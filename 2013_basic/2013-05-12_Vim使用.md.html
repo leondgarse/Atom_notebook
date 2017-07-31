@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <title>05-12_Vim使用</title>
+      <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(171, 178, 191); overflow: auto; background-color: rgb(40, 44, 52); }
+.markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
+.markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
+.markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
+.markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(124, 135, 156); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: rgb(82, 139, 255); }
+.markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
+.markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(124, 135, 156); border-color: rgb(75, 83, 98); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(75, 83, 98); background: none; }
+.markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(75, 83, 98); }
+.markdown-preview:not([data-use-github-style]) code { color: rgb(255, 255, 255); background-color: rgb(58, 63, 75); }
+.markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(49, 54, 63); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(255, 255, 255); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(75, 83, 98) rgb(75, 83, 98) rgb(62, 68, 81); background-color: rgb(58, 63, 75); }
+.markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); overflow: scroll; background-color: rgb(255, 255, 255); }
+.markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
+.markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
+.markdown-preview[data-use-github-style] a:not([href]) { color: inherit; text-decoration: none; }
+.markdown-preview[data-use-github-style] .absent { color: rgb(204, 0, 0); }
+.markdown-preview[data-use-github-style] .anchor { position: absolute; top: 0px; left: 0px; display: block; padding-right: 6px; padding-left: 30px; margin-left: -30px; }
+.markdown-preview[data-use-github-style] .anchor:focus { outline: none; }
+.markdown-preview[data-use-github-style] h1, .markdown-preview[data-use-github-style] h2, .markdown-preview[data-use-github-style] h3, .markdown-preview[data-use-github-style] h4, .markdown-preview[data-use-github-style] h5, .markdown-preview[data-use-github-style] h6 { position: relative; margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4; }
+.markdown-preview[data-use-github-style] h1 .octicon-link, .markdown-preview[data-use-github-style] h2 .octicon-link, .markdown-preview[data-use-github-style] h3 .octicon-link, .markdown-preview[data-use-github-style] h4 .octicon-link, .markdown-preview[data-use-github-style] h5 .octicon-link, .markdown-preview[data-use-github-style] h6 .octicon-link { display: none; color: rgb(0, 0, 0); vertical-align: middle; }
+.markdown-preview[data-use-github-style] h1:hover .anchor, .markdown-preview[data-use-github-style] h2:hover .anchor, .markdown-preview[data-use-github-style] h3:hover .anchor, .markdown-preview[data-use-github-style] h4:hover .anchor, .markdown-preview[data-use-github-style] h5:hover .anchor, .markdown-preview[data-use-github-style] h6:hover .anchor { padding-left: 8px; margin-left: -30px; text-decoration: none; }
+.markdown-preview[data-use-github-style] h1:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h2:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h3:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h4:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h5:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h6:hover .anchor .octicon-link { display: inline-block; }
+.markdown-preview[data-use-github-style] h1 tt, .markdown-preview[data-use-github-style] h2 tt, .markdown-preview[data-use-github-style] h3 tt, .markdown-preview[data-use-github-style] h4 tt, .markdown-preview[data-use-github-style] h5 tt, .markdown-preview[data-use-github-style] h6 tt, .markdown-preview[data-use-github-style] h1 code, .markdown-preview[data-use-github-style] h2 code, .markdown-preview[data-use-github-style] h3 code, .markdown-preview[data-use-github-style] h4 code, .markdown-preview[data-use-github-style] h5 code, .markdown-preview[data-use-github-style] h6 code { font-size: inherit; }
+.markdown-preview[data-use-github-style] h1 { padding-bottom: 0.3em; font-size: 2.25em; line-height: 1.2; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h1 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h2 { padding-bottom: 0.3em; font-size: 1.75em; line-height: 1.225; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h2 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h3 { font-size: 1.5em; line-height: 1.43; }
+.markdown-preview[data-use-github-style] h3 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h4 { font-size: 1.25em; }
+.markdown-preview[data-use-github-style] h4 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h5 { font-size: 1em; }
+.markdown-preview[data-use-github-style] h5 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] h6 { font-size: 1em; color: rgb(119, 119, 119); }
+.markdown-preview[data-use-github-style] h6 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] p, .markdown-preview[data-use-github-style] blockquote, .markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol, .markdown-preview[data-use-github-style] dl, .markdown-preview[data-use-github-style] table, .markdown-preview[data-use-github-style] pre { margin-top: 0px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] hr { height: 4px; padding: 0px; margin: 16px 0px; border: 0px none; background-color: rgb(231, 231, 231); }
+.markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol { padding-left: 2em; }
+.markdown-preview[data-use-github-style] ul.no-list, .markdown-preview[data-use-github-style] ol.no-list { padding: 0px; list-style-type: none; }
+.markdown-preview[data-use-github-style] ul ul, .markdown-preview[data-use-github-style] ul ol, .markdown-preview[data-use-github-style] ol ol, .markdown-preview[data-use-github-style] ol ul { margin-top: 0px; margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] li > p { margin-top: 16px; }
+.markdown-preview[data-use-github-style] dl { padding: 0px; }
+.markdown-preview[data-use-github-style] dl dt { padding: 0px; margin-top: 16px; font-size: 1em; font-style: italic; font-weight: bold; }
+.markdown-preview[data-use-github-style] dl dd { padding: 0px 16px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] blockquote { padding: 0px 15px; color: rgb(119, 119, 119); border-left: 4px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] blockquote > :first-child { margin-top: 0px; }
+.markdown-preview[data-use-github-style] blockquote > :last-child { margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] table { display: block; width: 100%; overflow: auto; word-break: keep-all; }
+.markdown-preview[data-use-github-style] table th { font-weight: bold; }
+.markdown-preview[data-use-github-style] table th, .markdown-preview[data-use-github-style] table td { padding: 6px 13px; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] table tr { border-top: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); }
+.markdown-preview[data-use-github-style] table tr:nth-child(2n) { background-color: rgb(248, 248, 248); }
+.markdown-preview[data-use-github-style] img { max-width: 100%; box-sizing: border-box; }
+.markdown-preview[data-use-github-style] .emoji { max-width: none; }
+.markdown-preview[data-use-github-style] span.frame { display: block; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.frame > span { display: block; float: left; width: auto; padding: 7px; margin: 13px 0px 0px; overflow: hidden; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] span.frame span img { display: block; float: left; }
+.markdown-preview[data-use-github-style] span.frame span span { display: block; padding: 5px 0px 0px; clear: both; color: rgb(51, 51, 51); }
+.markdown-preview[data-use-github-style] span.align-center { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-center > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-center span img { margin: 0px auto; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-right { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-right > span { display: block; margin: 13px 0px 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] span.align-right span img { margin: 0px; text-align: right; }
+.markdown-preview[data-use-github-style] span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-left span { margin: 13px 0px 0px; }
+.markdown-preview[data-use-github-style] span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-right > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] code, .markdown-preview[data-use-github-style] tt { padding: 0.2em 0px; margin: 0px; font-size: 85%; border-radius: 3px; background-color: rgba(0, 0, 0, 0.0392157); }
+.markdown-preview[data-use-github-style] code::before, .markdown-preview[data-use-github-style] tt::before, .markdown-preview[data-use-github-style] code::after, .markdown-preview[data-use-github-style] tt::after { letter-spacing: -0.2em; content: " "; }
+.markdown-preview[data-use-github-style] code br, .markdown-preview[data-use-github-style] tt br { display: none; }
+.markdown-preview[data-use-github-style] del code { text-decoration: inherit; }
+.markdown-preview[data-use-github-style] pre > code { padding: 0px; margin: 0px; font-size: 100%; word-break: normal; white-space: pre; border: 0px; background: transparent; }
+.markdown-preview[data-use-github-style] .highlight { margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] .highlight pre, .markdown-preview[data-use-github-style] pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; border-radius: 3px; background-color: rgb(247, 247, 247); }
+.markdown-preview[data-use-github-style] .highlight pre { margin-bottom: 0px; word-break: normal; }
+.markdown-preview[data-use-github-style] pre { word-wrap: normal; }
+.markdown-preview[data-use-github-style] pre code, .markdown-preview[data-use-github-style] pre tt { display: inline; max-width: initial; padding: 0px; margin: 0px; overflow: initial; line-height: inherit; word-wrap: normal; border: 0px; background-color: transparent; }
+.markdown-preview[data-use-github-style] pre code::before, .markdown-preview[data-use-github-style] pre tt::before, .markdown-preview[data-use-github-style] pre code::after, .markdown-preview[data-use-github-style] pre tt::after { content: normal; }
+.markdown-preview[data-use-github-style] kbd { display: inline-block; padding: 3px 5px; font-size: 11px; line-height: 10px; color: rgb(85, 85, 85); vertical-align: middle; border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204) rgb(204, 204, 204) rgb(187, 187, 187); border-radius: 3px; box-shadow: rgb(187, 187, 187) 0px -1px 0px inset; background-color: rgb(252, 252, 252); }
+.markdown-preview[data-use-github-style] a { color: rgb(51, 122, 183); }
+.markdown-preview[data-use-github-style] code { color: inherit; }
+.markdown-preview[data-use-github-style] pre.editor-colors { padding: 0.8em 1em; margin-bottom: 1em; font-size: 0.85em; border-radius: 4px; overflow: auto; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors .horizontal-scrollbar { visibility: hidden; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors:hover .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors:hover .horizontal-scrollbar { visibility: visible; }
+.markdown-preview .task-list-item-checkbox { position: absolute; margin: 0.25em 0px 0px -1.4em; }
+.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(171, 178, 191); overflow: auto; background-color: rgb(40, 44, 52); }
+.markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
+.markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) h1 { font-size: 2.4em; font-weight: 300; }
+.markdown-preview:not([data-use-github-style]) h2 { font-size: 1.8em; font-weight: 400; }
+.markdown-preview:not([data-use-github-style]) h3 { font-size: 1.5em; font-weight: 500; }
+.markdown-preview:not([data-use-github-style]) h4 { font-size: 1.2em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h5 { font-size: 1.1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) h6 { font-size: 1em; font-weight: 600; }
+.markdown-preview:not([data-use-github-style]) strong { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) del { color: rgb(124, 135, 156); }
+.markdown-preview:not([data-use-github-style]) a, .markdown-preview:not([data-use-github-style]) a code { color: rgb(82, 139, 255); }
+.markdown-preview:not([data-use-github-style]) img { max-width: 100%; }
+.markdown-preview:not([data-use-github-style]) > p { margin-top: 0px; margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) > ul, .markdown-preview:not([data-use-github-style]) > ol { margin-bottom: 1.5em; }
+.markdown-preview:not([data-use-github-style]) blockquote { margin: 1.5em 0px; font-size: inherit; color: rgb(124, 135, 156); border-color: rgb(75, 83, 98); border-width: 4px; }
+.markdown-preview:not([data-use-github-style]) hr { margin: 3em 0px; border-top: 2px dashed rgb(75, 83, 98); background: none; }
+.markdown-preview:not([data-use-github-style]) table { margin: 1.5em 0px; }
+.markdown-preview:not([data-use-github-style]) th { color: rgb(255, 255, 255); }
+.markdown-preview:not([data-use-github-style]) th, .markdown-preview:not([data-use-github-style]) td { padding: 0.66em 1em; border: 1px solid rgb(75, 83, 98); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) code { color: rgb(255, 255, 255); background-color: rgb(58, 63, 75); }
+.markdown-preview:not([data-use-github-style]) pre, .markdown-preview:not([data-use-github-style]) pre.editor-colors { margin: 1.5em 0px; padding: 1em; font-size: 0.92em; border-radius: 3px; background-color: rgb(49, 54, 63); }
+.markdown-preview:not([data-use-github-style]) kbd { color: rgb(255, 255, 255); border-width: 1px 1px 2px; border-style: solid; border-color: rgb(75, 83, 98) rgb(75, 83, 98) rgb(62, 68, 81); background-color: rgb(58, 63, 75); }
+.markdown-preview[data-use-github-style] { font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif; line-height: 1.6; word-wrap: break-word; padding: 30px; font-size: 16px; color: rgb(51, 51, 51); overflow: scroll; background-color: rgb(255, 255, 255); }
+.markdown-preview[data-use-github-style] > :first-child { margin-top: 0px !important; }
+.markdown-preview[data-use-github-style] > :last-child { margin-bottom: 0px !important; }
+.markdown-preview[data-use-github-style] a:not([href]) { color: inherit; text-decoration: none; }
+.markdown-preview[data-use-github-style] .absent { color: rgb(204, 0, 0); }
+.markdown-preview[data-use-github-style] .anchor { position: absolute; top: 0px; left: 0px; display: block; padding-right: 6px; padding-left: 30px; margin-left: -30px; }
+.markdown-preview[data-use-github-style] .anchor:focus { outline: none; }
+.markdown-preview[data-use-github-style] h1, .markdown-preview[data-use-github-style] h2, .markdown-preview[data-use-github-style] h3, .markdown-preview[data-use-github-style] h4, .markdown-preview[data-use-github-style] h5, .markdown-preview[data-use-github-style] h6 { position: relative; margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4; }
+.markdown-preview[data-use-github-style] h1 .octicon-link, .markdown-preview[data-use-github-style] h2 .octicon-link, .markdown-preview[data-use-github-style] h3 .octicon-link, .markdown-preview[data-use-github-style] h4 .octicon-link, .markdown-preview[data-use-github-style] h5 .octicon-link, .markdown-preview[data-use-github-style] h6 .octicon-link { display: none; color: rgb(0, 0, 0); vertical-align: middle; }
+.markdown-preview[data-use-github-style] h1:hover .anchor, .markdown-preview[data-use-github-style] h2:hover .anchor, .markdown-preview[data-use-github-style] h3:hover .anchor, .markdown-preview[data-use-github-style] h4:hover .anchor, .markdown-preview[data-use-github-style] h5:hover .anchor, .markdown-preview[data-use-github-style] h6:hover .anchor { padding-left: 8px; margin-left: -30px; text-decoration: none; }
+.markdown-preview[data-use-github-style] h1:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h2:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h3:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h4:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h5:hover .anchor .octicon-link, .markdown-preview[data-use-github-style] h6:hover .anchor .octicon-link { display: inline-block; }
+.markdown-preview[data-use-github-style] h1 tt, .markdown-preview[data-use-github-style] h2 tt, .markdown-preview[data-use-github-style] h3 tt, .markdown-preview[data-use-github-style] h4 tt, .markdown-preview[data-use-github-style] h5 tt, .markdown-preview[data-use-github-style] h6 tt, .markdown-preview[data-use-github-style] h1 code, .markdown-preview[data-use-github-style] h2 code, .markdown-preview[data-use-github-style] h3 code, .markdown-preview[data-use-github-style] h4 code, .markdown-preview[data-use-github-style] h5 code, .markdown-preview[data-use-github-style] h6 code { font-size: inherit; }
+.markdown-preview[data-use-github-style] h1 { padding-bottom: 0.3em; font-size: 2.25em; line-height: 1.2; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h1 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h2 { padding-bottom: 0.3em; font-size: 1.75em; line-height: 1.225; border-bottom: 1px solid rgb(238, 238, 238); }
+.markdown-preview[data-use-github-style] h2 .anchor { line-height: 1; }
+.markdown-preview[data-use-github-style] h3 { font-size: 1.5em; line-height: 1.43; }
+.markdown-preview[data-use-github-style] h3 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h4 { font-size: 1.25em; }
+.markdown-preview[data-use-github-style] h4 .anchor { line-height: 1.2; }
+.markdown-preview[data-use-github-style] h5 { font-size: 1em; }
+.markdown-preview[data-use-github-style] h5 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] h6 { font-size: 1em; color: rgb(119, 119, 119); }
+.markdown-preview[data-use-github-style] h6 .anchor { line-height: 1.1; }
+.markdown-preview[data-use-github-style] p, .markdown-preview[data-use-github-style] blockquote, .markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol, .markdown-preview[data-use-github-style] dl, .markdown-preview[data-use-github-style] table, .markdown-preview[data-use-github-style] pre { margin-top: 0px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] hr { height: 4px; padding: 0px; margin: 16px 0px; border: 0px none; background-color: rgb(231, 231, 231); }
+.markdown-preview[data-use-github-style] ul, .markdown-preview[data-use-github-style] ol { padding-left: 2em; }
+.markdown-preview[data-use-github-style] ul.no-list, .markdown-preview[data-use-github-style] ol.no-list { padding: 0px; list-style-type: none; }
+.markdown-preview[data-use-github-style] ul ul, .markdown-preview[data-use-github-style] ul ol, .markdown-preview[data-use-github-style] ol ol, .markdown-preview[data-use-github-style] ol ul { margin-top: 0px; margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] li > p { margin-top: 16px; }
+.markdown-preview[data-use-github-style] dl { padding: 0px; }
+.markdown-preview[data-use-github-style] dl dt { padding: 0px; margin-top: 16px; font-size: 1em; font-style: italic; font-weight: bold; }
+.markdown-preview[data-use-github-style] dl dd { padding: 0px 16px; margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] blockquote { padding: 0px 15px; color: rgb(119, 119, 119); border-left: 4px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] blockquote > :first-child { margin-top: 0px; }
+.markdown-preview[data-use-github-style] blockquote > :last-child { margin-bottom: 0px; }
+.markdown-preview[data-use-github-style] table { display: block; width: 100%; overflow: auto; word-break: keep-all; }
+.markdown-preview[data-use-github-style] table th { font-weight: bold; }
+.markdown-preview[data-use-github-style] table th, .markdown-preview[data-use-github-style] table td { padding: 6px 13px; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] table tr { border-top: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); }
+.markdown-preview[data-use-github-style] table tr:nth-child(2n) { background-color: rgb(248, 248, 248); }
+.markdown-preview[data-use-github-style] img { max-width: 100%; box-sizing: border-box; }
+.markdown-preview[data-use-github-style] .emoji { max-width: none; }
+.markdown-preview[data-use-github-style] span.frame { display: block; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.frame > span { display: block; float: left; width: auto; padding: 7px; margin: 13px 0px 0px; overflow: hidden; border: 1px solid rgb(221, 221, 221); }
+.markdown-preview[data-use-github-style] span.frame span img { display: block; float: left; }
+.markdown-preview[data-use-github-style] span.frame span span { display: block; padding: 5px 0px 0px; clear: both; color: rgb(51, 51, 51); }
+.markdown-preview[data-use-github-style] span.align-center { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-center > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-center span img { margin: 0px auto; text-align: center; }
+.markdown-preview[data-use-github-style] span.align-right { display: block; overflow: hidden; clear: both; }
+.markdown-preview[data-use-github-style] span.align-right > span { display: block; margin: 13px 0px 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] span.align-right span img { margin: 0px; text-align: right; }
+.markdown-preview[data-use-github-style] span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-left span { margin: 13px 0px 0px; }
+.markdown-preview[data-use-github-style] span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden; }
+.markdown-preview[data-use-github-style] span.float-right > span { display: block; margin: 13px auto 0px; overflow: hidden; text-align: right; }
+.markdown-preview[data-use-github-style] code, .markdown-preview[data-use-github-style] tt { padding: 0.2em 0px; margin: 0px; font-size: 85%; border-radius: 3px; background-color: rgba(0, 0, 0, 0.0392157); }
+.markdown-preview[data-use-github-style] code::before, .markdown-preview[data-use-github-style] tt::before, .markdown-preview[data-use-github-style] code::after, .markdown-preview[data-use-github-style] tt::after { letter-spacing: -0.2em; content: " "; }
+.markdown-preview[data-use-github-style] code br, .markdown-preview[data-use-github-style] tt br { display: none; }
+.markdown-preview[data-use-github-style] del code { text-decoration: inherit; }
+.markdown-preview[data-use-github-style] pre > code { padding: 0px; margin: 0px; font-size: 100%; word-break: normal; white-space: pre; border: 0px; background: transparent; }
+.markdown-preview[data-use-github-style] .highlight { margin-bottom: 16px; }
+.markdown-preview[data-use-github-style] .highlight pre, .markdown-preview[data-use-github-style] pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; border-radius: 3px; background-color: rgb(247, 247, 247); }
+.markdown-preview[data-use-github-style] .highlight pre { margin-bottom: 0px; word-break: normal; }
+.markdown-preview[data-use-github-style] pre { word-wrap: normal; }
+.markdown-preview[data-use-github-style] pre code, .markdown-preview[data-use-github-style] pre tt { display: inline; max-width: initial; padding: 0px; margin: 0px; overflow: initial; line-height: inherit; word-wrap: normal; border: 0px; background-color: transparent; }
+.markdown-preview[data-use-github-style] pre code::before, .markdown-preview[data-use-github-style] pre tt::before, .markdown-preview[data-use-github-style] pre code::after, .markdown-preview[data-use-github-style] pre tt::after { content: normal; }
+.markdown-preview[data-use-github-style] kbd { display: inline-block; padding: 3px 5px; font-size: 11px; line-height: 10px; color: rgb(85, 85, 85); vertical-align: middle; border-width: 1px; border-style: solid; border-color: rgb(204, 204, 204) rgb(204, 204, 204) rgb(187, 187, 187); border-radius: 3px; box-shadow: rgb(187, 187, 187) 0px -1px 0px inset; background-color: rgb(252, 252, 252); }
+.markdown-preview[data-use-github-style] a { color: rgb(51, 122, 183); }
+.markdown-preview[data-use-github-style] pre, .markdown-preview[data-use-github-style] code { color: inherit; }
+.markdown-preview[data-use-github-style] pre, .markdown-preview[data-use-github-style] pre.editor-colors { padding: 0.8em 1em; margin-bottom: 1em; font-size: 0.85em; border-radius: 4px; overflow: auto; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors .horizontal-scrollbar { visibility: hidden; }
+.scrollbars-visible-always .markdown-preview pre.editor-colors:hover .vertical-scrollbar, .scrollbars-visible-always .markdown-preview pre.editor-colors:hover .horizontal-scrollbar { visibility: visible; }
+.markdown-preview del { text-decoration: none; position: relative; }
+.markdown-preview del::after { border-bottom: 1px solid black; content: ""; left: 0px; position: absolute; right: 0px; top: 50%; }
+.markdown-preview .flash { animation: flash 1s ease-out 1; outline: rgba(255, 0, 0, 0) solid 1px; }
+.markdown-preview .flash:not(li) { display: block; }
+.bracket-matcher .region {
+  border-bottom: 1px dotted lime;
+  position: absolute;
+}
+
+.spell-check-misspelling .region {
+  border-bottom: 2px dotted rgba(255, 51, 51, 0.75);
+}
+.spell-check-corrections {
+  width: 25em !important;
+}
+
+pre.editor-colors {
+  background-color: #282c34;
+  color: #abb2bf;
+}
+pre.editor-colors .line.cursor-line {
+  background-color: rgba(153, 187, 255, 0.04);
+}
+pre.editor-colors .invisible {
+  color: #abb2bf;
+}
+pre.editor-colors .cursor {
+  border-left: 2px solid #528bff;
+}
+pre.editor-colors .selection .region {
+  background-color: #3e4451;
+}
+pre.editor-colors .bracket-matcher .region {
+  border-bottom: 1px solid #528bff;
+  box-sizing: border-box;
+}
+pre.editor-colors .invisible-character {
+  color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .indent-guide {
+  color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .wrap-guide {
+  background-color: rgba(171, 178, 191, 0.15);
+}
+pre.editor-colors .find-result .region.region.region,
+pre.editor-colors .current-result .region.region.region {
+  border-radius: 2px;
+  background-color: rgba(82, 139, 255, 0.24);
+  transition: border-color 0.4s;
+}
+pre.editor-colors .find-result .region.region.region {
+  border: 2px solid transparent;
+}
+pre.editor-colors .current-result .region.region.region {
+  border: 2px solid #528bff;
+  transition-duration: .1s;
+}
+pre.editor-colors .gutter .line-number {
+  color: #636d83;
+  -webkit-font-smoothing: antialiased;
+}
+pre.editor-colors .gutter .line-number.cursor-line {
+  color: #abb2bf;
+  background-color: #2c313a;
+}
+pre.editor-colors .gutter .line-number.cursor-line-no-selection {
+  background-color: transparent;
+}
+pre.editor-colors .gutter .line-number .icon-right {
+  color: #abb2bf;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed.git-line-removed::before {
+  bottom: -3px;
+}
+pre.editor-colors .gutter:not(.git-diff-icon) .line-number.git-line-removed::after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  width: 25px;
+  border-bottom: 1px dotted rgba(224, 82, 82, 0.5);
+  pointer-events: none;
+}
+pre.editor-colors .gutter .line-number.folded,
+pre.editor-colors .gutter .line-number:after,
+pre.editor-colors .fold-marker:after {
+  color: #abb2bf;
+}
+.syntax--comment {
+  color: #5c6370;
+  font-style: italic;
+}
+.syntax--comment .syntax--markup.syntax--link {
+  color: #5c6370;
+}
+.syntax--entity.syntax--name.syntax--type {
+  color: #e5c07b;
+}
+.syntax--entity.syntax--other.syntax--inherited-class {
+  color: #98c379;
+}
+.syntax--keyword {
+  color: #c678dd;
+}
+.syntax--keyword.syntax--control {
+  color: #c678dd;
+}
+.syntax--keyword.syntax--operator {
+  color: #abb2bf;
+}
+.syntax--keyword.syntax--other.syntax--special-method {
+  color: #61afef;
+}
+.syntax--keyword.syntax--other.syntax--unit {
+  color: #d19a66;
+}
+.syntax--storage {
+  color: #c678dd;
+}
+.syntax--storage.syntax--type.syntax--annotation,
+.syntax--storage.syntax--type.syntax--primitive {
+  color: #c678dd;
+}
+.syntax--storage.syntax--modifier.syntax--package,
+.syntax--storage.syntax--modifier.syntax--import {
+  color: #abb2bf;
+}
+.syntax--constant {
+  color: #d19a66;
+}
+.syntax--constant.syntax--variable {
+  color: #d19a66;
+}
+.syntax--constant.syntax--character.syntax--escape {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--numeric {
+  color: #d19a66;
+}
+.syntax--constant.syntax--other.syntax--color {
+  color: #56b6c2;
+}
+.syntax--constant.syntax--other.syntax--symbol {
+  color: #56b6c2;
+}
+.syntax--variable {
+  color: #e06c75;
+}
+.syntax--variable.syntax--interpolation {
+  color: #be5046;
+}
+.syntax--variable.syntax--parameter {
+  color: #abb2bf;
+}
+.syntax--string {
+  color: #98c379;
+}
+.syntax--string.syntax--regexp {
+  color: #56b6c2;
+}
+.syntax--string.syntax--regexp .syntax--source.syntax--ruby.syntax--embedded {
+  color: #e5c07b;
+}
+.syntax--string.syntax--other.syntax--link {
+  color: #e06c75;
+}
+.syntax--punctuation.syntax--definition.syntax--comment {
+  color: #5c6370;
+}
+.syntax--punctuation.syntax--definition.syntax--method-parameters,
+.syntax--punctuation.syntax--definition.syntax--function-parameters,
+.syntax--punctuation.syntax--definition.syntax--parameters,
+.syntax--punctuation.syntax--definition.syntax--separator,
+.syntax--punctuation.syntax--definition.syntax--seperator,
+.syntax--punctuation.syntax--definition.syntax--array {
+  color: #abb2bf;
+}
+.syntax--punctuation.syntax--definition.syntax--heading,
+.syntax--punctuation.syntax--definition.syntax--identity {
+  color: #61afef;
+}
+.syntax--punctuation.syntax--definition.syntax--bold {
+  color: #e5c07b;
+  font-weight: bold;
+}
+.syntax--punctuation.syntax--definition.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
+}
+.syntax--punctuation.syntax--section.syntax--embedded {
+  color: #be5046;
+}
+.syntax--punctuation.syntax--section.syntax--method,
+.syntax--punctuation.syntax--section.syntax--class,
+.syntax--punctuation.syntax--section.syntax--inner-class {
+  color: #abb2bf;
+}
+.syntax--support.syntax--class {
+  color: #e5c07b;
+}
+.syntax--support.syntax--type {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function {
+  color: #56b6c2;
+}
+.syntax--support.syntax--function.syntax--any-method {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--function {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--class,
+.syntax--entity.syntax--name.syntax--type.syntax--class {
+  color: #e5c07b;
+}
+.syntax--entity.syntax--name.syntax--section {
+  color: #61afef;
+}
+.syntax--entity.syntax--name.syntax--tag {
+  color: #e06c75;
+}
+.syntax--entity.syntax--other.syntax--attribute-name {
+  color: #d19a66;
+}
+.syntax--entity.syntax--other.syntax--attribute-name.syntax--id {
+  color: #61afef;
+}
+.syntax--meta.syntax--class {
+  color: #e5c07b;
+}
+.syntax--meta.syntax--class.syntax--body {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--method-call,
+.syntax--meta.syntax--method {
+  color: #abb2bf;
+}
+.syntax--meta.syntax--definition.syntax--variable {
+  color: #e06c75;
+}
+.syntax--meta.syntax--link {
+  color: #d19a66;
+}
+.syntax--meta.syntax--require {
+  color: #61afef;
+}
+.syntax--meta.syntax--selector {
+  color: #c678dd;
+}
+.syntax--meta.syntax--separator {
+  background-color: #373b41;
+  color: #abb2bf;
+}
+.syntax--meta.syntax--tag {
+  color: #abb2bf;
+}
+.syntax--underline {
+  text-decoration: underline;
+}
+.syntax--none {
+  color: #abb2bf;
+}
+.syntax--invalid.syntax--deprecated {
+  color: #523d14 !important;
+  background-color: #e0c285 !important;
+}
+.syntax--invalid.syntax--illegal {
+  color: white !important;
+  background-color: #e05252 !important;
+}
+.syntax--markup.syntax--bold {
+  color: #d19a66;
+  font-weight: bold;
+}
+.syntax--markup.syntax--changed {
+  color: #c678dd;
+}
+.syntax--markup.syntax--deleted {
+  color: #e06c75;
+}
+.syntax--markup.syntax--italic {
+  color: #c678dd;
+  font-style: italic;
+}
+.syntax--markup.syntax--heading {
+  color: #e06c75;
+}
+.syntax--markup.syntax--heading .syntax--punctuation.syntax--definition.syntax--heading {
+  color: #61afef;
+}
+.syntax--markup.syntax--link {
+  color: #56b6c2;
+}
+.syntax--markup.syntax--inserted {
+  color: #98c379;
+}
+.syntax--markup.syntax--quote {
+  color: #d19a66;
+}
+.syntax--markup.syntax--raw {
+  color: #98c379;
+}
+.syntax--source.syntax--c .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cpp .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--cs .syntax--keyword.syntax--operator {
+  color: #c678dd;
+}
+.syntax--source.syntax--css .syntax--property-name,
+.syntax--source.syntax--css .syntax--property-value {
+  color: #828997;
+}
+.syntax--source.syntax--css .syntax--property-name.syntax--support,
+.syntax--source.syntax--css .syntax--property-value.syntax--support {
+  color: #abb2bf;
+}
+.syntax--source.syntax--gfm .syntax--markup {
+  -webkit-font-smoothing: auto;
+}
+.syntax--source.syntax--gfm .syntax--link .syntax--entity {
+  color: #61afef;
+}
+.syntax--source.syntax--go .syntax--storage.syntax--type.syntax--string {
+  color: #c678dd;
+}
+.syntax--source.syntax--ini .syntax--keyword.syntax--other.syntax--definition.syntax--ini {
+  color: #e06c75;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--modifier.syntax--import {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--storage.syntax--type {
+  color: #e5c07b;
+}
+.syntax--source.syntax--java .syntax--keyword.syntax--operator.syntax--instanceof {
+  color: #c678dd;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair {
+  color: #e06c75;
+}
+.syntax--source.syntax--java-properties .syntax--meta.syntax--key-pair > .syntax--punctuation {
+  color: #abb2bf;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator {
+  color: #56b6c2;
+}
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--delete,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--in,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--of,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--instanceof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--new,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--typeof,
+.syntax--source.syntax--js .syntax--keyword.syntax--operator.syntax--void {
+  color: #c678dd;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation.syntax--string {
+  color: #e06c75;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--value.syntax--json > .syntax--string.syntax--quoted.syntax--json > .syntax--punctuation {
+  color: #98c379;
+}
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--dictionary.syntax--json > .syntax--constant.syntax--language.syntax--json,
+.syntax--source.syntax--json .syntax--meta.syntax--structure.syntax--array.syntax--json > .syntax--constant.syntax--language.syntax--json {
+  color: #56b6c2;
+}
+.syntax--source.syntax--ruby .syntax--constant.syntax--other.syntax--symbol > .syntax--punctuation {
+  color: inherit;
+}
+.syntax--source.syntax--python .syntax--keyword.syntax--operator.syntax--logical.syntax--python {
+  color: #c678dd;
+}
+.syntax--source.syntax--python .syntax--variable.syntax--parameter {
+  color: #d19a66;
+}
+</style>
+  </head>
+  <body class='markdown-preview'><ul>
+<li><strong><em>2013 - 05 - 12（Vim使用）</em></strong></li>
+<li>v选定到光标位置的内容</li>
+<li><ctrl-v>列选定</ctrl-v></li>
+<li><shift-v>行选定</shift-v></li>
+<li>. 在光标当前位置处重复上一次操作</li>
+<li>Ve / Se 打开目录</li>
+<li>替换文件中的^M: %s/^M//g (^M = Ctrl v + Ctrl m)</li>
+<li>可以用 “zo” 打开一个折叠。关闭使用 “zc”</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">复制删除</span></h1>
+<ul>
+<li>yw         表示拷贝从当前光标到光标所在单词结尾的内容.</li>
+<li>dw         表示删除从当前光标到光标所在单词结尾的内容.</li>
+<li>y0         表示拷贝从当前光标到光标所在行首的内容.</li>
+<li>d0         表示删除从当前光标到光标所在行首的内容.</li>
+<li>y$         表示拷贝从当前光标到光标所在行尾的内容.</li>
+<li>d$         表示删除从当前光标到光标所在行尾的内容.</li>
+<li>yfa         表示拷贝从当前光标到光标后面的第一个a 字符之间的内容.</li>
+<li>dfa         表示删除从当前光标到光标后面的第一个a 字符之间的内容.</li>
+<li>yy         表示拷贝光标所在行.</li>
+<li>dd         表示删除光标所在行.</li>
+<li>D         表示删除从当前光标到光标所在行尾的内容.</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">删除操作</span></h1>
+<ul>
+<li>:%s/r//g 删除DOS方式的回车^M</li>
+<li>:%s= *$== 删除行尾空白</li>
+<li>:%s/^(.*)n1/1$/ 删除重复行</li>
+<li>:%s/^.pdf/new.pdf/ 只是删除第一个pdf</li>
+<li>:%s/// 又是删除多行注释（咦？为什么要说「又」呢？）</li>
+<li>:g/^s*$/d 删除所有空行 :g/^s*$/d 删除所有空行</li>
+<li>:g!/^dd/d 删除不含字符串’dd’的行</li>
+<li>:v/^dd/d 同上 （译释：v == g!，就是不匹配！）</li>
+<li>:g/str1/,/str2/d 删除所有第一个含str1到第一个含str2之间的行</li>
+<li>:v/./.,/./-1join 压缩空行</li>
+<li>:g/^$/,/./-j 压缩空行</li>
+<li>ndw 或 ndW 删除光标处开始及其后的 n-1 个字符。</li>
+<li>d0 删至行首。</li>
+<li>d$ 删至行尾。</li>
+<li>ndd 删除当前行及其后 n-1 行。</li>
+<li>x 或 X 删除一个字符。</li>
+<li>Ctrl+u 删除输入方式下所输入的文本。</li>
+<li>^R 恢复u的操作</li>
+<li>J 把下一行合并到当前行尾</li>
+<li>V 选择一行</li>
+<li>^V 按下^V后即可进行矩形的选择了</li>
+<li>aw 选择单词</li>
+<li>iw 内部单词(无空格)</li>
+<li>as 选择句子</li>
+<li>is 选择句子(无空格)</li>
+<li>ap 选择段落</li>
+<li>ip 选择段落(无空格)</li>
+<li>D 删除到行尾</li>
+<li>x,y 删除与复制包含高亮区</li>
+<li>dl 删除当前字符（与x命令功能相同）</li>
+<li>d0 删除到某一行的开始位置</li>
+<li>d^ 删除到某一行的第一个字符位置（不包括空格或TAB字符）</li>
+<li>dw 删除到某个单词的结尾位置</li>
+<li>d3w 删除到第三个单词的结尾位置</li>
+<li>db 删除到某个单词的开始位置</li>
+<li>dW 删除到某个以空格作为分隔符的单词的结尾位置</li>
+<li>dB 删除到某个以空格作为分隔符的单词的开始位置</li>
+<li>d7B 删除到前面7个以空格作为分隔符的单词的开始位置</li>
+<li>d） 删除到某个语句的结尾位置</li>
+<li>d4） 删除到第四个语句的结尾位置</li>
+<li>d（ 删除到某个语句的开始位置</li>
+<li>d） 删除到某个段落的结尾位置</li>
+<li>d{ 删除到某个段落的开始位置</li>
+<li>d7{ 删除到当前段落起始位置之前的第7个段落位置</li>
+<li>dd 删除当前行</li>
+<li>d/text 删除从文本中出现“text”中所指定字样的位置，</li>
+<li>一直向前直到下一个该字样所出现的位置（但不包括该字样）之间的内容</li>
+<li>dfc 删除从文本中出现字符“c”的位置，一直向前直到下一个该字符所出现的位置（包括该字符）之间的内容</li>
+<li>dtc 删除当前行直到下一个字符“c”所出现位置之间的内容</li>
+<li>D 删除到某一行的结尾</li>
+<li>d$ 删除到某一行的结尾</li>
+<li>5dd 删除从当前行所开始的5行内容</li>
+<li>dL 删除直到屏幕上最后一行的内容</li>
+<li>dH 删除直到屏幕上第一行的内容</li>
+<li>dG 删除直到工作缓存区结尾的内容</li>
+<li>d1G 删除直到工作缓存区开始的内容</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">缓冲区跳转</span></h1>
+<ul>
+<li>:n         编辑下一个文件。</li>
+<li>:2n         编辑下二个文件。</li>
+<li>:N         编辑前一个文件。注意，这种用法只能用于argument list 的情形。</li>
+<li>:rew         回到首文件</li>
+<li>:args         查看当前编辑缓冲文件状态</li>
+<li>:e#或Ctrl-^        回到上次编辑的文件</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">移动光标</span></h1>
+<ul>
+<li>%        是从大括号的开始移动到大括号的结束位置</li>
+<li>:        后边加行号就是跳到这一行</li>
+<li><c-o>         光标返回到以前的位置。相当于光标移动的“撤销”</c-o></li>
+<li><c-i>         光标返回到后来的位置。相当于光标移动的“恢复”</c-i></li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">字符串的查找</span></h1>
+<ul>
+<li>vim 中用 / 和 ? 来查找字符串，两者的区别是：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>string&nbsp;会高亮显示光标后匹配的第一个字符串，回车后光标移到该字符串的第一个字母</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--keyword syntax--operator syntax--ternary syntax--c"><span>?</span></span><span>string&nbsp;会高亮显示光标前匹配的第一个字符串，回车后光标移到该字符串的第一个字母</span></span>
+</div></pre>
+</li>
+<li>在回车之后，按n键同方向转到下一个匹配的字符串，按N键反方向转到上一个匹配的字符串</li>
+<li>查找并替换：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>:n,$s</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>string1</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>string2</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>g&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>替换从第n行到最后一行所有的string1为string2，若没有g则表示替换每一行的第一个</span></span></span>
+</div></pre>
+</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">窗口分屏</span></h1>
+<ul>
+<li>vs main.cpp        纵向分屏打开main.cpp</li>
+<li>sp main.cpp 横向分屏打开main.cpp</li>
+<li>:ctrl+w+j/k，通过j/k可以上下切换，或者:ctrl+w加上下左右键，还可以通过快速双击ctrl+w依次切换窗口</li>
+<li>:ctrl+w+J / K / H / L, 调整窗口位置</li>
+<li>纵向调整<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>:ctrl</span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span>w&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;纵向扩大（行数增加）</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:ctrl</span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span>w&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;纵向缩小&nbsp;（行数减少）</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span>&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;例如：:res&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>5</span></span><span>，显示行数调整为5行</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span>num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;把当前窗口高度增加num行</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;把当前窗口高度减少num行</span></span>
+</div></pre>
+</li>
+<li>横向调整<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>:vertical&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span>&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;指定当前窗口为num列</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:vertical&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span>num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;把当前窗口增加num列</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:vertical&nbsp;</span><span class="syntax--meta syntax--function syntax--c"><span class="syntax--entity syntax--name syntax--function syntax--c"><span>res</span></span><span class="syntax--punctuation syntax--section syntax--arguments syntax--begin syntax--bracket syntax--round syntax--c"><span>(</span></span><span>ize</span><span class="syntax--punctuation syntax--section syntax--arguments syntax--end syntax--bracket syntax--round syntax--c"><span>)</span></span></span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;把当前窗口减少num列</span></span>
+</div></pre>
+</li>
+<li>配置文件中使用<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>nmap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>silent</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--decrement syntax--c"><span>--</span></span><span>&nbsp;:vertical&nbsp;res</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>3</span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>cr</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>nmap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>silent</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>==</span></span><span>&nbsp;:vertical&nbsp;res</span><span class="syntax--keyword syntax--operator syntax--c"><span>+</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>3</span></span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>cr</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>将纵向调整配置为&nbsp;</span><span class="syntax--keyword syntax--operator syntax--increment syntax--c"><span>++</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--decrement syntax--c"><span>--</span></span></span>
+</div></pre>
+</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;"> vim中其它的补全方式</span></h1>
+<ul>
+<li>整行补全                            CTRL-X CTRL-L</li>
+<li>根据当前文件里关键字补全            CTRL-X CTRL-N</li>
+<li>根据字典补全                          CTRL-X CTRL-K</li>
+<li>根据同义词字典补全               CTRL-X CTRL-T</li>
+<li>根据头文件内关键字补全             CTRL-X CTRL-I</li>
+<li>根据标签补全                          CTRL-X CTRL-]</li>
+<li>补全文件名                           CTRL-X CTRL-F</li>
+<li>补全宏定义                           CTRL-X CTRL-D</li>
+<li>补全vim命令                           CTRL-X CTRL-V</li>
+<li>用户自定义补全方式               CTRL-X CTRL-U</li>
+<li>拼写建议                            CTRL-X CTRL-S</li>
+<li>停止补全并回到原来录入的文字        CTRL-E</li>
+<li>停止补全,并接受当前所选的项目        CTRL-Y</li>
+<li>向上查找以进行补全                CTRL-P</li>
+<li>向下查找以进行补全                CTRL-N</li>
+<li>比如写过一行for (int i = 0; i &lt; 100; i++) ， 想再写一模一样的一行， 输入for<c-x><c-l>即可</c-l></c-x></li>
+<li>如果补全出来的不是想要的那一行，可以按<c-p> 或<c-n> 选择上一个或下一个匹配行</c-n></c-p></li>
+<li><c-x><c-f> 在文件系统中搜索，补全一个文件名</c-f></c-x></li>
+<li>如果按<c-p> 或<c-n> 补全一个词，在当前文件中没有找到匹配，VIM 将搜索#include语句中的文件，而文件的位置将在path 中搜索</c-n></c-p></li>
+<li><c-y> 把上一行对应列的字符抄下来</c-y></li>
+<li><c-e> 把下一行对应列的字符抄上来,这两个都可以一直按下去,到了行尾自己会停的</c-e></li>
+<li>可以在vimrc中定义下面的键绑定，以减少按键次数：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>inoremap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>]</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>X</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>]</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>inoremap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>F</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>X</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>F</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>inoremap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>D</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>X</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>D</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>inoremap&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>L</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>X</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span><span>&lt;</span></span><span>C</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>L</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span></span>
+</div></pre>
+</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">ctags</span></h1>
+<ul>
+<li>用ctags实现在工程中，符号到符号定义间的跳转</li>
+<li>在项目根目录下用 ctags -R . 创建一个tag文件，或使用 ctags –R {路径} 创建该路径的tags文件</li>
+<li>–links=no 指定不跟踪符号链接：ctags -R --links=no {绝对路径}</li>
+<li>在.vimrc文件中加入<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>set&nbsp;tags</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>tags;“一定要有末尾的分号，或使用set&nbsp;tags</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span><span>绝对路径名</span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span><span>来使用该路径下的tags文件</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>set&nbsp;autochdir</span></span>
+</div></pre>
+</li>
+<li>使用 CTRL - ] 在Symbol符号间跳转，CTRL - t 返回</li>
+<li>如果一个标签有多个匹配项：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>使用&nbsp;:tag&nbsp;将跳转到第一个标签，如果是在当前文件下，则跳转到该处</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>使用&nbsp;:tnext&nbsp;将跳转到下一个标签</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>使用&nbsp;:tselect&nbsp;tagname&nbsp;将给出所有匹配标签的列表，可通过选择序号进行跳转</span></span>
+</div></pre>
+</li>
+<li>在vim中使用：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>:set&nbsp;tags</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>tags&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;使用当前目录下的tags文件</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:tag&nbsp;</span><span class="syntax--meta syntax--block syntax--c"><span class="syntax--punctuation syntax--section syntax--block syntax--begin syntax--bracket syntax--curly syntax--c"><span>{</span></span><span>Symbol</span><span class="syntax--punctuation syntax--section syntax--block syntax--end syntax--bracket syntax--curly syntax--c"><span>}</span></span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;跳转到Symbol符号，支持正则表达式</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:tags&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;查看当前处于标签栈的哪个位置</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:help&nbsp;</span><span class="syntax--constant syntax--numeric syntax--c"><span>29.1</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;查看tags文档</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:help&nbsp;tagsrch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;查看更多tags命令</span></span>
+</div></pre>
+</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">path选项</span></h1>
+<ul>
+<li>path选项定义了一个目录列表，在使用gf / find / CTRL - W f等vim命令时，如果使用的是相对路径，会在path选项定义的目录列表中查找相应的文件<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>set&nbsp;path</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span>.,</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>usr</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>include,,</span><span class="syntax--keyword syntax--operator syntax--c"><span>~</span><span>/</span></span><span>src</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>vim70</span></span>
+</div></pre>
+</li>
+<li>在Normal模式下按 gf 跳转，CTRL - ^返回，CTRL - W f水平分割窗口显示</li>
+<li>可使用 nmap <c-w><c-f> <c-w>vgf 将其定义为纵向分屏</c-w></c-f></c-w></li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">Cscope</span></h1>
+<ul>
+<li>在项目目录中运行命令cscope -Rbq生成cscope数据库，在生成数据库中,在你的项目目录中未找到<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>的头文件,会自动到</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>usr</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>include目录中查找，可使用&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>k&nbsp;阻止这样做</span></span>
+</div></pre>
+</li>
+<li>也可使用 find 生成索引数据库：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>&nbsp;将当前目录下所有普通文件加入cscope.files，使用的相对路径</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--comment syntax--line syntax--double-slash syntax--cpp"><span class="syntax--punctuation syntax--definition syntax--comment syntax--cpp"><span>//</span></span><span>&nbsp;要使用绝对路径，可使用&nbsp;-Ppath&nbsp;在以相对路径表示的文件前加上的path</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>find&nbsp;.&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>type&nbsp;f&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;cscope.files</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>cscope&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>bq</span></span>
+</div></pre>
+</li>
+<li>生成绝对路径的cscope数据库：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>$&nbsp;cd&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>$find&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>home</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>leondgarse</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>linux</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>2.6</span><span>.35</span><span>.5</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>name&nbsp;</span><span class="syntax--string syntax--quoted syntax--single syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&#39;</span></span><span>*.c</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&#39;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>name&nbsp;</span><span class="syntax--string syntax--quoted syntax--single syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&#39;</span></span><span>*.h</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&#39;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span>&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>home</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>leondgarse</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>linux</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>2.6</span><span>.35</span><span>.5</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>cscope.files</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>$&nbsp;cd&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>home</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>leondgarse</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>linux</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>2.6</span><span>.35</span><span>.5</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>$&nbsp;cscope&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>bkq&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>i&nbsp;cscope.files</span></span>
+</div></pre>
+</li>
+<li>一个用于linux内核的find方法：<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>LNX</span><span class="syntax--keyword syntax--operator syntax--assignment syntax--c"><span>=</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>home</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>jru</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>linux</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span class="syntax--constant syntax--numeric syntax--c"><span>2.4</span><span>.18</span></span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>cd&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>find&nbsp;$LNX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/arch/*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--logical syntax--c"><span>!</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/arch/i386*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/include/asm-*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--logical syntax--c"><span>!</span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/include/asm-i386*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/tmp*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/Documentation*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/scripts*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>path&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>$LNX/drivers*</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>prune&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--constant syntax--character syntax--escape syntax--line-continuation syntax--c"><span>\</span></span><span>&nbsp;</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>name&nbsp;</span><span class="syntax--string syntax--quoted syntax--double syntax--c"><span class="syntax--punctuation syntax--definition syntax--string syntax--begin syntax--c"><span>&quot;</span></span><span>*.[chxsS]</span><span class="syntax--punctuation syntax--definition syntax--string syntax--end syntax--c"><span>&quot;</span></span></span><span>&nbsp;</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>print&nbsp;</span><span class="syntax--keyword syntax--operator syntax--comparison syntax--c"><span>&gt;</span></span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>home</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>jru</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>cscope</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>cscope.files</span></span>
+</div></pre>
+</li>
+</ul>
+<hr>
+<h1><span style="color:#ff0000;">List all matched search results</span></h1>
+<ul>
+<li>:g/PATTERN/p<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>In&nbsp;it</span><span class="syntax--constant syntax--numeric syntax--c"><span>&#39;</span></span><span>s&nbsp;longer&nbsp;form:</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span>:global</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>regular</span><span class="syntax--keyword syntax--operator syntax--c"><span>-</span></span><span>expression</span><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>print</span></span>
+</div></pre>
+</li>
+</ul>
+<h1><span style="color:#ff0000;">删除空行</span></h1>
+<ul>
+<li>:g/^s*$/d<pre class="editor-colors lang-c"><div class="line"><span class="syntax--source syntax--c"><span>g&nbsp;：全区命令</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>&nbsp;：分隔符</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--keyword syntax--operator syntax--c"><span>^</span></span><span>s</span><span class="syntax--keyword syntax--operator syntax--c"><span>*</span></span><span>$&nbsp;：匹配空行，</span><span class="syntax--keyword syntax--operator syntax--c"><span>^</span></span><span>表示行首，s表示空字符，包括空格和制表符，</span><span class="syntax--keyword syntax--operator syntax--c"><span>*</span></span><span>&nbsp;重复0到n个前面的字符，$表示行尾，就是匹配只有空字符的行</span></span>
+</div><div class="line"><span class="syntax--source syntax--c"><span class="syntax--keyword syntax--operator syntax--c"><span>/</span></span><span>d&nbsp;：删除该行</span></span>
+</div></pre>
+</li>
+</ul></body>
+</html>
