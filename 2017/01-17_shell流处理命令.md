@@ -1,5 +1,50 @@
 # ___2017 - 01 - 17 shell流处理命令___
-- Three ways finding a string in a file:
+***
+
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 01 - 17 shell流处理命令___](#user-content-2017-01-17-shell流处理命令)
+  - [目录](#user-content-目录)
+  - [Three ways finding a string in a file:](#user-content-three-ways-finding-a-string-in-a-file)
+  - [find](#user-content-find)
+  - [grep](#user-content-grep)
+  - [awk](#user-content-awk)
+  	- [awk工作流程：](#user-content-awk工作流程)
+  	- [示例：](#user-content-示例)
+  	- [awk内置变量：](#user-content-awk内置变量)
+  	- [awk自定义变量：](#user-content-awk自定义变量)
+  	- [awk 正则表达式 ~](#user-content-awk-正则表达式-)
+  	- [awk 使用 if / for 语句：](#user-content-awk-使用-if-for-语句)
+  	- [awk 变量](#user-content-awk-变量)
+  	- [awk 其他选项：](#user-content-awk-其他选项)
+  	- [awk编程：](#user-content-awk编程)
+  	- [重定向和管道](#user-content-重定向和管道)
+  - [awk内置函数](#user-content-awk内置函数)
+  	- [算术函数](#user-content-算术函数)
+  	- [字符串函数](#user-content-字符串函数)
+  	- [格式化字符串输出（sprintf使用）](#user-content-格式化字符串输出sprintf使用)
+  	- [一般函数](#user-content-一般函数)
+  	- [时间函数](#user-content-时间函数)
+  - [sed - stream editor for filtering and transforming text](#user-content-sed-stream-editor-for-filtering-and-transforming-text)
+  - [cut](#user-content-cut)
+  - [wc](#user-content-wc)
+  - [diff](#user-content-diff)
+  - [rename](#user-content-rename)
+  - [sort](#user-content-sort)
+  	- [-n、-r、-k、-t选项的使用：](#user-content--n-r-k-t选项的使用)
+  	- [-k选项的语法格式](#user-content--k选项的语法格式)
+  - [expect](#user-content-expect)
+  	- [命令](#user-content-命令)
+  	- [参数:](#user-content-参数)
+  	- [Tcl函数:](#user-content-tcl函数)
+  	- [if判断 / for循环](#user-content-if判断-for循环)
+  	- [Example expect file(exp_timeout.sh):](#user-content-example-expect-fileexptimeoutsh)
+
+  <!-- /TOC -->
+***
+
+# Three ways finding a string in a file:
   ```
   $ grep -n root /etc/passwd
   $ sed -n "/root/=;/root/p" /etc/passwd
@@ -8,7 +53,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">find
+# find
   - 流式编辑器sed命令修改当前文件夹下所有Makefile：
     ```
     find ./ -name 'Makefile' -exec sed -i "s/CC = gcc/CC = arm-linux-gcc/g" {} \;
@@ -38,7 +83,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">grep
+# grep
   - -s 不输出错误信息
   - -l 只输出匹配的文件名
   - -H 显示文件名，用于与find命令组合
@@ -57,19 +102,19 @@
     ```
 ***
 
-# <span style="color:#ff0000;">awk
+# awk
   - \# awk
   - awk '{pattern + action}' {filenames}
   - awk [-F field-separator] 'commands' input-file(s)
   - awk -f awk-script-file input-file(s)
-## <span style="color:#ff8000;">awk工作流程：
+## awk工作流程：
   - 先执行BEGING
   - 然后读取文件，读入有/n换行符分割的一条记录
   - 然后将记录按指定的域分隔符划分域，填充域，$0则表示所有域,$1表示第一个域,$n表示第n个域
   - 随后开始执行模式所对应的动作action
   - 接着开始读入第二条记录，直到所有的记录都读完
   - 最后执行END操作。
-## <span style="color:#ff8000;">示例：
+## 示例：
   ```
   awk -F ':' '{print $1}' /etc/passwd
   awk -F ':' '{print $1"\t"$7}' /etc/passwd
@@ -87,7 +132,7 @@
   awk -F: '$3~/[0-9][0-9]$/{print $1"\t"$3}' /etc/passwd 第三个域以两个数字结束就打印这个记录。
   awk -F: '$3>200 || $4==65534' /etc/passwd 第三个域大于200或者第四个域等于65534，则打印该行。
   ```
-## <span style="color:#ff8000;"> awk内置变量：
+##  awk内置变量：
   ```
   # ARGC        命令行参数个数
   # ARGV        命令行参数排列
@@ -107,7 +152,7 @@
   printf version:
   awk -F ':' '{printf("filename: %-15s linenumber: %-3s columns: %-3s linecontent: %s\n",FILENAME,NR,NF,$0)}' /etc/passwd
   ```
-## <span style="color:#ff8000;">awk自定义变量：
+## awk自定义变量：
   ```
   # 统计/etc/passwd的账户人数
   awk 'BEGIN {count=0;print "[start]user count is ", count} {count=count+1;print $0;} END{print "[end]user count is ", count}' /etc/passwd
@@ -115,7 +160,7 @@
   # 统计某个文件夹下的文件占用的字节数
   ls -l | awk 'BEGIN {size=0;} {size=size+$5;} END{print "[end]size is ", size}'
   ```
-## <span style="color:#ff8000;">awk 正则表达式 ~
+## awk 正则表达式 ~
   ```
   awk 'BEGIN {info="this is a test"; if(info ~ /test/){print "ok"}}'        # 包含字符串test
   awk 'BEGIN {info="hi i a"; if(info !~ "[test]"){print "ok"}}'        # 包含test中的任意一个字符
@@ -124,7 +169,7 @@
 
   awk -F ']' '{if($1 !~ "\\[SSTK") {print $0}}' cvp.log.sstk > foo        # 特殊字符匹配转义使用 \\
   ```
-## <span style="color:#ff8000;">awk 使用 if / for 语句：
+## awk 使用 if / for 语句：
   - 打印第四个字段长度大于3的行
     ```
     awk -F: '{if (length($4)>3) print $0}' /etc/passwd
@@ -155,7 +200,7 @@
     { if ($1 ~/test/){ next }
             else { print } }
     ```
-## <span style="color:#ff8000;">awk 变量
+## awk 变量
   - $ awk '$1 ~/test/{count = $2 + $3; print count}' test
     ```
     上式的作用是,awk先扫描第一个域，一旦test匹配，就把第二个域的值加上第三个域的值，并把结果赋值给变量count，最后打印出来
@@ -178,13 +223,13 @@
     变量列表在前面已列出，$ awk -F: '{IGNORECASE=1; $1 == "MARY"{print NR,$1,$2,$NF}'test
     把IGNORECASE设为1代表忽略大小写，打印第一个域是mary的记录数、第一个域、第二个域和最后一个域
     ```
-## <span style="color:#ff8000;">awk 其他选项：
+## awk 其他选项：
   - -v 定义变量值
     ```
     查找长度为3个字母的字符串：
     printf "%s\n%s\n%s\n" aaaa adf bbb | awk -F '' -vs=3 '{for(i=1; i<=NF;i++)if($i~/[a-z]/)num++; if(num==s)print $0; num=0}'
     ```
-## <span style="color:#ff8000;">awk编程：
+## awk编程：
   - 用户tty号
     ```
     who am i | awk '{print $2}'
@@ -208,7 +253,7 @@
     awk -F "" -vs=3 '{for(i=1;i<=NF;i++)if($i~/:alpha:/)num++;if(num==3)print $0;num=0}' foo # fail
     awk --posix '{if($0~/^[^[:alpha:]]*:alpha:{3}[^[:alpha:]]*$/)print $0}' foo # done
     ```
-## <span style="color:#ff8000;">重定向和管道
+## 重定向和管道
   - $ awk 'BEGIN{ "date" | getline d; print d}'
     ```
     执行linux的date命令，并通过管道输出给getline，然后再把输出赋值给自定义变量d，并打印它
@@ -246,9 +291,9 @@
     ```
 ***
 
-# <span style="color:#ff0000;">awk内置函数
+# awk内置函数
   - awk内置函数，主要分以下3种类似：算数函数、字符串函数、其它一般函数、时间函数
-## <span style="color:#ff8000;">算术函数
+## 算术函数
   - 以下算术函数执行与 C 语言中名称相同的子例程相同的操作：
     | 函数名 | 说明 |
     |-------|-----|
@@ -275,7 +320,7 @@
     [chengmo@centos5 ~]$ awk 'BEGIN{srand();fr=int(100*rand());print fr;}'
     41
     ```
-## <span style="color:#ff8000;">字符串函数
+## 字符串函数
   - Ere都可以是正则表达式
     | 函数 | 说明 |
     |-------|-----|
@@ -323,7 +368,7 @@
     3 a
     分割info,动态创建数组tA,这里比较有意思，awk for …in 循环，是一个无序的循环。 并不是从数组下标1…n ，因此使用时候需要注意。
     ```
-## <span style="color:#ff8000;">格式化字符串输出（sprintf使用）
+## 格式化字符串输出（sprintf使用）
   - 格式化字符串格式：
     ```
     其中格式化字符串包括两部分内容: 一部分是正常字符, 这些字符将按原样输出; 另一部分是格式化规定字符, 以"%"开始, 后跟一个或几个规定字符,用来确定输出内容格式。
@@ -345,7 +390,7 @@
     [chengmo@centos5 ~]$ awk 'BEGIN{n1=124.113;n2=-1.224;n3=1.2345; printf("%.2f,%.2u,%.2g,%X,%o\n",n1,n2,n3,n1,n1);}'
     124.11,18446744073709551615,1.2,7C,174
     ```
-## <span style="color:#ff8000;">一般函数
+## 一般函数
   | 函数  | 说明 |
   |-------|-----|
   | close( Expression )  | 用同一个带字符串值的 Expression 参数来关闭由 print 或 printf 语句打开的或调用 getline 函数打开的文件或管道。如果文件或管道成功关闭，则返回 0；其它情况下返回非零值。如果打算写一个文件，并稍后在同一个程序中读取文件，则 close 语句是必需的 |
@@ -379,7 +424,7 @@
     drwxr-xr-x 95 root   root       4096 10-08 14:01 ..
     b返回值，是执行结果。 
     ```
-## <span style="color:#ff8000;">时间函数
+## 时间函数
   | 函数名  | 说明 |
   | -------|-----|
   | mktime( YYYY MM DD HH MM SS[ DST])  | 生成时间格式 |
@@ -424,7 +469,7 @@
     | %%  | 百分号(%) |
 ***
 
-# <span style="color:#ff0000;">sed - stream editor for filtering and transforming text
+# sed - stream editor for filtering and transforming text
   - 将文本处理命令应用到每一行
   - 若使用shell变量，应使用""，而不是''，并做转义：
     ```
@@ -505,7 +550,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">cut
+# cut
   - cut 命令从文件的每一行剪切字节、字符和字段并将这些字节、字符和字段写至标准输出
   - cut  [-bn] [file] 或 cut [-c] [file]  或  cut [-df] [file]
   - 必须指定 -b、-c 或 -f 标志之一
@@ -535,7 +580,7 @@
   - 如果文件里面的某些域是由若干个空格来间隔的，那么用cut就有点麻烦了，因为cut只擅长处理“以一个字符间隔”的文本内容
 ***
 
-# <span style="color:#ff0000;">wc
+# wc
   - 统计给定文件中的字节数、字数、行数。如果没有给出文件名，则从标准输入读取
   - - c 统计字节数<br />- l 统计行数<br />- w 统计字数
   - 这些选项可以组合使用, 输出列的顺序和数目不受选项的顺序和数目的影响, 总是按下述顺序显示并且每项最多一列<br />        行数、字数、字节数、文件名 
@@ -547,7 +592,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">diff
+# diff
   - diff(differential) 功能说明：比较文件的差异
   - 语 法
     ```
@@ -597,7 +642,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">rename
+# rename
   - 用字符串替换的方式批量改变文件名
   - 原字符串：将文件名需要替换的字符串
   - 目标字符串：将文件名中含有的原字符替换成目标字符串
@@ -642,7 +687,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">sort
+# sort
   - 将文件进行排序，并将排序结果标准输出
   - 参 数：
     ```
@@ -667,7 +712,7 @@
     $ sort -r foo
     $ sort -n foo
     ```
-## <span style="color:#ff8000;">-n、-r、-k、-t选项的使用：
+## -n、-r、-k、-t选项的使用：
   ```
   $ cat sort.txt
   AAA:BB:CC
@@ -684,7 +729,7 @@
   将CC列数字从大到小顺序排列
   $ sort -nrk 3 -t: sort.txt
   ```
-## <span style="color:#ff8000;">-k选项的语法格式
+## -k选项的语法格式
   - -k选项的语法格式： <br />        FStart.CStart Modifie,        FEnd.CEnd Modifier
     ```
     -------Start--------,        -------End--------
@@ -707,11 +752,11 @@
     ```
 ***
 
-# <span style="color:#ff0000;">expect
+# expect
   - 实现自动和交互式任务进行通信
   - expect需要Tcl编程语言的支持，要在系统上运行Expect必须首先安装Tcl
   - 第一行使用 #!/usr/bin/expect
-## <span style="color:#ff8000;">命令
+## 命令
   - set, 设置变量
   - set timeout, 设置后面所有的expect命令的等待响应的超时时间, -1参数用来关闭任何超时设置
   - spawn, expect内部命令, 开始一个expect交互进程，只有spawn执行的命令结果才会被expect捕捉到
@@ -756,7 +801,7 @@
 
     spawn minicom -D $DEV
     ```
-## <span style="color:#ff8000;">参数:
+## 参数:
     ```
     -c, 从命令行执行expect脚本
             expect -c 'expect "\n" {send "pressed enter\n"}'
@@ -774,7 +819,7 @@
     -b, 逐行地执行expect脚本
             expect -b sample.sh
     ```
-## <span style="color:#ff8000;">Tcl函数:
+## Tcl函数:
   - set response [string trimright "$raw" " "]
     ```
     lindex, Tcl函数，从列表/数组得到一个特定的元素
@@ -785,7 +830,7 @@
     lappend, append string to a string array
              lappend parametre "[lindex $argv $i]"
     ```
-## <span style="color:#ff8000;">if判断 / for循环
+## if判断 / for循环
   - if判断:
     ```
     if {[file isfile $file]!=1}
@@ -814,7 +859,7 @@
       incr i
     }
     ```
-## <span style="color:#ff8000;">Example expect file(exp_timeout.sh):
+## Example expect file(exp_timeout.sh):
   ```
   #!/usr/bin/expect
   # Prompt function with timeout and default.

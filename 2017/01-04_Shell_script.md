@@ -1,4 +1,24 @@
 # ___2017 - 01 - 04 Shell script___
+***
+
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 01 - 04 Shell script___](#user-content-2017-01-04-shell-script)
+  - [目录](#user-content-目录)
+  - [变量](#user-content-变量)
+  - [命令行参数](#user-content-命令行参数)
+  - [计算](#user-content-计算)
+  - [字符串 长度 / index / 抽取 / 替换](#user-content-字符串-长度-index-抽取-替换)
+  - [if 判断条件语法](#user-content-if-判断条件语法)
+  - [case 选择语句](#user-content-case-选择语句)
+  - [for / while / until 循环](#user-content-for-while-until-循环)
+  - [function 函数](#user-content-function-函数)
+  - [getopts 命令行参数处理](#user-content-getopts-命令行参数处理)
+
+  <!-- /TOC -->
+***
+
 - \#!/bin/sh
 - \# shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
 - 当前使用的bash：
@@ -13,7 +33,7 @@
 - read 用于从用户输入
 ***
 
-# <span style="color:#ff0000;">变量
+# 变量
   - 双引号，避免shell对字符串做拆分处理，可引用除了字符 $、反引号（\`）、\ 外的任意字符或字符串
     ```c
     echo *        # 输出当前路径下所有文件名
@@ -91,7 +111,7 @@
   - ${var:-defaultvalue}  # 引用该变量时，设置变量默认值
 ***
 
-# <span style="color:#ff0000;">命令行参数
+# 命令行参数
   - $0 脚本名称
   - $n 传递给脚本或函数的第 n 个参数
   - $# 传递给脚本 / 函数的变量数目
@@ -123,13 +143,13 @@
     ```
 ***
 
-# <span style="color:#ff0000;">计算
+# 计算
   - expr 3 \ * 2 expr 用于对一个表达式求值，乘法符号必须被转义
   - echo $? 显示结果
   - <a name="inner-text"></a>$((expression)) 双括号代替 expr 命令计算表达式的值
 ***
 
-# <span style="color:#ff0000;">字符串 长度 / index / 抽取 / 替换
+# 字符串 长度 / index / 抽取 / 替换
   - $(#) 字符串长度
     ```
     STRING="this is a string"
@@ -188,7 +208,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">if 判断条件语法
+# if 判断条件语法
   - 格式：
     ```
     if [ expression ]; then
@@ -258,7 +278,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">case 选择语句
+# case 选择语句
   - 语法：
     ```
     case "$variable" in
@@ -283,7 +303,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">for / while / until 循环
+# for / while / until 循环
   - for 语法：
     ```
     # basic construct
@@ -354,7 +374,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">function 函数
+# function 函数
   - 语法：
     ```
     # basic construct
@@ -400,7 +420,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">getopts 命令行参数处理
+# getopts 命令行参数处理
   - getopts,它不支持长选项 (--help)
   - getopts和getopt功能相似但又不完全相同，其中getopt是独立的可执行文件，而getopts是由Bash内置的,支持长选项以及可选参数
   - getopts options variable

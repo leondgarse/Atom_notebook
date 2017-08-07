@@ -1,7 +1,24 @@
 # ___2017 - 01 - 14 Github___
 ***
 
-# <span style="color:#ff0000;">github相关命令
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 01 - 14 Github___](#user-content-2017-01-14-github)
+  - [目录](#user-content-目录)
+  - [github相关命令](#user-content-github相关命令)
+  - [Setting up Git](#user-content-setting-up-git)
+  - [](#user-content-)
+  - [Adding a new SSH key to your GitHub account](#user-content-adding-a-new-ssh-key-to-your-github-account)
+  - [Adding a new repository](#user-content-adding-a-new-repository)
+  - [Create a local clone of your fork](#user-content-create-a-local-clone-of-your-fork)
+  - [Configure Git to sync your fork with the original Spoon-Knife repository](#user-content-configure-git-to-sync-your-fork-with-the-original-spoon-knife-repository)
+  - [Syncing a fork](#user-content-syncing-a-fork)
+
+  <!-- /TOC -->
+***
+
+# github相关命令
   - Tell Git your name so your commits will be properly labeled:
     ```
     git config --global user.name "YOUR NAME"
@@ -59,7 +76,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">Setting up Git
+# Setting up Git
   ```python
   Download and install the latest version of Git.
   On your computer, open your command line application.
@@ -70,7 +87,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">Caching your GitHub password in Git</span><span style=" color:#ff0000;">
+#
   ```python
   If you're cloning GitHub repositories using HTTPS, you can use a credential helper to tell Git to remember your GitHub username and password every time it talks to GitHub.
   If you clone GitHub repositories using SSH, then you authenticate using SSH keys instead of a username and password. For help setting up an SSH connection, see Generating an SSH Key.
@@ -85,7 +102,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">Adding a new SSH key to your GitHub account
+# Adding a new SSH key to your GitHub account
   ```python
   Adding a new SSH key to your GitHub account
   To configure your GitHub account to use your new (or existing) SSH key, you'll also need to add it to your GitHub account.
@@ -116,7 +133,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">Adding a new repository
+# Adding a new repository
   ```python
   Quick setup — if you’ve done this kind of thing before
   …or create a new repository on the command line
@@ -134,7 +151,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">Create a local clone of your fork
+# Create a local clone of your fork
   ```python
   Right now, you have a fork of the Spoon-Knife repository, but you don't have the files in that repository on your computer. Let's create a clone of your fork locally on your computer.
   On GitHub, navigate to your fork of the Spoon-Knife repository.
@@ -147,7 +164,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">Configure Git to sync your fork with the original Spoon-Knife repository
+# Configure Git to sync your fork with the original Spoon-Knife repository
   ```python
   When you fork a project in order to propose changes to the original repository, you can configure Git to pull changes from the original, or upstream, repository into the local clone of your fork.
   On GitHub, navigate to the octocat/Spoon-Knife repository.
@@ -174,7 +191,7 @@
   ```
 ***
 
-# <span style="color:#ff0000;">Syncing a fork
+# Syncing a fork
   ```python
   Sync a fork of a repository to keep it up-to-date with the upstream repository.
   Tip: Before you can sync your fork with an upstream repository, you must configure a remote that points to the upstream repository in Git.

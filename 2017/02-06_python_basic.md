@@ -1,7 +1,94 @@
 # ___2017 - 02 - 06 Python Basic___
 ***
 
-# <span style="color:#ff0000;">Q / A
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 02 - 06 Python Basic___](#user-content-2017-02-06-python-basic)
+  - [目录](#user-content-目录)
+  - [Q / A](#user-content-q-a)
+  - [python程序的执行方式](#user-content-python程序的执行方式)
+  - [print格式化输出](#user-content-print格式化输出)
+  - [数据类型 / 运算符](#user-content-数据类型-运算符)
+  	- [数字常量](#user-content-数字常量)
+  	- [布尔常量 True / False](#user-content-布尔常量-true-false)
+  	- [字符串常量](#user-content-字符串常量)
+  	- [算数运算符](#user-content-算数运算符)
+  	- [比较运算符 / 逻辑运算符](#user-content-比较运算符-逻辑运算符)
+  - [if / for / while](#user-content-if-for-while)
+  - [函数](#user-content-函数)
+  	- [定义](#user-content-定义)
+  	- [Python中函数的参数形式](#user-content-python中函数的参数形式)
+  	- [python内建函数](#user-content-python内建函数)
+  	- [global](#user-content-global)
+  	- [默认参数值](#user-content-默认参数值)
+  	- [指定关键参数](#user-content-指定关键参数)
+  	- [docstrings 文档字符串](#user-content-docstrings-文档字符串)
+  	- [在函数中接收元组和列表](#user-content-在函数中接收元组和列表)
+  	- [在函数中接收字典参数](#user-content-在函数中接收字典参数)
+  	- [函数返回多个参数 (元组 / 字典)](#user-content-函数返回多个参数-元组-字典)
+  	- [传递函数 （函数作为参数传递）](#user-content-传递函数-函数作为参数传递)
+  	- [内嵌函数](#user-content-内嵌函数)
+  - [模块](#user-content-模块)
+  	- [sys模块](#user-content-sys模块)
+  	- [字节编译的.pyc文件](#user-content-字节编译的pyc文件)
+  	- [from ... import ...](#user-content-from-import-)
+  	- [\_\_name\_\_](#user-content-name)
+  	- [dir](#user-content-dir)
+  - [数据结构](#user-content-数据结构)
+  	- [序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)](#user-content-序列-切片-索引-in-not-in-转换工厂函数-内建函数)
+  	- [列表 list](#user-content-列表-list)
+  		- [列表方法](#user-content-列表方法)
+  		- [示例](#user-content-示例)
+  		- [列表复制](#user-content-列表复制)
+  		- [列表解析 / 列表生成器](#user-content-列表解析-列表生成器)
+  		- [map / filter](#user-content-map-filter)
+  	- [sorted / min的key参数](#user-content-sorted-min的key参数)
+  	- [元组 tuple](#user-content-元组-tuple)
+  		- [元组操作](#user-content-元组操作)
+  		- [元组的作用](#user-content-元组的作用)
+  	- [字典 dict](#user-content-字典-dict)
+  		- [创建字典](#user-content-创建字典)
+  		- [索引 / 删除 / 遍历](#user-content-索引-删除-遍历)
+  		- [字典的格式化字符串](#user-content-字典的格式化字符串)
+  		- [字典的方法](#user-content-字典的方法)
+  	- [字典值排序](#user-content-字典值排序)
+  	- [集合 set](#user-content-集合-set)
+  		- [集合比较](#user-content-集合比较)
+  		- [集合关系运算](#user-content-集合关系运算)
+  		- [集合的方法](#user-content-集合的方法)
+  - [字符串](#user-content-字符串)
+  	- [字符串对象方法](#user-content-字符串对象方法)
+  	- [字符串方法 （图片）](#user-content-字符串方法-图片)
+  	- [示例](#user-content-示例)
+  	- [模块 / 字符串示例程序](#user-content-模块-字符串示例程序)
+  - [正则表达式 re模块](#user-content-正则表达式-re模块)
+  - [面向对象的编程](#user-content-面向对象的编程)
+  	- [类](#user-content-类)
+  	- [继承](#user-content-继承)
+  - [文件](#user-content-文件)
+  	- [open() / close()](#user-content-open-close)
+  	- [读文件](#user-content-读文件)
+  	- [写文件](#user-content-写文件)
+  - [二进制储存器](#user-content-二进制储存器)
+  - [异常](#user-content-异常)
+  - [Python标准库 (sys / os)](#user-content-python标准库-sys-os)
+  	- [sys模块](#user-content-sys模块)
+  	- [os模块](#user-content-os模块)
+  - [其他语句 lambda / exec / eval / assert / repr / enumerate / format](#user-content-其他语句-lambda-exec-eval-assert-repr-enumerate-format)
+  	- [lambda形式，匿名函数](#user-content-lambda形式匿名函数)
+  	- [exec和eval语句，执行语句 / 表达式](#user-content-exec和eval语句执行语句-表达式)
+  	- [assert语句，断言](#user-content-assert语句断言)
+  	- [repr函数，规范字符串表示](#user-content-repr函数规范字符串表示)
+  	- [range 函数，列表生成器](#user-content-range-函数列表生成器)
+  	- [enumerate 带指数的列表](#user-content-enumerate-带指数的列表)
+  	- [format 格式化](#user-content-format-格式化)
+  	- [Iterables / Generators / Yield](#user-content-iterables-generators-yield)
+
+  <!-- /TOC -->
+***
+
+# Q / A
   - Python参考教程
     ```python
     (1) Magnus Lie Hetland,Beginning Python: from Novice to Professional, 2nd edition, Apress.（第二版中译版名为《Python基础教程》）
@@ -70,7 +157,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">python程序的执行方式
+# python程序的执行方式
   - python能够轻松的集成C,C++,Fortran代码（Cython项目），可以同时用于研究和原型的构建以及生产系统的构建
   - 因为python是一种解释型语言，运行速度比编译型数据慢
   - 由于python有一个全局解释器锁（GIL）,防止解释器同时执行多条python字节码，所以python不适用于高并发、多线程的应用程序
@@ -103,7 +190,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">print格式化输出
+# print格式化输出
   - print 原型 print(* objects, sep=' ', end='\n', file=sys.stdout, flush=False)
     ```python
     sys.stdout.write('Hello World')        # 直接使用sys.stdout.write输出
@@ -147,11 +234,11 @@
     ```
 ***
 
-# <span style="color:#ff0000;">数据类型 / 运算符
+# 数据类型 / 运算符
   - del 删除 一个变量/名称
   - i = 5 # 不需要声明或定义数据类型
   - print(i+1)
-## <span style="color:#ff8000;">数字常量
+## 数字常量
   - 整数： 2
     ```python
     type(3)
@@ -174,7 +261,7 @@
     x.conjugate()
     (2.4-5.6j)
     ```
-## <span style="color:#ff8000;">布尔常量 True / False
+## 布尔常量 True / False
   - 仅有2个值:True、False
     ```python
     type(True)
@@ -183,7 +270,7 @@
     int(x)
     1
     ```
-## <span style="color:#ff8000;">字符串常量
+## 字符串常量
   - 可以使用 ' ' 或 " "
   - 使用 ''' ''' 或 """ """ ： 可以指定多行的字符串，或使用 '' / ""
   - 转义符 / 续行符： \
@@ -204,7 +291,7 @@
     print(u"This is a Unicode string.")
     ```
   - 二进制编码：前缀b
-## <span style="color:#ff8000;">算数运算符
+## 算数运算符
   - + 加可用于字符串 / 列表 / 元组： 'a' + 'b' = 'ab'
   - * 乘可用于字符串 / 列表 / 元组： 'a' *3 = 'aaa'
   - ** 幂运算： 3 ** 4 = 81
@@ -212,7 +299,7 @@
     幂运算优先级高于负号-， -3 ** 2 = -9，应使用(-3) ** 2
     ```
     // 商的整数部分： 4 // 3.0 = 1.0
-## <span style="color:#ff8000;">比较运算符 / 逻辑运算符
+## 比较运算符 / 逻辑运算符
   - 比较运算符可以连接
     ```python
     3 < 4 < 7 # same as (2 < 4) &amp;&amp; (4 < 7)
@@ -231,7 +318,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">if / for / while
+# if / for / while
   - if示例：
     ```python
     #!/usr/bin/python
@@ -281,8 +368,8 @@
     ```
 ***
 
-# <span style="color:#ff0000;">函数
-## <span style="color:#ff8000;">定义
+# 函数
+## 定义
   - 关键字def，使用缩进指定代码块
     ```python
     def maximum(x, y):
@@ -293,13 +380,13 @@
 
     print maximum(2, 3)
     ```
-## <span style="color:#ff8000;">Python中函数的参数形式
+## Python中函数的参数形式
   - 位置或关键字参数
   - 仅位置的参数
   - 可变长位置参数：列表list / 元组tuple，形参中使用*
   - 可变长关键字参数：字典dict，形参中使用**
   - (参数可以设定默认值)
-## <span style="color:#ff8000;">python内建函数
+## python内建函数
   - 如abs / min / sum，不需要import：
     ```python
     dir(__builtins__) # 查看支持的内建函数
@@ -320,7 +407,7 @@
     math.floor(-35.4)
     -36
     ```
-## <span style="color:#ff8000;">global
+## global
   - 外部定义的变量可以在函数内部访问，若要修改，则会自动创建同名局部变量，可使用global / nonlocal 关键字声明为全局变量
   - global 表明变量是在外面的块定义的
     ```python
@@ -334,7 +421,7 @@
     func()
     print('Value of x is', x)
     ```
-## <span style="color:#ff8000;">默认参数值
+## 默认参数值
   - 有默认值的形参只能位于参数列表后面
     ```python
     def say(message, times = 1):        # 形参列表中使用= 指定默认值
@@ -343,7 +430,7 @@
     say('hello')
     say('world', 5)
     ```
-## <span style="color:#ff8000;">指定关键参数
+## 指定关键参数
   - 实参调用时，可以指定为某些参数赋值
   - 关键字参数后面只能是关键字参数
     ```python
@@ -354,7 +441,7 @@
     func(25, c=24)
     func(c=50, a=100)
     ```
-## <span style="color:#ff8000;">docstrings 文档字符串
+## docstrings 文档字符串
   - 函数的第一个逻辑行的字符串是这个函数的 文档字符串 ，DocStrings也适用于模块和类
   - 文档字符串的惯例是一个多行字符串，首行以大写字母开始，句号结尾，第二行是空行，从第三行开始是详细的描述
   - 使用__doc__调用函数的文档字符串属性
@@ -368,7 +455,7 @@
     ```
   - help()会抓取函数的__doc__属性，然后展示
   - 可以在程序中调用如： help(func)
-## <span style="color:#ff8000;">在函数中接收元组和列表
+## 在函数中接收元组和列表
   - * 前缀，所有多余的函数参数都会作为一个元组存储在args中
   - 用于函数获取可变数量的参数
     ```python
@@ -383,7 +470,7 @@
     powersum(2, 10)
     100
     ```
-## <span style="color:#ff8000;">在函数中接收字典参数
+## 在函数中接收字典参数
   - 可变长关键字参数
   - ** 前缀，多余的参数则会被认为是一个字典的键/值对
     ```python
@@ -397,7 +484,7 @@
     ('Wangdachui', 'Niuyun', 'Linling')
     {'a1': 1, 'a2': 2, 'a3': 3}
     ```
-## <span style="color:#ff8000;">函数返回多个参数 (元组 / 字典)
+## 函数返回多个参数 (元组 / 字典)
   - 返回元组
     ```python
     def func():
@@ -424,7 +511,7 @@
     fb = lambda a, b : a + b
     fb(* fa())
     ```
-## <span style="color:#ff8000;">传递函数 （函数作为参数传递）
+## 传递函数 （函数作为参数传递）
   - 传递函数
     ```python
     def addMe2Me(x):
@@ -436,7 +523,7 @@
     self(addMe2Me, 2.2)
     4.4
     ```
-## <span style="color:#ff8000;">内嵌函数
+## 内嵌函数
   - 内嵌函数
     ```python
     def FuncX(x):
@@ -453,7 +540,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">模块
+# 模块
   - 模块是一个包含函数和变量的文件，以.py为扩展名结尾
   - 当一个模块被第一次输入的时候,这个模块的主块将被运行
   - import sys 导入模块
@@ -462,7 +549,7 @@
     import 1 as p
     # import 2 as p
     ```
-## <span style="color:#ff8000;">sys模块
+## sys模块
   - sys模块包含了与Python解释器和它的环境有关的函数
   - 当Python执行import sys语句的时候会在sys.path变量中所列目录中寻找sys.py模块，随后执行这个模块主块中的语句，然后这个模块将能够使用
   - 初始化过程仅在第一次 输入模块的时候进行
@@ -473,10 +560,10 @@
       print(i)
     print('\n\nPYTHONPATH = ', sys.path, '\n')
     ```
-## <span style="color:#ff8000;">字节编译的.pyc文件
+## 字节编译的.pyc文件
   - 导入模块时，pyc文件会快得多，因为一部分输入模块所需的处理已经完成了
   - 字节编译的文件是与平台无关的
-## <span style="color:#ff8000;">from ... import ...
+## from ... import ...
   - from sys import argv 直接输入argv变量到程序中(使用时可省略sys.)
   - from sys import * 输入所有sys模块使用的名字
   - 如使用了 import pandas as pd，再导入pandas.DataFrame时，应使用：
@@ -486,7 +573,7 @@
     from pd imprt DataFrame
     ```
   - 应该避免使用from..import而使用import语句，因为这样可以使程序更加易读，也可以避免名称的冲突
-## <span style="color:#ff8000;">\_\_name\_\_
+## \_\_name\_\_
   - 每个Python模块都有它的__name__
   - 被用户单独运行的模块是'__main__'
     ```python
@@ -509,7 +596,7 @@
     import using_name
     ('This program is imported from other module, __name__ =', 'using_name')
     ```
-## <span style="color:#ff8000;">dir
+## dir
   - dir函数来列出模块定义的标识符，包括函数、类和变量
     ```python
     print(dir())        # 当前模块的符号列表
@@ -531,7 +618,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">数据结构
+# 数据结构
   - Python中内建的数据结构：列表 / 元组 / 字典 / 集合
     ```python
     type([1, 2])
@@ -546,7 +633,7 @@
     type({1, 2, 3, 4, 2, 3, 1})        # 集合中元素是惟一的
     <class 'set'>
     ```
-## <span style="color:#ff8000;">序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)
+## 序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)
   - 列表、元组和字符串都是序列
   - 切片 / 索引
     ```python
@@ -626,7 +713,7 @@
     sum() 返回序列成员(int)总和，sum(member)
     zip() 压缩组合，建立两个序列间的对应关系，可用于生成dict，返回一个列表生成器 a=[1, 2, 3, 4], b=[5, 6], list(zip(a, b)) --> [(1, 5), (2, 6)]
     ```
-## <span style="color:#ff8000;">列表 list
+## 列表 list
   - 处理一组有序项目的数据结构，包括在方括号中
     ```python
     list = [1, 2, 3]
@@ -638,7 +725,7 @@
     pList = [(1, 'a'), (2, 'b'), [3, 4, 'c']]
     ```
     列表之间可以执行 = / > / < / == / + / *
-### <span style="color:#00ff00;">列表方法
+### 列表方法
   - 头插入： insert(index, object) index之前插入元素
   - 尾插入： append(object)
   - 遍历： for str in list: ...
@@ -650,7 +737,7 @@
   - 成员计数：L.count(value) -> integer -- return number of occurrences of value 返回成员数量
   - 弹出：L.pop([index]) -> item -- remove and return item at index (default last) 返回并删除元素
   - 扩展：L.extend(iterable) -> None -- extend list by appending elements from the iterable 将容器中的元素添加到列表结尾，类似于使用 +=
-### <span style="color:#00ff00;">示例
+### 示例
   - len / in / append / sort / del
     ```python
     #!/usr/bin/python
@@ -697,7 +784,7 @@
     week
     ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', ['Saturday', 'Sunday']]
     ```
-### <span style="color:#00ff00;">列表复制
+### 列表复制
   - 当创建一个对象并给它赋一个变量的时候，仅仅是创建一个原对象的引用
     ```python
     shoplist = ['apple', 'mango', 'carrot', 'banana']
@@ -716,7 +803,7 @@
     mylist
     ['mango', 'carrot', 'banana']
     ```
-### <span style="color:#00ff00;">列表解析 / 列表生成器
+### 列表解析 / 列表生成器
   - 动态创建列表，从一个已有的列表导出一个新的列表
   - 列表生成器只能遍历一次
   - [ expression for expr in sequence1
@@ -744,7 +831,7 @@
     ...
     1 2 5 6 9 10
     ```
-### <span style="color:#00ff00;">map / filter
+### map / filter
   - map: 根据功能函数一一代入列表中参数
     ```python
     list(map(lambda x : x % 2, range(10)))
@@ -755,7 +842,7 @@
     list(filter(lambda x : x % 2, range(10)))
     [1, 3, 5, 7, 9]
     ```
-## <span style="color:#ff8000;">sorted / min的key参数
+## sorted / min的key参数
   - 用于指定比较的依据
   ```python
   l = [[2, 1], [1, 3], [3, 2]]
@@ -768,7 +855,7 @@
   min(l, key = lambda x : x[1])
   Out[166]: [2, 1]
   ```
-## <span style="color:#ff8000;">元组 tuple
+## 元组 tuple
   - 元组与列表类似，但元素不可修改
   - 通过圆括号中用逗号分割的项目定义，括号可以省略
     ```python
@@ -787,7 +874,7 @@
     ```python
     singleton = (2 , )
     ```
-### <span style="color:#00ff00;">元组操作
+### 元组操作
   - 可以使用 += / * = / 切片方法：
     ```python
     t1 = (1, 2, 3, 4, 5)
@@ -818,7 +905,7 @@
     t
     (1, 2, 3, 4, 5) # 创建了新的元组
     ```
-### <span style="color:#00ff00;">元组的作用
+### 元组的作用
   - 在映射类型中作为键使用
   - 作为函数的可变长度形参
   - 作为很多内建函数的返回值
@@ -859,13 +946,13 @@
     3: l
     4: o
     ```
-## <span style="color:#ff8000;">字典 dict
+## 字典 dict
   - 键值对的方式存储数据，键必须是唯一的
   - 只能使用不可变的对象(比如字符串)来作为字典的键
   - 键/值对用冒号分割，而各个对用逗号分割，所有这些都包括在花括号中
   - 字典中的键/值对是没有顺序的
   - 字典是dict类的实例/对象
-### <span style="color:#00ff00;">创建字典
+### 创建字典
   - 直接创建：
     ```python
     aInfo = {'Wangdachui': 3000, 'Niuyun':2000, 'Linling':4500, 'Tianqi':8000}
@@ -918,7 +1005,7 @@
     d
     {'AXP': '86.40', 'BA': '122.64'}
     ```
-### <span style="color:#00ff00;">索引 / 删除 / 遍历
+### 索引 / 删除 / 遍历
   - 示例：
     ```python
     #!/usr/bin/python
@@ -945,7 +1032,7 @@
     if 'Guido' in ab:        # python3中不能使用 has_key 方法
       print("Guido's address is %s" %ab['Guido'])
     ```
-### <span style="color:#00ff00;">字典的格式化字符串
+### 字典的格式化字符串
   - print中使用元组形式：
     ```python
     info = dict(zip(tuple('hello'), range(6)))
@@ -978,7 +1065,7 @@
     h has value 0.
     e has value 1.
     ```
-### <span style="color:#00ff00;">字典的方法
+### 字典的方法
   - items方法：返回一个元组的列表，其中每个元组都包含一对项目，即键与对应的值
   - fromkeys()方法提供默认值，默认是None：
     ```python
@@ -1060,7 +1147,7 @@
   - setdefault()：D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D，键k存在时返回对应值，键k不存在时，添加并设置值为d
   - pop() 若键存在，返回对应值并删除，不存在抛出异常KeyError
   - popitem() 弹出键值对，[从末尾？？]字典为空时抛出异常KeyError
-## <span style="color:#ff8000;">字典值排序
+## 字典值排序
   ```python
   dd = {1:3, 4:4, 3:2}
   dd  # dict 默认会按照 key 排序
@@ -1071,7 +1158,7 @@
   min(dd, key=lambda x : x[1])
   Out[120]: (3, 2)
   ```
-## <span style="color:#ff8000;">集合 set
+## 集合 set
   - 集合中的元素不重复
     ```python
     s1 = set('hello')
@@ -1091,7 +1178,7 @@
     type(s2)
     <class 'frozenset'>
     ```
-### <span style="color:#00ff00;">集合比较
+### 集合比较
   - 比较运算符
     ```python
     in / not in：∈，集合是否包含元素
@@ -1109,7 +1196,7 @@
     set('sun') < s2
     True
     ```
-### <span style="color:#00ff00;">集合关系运算
+### 集合关系运算
   - 关系运算符
     ```python
     &amp; / &amp;=：∩，交集
@@ -1131,7 +1218,7 @@
     (s1 - (s1 &amp; s2)) | (s2 - (s1 &amp; s2))
     {'r', 'i', 't'}
     ```
-### <span style="color:#00ff00;">集合的方法
+### 集合的方法
   - 面向可变 / 不可变集合的方法
     ```python
     issubset(t)
@@ -1156,12 +1243,12 @@
     ```
 ***
 
-# <span style="color:#ff0000;">字符串
+# 字符串
   - 字符串是str类的对象
   - help(str)查看帮助信息
   - python3中不再使用cmp()函数
   - 可使用序列方法 / += / * =
-## <span style="color:#ff8000;">字符串对象方法
+## 字符串对象方法
   - lower / upper 转换为小写 / 大写
   - endswith / startswith 判断是否以某个后缀结尾 / 前缀开头
   - replace 用另一个子串替换指定子串
@@ -1199,10 +1286,10 @@
     val.count(',')
     Out[474]: 2
     ```
-## <span style="color:#ff8000;">字符串方法 （图片）
+## 字符串方法 （图片）
 
   ![](images/Selection_017.png)
-## <span style="color:#ff8000;">示例
+## 示例
   - startswith / in / find / join / split
     ```python
     #!/usr/bin/python
@@ -1231,7 +1318,7 @@
     aStr = 'What do you think of this saying "No pain, No gain"?'
     tempStr = aStr.split('\"')[1]        # split返回分割后的字符串列表，此时 tempStr = No pain, No gain
     ```
-## <span style="color:#ff8000;">模块 / 字符串示例程序
+## 模块 / 字符串示例程序
   - 将指定的文件备份到指定目录下，创建日期为名的文件夹，文件以时间+注释命名
     ```python
     #!/usr/bin/python
@@ -1274,7 +1361,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">正则表达式 re模块
+# 正则表达式 re模块
   - Python内置的re模块负责对字符串应用正则表达式
     ```python
     import re
@@ -1356,8 +1443,8 @@
     ```
 ***
 
-# <span style="color:#ff0000;">面向对象的编程
-## <span style="color:#ff8000;">类
+# 面向对象的编程
+## 类
   - 定义
     ```python
     #!/usr/bin/python
@@ -1421,7 +1508,7 @@
         else:
           print('We have %d persons here.' % Person.population)
     ```
-## <span style="color:#ff8000;">继承
+## 继承
   - 基本类的名称作为一个元组跟在定义类时的类名称之后
   - Python总是首先查找对应类型的方法，然后到基本类中逐个查找
   - 多重继承：在继承元组中列了一个以上的类
@@ -1450,14 +1537,14 @@
     ```
 ***
 
-# <span style="color:#ff0000;">文件
+# 文件
   - 打开文件：python2使用file()，python3使用open()，python3中不再使用file类
   - 读写文件：read、readline或write方法，对文件的读写能力依赖于打开文件时指定的模式
   - 关闭文件：close方法来告诉Python完成了对文件的使用，文件写入后如果不关闭则文件内容会存在于缓冲区中
 
   - f.read() / f.write() / f.readline() / f.readlines() / f.writelines()        # readline()返回一行字符串，readlines()返回包含所有行的字符串列表
   - f.seek() / f.tell()        # seek(offset, whence=0)指定文件指针偏移
-## <span style="color:#ff8000;">open() / close()
+## open() / close()
   - file_obj = open(filename, mode='r', buffering=-1)
     ```python
     mode为可选参数,默认值为r
@@ -1467,7 +1554,7 @@
     f2 = open(r'd:\outfile.txt', 'w')
     f3 = open('frecord.csv', 'ab', 0)
     ```
-## <span style="color:#ff8000;">读文件
+## 读文件
   - list / in
     ```python
     f = open('Blowing_in_the_wind.lrc', 'r')
@@ -1507,7 +1594,7 @@
     hello, world.
     f.close()
     ```
-## <span style="color:#ff8000;">写文件
+## 写文件
   - write
     ```python
     f = open(r'foo', 'w')
@@ -1539,7 +1626,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">二进制储存器
+# 二进制储存器
   - Python提供一个标准的模块，称为pickle，可以在一个文件中储存任何Python对象，之后可以把它完整无缺地取出来，称为持久地储存对象
   - python3不再使用cPickle模块
   - pickle存储方式默认是二进制方式，python3中与文件交互需要指定'wb' / 'rb'
@@ -1561,7 +1648,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">异常
+# 异常
   - try..except语句来处理异常，通常的语句放在try-块中，错误处理语句放在except-块中
   - 可以让try..catch块关联上一个else从句。当没有异常发生的时候,else从句将被执行
   - raise语句 引发 异常
@@ -1635,8 +1722,8 @@
     ```
 ***
 
-# <span style="color:#ff0000;">Python标准库 (sys / os)
-## <span style="color:#ff8000;">sys模块
+# Python标准库 (sys / os)
+## sys模块
   - sys模块包含系统对应的功能，如sys.argv列表包含命令行参数
     ```python
     $ python3
@@ -1649,7 +1736,7 @@
     sys.version_info
     sys.version_info(major=3, minor=5, micro=2, releaselevel='final', serial=0)
     ```
-## <span style="color:#ff8000;">os模块
+## os模块
   - 包含普遍的操作系统功能，用于编写与平台无关的代码，如使用os.sep可以取代操作系统特定的路径分割符
     ```python
     os.name字符串指示你正在使用的平台。比如对于Windows,它是'nt',而对于Linux/Unix用户,它是'posix'
@@ -1673,8 +1760,8 @@
     ```
 ***
 
-# <span style="color:#ff0000;">其他语句 lambda / exec / eval / assert / repr / enumerate / format
-## <span style="color:#ff8000;">lambda形式，匿名函数
+# 其他语句 lambda / exec / eval / assert / repr / enumerate / format
+## lambda形式，匿名函数
   - lambda语句被用来创建新的函数对象，并且在运行时返回它们
   - lambda需要一个参数，后面仅跟单个表达式作为函数体，而表达式的值被这个新建的函数返回
     ```python
@@ -1698,7 +1785,7 @@
     wordword
     10
     ```
-## <span style="color:#ff8000;">exec和eval语句，执行语句 / 表达式
+## exec和eval语句，执行语句 / 表达式
   - exec语句用来执行储存在字符串或文件中的Python语句
     ```python
     exec 'print "Hello World"'
@@ -1708,7 +1795,7 @@
     ```python
     eval('2*3')
     ```
-## <span style="color:#ff8000;">assert语句，断言
+## assert语句，断言
   - assert语句用来声明某个条件是真的，并且在它非真的时候引发一个错误AssertionError
     ```python
     $ python3
@@ -1724,7 +1811,7 @@
      File "<stdin>", line 1, in <module>
     AssertionError
     ```
-## <span style="color:#ff8000;">repr函数，规范字符串表示
+## repr函数，规范字符串表示
   - repr函数用来取得对象的规范字符串表示，python3去除``，全部改用repr()
   - 在大多数时候有eval(repr(object)) == object
   - 用来获取对象的可打印的表示形式，可以通过定义类的__repr__方法来控制对象在被repr函数调用的时候返回的内容
@@ -1737,7 +1824,7 @@
     repr(i)
     "['item', 'item']"
     ```
-## <span style="color:#ff8000;">range 函数，列表生成器
+## range 函数，列表生成器
   - 包含起始，不包含结尾
   - python3中不再使用xrange
   - 返回一个列表生成器
@@ -1754,7 +1841,7 @@
     sum(range(5, 30, 5))
     75
     ```
-## <span style="color:#ff8000;">enumerate 带指数的列表
+## enumerate 带指数的列表
   - enumerate(iterable[, start]) -> iterator for index, value of iterable
   - 返回一个元组，给参数的每一项加上指数(0, seq[0]), (1, seq[1]), (2, seq[2]), ...
     ```python
@@ -1774,7 +1861,7 @@
     mapping
     Out[267]: {'bar': 1, 'baz': 2, 'foo': 0}
     ```
-## <span style="color:#ff8000;">format 格式化
+## format 格式化
   - 生成格式化字符串
     ```python
     format(value, format_spec='', /)

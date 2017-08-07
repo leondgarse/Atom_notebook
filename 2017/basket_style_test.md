@@ -189,4 +189,24 @@ def basket_html2md(filename, output = 'foo.md', categories = True):
             f_md.write(' ' * level + '  ' + '```\n')
             block_flag = False
 ```
+```shell
+# 标题替换，添加 "<span id=" ... ">"
 sed -i 's/^\(#\+\) \(.*\)$/\1 <span id="\2">\2/' 08-06_sql_table_test.md
+```
+```python
+# 标题替换，添加 "<span id=" ... ">"
+f = open('08-06_sql_table_test.md', 'r')
+l = f.readlines()
+
+reg_title = re.compile(r'(^#+) (.*)')
+fout = open('foo.md', 'w')
+for line in l:
+    if line.startswith('#'):
+        item = reg_title.findall(line)[0]
+        item_id = item[1].replace(' ', '-')
+        item = item[0] + ' <span id="' + item_id + '">' + item[1] + '\n'
+        print(item)
+        fout.write(item)
+    else:
+        fout.write(line)
+```

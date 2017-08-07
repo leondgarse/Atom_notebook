@@ -4,9 +4,10 @@
 ### <span id="jump">Hello World</span>
 ## <span id="tith">This is the Headin</span>
 ## <span id="toggle-here">toggle here
-## My paragraph title
 <h2 id="1">1.语法示例</h2>
+## My paragraph title
 
+In Github, ## My paragraph title will produce the following anchor user-content-my-paragraph-title, so you can reference it with [Some text](#user-content-my-paragraph-title). However, I haven't found official documentation for this.
 
 
 

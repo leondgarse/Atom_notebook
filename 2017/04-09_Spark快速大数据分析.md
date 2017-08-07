@@ -1,7 +1,117 @@
-# <span style="color:#ff0000;">___2017 - 04 - 09 Spark 快速大数据分析___
+# ___2017 - 04 - 09 Spark 快速大数据分析___
 ***
 
-# <span style="color:#ff0000;">Q / A
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 04 - 09 Spark 快速大数据分析___](#user-content-2017-04-09-spark-快速大数据分析)
+  - [目录](#user-content-目录)
+  - [Q / A](#user-content-q-a)
+  - [基本概念](#user-content-基本概念)
+  - [使用spark运行python脚本](#user-content-使用spark运行python脚本)
+  - [RDD编程基础 (创建 / 转化操作 / 行动操作 / 惰性求值 / 缓存persist)](#user-content-rdd编程基础-创建-转化操作-行动操作-惰性求值-缓存persist)
+  	- [创建 RDD](#user-content-创建-rdd)
+  	- [RDD的两种操作类型 / 惰性求值](#user-content-rdd的两种操作类型-惰性求值)
+  	- [RDD 缓存persist()](#user-content-rdd-缓存persist)
+  	- [基本RDD转化操作](#user-content-基本rdd转化操作)
+  	- [基本RDD行动操作](#user-content-基本rdd行动操作)
+  - [pair RDD 键值对操作 (创建 / 转化 / 行动)](#user-content-pair-rdd-键值对操作-创建-转化-行动)
+  	- [创建 pair RDD](#user-content-创建-pair-rdd)
+  	- [Pair RDD的转化操作](#user-content-pair-rdd的转化操作)
+  		- [并行度调优](#user-content-并行度调优)
+  		- [聚合操作](#user-content-聚合操作)
+  		- [数据分组](#user-content-数据分组)
+  		- [连接](#user-content-连接)
+  		- [数据排序](#user-content-数据排序)
+  	- [Pair RDD的行动操作](#user-content-pair-rdd的行动操作)
+  - [数据分区](#user-content-数据分区)
+  	- [自定义分区方式](#user-content-自定义分区方式)
+  - [数据读取与保存 (文件格式 / 文件系统 / SQL / 数据库)](#user-content-数据读取与保存-文件格式-文件系统-sql-数据库)
+  	- [文件格式](#user-content-文件格式)
+  		- [Spark支持的一些常见格式](#user-content-spark支持的一些常见格式)
+  		- [文本文件](#user-content-文本文件)
+  		- [JSON](#user-content-json)
+  		- [逗号分隔值 CSV 与 制表符分隔值TSV](#user-content-逗号分隔值-csv-与-制表符分隔值tsv)
+  		- [SequenceFile](#user-content-sequencefile)
+  		- [对象文件](#user-content-对象文件)
+  		- [Hadoop输入输出格式](#user-content-hadoop输入输出格式)
+  		- [protocol buffer](#user-content-protocol-buffer)
+  		- [文件压缩](#user-content-文件压缩)
+  	- [文件系统](#user-content-文件系统)
+  		- [本地 / 常规文件系统](#user-content-本地-常规文件系统)
+  		- [Amazon S3](#user-content-amazon-s3)
+  		- [HDFS](#user-content-hdfs)
+  	- [Spark SQL中的结构化数据](#user-content-spark-sql中的结构化数据)
+  		- [Apache Hive](#user-content-apache-hive)
+  		- [JSON](#user-content-json)
+  	- [数据库](#user-content-数据库)
+  		- [Cassandra](#user-content-cassandra)
+  		- [HBase](#user-content-hbase)
+  		- [Elasticsearch](#user-content-elasticsearch)
+  - [共享变量 ( 累加器 / 广播变量 / 基于分区进行操作 / 与外部程序间的管道 / 数值RDD的操作)](#user-content-共享变量-累加器-广播变量-基于分区进行操作-与外部程序间的管道-数值rdd的操作)
+  	- [累加器](#user-content-累加器)
+  		- [累加器的用法](#user-content-累加器的用法)
+  		- [行动操作 / 转化操作中的累加器容错性](#user-content-行动操作-转化操作中的累加器容错性)
+  		- [自定义累加器](#user-content-自定义累加器)
+  	- [广播变量](#user-content-广播变量)
+  		- [广播变量的使用](#user-content-广播变量的使用)
+  		- [广播的优化](#user-content-广播的优化)
+  	- [基于分区进行操作](#user-content-基于分区进行操作)
+  	- [与外部程序间的管道](#user-content-与外部程序间的管道)
+  	- [数值RDD的操作](#user-content-数值rdd的操作)
+  - [在集群上运行 Spark （运行时架构 / spark-submit / 集群管理器）](#user-content-在集群上运行-spark-运行时架构-spark-submit-集群管理器)
+  	- [Spark运行时架构](#user-content-spark运行时架构)
+  		- [分布式环境下Spark 集群的主 / 从结构](#user-content-分布式环境下spark-集群的主-从结构)
+  		- [Spark驱动器程序](#user-content-spark驱动器程序)
+  		- [执行器节点](#user-content-执行器节点)
+  		- [集群管理器](#user-content-集群管理器)
+  		- [启动一个程序](#user-content-启动一个程序)
+  		- [在集群上运行 Spark 应用的详细过程](#user-content-在集群上运行-spark-应用的详细过程)
+  	- [使用spark-submit部署应用](#user-content-使用spark-submit部署应用)
+  	- [打包代码与依赖](#user-content-打包代码与依赖)
+  	- [Spark应用内与应用间调度](#user-content-spark应用内与应用间调度)
+  	- [独立集群管理器](#user-content-独立集群管理器)
+  		- [启动集群管理器](#user-content-启动集群管理器)
+  		- [提交应用](#user-content-提交应用)
+  		- [配置资源用量](#user-content-配置资源用量)
+  		- [高度可用性](#user-content-高度可用性)
+  	- [集群管理器 Hadoop YARN](#user-content-集群管理器-hadoop-yarn)
+  		- [在 Spark 里使用 YARN](#user-content-在-spark-里使用-yarn)
+  		- [客户端模式 / 集群模式](#user-content-客户端模式-集群模式)
+  		- [配置资源用量](#user-content-配置资源用量)
+  	- [集群管理器 Apache Mesos](#user-content-集群管理器-apache-mesos)
+  	- [集群管理器 Amazon EC2](#user-content-集群管理器-amazon-ec2)
+  		- [启动集群](#user-content-启动集群)
+  		- [登录集群](#user-content-登录集群)
+  		- [销毁集群](#user-content-销毁集群)
+  		- [暂停和重启集群](#user-content-暂停和重启集群)
+  		- [集群存储](#user-content-集群存储)
+  	- [选择合适的集群管理器](#user-content-选择合适的集群管理器)
+  - [使用 SparkConf / spark-submit 配置Spark](#user-content-使用-sparkconf-spark-submit-配置spark)
+  	- [SparkConf 类](#user-content-sparkconf-类)
+  	- [spark-submit配置](#user-content-spark-submit配置)
+  	- [Spark配置优先级](#user-content-spark配置优先级)
+  	- [常用的Spark配置项的值](#user-content-常用的spark配置项的值)
+  	- [SPARK_LOCAL_DIRS](#user-content-sparklocaldirs)
+  - [Spark 性能调优 (作业 / 用户界面 / 日志 / 并行度 / 序列化格式 / 内存管理)](#user-content-spark-性能调优-作业-用户界面-日志-并行度-序列化格式-内存管理)
+  	- [Spark执行的作业 / 任务 / 步骤](#user-content-spark执行的作业-任务-步骤)
+  	- [Spark 内建的网页用户界面](#user-content-spark-内建的网页用户界面)
+  	- [驱动器进程和执行器进程的日志](#user-content-驱动器进程和执行器进程的日志)
+  	- [并行度](#user-content-并行度)
+  	- [序列化格式](#user-content-序列化格式)
+  		- [Kryo序列化工具](#user-content-kryo序列化工具)
+  		- [NotSerializableException错误](#user-content-notserializableexception错误)
+  	- [内存管理](#user-content-内存管理)
+  		- [内存用途](#user-content-内存用途)
+  		- [内存缓存策略优化](#user-content-内存缓存策略优化)
+  - [Spark SQL (Spark 2.1.0有改动)](#user-content-spark-sql-spark-210有改动)
+  - [Spark Streaming (Spark 1.2不支持python)](#user-content-spark-streaming-spark-12不支持python)
+  - [基于 MLlib 的机器学习](#user-content-基于-mllib-的机器学习)
+
+  <!-- /TOC -->
+***
+
+# Q / A
   - Q：安装
   - A：下载链接 http://spark.apache.org/downloads.html
         环境变量：
@@ -39,7 +149,7 @@
         sc.textFile(path).count()
 ***
 
-# <span style="color:#ff0000;">基本概念
+# 基本概念
   - pyspark # python版本的spark
   - http://127.0.1.1:4040/jobs/ 访问 Spark 用户界面，查看关于任务和集群的各种信息，默认端口是4040，启动时可通过打开INFO级别log查看
   - Spark 本身是用 Scala 写的，运行在 Java 虚拟机（JVM）上
@@ -86,7 +196,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">使用spark运行python脚本
+# 使用spark运行python脚本
   - 在脚本文件中先创建一个 SparkConf 对象来配置应用，然后基于这个 SparkConf 创建一个 SparkContext 对象
   - 创建 SparkContext 的最基本的方法，只需传递两个参数：
     ```python
@@ -113,7 +223,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">RDD编程基础 (创建 / 转化操作 / 行动操作 / 惰性求值 / 缓存persist)
+# RDD编程基础 (创建 / 转化操作 / 行动操作 / 惰性求值 / 缓存persist)
   - Spark 中的 RDD 就是一个不可变的分布式对象集合，每个 RDD 都被分为多个分区，这些分区运行在集群中的不同节点上
   - RDD 可以包含 Python、Java、Scala 中任意类型的对象，甚至可以包含用户自定义的对象
   - 每个 Spark 程序或 shell 会话都按如下方式工作：
@@ -123,7 +233,7 @@
     (3) 告诉 Spark 对需要被重用的中间结果 RDD 执行 persist() 操作。
     (4) 使用行动操作（例如 count() 和 first() 等）来触发一次并行计算，Spark 会对计算进行优化后再执行。
     ```
-## <span style="color:#ff8000;">创建 RDD
+## 创建 RDD
   - 读取一个外部数据集
   - 或在驱动器程序里分发驱动器程序中的对象集合（比如 list 和 set）
     ```python
@@ -160,7 +270,7 @@
     textFile.collect()
     ['Hello world!']
     ```
-## <span style="color:#ff8000;">RDD的两种操作类型 / 惰性求值
+## RDD的两种操作类型 / 惰性求值
   - 创建出来后，RDD 支持两种类型的操作：转化操作（transformation） 和行动操作（action）
     ```python
     转化操作会由一个 RDD 生成一个新的 RDD，根据谓词匹配情况筛选数据就是一个常见的转化操作
@@ -181,7 +291,7 @@
   - 在类似 Hadoop MapReduce 的系统中，开发者常常花费大量时间考虑如何把操作组合到一起，以减少 MapReduce 的周期数
   - 在 Spark 中，写出一个非常复杂的映射并不见得能比使用很多简单的连续操作获得好很多的性能，因此，用户可以用更小的操作来组织他们的程序， 这样也使这些操作更容易管理
   - 如果对于一个特定的函数是属于转化操作还是行动操作感到困惑，可以看看它的返回值类型：转化操作返回的是 RDD，而行动操作返回的是其他的数据类型
-## <span style="color:#ff8000;">RDD 缓存persist()
+## RDD 缓存persist()
   - 在实际操作中，会经常用 persist() 来把数据的一部分读取到内存中，并反复查询这部分数据
     ```python
     pythonLines.persist
@@ -189,7 +299,7 @@
     ```
   - persist() 调用本身不会触发强制求值
   - unpersist()方法可以手动把持久化的 RDD 从缓存中移除
-## <span style="color:#ff8000;">基本RDD转化操作
+## 基本RDD转化操作
   - map() 映射
     ```python
     接收一个函数，把这个函数用于 RDD 中的每个元素，将函数的返回结果作为结果 RDD 中对应元素的值
@@ -253,7 +363,7 @@
     ...
      (3, 2), (3, 3), (3, 5)]
     ```
-## <span style="color:#ff8000;">基本RDD行动操作
+## 基本RDD行动操作
   - foreach() 对 RDD 中的每个元素进行操作，而不需要把 RDD 发回本地
   - count() 返回元素的个数
   - countByValue() 返回一个从各值到值对应的计数的映射表
@@ -297,13 +407,13 @@
     ```
 ***
 
-# <span style="color:#ff0000;">pair RDD 键值对操作 (创建 / 转化 / 行动)
+# pair RDD 键值对操作 (创建 / 转化 / 行动)
   - 键值对 RDD 通常用来进行聚合计算。我们一般要先通过一些初始 ETL（抽取、转化、装载）操作来将数据转化为键值对形式
   - 键值对 RDD 提供了一些新的操作接口（比如统计每个产品的评论，将数据中键相同的分为一组，将两个不同的 RDD 进行分组合并等）
   - 使用可控的分区方式把常被一起访问的数据放到同一个节点上，可以大大减少应用的通信开销
   - 为分布式数据集选择正确的分区方式和为本地数据集选择合适的数据结构很相似——在这两种情况下，数据的分布都会极其明显地影响程序的性能表现
   - 当需要把一个普通的 RDD 转为 pair RDD 时，可以调用 map() 函数来实现，传递的函数需要返回键值对
-## <span style="color:#ff8000;">创建 pair RDD
+## 创建 pair RDD
   - 在 Python 中，为了让提取键之后的数据能够在函数中使用，需要返回一个由二元组组成的 RDD
     ```python
     lines = sc.textFile('README.md')
@@ -313,7 +423,7 @@
     ```python
     pnum = sc.parallelize({(1, 2), (3, 4), (3, 6)})
     ```
-## <span style="color:#ff8000;">Pair RDD的转化操作
+## Pair RDD的转化操作
   - Pair RDD 可以使用所有标准 RDD 上的可用的转化操作
   - 由于 pair RDD 中包含二元组，所以需要传递的函数应当操作二元组而不是独立的元素
     ```python
@@ -322,7 +432,7 @@
   - keys() 返回一个仅包含键的RDD
   - values() 返回一个仅包含值的RDD
   - 如果只想访问 pair RDD 的值部分，操作二元组很麻烦，因此 Spark 提供了 mapValues(func) 函数，功能类似于 map{case (x, y): (x, func(y))}
-### <span style="color:#00ff00;">并行度调优
+### 并行度调优
   - 每个 RDD 都有固定数目的分区，分区数决定了在 RDD 上执行操作时的并行度
   - 在执行聚合或分组操作时，可以要求 Spark 使用给定的分区数，Spark 始终尝试根据集群的大小推断出一个有意义的默认值，但是有时候可能要对并行度进行调优来获取更好的性能表现
     ```python
@@ -333,7 +443,7 @@
   - Spark 提供了 repartition() 函数,它会把数据通过网络进行混洗，并创建出新的分区集合
   - 对数据进行重新分区是代价相对比较大的操作
   - coalesce()是Spark 中也有一个优化版的 repartition()，可以使用 Python 中的rdd.getNumPartitions 查看 RDD 的分区数，并确保调用 coalesce() 时将 RDD 合并到比现在的分区数更少的分区中
-### <span style="color:#00ff00;">聚合操作
+### 聚合操作
   - 当数据集以键值对形式组织的时候，聚合具有相同键的元素进行一些统计操作
   - reduceByKey()
     ```python
@@ -395,7 +505,7 @@
     sorted(x.combineByKey(str, add, add).collect())
     [('a', '11'), ('b', '1')]
     ```
-### <span style="color:#00ff00;">数据分组
+### 数据分组
   - 对于有键的数据，一个常见的用例是将数据根据键进行分组——比如查看一个顾客的所有订单
   - groupByKey()
     ```python
@@ -416,7 +526,7 @@
   - 如果先使用groupByKey() 然后再对值使用 reduce() 或者 fold() ，很有可能可以通过使用一种根据键进行聚合的函数来更高效地实现同样的效果
   - 对每个键归约数据，返回对应每个键的归约值的 RDD，而不是把 RDD 归约为一个内存中的值
   - 例如，rdd.reduceByKey(func) 与rdd.groupByKey().mapValues(value => value.reduce(func)) 等价，但是前者更为高效，因为它避免了为每个键创建存放值的列表的步骤
-### <span style="color:#00ff00;">连接
+### 连接
   - 将有键的数据与另一组有键的数据一起使用是对键值对数据执行的最有用的操作之一
   - 连接方式多种多样：右外连接、左外连接、交叉连接以及内连接
   - join 操作符表示内连接
@@ -439,7 +549,7 @@
     ```python
     删掉 RDD 中键与 other RDD 中的键相同的元素
     ```
-### <span style="color:#00ff00;">数据排序
+### 数据排序
   - 让数据排好序是很有用的，尤其是在生成下游输出时，如果键有已定义的顺序，就可以对这种键值对 RDD 进行排序
   - 当把数据排好序后，后续对数据进行 collect() 或 save() 等操作都会得到有序的数据
   - sortByKey() 函数接收一个叫作 ascending 的参数，表示我们是否想要让结果按升序排序（默认值为 true）
@@ -448,7 +558,7 @@
     ```python
     rdd.sortByKey(ascending=True, numPartitions=None, keyfunc = lambda x: str(x))
     ```
-## <span style="color:#ff8000;">Pair RDD的行动操作
+## Pair RDD的行动操作
   - 所有基础 RDD 支持的传统行动操作也都在 pair RDD 上可用
   - countByKey() 对每个键对应的元素分别计数
   - collectAsMap() 将结果以映射表的形式返回，以便查询
@@ -464,7 +574,7 @@
     ```
 ***
 
-# <span style="color:#ff0000;">数据分区
+# 数据分区
   - 在分布式程序中，通信的代价是很大的，因此控制数据分布以获得最少的网络传输可以极大地提升整体性能
   - 如果给定 RDD 只需要被扫描一次，我们完全没有必要对其预先进行分区处理，只有当数据集多次在诸如连接这种基于键的操作中使用时，分区才会有帮助
   - Spark 中所有的键值对 RDD 都可以进行分区，系统会根据一个针对键的函数对元素进行分组，Spark 可以确保同一组的键出现在同一个节点上
@@ -484,7 +594,7 @@
   - 而另一方面，诸如 map() 这样的操作会导致新的 RDD 失去父 RDD 的分区信息，因为这样的操作理论上可能会修改每条记录的键
   - 不过，Spark 提供了另外两个操作 mapValues() 和 flatMapValues() 作为替代方法，它们可以保证每个二元组的键保持不变
   - 为了最大化分区相关优化的潜在作用，应该在无需改变元素的键时尽量使用 mapValues() 或 flatMapValues()
-## <span style="color:#ff8000;">自定义分区方式
+## 自定义分区方式
   - Spark 提供的 HashPartitioner 与 RangePartitioner 已经能够满足大多数用例，但 Spark 还允许通过提供一个自定义的 Partitioner 对象来控制 RDD 的分区方式
   - 在 Python 中，实现自定义分区器不需要扩展 Partitioner 类，而是把一个特定的哈希函数作为一个额外的参数传给RDD.partitionBy() 函数
     ```python
@@ -499,12 +609,12 @@
   - Spark 中有许多依赖于数据混洗的方法，比如 join() 和 groupByKey()，它们也可以接收一个可选的 Partitioner对象来控制输出数据的分区方式
 ***
 
-# <span style="color:#ff0000;">数据读取与保存 (文件格式 / 文件系统 / SQL / 数据库)
+# 数据读取与保存 (文件格式 / 文件系统 / SQL / 数据库)
   - Spark 支持很多种输入输出源，部分原因是 Spark 本身是基于 Hadoop 生态圈而构建
   - 特别是 Spark 可以通过 Hadoop MapReduce 所使用的 InputFormat 和 OutputFormat 接口访问数据，大部分常见的文件格式与存储系统（例如 S3、HDFS、Cassandra、HBase 等）都支持这种接口
   - 不过，基于这些原始接口构建出的高层 API 会更常用
-## <span style="color:#ff8000;">文件格式
-### <span style="color:#00ff00;">Spark支持的一些常见格式
+## 文件格式
+### Spark支持的一些常见格式
   - Spark 会根据文件扩展名选择对应的处理方式。这一过程是封装好的，对用户透明
   - 文本文件 非结构化 / 普通的文本文件，每行一条记录
   - JSON 半结构化 / 常见的基于文本的格式，半结构化；大多数库都要求每行一条记录
@@ -512,7 +622,7 @@
   - SequenceFiles 结构化 / 一种用于键值对数据的常见 Hadoop 文件格式
   - Protocol buffers 结构化 / 一种快速、节约空间的跨语言格式
   - 对象文件 结构化 / 用来将 Spark 作业中的数据存储下来以让共享的代码读取。改变类的时候它会失效，因为它依赖于 Java 序列化
-### <span style="color:#00ff00;">文本文件
+### 文本文件
   - 当我们将一个文本文件读取为 RDD 时，输入的每一行都会成为 RDD 的一个元素
   - 将多个完整的文本文件一次性读取为一个 pair RDD，键是文件名，值是文件内容
   - 读取文本文件使用文件路径作为参数调用 SparkContext 中的 textFile() 函数，就可以读取一个文本文件，如果要控制分区数的话，可以指定 minPartitions
@@ -527,7 +637,7 @@
     在 Python 中将数据保存为文本文件
             result.saveAsTextFile(outputFile)
     ```
-### <span style="color:#00ff00;">JSON
+### JSON
   - JSON JavaScript Object Notation，一种常用的Web数据格式，是一种使用较广的半结构化数据格式
   - 读取 JSON 数据的最简单的方式是将数据作为文本文件读取，然后使用 JSON 解析器来对 RDD 中的值进行映射操作
   - 这种方法假设文件中的每一行都是一条 JSON 记录，如果有跨行的 JSON 数据，就只能读入整个文件，然后对每个文件进行解析
@@ -543,7 +653,7 @@
      Python 保存为 JSON
             (data.filter(lambda x: x["lovesPandas"]).map(lambda x: json.dumps(x)).saveAsTextFile(outputFile))
     ```
-### <span style="color:#00ff00;">逗号分隔值 CSV 与 制表符分隔值TSV
+### 逗号分隔值 CSV 与 制表符分隔值TSV
   - 逗号分隔值（CSV）文件每行都有固定数目的字段，字段间用逗号隔开
   - 记录通常是一行一条，不过也不总是这样，有时也可以跨行
   - 与 JSON 中的字段不一样的是，这里的每条记录都没有相关联的字段名，只能得到对应的序号，常规做法是使用第一行中每列的值作为字段名
@@ -591,7 +701,7 @@
 
     pandaLovers.mapPartitions(writeRecords).saveAsTextFile(outputFile)
     ```
-### <span style="color:#00ff00;">SequenceFile
+### SequenceFile
   - SequenceFile 是由没有相对关系结构的键值对文件组成的常用 Hadoop 格式
   - SequenceFile 文件有同步标记，Spark可以用它来定位到文件中的某个点，然后再与记录的边界对齐，这可以让 Spark 使用多个节点高效地并行读取 SequenceFile 文件
   - SequenceFile 也是 Hadoop MapReduce 作业中常用的输入输出格式，所以如果你在使用一个已有的 Hadoop 系统，数据很有可能是以 SequenceFile 的格式供你使用的
@@ -611,7 +721,7 @@
             val data = sc.sequenceFile(inFile,
              "org.apache.hadoop.io.Text", "org.apache.hadoop.io.IntWritable")
     ```
-### <span style="color:#00ff00;">对象文件
+### 对象文件
   - 对象文件看起来就像是对 SequenceFile 的简单封装，它允许存储只包含值的 RDD
   - 和 SequenceFile 不一样的是，对象文件是使用 Java 序列化写出的
   - 使用对象文件的主要原因是它们可以用来保存几乎任意对象而不需要额外的工作
@@ -624,7 +734,7 @@
   - 读回对象文件也相当简单：用 SparkContext 中的 objectFile() 函数接收一个路径，返回对应的 RDD
   - 对象文件在 Python 中无法使用，不过 Python 中的 RDD 和 SparkContext 支持 saveAsPickleFile()和 pickleFile() 方法作为替代，这使用了 Python 的 pickle 序列化库
   - 对象文件的注意事项同样适用于 pickle 文件：pickle 库可能很慢，并且在修改类定义后，已经生产的数据文件可能无法再读出来
-### <span style="color:#00ff00;">Hadoop输入输出格式
+### Hadoop输入输出格式
   - 除了 Spark 封装的格式之外，也可以与任何 Hadoop 支持的格式交互
   - Hadoop 在演进过程中增加了一套新的 MapReduce API，不过有些库仍然使用旧的那套
   - Spark 支持新旧两套 Hadoop 文件 API，提供了很大的灵活性
@@ -643,7 +753,7 @@
     hadoopDataset() 这一组函数只接收一个 Configuration 对象，这个对象用来设置访问数据源所必需的 Hadoop 属性
     需要使用与配置 Hadoop MapReduce 作业相同的方式来配置这个对象，所以应当按照在 MapReduce 中访问这些数据源的使用说明来配置，并把配置对象传给 Spark
     ```
-### <span style="color:#00ff00;">protocol buffer
+### protocol buffer
   - Protocol buffer（简称 PB，https://github.com/google/protobuf）最早由 Google 开发，用于内部的远程过程调用（RPC），已经开源
   - PB 是结构化数据，它要求字段和类型都要明确定义，它们是经过优化的，编解码速度快，而且占用空间也很小
   - 比起 XML，PB 能在同样的空间内存储大约 3 到 10 倍的数据，同时编解码速度大约为 XML 的 20 至 100 倍
@@ -655,7 +765,7 @@
   - 在往 PB 定义中添加新字段时，最好将新字段设为可选字段，毕竟不是所有人都会同时更新到新版本（即使会这样做，还是有可能需要读取以前的旧数据）
   - PB 字段支持许多预定义类型，或者另一个 PB 消息，这些类型包括 string、int32、enum 等
   - Protocol Buffer 的网站（https://developers.google.com/protocol-buffers）了解更多细节
-### <span style="color:#00ff00;">文件压缩
+### 文件压缩
   - 在大数据工作中，我们经常需要对数据进行压缩以节省存储空间和网络传输开销
   - 对于大多数 Hadoop 输出格式来说，我们可以指定一种压缩编解码器来压缩数据
   - Spark 原生的输入方式（textFile 和 sequenceFile）可以自动处理一些类型的压缩，在读取压缩后的数据时，一些压缩编解码器可以推测压缩类型
@@ -665,20 +775,20 @@
     要实现这种情况，每个工作节点都必须能够找到一条新记录的开端
     有些压缩格式会使这变得不可能，而必须要单个节点来读入所有数据，这就很容易产生性能瓶颈，可以很容易地从多个节点上并行读取的格式被称为“可分割”的格式
     ```
-## <span style="color:#ff8000;">文件系统
-### <span style="color:#00ff00;">本地 / 常规文件系统
+## 文件系统
+### 本地 / 常规文件系统
   - Spark 支持从本地文件系统中读取文件，不过它要求文件在集群中所有节点的相同路径下都可以找到
   - 一些像 NFS、AFS 以及 MapR 的 NFS layer 这样的网络文件系统会把文件以常规文件系统的形式暴露给用户
   - 如果数据已经在这些系统中，那么只需要指定输入为一个 file:// 路径；只要这个文件系统挂载在每个节点的同一个路径下，Spark 就会自动处理
   - 如果文件还没有放在集群中的所有节点上，可以在驱动器程序中从本地读取该文件而无需使用整个集群，然后再调用 parallelize 将内容分发给工作节点
   - 不过这种方式可能会比较慢，所以推荐的方法是将文件先放到像 HDFS、NFS、S3 等共享文件系统上
-### <span style="color:#00ff00;">Amazon S3
+### Amazon S3
   - 用 Amazon S3 来存储大量数据正日益流行。当计算节点部署在 Amazon EC2 上的时候，使用 S3 作为存储尤其快，但是在需要通过公网访问数据时性能会差很多
   - 要在 Spark 中访问 S3 数据，应该首先把 S3 访问凭据设置为 AWS_ACCESS_KEY_ID 和 AWS_SECRET_ACCESS_KEY 环境变量，可以从 Amazon Web Service 控制台创建这些凭据
   - 接下来，将一个以 s3n:// 开头的路径以 s3n://bucket/path-within-bucket 的形式传给 Spark 的输入方法
   - 和其他所有文件系统一样，Spark 也能在 S3 路径中支持通配字符，例如 s3n://bucket/my-Files/\*.txt
   - 如果从 Amazon 那里得到 S3 访问权限错误，请确保你指定了访问密钥的账号对数据桶有“read”（读）和“list”（列表）的权限，Spark 需要列出桶内的内容，来找到想要读取的数据
-### <span style="color:#00ff00;">HDFS
+### HDFS
   - Hadoop 分布式文件系统（HDFS）是一种广泛使用的文件系统，Spark 能够很好地使用它
   - HDFS 被设计为可以在廉价的硬件上工作，有弹性地应对节点失败，同时提供高吞吐量。
   - Spark 和 HDFS 可以部署在同一批机器上，这样 Spark 可以利用数据分布来尽量避免一些网络开销
@@ -686,12 +796,12 @@
   - HDFS 协议随 Hadoop 版本改变而变化，因此如果使用的 Spark 是依赖于另一个版本的 Hadoop 编译的，那么读取会失败
   - 如果从源代码编译，可以在环境变量中指定 SPARK_HADOOP_VERSION= 来基于另一个版本的 Hadoop 进行编译，也可以直接下载预编译好的 Spark 版本
   - 可以根据运行 hadoop version 的结果来获得环境变量要设置的值
-## <span style="color:#ff8000;">Spark SQL中的结构化数据
+## Spark SQL中的结构化数据
   - Spark SQL 是在 Spark 1.0 中新加入 Spark 的组件
   - 结构化数据指的是有结构信息的数据，也就是所有的数据记录都具有一致字段结构的集合，Spark SQL 支持多种结构化数据源作为输入
   - 在各种情况下，我们把一条 SQL 查询给 Spark SQL，让它对一个数据源执行查询（选出一些字段或者对字段使用一些函数），然后得到由 Row 对象组成的 RDD，每个 Row 对象表示一条记录
   - 在 Python 中，可以使用 row[column_number] 以及 row.column_name 来访问元素
-### <span style="color:#00ff00;">Apache Hive
+### Apache Hive
   - Hadoop 上的一种常见的结构化数据源
   - Hive 可以在 HDFS 内或者在其他存储系统上存储多种格式的表，这些格式从普通文本到列式存储格式，应有尽有，Spark SQL 可以读取 Hive 支持的任何表
   - 要把 Spark SQL 连接到已有的 Hive 上：
@@ -709,7 +819,7 @@
     firstRow = rows.first()
     print firstRow.name
     ```
-### <span style="color:#00ff00;">JSON
+### JSON
   - 对于记录间结构一致的 JSON 数据，Spark SQL 也可以自动推断出它们的结构信息，并将这些数据读取为记录
   - 要读取 JSON 数据，首先需要和使用 Hive 一样创建一个 HiveContext，不过在这种情况下我们不需要安装好 Hive，也就是说不需要 hive-site.xml 文件
   - 然后使用 HiveContext.jsonFile 方法来从整个文件中获取由 Row 对象组成的 RDD
@@ -720,9 +830,9 @@
     tweets.registerTempTable("tweets")
     results = hiveCtx.sql("SELECT user.name, text FROM tweets")        # 选取 user.name text 字段
     ```
-## <span style="color:#ff8000;">数据库
+## 数据库
   - 通过数据库提供的 Hadoop 连接器或者自定义的 Spark 连接器，Spark 可以访问一些常用的数据库系统
-### <span style="color:#00ff00;">Cassandra
+### Cassandra
   - 随着 DataStax 开源其用于 Spark 的 Cassandra 连接器（https://github.com/datastax/spark-cassandra-connector），Spark 对 Cassandra 的支持大大提升
   - 这个连接器目前还不是 Spark 的一部分，因此需要添加一些额外的依赖到你的构建文件中才能使用它
   - Cassandra 还没有使用 Spark SQL，不过它会返回由 CassandraRow 对象组成的 RDD，这些对象有一部分方法与 Spark SQL 的 Row 对象的方法相同
@@ -734,14 +844,14 @@
   - 除了读取整张表，也可以查询数据集的子集，通过在 cassandraTable() 的调用中加上 where 子句，可以限制查询的数据，例如 sc.cassandraTable(...).where("key=?", "panda")
   - Cassandra 连接器支持把多种类型的RDD保存到 Cassandra 中，我们可以直接保存由 CassandraRow对象组成的 RDD，这对于在表之间复制数据比较有用
   - 通过指定列的映射关系，我们也可以存储不是行的形式而是元组和列表的形式的 RDD
-### <span style="color:#00ff00;">HBase
+### HBase
   - 由于 org.apache.hadoop.hbase.mapreduce.TableInputFormat 类的实现，Spark 可以通过 Hadoop 输入格式访问 HBase
   - 这个输入格式会返回键值对数据，其中键的类型为org.apache.hadoop.hbase.io.ImmutableBytesWritable，而值的类型为org.apache.hadoop.hbase.client.Result
   - Result 类包含多种根据列获取值的方法，在其 API 文档（https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Result.html）中有所描述
   - 要将 Spark 用于 HBase，需要使用正确的输入格式调用 SparkContext.newAPIHadoopRDD
   - TableInputFormat 包含多个可以用来优化对 HBase 的读取的设置项，比如将扫描限制到一部分列中，以及限制扫描的时间范围
   - 可以在 TableInputFormat 的 API 文档中找到这些选项，并在 HBaseConfiguration 中设置它们，然后再把它传给 Spark
-### <span style="color:#00ff00;">Elasticsearch
+### Elasticsearch
   - Spark 可以使用 Elasticsearch-Hadoop（https://github.com/elastic/elasticsearch-hadoop）从 Elasticsearch 中读写数据
   - Elasticsearch 是一个开源的、基于 Lucene 的搜索系统
   - Elasticsearch 连接器和我们研究过的其他连接器不大一样，它会忽略我们提供的路径信息，而依赖于在 SparkContext 中设置的配置项
@@ -750,15 +860,15 @@
   - 就输出而言，Elasticsearch 可以进行映射推断，但是偶尔会推断出不正确的数据类型，因此如你要存储字符串以外的数据类型，最好明确指定类型映射（https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html）
 ***
 
-# <span style="color:#ff0000;">共享变量 ( 累加器 / 广播变量 / 基于分区进行操作 / 与外部程序间的管道 / 数值RDD的操作)
+# 共享变量 ( 累加器 / 广播变量 / 基于分区进行操作 / 与外部程序间的管道 / 数值RDD的操作)
   - 对应代码 learning-spark/src/python/ChapterSixExample.py
   - 文本文件 learning-spark/files/callsigns
-## <span style="color:#ff8000;">累加器
+## 累加器
   - 累加器，提供了将工作节点中的值聚合到驱动器程序中的简单语法，累加器的一个常见用途是在调试时对作业执行过程中的事件进行计数
   - 工作节点上的任务不能访问累加器的值，从这些任务的角度来看，累加器是一个只写变量
   - 在这种模式下，累加器的实现可以更加高效，不需要对每次更新操作进行复杂的通信
   - 计数在很多时候都非常方便，比如有多个值需要跟踪时，或者当某个值需要在并行程序的多个地方增长时
-### <span style="color:#00ff00;">累加器的用法
+### 累加器的用法
   - 通过在驱动器中调用 SparkContext.accumulator(initialValue) 方法，创建出存有初始值的累加器，返回值为 org.apache.spark.Accumulator[T] 对象，其中 T 是初始值 initialValue 的类型
   - Spark 闭包里的执行器代码可以使用累加器的 += 方法（在 Java 中是 add）增加累加器的值
   - 驱动器程序可以调用累加器的 value 属性（在 Java 中使用 value() 或 setValue()）来访问累加器的值
@@ -778,7 +888,7 @@
 
     注意，只有在运行saveAsTextFile() 行动操作后才能看到正确的计数，因为行动操作前的转化操作 flatMap() 是惰性的
     ```
-### <span style="color:#00ff00;">行动操作 / 转化操作中的累加器容错性
+### 行动操作 / 转化操作中的累加器容错性
   - Spark 会自动重新执行失败的或较慢的任务来应对有错误的或者比较慢的机器例如
   - 如果对某分区执行 map() 操作的节点失败了，Spark 会在另一个节点上重新运行该任务
   - 即使该节点没有崩溃，而只是处理速度比别的节点慢很多，Spark 也可以抢占式地在另一个节点上启动一个“投机”（speculative）型的任务副本
@@ -804,12 +914,12 @@
     count.value
     Out[108]: 4
     ```
-### <span style="color:#00ff00;">自定义累加器
+### 自定义累加器
   - Spark 还直接支持 Double、Long 和 Float 型的累加器
   - 除此以外，Spark 也引入了自定义累加器和聚合操作的 API（比如找到要累加的值中的最大值，而不是把这些值加起来）
   - 自定义累加器需要扩展 AccumulatorParam，这在 Spark API 文档（http://spark.apache.org/docs/latest/api/scala/index.html#package）中有所介绍
   - 只要该操作同时满足交换律和结合律，就可以使用任意操作来代替数值上的加法，如，sum 和 max 既满足交换律又满足结合律，是 Spark 累加器中的常用操作
-## <span style="color:#ff8000;">广播变量
+## 广播变量
   - 可以让程序高效地向所有工作节点发送一个较大的只读值，以供一个或多个 Spark 操作使用，如，向所有节点发送一个较大的只读查询表，甚至是机器学习算法中的一个很大的特征向量
   - Spark 会自动把闭包中所有引用到的变量发送到工作节点上，虽然这很方便，但也很低效
   - 首先，默认的任务发射机制是专门为小任务进行优化的
@@ -818,7 +928,7 @@
   - 广播变量其实就是类型为spark.broadcast.Broadcast[T] 的一个对象，其中存放着类型为 T 的值
   - 可以在任务中通过对Broadcast 对象调用 value 来获取该对象的值
   - 这个值只会被发送到各节点一次，使用的是一种高效的类似 BitTorrent 的通信机制
-### <span style="color:#00ff00;">广播变量的使用
+### 广播变量的使用
   - 通过对一个类型 T 的对象调用 SparkContext.broadcast 创建出一个 Broadcast[T] 对象，任何可序列化的类型都可以这么实现
   - 通过 value 属性访问该对象的值
   - 变量只会被发到各个节点一次，应作为只读值处理（修改这个值不会影响到别的节点）
@@ -829,12 +939,12 @@
       return f.readlines()
     signPrefixes = sc.broadcast(loadCallSignTable)
     ```
-### <span style="color:#00ff00;">广播的优化
+### 广播的优化
   - 当广播一个比较大的值时，选择既快又好的序列化格式是很重要的
   - 因为如果序列化对象的时间很长或者传送花费的时间太久，这段时间很容易就成为性能瓶颈
   - 尤其是，Spark 的 Scala 和 Java API 中默认使用的序列化库为 Java 序列化库，因此它对于除基本类型的数组以外的任何对象都比较低效
   - 可以使用 spark.serializer 属性选择另一个序列化库来优化序列化过程（如使用 Kryo 这种更快的序列化库)
-## <span style="color:#ff8000;">基于分区进行操作
+## 基于分区进行操作
   - 对于打开数据库连接或创建随机数生成器等操作，Spark 提供基于分区的 map 和 foreach，让你的部分代码只对 RDD 的每个分区运行一次，这样可以帮助降低这些操作的代价
   - 按分区执行的操作符
     ```python
@@ -872,7 +982,7 @@
       sumCount = nums.mapPartitions(partitionCtr).reduce(combineCtrs)
       return sumCount[0] / float(sumCount[1])
     ```
-## <span style="color:#ff8000;">与外部程序间的管道
+## 与外部程序间的管道
   - Spark 的 pipe() 方法可以让我们使用任意一种语言实现 Spark 作业中的部分逻辑，只要它能读写 Unix 标准流就行
   - 通过 pipe()，可以将 RDD 中的各元素从标准输入流中以字符串形式读出，并对这些元素执行任何你需要的操作，然后把结果以字符串的形式写入标准输出，这个过程就是 RDD 的转化操作过程
   - 需要做的事情是让每个工作节点都能访问外部脚本，并调用这个脚本来对 RDD 进行实际的转化操作
@@ -904,7 +1014,7 @@
   - 也可以使用 SparkFiles.get(Filename) 来定位单个文件
   - 也可以使用其他的远程复制工具来把脚本文件放到各节点可以找到的位置上
   - 如果需要的话，也可以通过 pipe() 指定命令行环境变量，只需要把环境变量到对应值的映射表作为 pipe() 的第二个参数传进去，Spark 就会设置好这些值
-## <span style="color:#ff8000;">数值RDD的操作
+## 数值RDD的操作
   - Spark 的数值操作是通过流式算法实现的，允许以每次一个元素的方式构建出模型，这些统计数据都会在调用 stats() 时通过一次遍历数据计算出来，并以 StatsCounter 对象返回
   - StatsCounter中可用的汇总统计数据
     ```python
@@ -933,11 +1043,11 @@
     ```
 ***
 
-# <span style="color:#ff0000;">在集群上运行 Spark （运行时架构 / spark-submit / 集群管理器）
+# 在集群上运行 Spark （运行时架构 / spark-submit / 集群管理器）
   - Spark 的一大好处就是可以通过增加机器数量并使用集群模式运行，来扩展程序的计算能力
   - 可以在小数据集上利用本地模式快速开发并验证应用，然后无需修改代码就可以在大规模集群上运行
-## <span style="color:#ff8000;">Spark运行时架构
-### <span style="color:#00ff00;">分布式环境下Spark 集群的主 / 从结构
+## Spark运行时架构
+### 分布式环境下Spark 集群的主 / 从结构
   - Spark驱动器程序 --> 集群管理器Mesos / YARN 或独立集群管理器 --> 集群工作节点 (执行器进程) 1 / 2 / 3 / ...
   - 驱动器（Driver）节点：负责中央协调，调度各个分布式工作节点
   - 执行器（executor）节点：驱动器节点可以和大量的执行器节点进行通信，它们也都作为独立的 Java 进程运行
@@ -950,7 +1060,7 @@
     再使用转化操作派生出新的 RDD
     最后使用行动操作收集或存储结果 RDD 中的数据
     ```
-### <span style="color:#00ff00;">Spark驱动器程序
+### Spark驱动器程序
   - Spark 驱动器是执行程序中的 main() 方法的进程，它执行用户编写的用来创建 SparkContext、创建 RDD，以及进行 RDD 的转化操作和行动操作的代码
   - 驱动器程序在 Spark 应用中有下述两个职责
   - 把用户程序转为任务
@@ -970,7 +1080,7 @@
     当任务执行时，执行器进程会把缓存数据存储起来，而驱动器进程同样会跟踪这些缓存数据的位置，并且利用这些位置信息来调度以后的任务，以尽量减少数据的网络传输
     驱动器程序会将一些 Spark 应用的运行时的信息通过网页界面呈现出来，默认在端口 4040 上，在本地模式下，访问 http://localhost:4040 可以看到这个网页
     ```
-### <span style="color:#00ff00;">执行器节点
+### 执行器节点
   - Spark 执行器节点是一种工作进程，负责在 Spark 作业中运行任务，任务间相互独立
   - Spark 应用启动时，执行器节点就被同时启动，并且始终伴随着整个 Spark 应用的生命周期而存在
   - 如果有执行器节点发生了异常或崩溃，Spark 应用也可以继续执行
@@ -979,18 +1089,18 @@
     负责运行组成 Spark 应用的任务，并将结果返回给驱动器进程
     通过自身的块管理器（Block Manager）为用户程序中要求缓存的 RDD 提供内存式存储，RDD 是直接缓存在执行器进程内的，因此任务可以在运行时充分利用缓存数据加速运算
     ```
-### <span style="color:#00ff00;">集群管理器
+### 集群管理器
   - Spark 依赖于集群管理器来启动执行器节点，而在某些特殊情况下，也依赖集群管理器来启动驱动器节点
   - 集群管理器是 Spark 中的可插拔式组件，除了 Spark 自带的独立集群管理器，Spark 也可以运行在其他外部集群管理器上，比如 YARN 和 Mesos
   - Spark 文档中始终使用驱动器节点和执行器节点的概念来描述执行 Spark 应用的进程
   - 而主节点（master）和工作节点（worker）的概念则被用来分别表述集群管理器中的中心化的部分和分布式的部分
   - 在Hadoop YARN 会启动一个叫作资源管理器（Resource Manager）的主节点守护进程，以及一系列叫作节点管理器（Node Manager）的工作节点守护进程
   - 在 YARN 的工作节点上，Spark 不仅可以运行执行器进程，还可以运行驱动器进程
-### <span style="color:#00ff00;">启动一个程序
+### 启动一个程序
   - 不论使用的是哪一种集群管理器，都可以使用 Spark 提供的统一脚本 spark-submit 将应用提交到那种集群管理器上
   - 通过不同的配置选项，spark-submit 可以连接到相应的集群管理器上，并控制应用所使用的资源数量
   - 在使用某些特定集群管理器时，spark-submit 也可以将驱动器节点运行在集群内部（比如一个 YARN 的工作节点），但对于其他的集群管理器，驱动器节点只能被运行在本地机器上
-### <span style="color:#00ff00;">在集群上运行 Spark 应用的详细过程
+### 在集群上运行 Spark 应用的详细过程
   - (1) 用户通过 spark-submit 脚本提交应用。
   - (2) spark-submit 脚本启动驱动器程序，调用用户定义的 main() 方法。
   - (3) 驱动器程序与集群管理器通信，申请资源以启动执行器节点。
@@ -998,7 +1108,7 @@
   - (5) 驱动器进程执行用户应用中的操作。根据程序中所定义的对 RDD 的转化操作和行动操作，驱动器节点把工作以任务的形式发送到执行器进程。
   - (6) 任务在执行器程序中进行计算并保存结果。
   - (7) 如果驱动器程序的 main() 方法退出，或者调用了 SparkContext.stop()，驱动器程序会终止执行器进程，并且通过集群管理器释放资源
-## <span style="color:#ff8000;">使用spark-submit部署应用
+## 使用spark-submit部署应用
   - 如果在调用 spark-submit 时除了脚本或 JAR 包的名字之外没有别的参数，那么这个 Spark 程序只会在本地执行
   - 将应用提交到 Spark 独立集群上的时候，可以将独立集群的地址和希望启动的每个执行器进程的大小作为附加标记提供：
     ```python
@@ -1064,7 +1174,7 @@
      --executor-memory 10g \
      my_script.py "options" "to your application" "go here"
     ```
-## <span style="color:#ff8000;">打包代码与依赖
+## 打包代码与依赖
   - 如果程序引入了任何既不在 org.apache.spark 包内也不属于语言运行时的库的依赖，就需要确保所有的依赖在该 Spark 应用运行时都能被找到
   - 当提交应用时，绝不要把 Spark 本身放在提交的依赖中，spark-submit 会自动确保 Spark 在你的程序的运行路径中
   - Python 用户
@@ -1089,7 +1199,7 @@
     二是使用通常被称为“shading”的方式打包你的应用
     shading 可以让你以另一个命名空间保留冲突的包，并自动重写应用的代码使得它们使用重命名后的版本
     ```
-## <span style="color:#ff8000;">Spark应用内与应用间调度
+## Spark应用内与应用间调度
   - 许多集群是在多个用户间共享的，如果两个用户都启动了希望使用整个集群所有资源的应用，Spark 有一系列调度策略来保障资源不会被过度使用，还允许工作负载设置优先级
   - 在调度多用户集群时，Spark 主要依赖集群管理器来在 Spark 应用间共享资源
   - 当 Spark 应用向集群管理器申请执行器节点时，应用收到的执行器节点个数可能比它申请的更多或者更少，这取决于集群的可用性与争用
@@ -1099,12 +1209,12 @@
   - 由于这个应用本身就是为多用户调度工作的，所以它需要一种细粒度的调度机制来强制共享资源
   - Spark 提供了一种用来配置应用内调度策略的机制
   - Spark 内部的公平调度器（Fair Scheduler）会让长期运行的应用定义调度任务的优先级队列，参考公平调度器的官方文档：（http://spark.apache.org/docs/latest/job-scheduling.html）
-## <span style="color:#ff8000;">独立集群管理器
+## 独立集群管理器
   - Spark 独立集群管理器提供在集群上运行应用的简单方法
   - 这种集群管理器由一个主节点和几个工作节点组成，各自都分配有一定量的内存和 CPU 核心，当提交应用时，可以配置执行器进程使用的内存量，以及所有执行器进程使用的 CPU 核心总数
   - 要启动独立集群管理器，既可以通过手动启动一个主节点和多个工作节点来实现，也可以使用 Spark 的 sbin 目录中的启动脚本来实现
   - 启动脚本使用最简单的配置选项，但是需要预先设置机器间的 SSH 无密码访问
-### <span style="color:#00ff00;">启动集群管理器
+### 启动集群管理器
   - 要使用集群启动脚本，请按如下步骤执行：
     ```python
     将编译好的 Spark 复制到所有机器的一个相同的目录下，比如 /home/yourname/spark
@@ -1134,7 +1244,7 @@
     ```
   - 默认情况下，集群管理器会选择合适的默认值自动为所有工作节点分配 CPU 核心与内存
   - 配置独立集群管理器的更多细节请参考 Spark 的官方文档（http://spark.apache.org/docs/latest/spark-standalone.html）
-### <span style="color:#00ff00;">提交应用
+### 提交应用
   - 要向独立集群管理器提交应用，需要把 spark://masternode:7077 作为主节点参数传给 spark-submit：
     ```python
     spark-submit --master spark://masternode:7077 yourapp
@@ -1166,7 +1276,7 @@
     在这种模式下，spark-submit 是“一劳永逸”型，可以在应用运行时关掉电脑，还可以通过集群管理器的网页用户界面访问应用的日志
     向 spark-submit 传递 --deploy-mode cluster 参数可以切换到集群模式
     ```
-### <span style="color:#00ff00;">配置资源用量
+### 配置资源用量
   - 如果在多应用间共享 Spark 集群，需要决定如何在执行器进程间分配资源
   - 独立集群管理器使用基础的调度策略，这种策略允许限制各个应用的用量来让多个应用并发执行
   - Apache Mesos 支持应用运行时的更动态的资源共享
@@ -1194,16 +1304,16 @@
     在这样的情况下，这个应用就只会得到两个执行器节点，每个有 1 GB 内存和 4 个核心
     这一设定会影响运行在独立模式集群上的所有应用，并且必须在启动独立集群管理器之前设置好
     ```
-### <span style="color:#00ff00;">高度可用性
+### 高度可用性
   - 当在生产环境中运行时，会希望独立模式集群始终能够接收新的应用，哪怕当前集群中所有的节点都崩溃了
   - 其实，独立模式能够很好地支持工作节点的故障
   - 如果想让集群的主节点也拥有高度可用性，Spark 还支持使用 Apache ZooKeeper（一个分布式协调系统）来维护多个备用的主节点，并在一个主节点失败时切换到新的主节点上
   - 为独立集群配置 ZooKeeper在 Spark 官方文档（https://spark.apache.org/docs/latest/spark-standalone.html#high-availability）中有所描述
-## <span style="color:#ff8000;">集群管理器 Hadoop YARN
+## 集群管理器 Hadoop YARN
   - YARN 是在 Hadoop 2.0 中引入的集群管理器
   - 它可以让多种数据处理框架运行在一个共享的资源池上，并且通常安装在与 Hadoop 文件系统（简称 HDFS）相同的物理节点上
   - 在这样配置的 YARN 集群上运行 Spark 是很有意义的，它可以让 Spark 在存储数据的物理节点上运行，以快速访问 HDFS 中的数据
-### <span style="color:#00ff00;">在 Spark 里使用 YARN
+### 在 Spark 里使用 YARN
   - 只需要设置指向 Hadoop 配置目录的环境变量，然后使用 spark-submit 向一个特殊的主节点 URL 提交作业即可
   - 找到 Hadoop 的配置目录，并把它设为环境变量 HADOOP_CONF_DIR：
     ```python
@@ -1215,7 +1325,7 @@
     export HADOOP_CONF_DIR="..."
     spark-submit --master yarn yourapp
     ```
-### <span style="color:#00ff00;">客户端模式 / 集群模式
+### 客户端模式 / 集群模式
   - 和独立集群管理器一样，有两种将应用连接到集群的模式：客户端模式以及集群模式
     ```python
     在客户端模式下应用的驱动器程序运行在提交应用的机器上
@@ -1224,7 +1334,7 @@
     可以通过 spark-submit 的 --deploy-mode 参数设置不同的模式 (yarn-client / yarn-cluster)
   - Spark 的交互式 shell 以及 pyspark 也都可以运行在 YARN 上,只要设置好 HADOOP_CONF_ DIR 并对这些应用使用 --master yarn 参数即可
   - 由于这些应用需要从用户处获取输 入，所以只能运行于客户端模式下
-### <span style="color:#00ff00;">配置资源用量
+### 配置资源用量
   - 当在 YARN 上运行时，根据在 spark-submit 或 spark-shell 等脚本的 --num-executors 标记中设置的值，Spark 应用会使用固定数量的执行器节点
   - 默认情况下，这个值仅为 2，所以可能需要提高它
   - 也可以设置通过 --executor-memory 设置每个执行器的内存用量，通过 --executor-cores 设置每个执行器进程从 YARN 中占用的核心数目
@@ -1232,7 +1342,7 @@
   - 然而，需要注意的是，一些集群限制了每个执行器进程的最大内存（默认为 8 GB），不允许使用更大的执行器进程
   - 出于资源管理的目的，某些 YARN 集群被设置为将应用调度到多个队列中，使用 --queue 选项来选择你的队列的名字
   - 要了解关于 YARN 的更多配置选项的相关信息，可以查阅 Spark 官方文档（http://spark.apache.org/docs/latest/submitting-applications.html）
-## <span style="color:#ff8000;">集群管理器 Apache Mesos
+## 集群管理器 Apache Mesos
   - Apache Mesos 是一个通用集群管理器，既可以运行分析型工作负载又可以运行长期运行的服务（比如网页服务或者键值对存储）
   - 要在 Mesos 上使用 Spark，需要把一个 mesos:// 的 URI 传给 spark-submit：
     ```python
@@ -1269,7 +1379,7 @@
     默认情况下，Spark 会使用尽可能多的核心启动各个执行器节点，来将应用合并到尽量少的执行器实例中，并为应用分配所需要的核心数
     如果不设置 --total-executor-cores 参数，Mesos 会尝试使用集群中所有可用的核心
     ```
-## <span style="color:#ff8000;">集群管理器 Amazon EC2
+## 集群管理器 Amazon EC2
   - Spark 自带一个可以在 Amazon EC2 上启动集群的脚本
   - 这个脚本会启动一些节点，并且在它们上面安装独立集群管理器
   - 一旦集群启动起来，就可以根据独立模式使用方法来使用这个集群
@@ -1278,7 +1388,7 @@
   - 它需要 Python 2.6 或更高版本的运行环境，可以在下载 Spark 后直接运行 EC2 脚本而无需预先编译 Spark
   - EC2 脚本可以管理多个已命名的集群（cluster），并且使用 EC2 安全组来区分它们
   - 对于每个集群，脚本都会为主节点创建一个叫作 clustername-master 的安全组，而为工作节点创建一个叫作 clustername-slaves 的安全组
-### <span style="color:#00ff00;">启动集群
+### 启动集群
   - 要启动一个集群，应该先创建一个 Amazon 网络服务（AWS）账号，并且获取访问键 ID 和访问键密码，然后把它们设在环境变量中：
     ```python
     export AWS_ACCESS_KEY_ID="..."
@@ -1308,7 +1418,7 @@
     --spot-price=PRICE 在给定的出价使用 spot 实例（单位为美元） 
     ```
   - 从启动脚本开始，通常需要五分钟左右来完成启动机器、登录到机器上并配置 Spark 的全部过程。
-### <span style="color:#00ff00;">登录集群
+### 登录集群
   - 可以使用存有私钥的 .pem 文件通过 SSH 登录到集群的主节点上，spark-ec2 提供了登录命令：
     ```python
     ./spark-ec2 -k mykeypair -i mykeypair.pem login mycluster
@@ -1327,13 +1437,13 @@
     ```python
     scp -i mykeypair.pem app.jar root@masternode:~
     ```
-### <span style="color:#00ff00;">销毁集群
+### 销毁集群
   - 要销毁 spark-ec2 所启动的集群，运行：
     ```python
     ./spark-ec2 destroy mycluster
     ```
     这条命令会终止集群中的所有的实例，包括 mycluster-master 和 mycluster-slaves 两个安全组中的所有实例
-### <span style="color:#00ff00;">暂停和重启集群
+### 暂停和重启集群
   - 除了将集群彻底销毁，spark-ec2 还可以中止运行集群的 Amazon 实例，并且可以稍后重启这些实例
   - 停止这些实例会将它们关机，并丢失“临时”盘上的所有数据，“临时”盘上还配有一个给 spark-ec2 使用的 HDFS 环境
   - 不过，中止的实例会 保留 root 目录下的所有数据（如上传到那里的所有文件），这样就可以快速恢复自己的工作
@@ -1353,7 +1463,7 @@
     然后使用 spark-ec2 start 启动集群
     ```
     移除机器，只需在 AWS 控制台上终止这一实例即可，不过要小心，这也会破坏集群中 HDFS 上的数据
-### <span style="color:#00ff00;">集群存储
+### 集群存储
   - Spark EC2 集群已经配置好了两套 Hadoop 文件系统以供存储临时数据，可以很方便地将数据集存储在访问速度比 Amazon S3 更快的媒介中 
   - “临时”HDFS
     ```python
@@ -1370,7 +1480,7 @@
     它安装于 /root/persistent-hdfs 目录，网页用户界面地址是 http://masternode:60070
     ```
     除了这些以外，最有可能访问的就是 Amazon S3 中的数据了，可以在 Spark 中使用 s3n:// 的 URI 结构来访问其中的数据
-## <span style="color:#ff8000;">选择合适的集群管理器
+## 选择合适的集群管理器
   - 如果是从零开始，可以先选择独立集群管理器，独立模式安装起来最简单，而且如果只是使用 Spark 的话，独立集群管理器提供与其他集群管理器完全一样的全部功能
   - 如果要在使用 Spark 的同时使用其他应用，或者是要用到更丰富的资源调度功能（例如队列），那么 YARN 和 Mesos 都能满足需求
   - 对于大多数 Hadoop 发行版来说，一般 YARN 已经预装好了
@@ -1381,8 +1491,8 @@
   - 如果使用 YARN 的话，大多数发行版已经把 YARN 和 HDFS 安装在了一起
 ***
 
-# <span style="color:#ff0000;">使用 SparkConf / spark-submit 配置Spark
-## <span style="color:#ff8000;">SparkConf 类
+# 使用 SparkConf / spark-submit 配置Spark
+## SparkConf 类
   - 对 Spark 进行性能调优，通常就是修改 Spark 应用的运行时配置选项
   - Spark 中最主要的配置机制是通过 SparkConf 类对 Spark 进行配置
   - 当创建出一个 SparkContext 时，就需要创建出一个 SparkConf 的实例
@@ -1402,7 +1512,7 @@
   - 要使用创建出来的 SparkConf 对象，可以调用 set() 方法来添加配置项的设置，然后把这个对象传给 SparkContext 的构造方法
   - 除了 set() 之外，SparkConf 类也包含了一小部分工具方法，可以很方便地设置部分常用参数
   - 如 setAppName() 和 setMaster() 分别设置 spark.app.name 和 spark.master 的配置值
-## <span style="color:#ff8000;">spark-submit配置
+## spark-submit配置
   - 当应用被 spark-submit 脚本启动时，脚本会把这些配置项设置到运行环境中
   - 当一个新的 SparkConf 被创建出来时，这些环境变量会被检测出来并且自动配好
   - 在使用 spark-submit 时，用户应用中只要创建一个“空”的 SparkConf，并直接传给 SparkContext 的构造方法就行了
@@ -1431,7 +1541,7 @@
     spark.app.name  "My Spark App"
     spark.ui.port   36000
     ```
-## <span style="color:#ff8000;">Spark配置优先级
+## Spark配置优先级
   - 有时，同一个配置项可能在多个地方被设置了，如用户可能在程序代码中直接调用了 setAppName() 方法，同时也通过 spark-submit 的 --name 标记设置了这个值
   - Spark 有特定的优先级顺序来选择实际配置：
     ```python
@@ -1440,7 +1550,7 @@
     最后是系统的默认值
     ```
     可以在应用的网页用户界面中查看应用中实际生效的配置
-## <span style="color:#ff8000;">常用的Spark配置项的值
+## 常用的Spark配置项的值
   - 完整的配置项列表，请参考 Spark 文档（http://spark.apache.org/docs/latest/configuration.html）
   - spark.executor.memory(--executor-memory)
     ```python
@@ -1499,14 +1609,14 @@
     指开启事件日志机制时，事件日志文件的存储位置
     这个值指向的路径需要设置到一个全局可见的文件系统中，比如 HDFS 
     ```
-## <span style="color:#ff8000;">SPARK_LOCAL_DIRS
+## SPARK_LOCAL_DIRS
   - 几乎所有的 Spark 配置都发生在 SparkConf 的创建过程中，但有一个重要的选项是个例外
   - 需要在 conf/spark-env.sh 中将环境变量 SPARK_LOCAL_DIRS 设置为用逗号隔开的存储位置列表，来指定 Spark 用来混洗数据的本地存储路径，这需要在独立模式和 Mesos 模式下设置
   - 这个配置项之所以和其他的 Spark 配置项不一样，是因为它的值在不同的物理主机上可能会有区别
 ***
 
-# <span style="color:#ff0000;">Spark 性能调优 (作业 / 用户界面 / 日志 / 并行度 / 序列化格式 / 内存管理)
-## <span style="color:#ff8000;">Spark执行的作业 / 任务 / 步骤
+# Spark 性能调优 (作业 / 用户界面 / 日志 / 并行度 / 序列化格式 / 内存管理)
+## Spark执行的作业 / 任务 / 步骤
   - Spark 执行时有下面所列的这些流程：
     ```python
     用户代码定义RDD的有向无环图
@@ -1535,7 +1645,7 @@
     把输出写到一个数据混洗文件中，写入外部存储，或者是发回驱动器程序（如果最终 RDD 调用的是类似 count() 这样的行动操作）
     ```
     Spark 的大部分日志信息和工具都是以步骤、任务或数据混洗为单位的
-## <span style="color:#ff8000;">Spark 内建的网页用户界面
+## Spark 内建的网页用户界面
   - 默认情况下，它在驱动器程序所在机器的 4040 端口上
   - 对于 YARN 集群模式来说，应用的驱动器程序会运行在集群内部，应该通过 YARN 的资源管理器来访问用户界面，YARN 的资源管理器会把请求直接转发给驱动器程序
   - 作业页面：
@@ -1578,7 +1688,7 @@
     当检查哪些配置标记生效时，这个页面很有用，尤其是当同时使用了多种配置机制时
     这个页面也会列出添加到应用路径中的所有 JAR 包和文件，在追踪类似依赖缺失的问题时可以用到
     ```
-## <span style="color:#ff8000;">驱动器进程和执行器进程的日志
+## 驱动器进程和执行器进程的日志
   - 日志会更详细地记录各种异常事件，例如内部的警告以及用户代码输出的详细异常信息
   - Spark 日志文件的具体位置取决于以下部署模式
     ```python
@@ -1600,7 +1710,7 @@
     如果在设置日志级别时遇到了困难，请首先确保没有在应用中引入任何自身包含 log4j.properties 文件的 JAR 包
     Log4j 会扫描整个 classpath，以其找到的第一个配置文件为准，因此如果在别处先找到该文件，它就会忽略自定义的文件
     ```
-## <span style="color:#ff8000;">并行度
+## 并行度
   - 当 Spark 调度并运行任务时，Spark 会为每个分区中的数据创建出一个任务，该任务在默认情况下会需要集群中的一个计算核心来执行
   - Spark 也会针对 RDD 直接自动推断出合适的并行度，这对于大多数用例来说已经足够了
   - 输入 RDD 一般会根据其底层的存储系统选择并行度，例如，从 HDFS 上读数据的输入 RDD 会为数据在 HDFS 上的每个文件区块创建一个分区
@@ -1637,11 +1747,11 @@
     # 可以在合并之后的RDD上进行后续分析
     lines.count()
     ```
-## <span style="color:#ff8000;">序列化格式
+## 序列化格式
   - 当 Spark 需要通过网络传输数据，或是将数据溢写到磁盘上时，Spark 需要把数据序列化为二进制格式
   - 序列化会在数据进行混洗操作时发生，此时有可能需要通过网络传输大量数据
   - 默认情况下，Spark 会使用 Java 内建的序列化库，Spark 也支持使用第三方序列化库
-### <span style="color:#00ff00;">Kryo序列化工具
+### Kryo序列化工具
   - Kryo（https://github.com/EsotericSoftware/kryo），可以提供比 Java 的序列化工具更短的序列化时间和更高压缩比的二进制表示，但不能直接序列化全部类型的对象
   - 几乎所有的应用都在迁移到 Kryo 后获得了更好的性能
   - 要使用 Kryo 序列化工具，需要设置 spark.serializer 为org.apache.spark.serializer.KryoSerializer
@@ -1655,7 +1765,7 @@
     conf.set("spark.kryo.registrationRequired", "true")
     conf.registerKryoClasses(Array(classOf[MyClass], classOf[MyOtherClass]))
     ```
-### <span style="color:#00ff00;">NotSerializableException错误
+### NotSerializableException错误
   - 不论是选用 Kryo 还是 Java 序列化，如果代码中引用到了一个没有扩展 Java 的 Serializable 接口的类，都会遇到 NotSerializableException
   - 在这种情况下，要查出引发问题的类是比较困难的，因为用户代码会引用到许许多多不同的类
   - 很多 JVM 都支持通过一个特别的选项来帮助调试这一情况："-Dsun.io.serialization.extended DebugInfo=true”
@@ -1664,8 +1774,8 @@
   - 如果没有办法修改这个产生问题的类，就需要采用一些高级的变通策略，比如为这个类创建一个子类并实现 Java 的 Externalizable 接口
   - 参考（https://docs.oracle.com/javase/7/docs/api/java/io/Externalizable.html）
   - 或者自定义 Kryo 的序列化行为
-## <span style="color:#ff8000;">内存管理
-### <span style="color:#00ff00;">内存用途
+## 内存管理
+### 内存用途
   - RDD存储
     ```python
     当调用 RDD 的 persist() 或 cache() 方法时，这个 RDD 的分区会被存储到缓存区中
@@ -1684,7 +1794,7 @@
     如果一个用户应用分配了巨大的数组或者其他对象，那这些都会占用总的内存
     用户代码可以访问 JVM 堆空间中除分配给 RDD 存储和数据混洗存储以外的全部剩余空间
     ```
-### <span style="color:#00ff00;">内存缓存策略优化
+### 内存缓存策略优化
   - 调整内存比例
     ```python
     默认情况下，Spark 会使用 60％的空间来存储 RDD，20% 存储数据混洗操作产生的数据，剩下的 20% 留给用户程序
@@ -1711,11 +1821,11 @@
     ```
 ***
 
-# <span style="color:#ff0000;">Spark SQL (Spark 2.1.0有改动)
+# Spark SQL (Spark 2.1.0有改动)
 ***
 
-# <span style="color:#ff0000;">Spark Streaming (Spark 1.2不支持python)
+# Spark Streaming (Spark 1.2不支持python)
 ***
 
-# <span style="color:#ff0000;">基于 MLlib 的机器学习
+# 基于 MLlib 的机器学习
 ***

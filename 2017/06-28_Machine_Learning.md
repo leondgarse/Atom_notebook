@@ -1,6 +1,62 @@
 # ___2017 - 06 - 28 机器学习 (无监督学习 / 降维 / MapReduce)___
+***
 
 # 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2017 - 06 - 28 机器学习 (无监督学习 / 降维 / MapReduce)___](#user-content-2017-06-28-机器学习-无监督学习-降维-mapreduce)
+  - [目录](#user-content-目录)
+  - [利用 Ｋ-means 聚类算法对未标注数据分组](#user-content-利用-means-聚类算法对未标注数据分组)
+  	- [聚类与K-means](#user-content-聚类与k-means)
+  	- [python实现 K-means 算法](#user-content-python实现-k-means-算法)
+  	- [提高聚类性能 后处理 / 二分k均值算法](#user-content-提高聚类性能-后处理-二分k均值算法)
+  	- [python实现 二分k均值 算法](#user-content-python实现-二分k均值-算法)
+  	- [一个地图上两点的距离计算公式](#user-content-一个地图上两点的距离计算公式)
+  	- [scipy.cluster.vq 中的 whiten / kmeans / vq 方法](#user-content-scipyclustervq-中的-whiten-kmeans-vq-方法)
+  	- [scipy 库中的 kmeans 用于学生成绩分析与数据分组示例](#user-content-scipy-库中的-kmeans-用于学生成绩分析与数据分组示例)
+  - [使用先验知识 Apriori 算法进行关联分析](#user-content-使用先验知识-apriori-算法进行关联分析)
+  	- [关联分析](#user-content-关联分析)
+  	- [Apriori原理](#user-content-apriori原理)
+  	- [python实现 Apriori 算法发现频繁集](#user-content-python实现-apriori-算法发现频繁集)
+  	- [python实现从频繁项集中挖掘关联规则](#user-content-python实现从频繁项集中挖掘关联规则)
+  	- [发现毒蘑菇的相似特征](#user-content-发现毒蘑菇的相似特征)
+  	- [Apriori 算法计算一组数据到目标值的最佳组合](#user-content-apriori-算法计算一组数据到目标值的最佳组合)
+  - [使用 FP-growth 算法来高效发现频繁项集](#user-content-使用-fp-growth-算法来高效发现频繁项集)
+  	- [FP-growth 算法](#user-content-fp-growth-算法)
+  	- [FP树：用于编码数据集的有效方式](#user-content-fp树用于编码数据集的有效方式)
+  	- [python实现构建FP树](#user-content-python实现构建fp树)
+  	- [条件模式基与从FP树中挖掘频繁项集](#user-content-条件模式基与从fp树中挖掘频繁项集)
+  	- [python实现查找条件模式基](#user-content-python实现查找条件模式基)
+  	- [python实现从FP树中挖掘频繁项](#user-content-python实现从fp树中挖掘频繁项)
+  	- [完整的 FP-growth 算法与 Apriori 算法对比](#user-content-完整的-fp-growth-算法与-apriori-算法对比)
+  	- [从新闻网站点击流中挖掘频繁项集](#user-content-从新闻网站点击流中挖掘频繁项集)
+  - [利用主成分分析 PCA 来简化数据](#user-content-利用主成分分析-pca-来简化数据)
+  	- [降维](#user-content-降维)
+  	- [主成分分析 PCA](#user-content-主成分分析-pca)
+  	- [python实现 PCA 变换](#user-content-python实现-pca-变换)
+  	- [利用PCA对半导体制造数据降维](#user-content-利用pca对半导体制造数据降维)
+  - [利用奇异值分解 SVD 简化数据](#user-content-利用奇异值分解-svd-简化数据)
+  	- [SVD的应用](#user-content-svd的应用)
+  	- [矩阵分解](#user-content-矩阵分解)
+  	- [利用Python进行 SVD 结果分析](#user-content-利用python进行-svd-结果分析)
+  	- [基于协同过滤的推荐引擎](#user-content-基于协同过滤的推荐引擎)
+  	- [相似度计算](#user-content-相似度计算)
+  	- [python实现相似度计算](#user-content-python实现相似度计算)
+  	- [餐馆菜品推荐系统](#user-content-餐馆菜品推荐系统)
+  	- [基于SVD的图像压缩](#user-content-基于svd的图像压缩)
+  - [大数据与MapReduce分布式计算框架](#user-content-大数据与mapreduce分布式计算框架)
+  	- [MapReduce 分布式计算框架](#user-content-mapreduce-分布式计算框架)
+  	- [python实现分布式计算均值和方差的 mapper / reducer](#user-content-python实现分布式计算均值和方差的-mapper-reducer)
+  	- [Hadoop 安装与本地运行](#user-content-hadoop-安装与本地运行)
+  	- [托管的hadoop集群亚马逊云服务 AWS 上的可用服务](#user-content-托管的hadoop集群亚马逊云服务-aws-上的可用服务)
+  	- [在 Amazon EMR 上运行 Hadoop 作业](#user-content-在-amazon-emr-上运行-hadoop-作业)
+  	- [MapReduce上的机器学习](#user-content-mapreduce上的机器学习)
+  	- [使用 mrjob 自动化 MapReduce 作业流](#user-content-使用-mrjob-自动化-mapreduce-作业流)
+  	- [python实现 mrjob 分布式计算均值方差](#user-content-python实现-mrjob-分布式计算均值方差)
+  	- [python实现SVM的 Pegasos 算法](#user-content-python实现svm的-pegasos-算法)
+  	- [python实现mrjob版本的 SVM Pegasos 算法](#user-content-python实现mrjob版本的-svm-pegasos-算法)
+
+  <!-- /TOC -->
 ***
 
 # 利用 Ｋ-means 聚类算法对未标注数据分组
