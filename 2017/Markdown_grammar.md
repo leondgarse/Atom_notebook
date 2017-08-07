@@ -1,13 +1,13 @@
 * [1.语法示例](#1)
 * [2. toggle here](#toggle-here)
-* [Some text](#user-content-my-paragraph-title)
+* [Some text](#my-paragraph-title)
 ### <span id="jump">Hello World</span>
 ## <span id="tith">This is the Headin</span>
 ## <span id="toggle-here">toggle here
 <h2 id="1">1.语法示例</h2>
 ## My paragraph title
 
-In Github, ## My paragraph title will produce the following anchor user-content-my-paragraph-title, so you can reference it with [Some text](#user-content-my-paragraph-title). However, I haven't found official documentation for this.
+In Github, ## My paragraph title will produce the following anchor user-content-my-paragraph-title, so you can reference it with [Some text](#my-paragraph-title). However, I haven't found official documentation for this.
 
 
 

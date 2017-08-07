@@ -4,17 +4,17 @@
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2017 - 01 - 04 Shell script___](#user-content-2017-01-04-shell-script)
-  - [目录](#user-content-目录)
-  - [变量](#user-content-变量)
-  - [命令行参数](#user-content-命令行参数)
-  - [计算](#user-content-计算)
-  - [字符串 长度 / index / 抽取 / 替换](#user-content-字符串-长度-index-抽取-替换)
-  - [if 判断条件语法](#user-content-if-判断条件语法)
-  - [case 选择语句](#user-content-case-选择语句)
-  - [for / while / until 循环](#user-content-for-while-until-循环)
-  - [function 函数](#user-content-function-函数)
-  - [getopts 命令行参数处理](#user-content-getopts-命令行参数处理)
+  - [___2017 - 01 - 04 Shell script___](#2017-01-04-shell-script)
+  - [目录](#目录)
+  - [变量](#变量)
+  - [命令行参数](#命令行参数)
+  - [计算](#计算)
+  - [字符串 长度 / index / 抽取 / 替换](#字符串-长度-index-抽取-替换)
+  - [if 判断条件语法](#if-判断条件语法)
+  - [case 选择语句](#case-选择语句)
+  - [for / while / until 循环](#for-while-until-循环)
+  - [function 函数](#function-函数)
+  - [getopts 命令行参数处理](#getopts-命令行参数处理)
 
   <!-- /TOC -->
 ***

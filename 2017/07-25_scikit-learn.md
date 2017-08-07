@@ -4,14 +4,14 @@
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2017 - 07 - 30 R语言基础___](#user-content-2017-07-30-r语言基础)
-  - [目录](#user-content-目录)
-  	- [scikit-learn 介绍](#user-content-scikit-learn-介绍)
-  	- [scikit-learn 载入数据集](#user-content-scikit-learn-载入数据集)
-  	- [scikit-learn学习和预测一般流程](#user-content-scikit-learn学习和预测一般流程)
-  	- [数据预处理](#user-content-数据预处理)
-  	- [sklearn库中的算法](#user-content-sklearn库中的算法)
-  	- [优化算法的参数](#user-content-优化算法的参数)
+  - [___2017 - 07 - 30 R语言基础___](#2017-07-30-r语言基础)
+  - [目录](#目录)
+  	- [scikit-learn 介绍](#scikit-learn-介绍)
+  	- [scikit-learn 载入数据集](#scikit-learn-载入数据集)
+  	- [scikit-learn学习和预测一般流程](#scikit-learn学习和预测一般流程)
+  	- [数据预处理](#数据预处理)
+  	- [sklearn库中的算法](#sklearn库中的算法)
+  	- [优化算法的参数](#优化算法的参数)
 
   <!-- /TOC -->
 ***

@@ -4,16 +4,16 @@
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2017 - 01 - 14 Github___](#user-content-2017-01-14-github)
-  - [目录](#user-content-目录)
-  - [github相关命令](#user-content-github相关命令)
-  - [Setting up Git](#user-content-setting-up-git)
-  - [](#user-content-)
-  - [Adding a new SSH key to your GitHub account](#user-content-adding-a-new-ssh-key-to-your-github-account)
-  - [Adding a new repository](#user-content-adding-a-new-repository)
-  - [Create a local clone of your fork](#user-content-create-a-local-clone-of-your-fork)
-  - [Configure Git to sync your fork with the original Spoon-Knife repository](#user-content-configure-git-to-sync-your-fork-with-the-original-spoon-knife-repository)
-  - [Syncing a fork](#user-content-syncing-a-fork)
+  - [___2017 - 01 - 14 Github___](#2017-01-14-github)
+  - [目录](#目录)
+  - [github相关命令](#github相关命令)
+  - [Setting up Git](#setting-up-git)
+  - [](#)
+  - [Adding a new SSH key to your GitHub account](#adding-a-new-ssh-key-to-your-github-account)
+  - [Adding a new repository](#adding-a-new-repository)
+  - [Create a local clone of your fork](#create-a-local-clone-of-your-fork)
+  - [Configure Git to sync your fork with the original Spoon-Knife repository](#configure-git-to-sync-your-fork-with-the-original-spoon-knife-repository)
+  - [Syncing a fork](#syncing-a-fork)
 
   <!-- /TOC -->
 ***
