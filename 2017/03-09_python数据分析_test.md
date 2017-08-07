@@ -5,11 +5,11 @@
 
   - [___2017 - 03 - 09 Python 数据分析___](#2017-03-09-python-数据分析)
   - [目录](#目录)
-  - [Q / A](#q-a)
-  - [python扩展库 numpy / pandas / matplotlib / ipython / scipy / Biopython简介](#python扩展库-numpy-pandas-matplotlib-ipython-scipy-biopython简介)
+  - [Q & A](#q-a)
+  - [python扩展库 numpy & pandas & matplotlib & ipython & scipy & Biopython简介](#python扩展库-numpy-pandas-matplotlib-ipython-scipy-biopython简介)
   - [ipython](#ipython)
   	- [shell命令和别名](#shell命令和别名)
-  	- [? 用于显示信息 / 搜索命名空间](#-用于显示信息-搜索命名空间)
+  	- [? 用于显示信息 & 搜索命名空间](#-用于显示信息-搜索命名空间)
   	- [魔术命令](#魔术命令)
   	- [%run命令](#run命令)
   	- [Qt的富GUI控制台 jupyter qtconsole](#qt的富gui控制台-jupyter-qtconsole)
@@ -17,128 +17,128 @@
   	- [输入和输出变量](#输入和输出变量)
   	- [记录输入和输出](#记录输入和输出)
   	- [调试器的其他使用场景](#调试器的其他使用场景)
-  	- [%time / %timeit 测试代码的执行时间](#time-timeit-测试代码的执行时间)
+  	- [%time & %timeit 测试代码的执行时间](#time-timeit-测试代码的执行时间)
   	- [基本性能分析：%prun和%run -p](#基本性能分析prun和run-p)
   	- [逐行分析函数性能 %lprun](#逐行分析函数性能-lprun)
   	- [ipython 键盘快捷键](#ipython-键盘快捷键)
   	- [IPython HTML Notebook](#ipython-html-notebook)
   	- [IPython 提高代码开发效率的几点提示](#ipython-提高代码开发效率的几点提示)
   	- [IPython 个性化和配置](#ipython-个性化和配置)
-  - [NumPy 基本数据结构 (ndarray / random / 视图 / 索引 / take / put / reshape / ravel / flatten / resize / 轴变换transpose / swapaxes)](#numpy-基本数据结构-ndarray-random-视图-索引-take-put-reshape-ravel-flatten-resize-轴变换transpose-swapaxes)
-  	- [ndarray：一种多维数组对象 (dtype / shape / array / zeros / ones / eye / diag / empty / arange / astype / linspace)](#ndarray一种多维数组对象-dtype-shape-array-zeros-ones-eye-diag-empty-arange-astype-linspace)
-  	- [random模块 （random_sample / rand / randint / uniform / normal / randn / permutation / shuffle / choice)](#random模块-randomsample-rand-randint-uniform-normal-randn-permutation-shuffle-choice)
+  - [NumPy 基本数据结构 (ndarray & random & 视图 & 索引 & take & put & reshape & ravel & flatten & resize & 轴变换transpose & swapaxes)](#numpy-基本数据结构-ndarray-random-视图-索引-take-put-reshape-ravel-flatten-resize-轴变换transpose-swapaxes)
+  	- [ndarray：一种多维数组对象 (dtype & shape & array & zeros & ones & eye & diag & empty & arange & astype & linspace)](#ndarray一种多维数组对象-dtype-shape-array-zeros-ones-eye-diag-empty-arange-astype-linspace)
+  	- [random模块 （random_sample & rand & randint & uniform & normal & randn & permutation & shuffle & choice)](#random模块-randomsample-rand-randint-uniform-normal-randn-permutation-shuffle-choice)
   	- [数组的视图](#数组的视图)
   	- [高维数组索引](#高维数组索引)
   	- [布尔型索引](#布尔型索引)
   	- [花式索引](#花式索引)
-  	- [take / put 花式索引的等价函数](#take-put-花式索引的等价函数)
-  	- [重新排列 (reshape / ravel / flatten)](#重新排列-reshape-ravel-flatten)
+  	- [take & put 花式索引的等价函数](#take-put-花式索引的等价函数)
+  	- [重新排列 (reshape & ravel & flatten)](#重新排列-reshape-ravel-flatten)
   	- [resize改变数组大小](#resize改变数组大小)
-  	- [数组转置和轴对换 (transpose / T / dot计算内积)](#数组转置和轴对换-transpose-t-dot计算内积)
+  	- [数组转置和轴对换 (transpose & T & dot计算内积)](#数组转置和轴对换-transpose-t-dot计算内积)
   	- [高维数组轴变换 (swapaxes)](#高维数组轴变换-swapaxes)
-  - [Numpy 数组方法 (ufunc / meshgrid / where / 数学方法 / any / all / sort / unique / concatention / vstack / split / fromfunction / 文件 / 线性代数 / fft / 随机数)](#numpy-数组方法-ufunc-meshgrid-where-数学方法-any-all-sort-unique-concatention-vstack-split-fromfunction-文件-线性代数-fft-随机数)
-  	- [通用函数 ufunc (一元 sqt / exp / modf / 二元 add / maximum)](#通用函数-ufunc-一元-sqt-exp-modf-二元-add-maximum)
+  - [Numpy 数组方法 (ufunc & meshgrid & where & 数学方法 & any & all & sort & unique & concatention & vstack & split & fromfunction & 文件 & 线性代数 & fft & 随机数)](#numpy-数组方法-ufunc-meshgrid-where-数学方法-any-all-sort-unique-concatention-vstack-split-fromfunction-文件-线性代数-fft-随机数)
+  	- [通用函数 ufunc (一元 sqt & exp & modf & 二元 add & maximum)](#通用函数-ufunc-一元-sqt-exp-modf-二元-add-maximum)
   	- [np.meshgrid 函数](#npmeshgrid-函数)
   	- [将条件逻辑表述为数组运算 (where)](#将条件逻辑表述为数组运算-where)
-  	- [数学和统计方法 (sum / mean / std / var / add / sin / power / sign / cumsum / cumprod / diff)](#数学和统计方法-sum-mean-std-var-add-sin-power-sign-cumsum-cumprod-diff)
-  	- [用于布尔型数组的方法 (any / all / alltrue / allclose)](#用于布尔型数组的方法-any-all-alltrue-allclose)
-  	- [排序 (sort / sort_values / sort_index )](#排序-sort-sortvalues-sortindex-)
-  	- [唯一化以及其他的集合逻辑 (unique / in1d)](#唯一化以及其他的集合逻辑-unique-in1d)
-  	- [数组合并与拆分concatentaion / vstack / row_stack / hstack / column_stack / split / hsplit / vsplit / dsplit](#数组合并与拆分concatentaion-vstack-rowstack-hstack-columnstack-split-hsplit-vsplit-dsplit)
+  	- [数学和统计方法 (sum & mean & std & var & add & sin & power & sign & cumsum & cumprod & diff)](#数学和统计方法-sum-mean-std-var-add-sin-power-sign-cumsum-cumprod-diff)
+  	- [用于布尔型数组的方法 (any & all & alltrue & allclose)](#用于布尔型数组的方法-any-all-alltrue-allclose)
+  	- [排序 (sort & sort_values & sort_index )](#排序-sort-sortvalues-sortindex-)
+  	- [唯一化以及其他的集合逻辑 (unique & in1d)](#唯一化以及其他的集合逻辑-unique-in1d)
+  	- [数组合并与拆分concatentaion & vstack & row_stack & hstack & column_stack & split & hsplit & vsplit & dsplit](#数组合并与拆分concatentaion-vstack-rowstack-hstack-columnstack-split-hsplit-vsplit-dsplit)
   	- [fromfunction在每个坐标点上执行function](#fromfunction在每个坐标点上执行function)
-  	- [save / load 存取二进制格式文件](#save-load-存取二进制格式文件)
-  	- [savetxt / loadtxt 存取文本文件](#savetxt-loadtxt-存取文本文件)
-  	- [线性代数 (dot / linalg / inv / qr / var / det / eig / svd)](#线性代数-dot-linalg-inv-qr-var-det-eig-svd)
+  	- [save & load 存取二进制格式文件](#save-load-存取二进制格式文件)
+  	- [savetxt & loadtxt 存取文本文件](#savetxt-loadtxt-存取文本文件)
+  	- [线性代数 (dot & linalg & inv & qr & var & det & eig & svd)](#线性代数-dot-linalg-inv-qr-var-det-eig-svd)
   	- [傅立叶变换 fft](#傅立叶变换-fft)
-  	- [示例：随机漫步 (randint / where / cumsum / abs / any / argmax)](#示例随机漫步-randint-where-cumsum-abs-any-argmax)
+  	- [示例：随机漫步 (randint & where & cumsum & abs & any & argmax)](#示例随机漫步-randint-where-cumsum-abs-any-argmax)
   - [pandas 一维数组对象Series](#pandas-一维数组对象series)
   	- [Series的创建](#series的创建)
   	- [Series的基本运算](#series的基本运算)
   	- [Series与Python字典](#series与python字典)
   	- [Series的数据对齐](#series的数据对齐)
   	- [Series的name属性](#series的name属性)
-  - [pandas 表格数据结构DataFrame / Index对象 / 矢量化的字符串函数 / Panel](#pandas-表格数据结构dataframe-index对象-矢量化的字符串函数-panel)
-  	- [创建 （zip / index / columns / 嵌套字典 / Series）](#创建-zip-index-columns-嵌套字典-series)
+  - [pandas 表格数据结构DataFrame & Index对象 & 矢量化的字符串函数 & Panel](#pandas-表格数据结构dataframe-index对象-矢量化的字符串函数-panel)
+  	- [创建 （zip & index & columns & 嵌套字典 & Series）](#创建-zip-index-columns-嵌套字典-series)
   	- [创建使用日期做index的DataFrame (pd.date_range)](#创建使用日期做index的dataframe-pddaterange)
-  	- [数据查看 （index / columns / values / describe / ix / 切片）](#数据查看-index-columns-values-describe-ix-切片)
+  	- [数据查看 （index & columns & values & describe & ix & 切片）](#数据查看-index-columns-values-describe-ix-切片)
   	- [数据修改 (set_value)](#数据修改-setvalue)
-  	- [数据删除 （del / drop）](#数据删除-del-drop)
-  	- [DataFrame的 index / columns 的name属性](#dataframe的-index-columns-的name属性)
+  	- [数据删除 （del & drop）](#数据删除-del-drop)
+  	- [DataFrame的 index & columns 的name属性](#dataframe的-index-columns-的name属性)
   	- [Index 索引对象](#index-索引对象)
-  	- [pandas 矢量化的字符串函数 (contains / get / findall / extract)](#pandas-矢量化的字符串函数-contains-get-findall-extract)
+  	- [pandas 矢量化的字符串函数 (contains & get & findall & extract)](#pandas-矢量化的字符串函数-contains-get-findall-extract)
   	- [面板数据Panel (三维版的DataFrame)](#面板数据panel-三维版的dataframe)
-  - [Series / DataFrame 基本通用功能 (reindex / 索引 / ix / 算数运算 / 函数映射apply / 值计数 / 数据对齐 / 排序 / loc / at / iloc / iat)](#series-dataframe-基本通用功能-reindex-索引-ix-算数运算-函数映射apply-值计数-数据对齐-排序-loc-at-iloc-iat)
-  	- [reindex 重新索引 (插值method / ix)](#reindex-重新索引-插值method-ix)
-  	- [索引、选取和过滤 (切片 / head / tail / 索引ix / is_unique)](#索引选取和过滤-切片-head-tail-索引ix-isunique)
-  	- [汇总和计算描述统计 (ufunc / sum / idmax / describe / 相关系数与协方差)](#汇总和计算描述统计-ufunc-sum-idmax-describe-相关系数与协方差)
-  	- [函数映射 (apply / applymap)](#函数映射-apply-applymap)
-  	- [唯一值、值计数以及成员资格 (unique / value_counts / isin / apply(pd.value_counts))](#唯一值值计数以及成员资格-unique-valuecounts-isin-applypdvaluecounts)
-  	- [数据对齐和处理缺失数据 (isnull / notnull / dropna / fillna / DataFrame和Series之间的运算)](#数据对齐和处理缺失数据-isnull-notnull-dropna-fillna-dataframe和series之间的运算)
-  	- [排序 (sort_index / order / by)](#排序-sortindex-order-by)
+  - [Series & DataFrame 基本通用功能 (reindex & 索引 & ix & 算数运算 & 函数映射apply & 值计数 & 数据对齐 & 排序 & loc & at & iloc & iat)](#series-dataframe-基本通用功能-reindex-索引-ix-算数运算-函数映射apply-值计数-数据对齐-排序-loc-at-iloc-iat)
+  	- [reindex 重新索引 (插值method & ix)](#reindex-重新索引-插值method-ix)
+  	- [索引、选取和过滤 (切片 & head & tail & 索引ix & is_unique)](#索引选取和过滤-切片-head-tail-索引ix-isunique)
+  	- [汇总和计算描述统计 (ufunc & sum & idmax & describe & 相关系数与协方差)](#汇总和计算描述统计-ufunc-sum-idmax-describe-相关系数与协方差)
+  	- [函数映射 (apply & applymap)](#函数映射-apply-applymap)
+  	- [唯一值、值计数以及成员资格 (unique & value_counts & isin & apply(pd.value_counts))](#唯一值值计数以及成员资格-unique-valuecounts-isin-applypdvaluecounts)
+  	- [数据对齐和处理缺失数据 (isnull & notnull & dropna & fillna & DataFrame和Series之间的运算)](#数据对齐和处理缺失数据-isnull-notnull-dropna-fillna-dataframe和series之间的运算)
+  	- [排序 (sort_index & order & by)](#排序-sortindex-order-by)
   	- [排名（ranking）](#排名ranking)
-  	- [整数索引 与 loc / at / iloc / iat方法](#整数索引-与-loc-at-iloc-iat方法)
-  - [Series / DataFrame 层次化索引 (MultiIndex / swaplevel / sortlevel / 根据级别汇总统计 / set_index / reset_index / stack / unstack / pivot)](#series-dataframe-层次化索引-multiindex-swaplevel-sortlevel-根据级别汇总统计-setindex-resetindex-stack-unstack-pivot)
+  	- [整数索引 与 loc & at & iloc & iat方法](#整数索引-与-loc-at-iloc-iat方法)
+  - [Series & DataFrame 层次化索引 (MultiIndex & swaplevel & sortlevel & 根据级别汇总统计 & set_index & reset_index & stack & unstack & pivot)](#series-dataframe-层次化索引-multiindex-swaplevel-sortlevel-根据级别汇总统计-setindex-resetindex-stack-unstack-pivot)
   	- [层次化索引与MultiIndex](#层次化索引与multiindex)
   	- [重排分级顺序 swaplevel](#重排分级顺序-swaplevel)
   	- [数据排序 sortlevel](#数据排序-sortlevel)
   	- [根据级别汇总统计](#根据级别汇总统计)
-  	- [使用DataFrame的列作为索引 (set_index / reset_index)](#使用dataframe的列作为索引-setindex-resetindex)
-  	- [stack / unstack 旋转层次化索引的轴，转换Series / DataFrame](#stack-unstack-旋转层次化索引的轴转换series-dataframe)
-  	- [stack / unstack操作中的缺失值](#stack-unstack操作中的缺失值)
+  	- [使用DataFrame的列作为索引 (set_index & reset_index)](#使用dataframe的列作为索引-setindex-resetindex)
+  	- [stack & unstack 旋转层次化索引的轴，转换Series & DataFrame](#stack-unstack-旋转层次化索引的轴转换series-dataframe)
+  	- [stack & unstack操作中的缺失值](#stack-unstack操作中的缺失值)
   	- [DataFrame进行unstack操作](#dataframe进行unstack操作)
   	- [pivot转换方法，使用原有数据创建新的DataFrame](#pivot转换方法使用原有数据创建新的dataframe)
-  - [数据存取 （文本文档 / 二进制文件 / HDF5 / Excel / SQL数据库 / MongoDB）](#数据存取-文本文档-二进制文件-hdf5-excel-sql数据库-mongodb)
-  	- [pandas读写表格型文件 read_csv / read_table / 缺失值处理 / 逐块读取 / from_csv](#pandas读写表格型文件-readcsv-readtable-缺失值处理-逐块读取-fromcsv)
-  	- [手工处理分隔符格式 csv.reader / csv.writer](#手工处理分隔符格式-csvreader-csvwriter)
-  	- [二进制文本文件读写 (pickle / save / load)](#二进制文本文件读写-pickle-save-load)
+  - [数据存取 （文本文档 & 二进制文件 & HDF5 & Excel & SQL数据库 & MongoDB）](#数据存取-文本文档-二进制文件-hdf5-excel-sql数据库-mongodb)
+  	- [pandas读写表格型文件 read_csv & read_table & 缺失值处理 & 逐块读取 & from_csv](#pandas读写表格型文件-readcsv-readtable-缺失值处理-逐块读取-fromcsv)
+  	- [手工处理分隔符格式 csv.reader & csv.writer](#手工处理分隔符格式-csvreader-csvwriter)
+  	- [二进制文本文件读写 (pickle & save & load)](#二进制文本文件读写-pickle-save-load)
   	- [HDF5格式 (HDFStore)](#hdf5格式-hdfstore)
-  	- [读取 (read_excel / to_excel / ExcelFile类)](#读取-readexcel-toexcel-excelfile类)
-  	- [SQL数据库 (sqlite3 / read_sql)](#sql数据库-sqlite3-readsql)
+  	- [读取 (read_excel & to_excel & ExcelFile类)](#读取-readexcel-toexcel-excelfile类)
+  	- [SQL数据库 (sqlite3 & read_sql)](#sql数据库-sqlite3-readsql)
   	- [存取MongoDB中的数据](#存取mongodb中的数据)
-  - [网络相关数据处理 (json / urllib / request / html / xml)](#网络相关数据处理-json-urllib-request-html-xml)
+  - [网络相关数据处理 (json & urllib & request & html & xml)](#网络相关数据处理-json-urllib-request-html-xml)
   	- [json库读取JSON数据](#json库读取json数据)
-  	- [Python获取网络数据 (urllib / requests)](#python获取网络数据-urllib-requests)
+  	- [Python获取网络数据 (urllib & requests)](#python获取网络数据-urllib-requests)
   	- [lxml.html解析html文件 (Yahoo财经数据处理成DataFrame)](#lxmlhtml解析html文件-yahoo财经数据处理成dataframe)
   	- [lxml.objectify解析XML (地铁资料数据处理成DataFrame)](#lxmlobjectify解析xml-地铁资料数据处理成dataframe)
-  - [数据合并 (merge / join / concat / combine_first)](#数据合并-merge-join-concat-combinefirst)
-  	- [merge 根据指定的列名 / 索引合并DataFrame重名数据项](#merge-根据指定的列名-索引合并dataframe重名数据项)
+  - [数据合并 (merge & join & concat & combine_first)](#数据合并-merge-join-concat-combinefirst)
+  	- [merge 根据指定的列名 & 索引合并DataFrame重名数据项](#merge-根据指定的列名-索引合并dataframe重名数据项)
   	- [join DataFrame索引上的合并](#join-dataframe索引上的合并)
-  	- [concat Series / DataFrame 横轴或纵轴上的数据堆叠](#concat-series-dataframe-横轴或纵轴上的数据堆叠)
-  	- [DataFrame分别使用 join / merge / concat](#dataframe分别使用-join-merge-concat)
+  	- [concat Series & DataFrame 横轴或纵轴上的数据堆叠](#concat-series-dataframe-横轴或纵轴上的数据堆叠)
+  	- [DataFrame分别使用 join & merge & concat](#dataframe分别使用-join-merge-concat)
   	- [combine_first 使用另一个数据集的数据，填补NA值](#combinefirst-使用另一个数据集的数据填补na值)
-  - [数据整理 (duplicated / drop_duplicates / map / replace / rename / cut / qcut / 过滤异常值 / 随机采样 / get_dummies)](#数据整理-duplicated-dropduplicates-map-replace-rename-cut-qcut-过滤异常值-随机采样-getdummies)
-  	- [duplicated / drop_duplicates 处理重复数据](#duplicated-dropduplicates-处理重复数据)
+  - [数据整理 (duplicated & drop_duplicates & map & replace & rename & cut & qcut & 过滤异常值 & 随机采样 & get_dummies)](#数据整理-duplicated-dropduplicates-map-replace-rename-cut-qcut-过滤异常值-随机采样-getdummies)
+  	- [duplicated & drop_duplicates 处理重复数据](#duplicated-dropduplicates-处理重复数据)
   	- [map映射](#map映射)
   	- [replace替换](#replace替换)
-  	- [Index.map / rename重命名轴索引](#indexmap-rename重命名轴索引)
-  	- [cut / qcut离散化和面元划分](#cut-qcut离散化和面元划分)
-  	- [数组运算过滤 / 变换异常值](#数组运算过滤-变换异常值)
-  	- [通过permutation / randint随机数排列和随机采样](#通过permutation-randint随机数排列和随机采样)
-  	- [get_dummies 计算指标/哑变量](#getdummies-计算指标哑变量)
+  	- [Index.map & rename重命名轴索引](#indexmap-rename重命名轴索引)
+  	- [cut & qcut离散化和面元划分](#cut-qcut离散化和面元划分)
+  	- [数组运算过滤 & 变换异常值](#数组运算过滤-变换异常值)
+  	- [通过permutation & randint随机数排列和随机采样](#通过permutation-randint随机数排列和随机采样)
+  	- [get_dummies 计算指标&哑变量](#getdummies-计算指标哑变量)
   	- [get_dummies 计算电影数据的各标签分布](#getdummies-计算电影数据的各标签分布)
   - [matplotlib 绘图](#matplotlib-绘图)
-  	- [pyplot / pylab](#pyplot-pylab)
-  	- [绘图对象Figure / 子图Subplot](#绘图对象figure-子图subplot)
+  	- [pyplot & pylab](#pyplot-pylab)
+  	- [绘图对象Figure & 子图Subplot](#绘图对象figure-子图subplot)
   	- [subplots方法](#subplots方法)
   	- [Figure的subplots_adjust方法修改间距](#figure的subplotsadjust方法修改间距)
-  	- [颜色 color / 线型 linestyle(ls) / 标记 marker / 线宽 linewidth / 标签 label](#颜色-color-线型-linestylels-标记-marker-线宽-linewidth-标签-label)
-  	- [刻度 set_xticks / set_xtickslabels / 标题 set_title / set_xlabel / 范围 set_xlim / 图例 legend](#刻度-setxticks-setxtickslabels-标题-settitle-setxlabel-范围-setxlim-图例-legend)
+  	- [颜色 color & 线型 linestyle(ls) & 标记 marker & 线宽 linewidth & 标签 label](#颜色-color-线型-linestylels-标记-marker-线宽-linewidth-标签-label)
+  	- [刻度 set_xticks & set_xtickslabels & 标题 set_title & set_xlabel & 范围 set_xlim & 图例 legend](#刻度-setxticks-setxtickslabels-标题-settitle-setxlabel-范围-setxlim-图例-legend)
   	- [drawstyle 选项修改线型图中，非实际数据点的插值方式，默认是按线性方式插值](#drawstyle-选项修改线型图中非实际数据点的插值方式默认是按线性方式插值)
   	- [axes指定绘图区域](#axes指定绘图区域)
-  	- [注释text / arrow / annotate](#注释text-arrow-annotate)
+  	- [注释text & arrow & annotate](#注释text-arrow-annotate)
   	- [图形绘制 add_patch](#图形绘制-addpatch)
   	- [将图表保存到文件 savefig](#将图表保存到文件-savefig)
   	- [matplotlib全局配置 rc方法](#matplotlib全局配置-rc方法)
   - [pandas 绘图](#pandas-绘图)
-  	- [Series / DataFrame的plot方法直接绘图](#series-dataframe的plot方法直接绘图)
+  	- [Series & DataFrame的plot方法直接绘图](#series-dataframe的plot方法直接绘图)
   	- [Series 绘图选项](#series-绘图选项)
   	- [DataFrame 的专有绘图选项](#dataframe-的专有绘图选项)
   	- [ax选项](#ax选项)
-  	- [柱状图 bar / barh](#柱状图-bar-barh)
-  	- [直方图 hist / 密度图 kde](#直方图-hist-密度图-kde)
+  	- [柱状图 bar & barh](#柱状图-bar-barh)
+  	- [直方图 hist & 密度图 kde](#直方图-hist-密度图-kde)
   	- [散布图 scatter](#散布图-scatter)
   - [Python图形化工具生态系统](#python图形化工具生态系统)
-  - [GroupBy数据聚合与分组运算(groupby / aggregate / transform / apply / cut / qcut / pivot_table / crosstab)](#groupby数据聚合与分组运算groupby-aggregate-transform-apply-cut-qcut-pivottable-crosstab)
+  - [GroupBy数据聚合与分组运算(groupby & aggregate & transform & apply & cut & qcut & pivot_table & crosstab)](#groupby数据聚合与分组运算groupby-aggregate-transform-apply-cut-qcut-pivottable-crosstab)
   	- [GroupBy技术](#groupby技术)
   		- [GroupBy对象](#groupby对象)
   		- [Series分组](#series分组)
@@ -150,47 +150,47 @@
   		- [通过函数进行分组](#通过函数进行分组)
   		- [level 根据索引级别分组](#level-根据索引级别分组)
   	- [GroupBy的方法聚合数据](#groupby的方法聚合数据)
-  	- [aggregate / agg 聚合，将多个函数应用于多个列，只接受能够将一维数组简化为标量值的函数](#aggregate-agg-聚合将多个函数应用于多个列只接受能够将一维数组简化为标量值的函数)
+  	- [aggregate & agg 聚合，将多个函数应用于多个列，只接受能够将一维数组简化为标量值的函数](#aggregate-agg-聚合将多个函数应用于多个列只接受能够将一维数组简化为标量值的函数)
   	- [transform聚合，将一个函数应用到各个分组，接受的函数只能产生两种结果，一个可以广播的标量值(np.mean)，或是一个相同大小的结果数组](#transform聚合将一个函数应用到各个分组接受的函数只能产生两种结果一个可以广播的标量值npmean或是一个相同大小的结果数组)
   	- [apply聚合，最一般化的GroupBy方法，传入的函数只需返回一个pandas对象或标量值即可](#apply聚合最一般化的groupby方法传入的函数只需返回一个pandas对象或标量值即可)
-  	- [cut / qcut 桶 bucket / 分位数 quantile 分析](#cut-qcut-桶-bucket-分位数-quantile-分析)
+  	- [cut & qcut 桶 bucket & 分位数 quantile 分析](#cut-qcut-桶-bucket-分位数-quantile-分析)
   	- [groupby的“拆分－应用－合并”范式应用](#groupby的拆分应用合并范式应用)
-  	- [透视表pivot table (pivot_table / margins / aggfunc / fill_value)](#透视表pivot-table-pivottable-margins-aggfunc-fillvalue)
+  	- [透视表pivot table (pivot_table & margins & aggfunc & fill_value)](#透视表pivot-table-pivottable-margins-aggfunc-fillvalue)
   	- [交叉表（cross-tabulation，简称crosstab）是一种用于计算分组频率的特殊透视表](#交叉表cross-tabulation简称crosstab是一种用于计算分组频率的特殊透视表)
-  - [日期和时间数据类型及工具 (datetiem / timedelta / strftime / strptime / parse / date_range / shift / rollforward / rollback / 时区 / 时期period / resample重采样 / 移动窗口函数)](#日期和时间数据类型及工具-datetiem-timedelta-strftime-strptime-parse-daterange-shift-rollforward-rollback-时区-时期period-resample重采样-移动窗口函数)
-  	- [datetime.now 当前时间 year / month / day / date / time 属性](#datetimenow-当前时间-year-month-day-date-time-属性)
+  - [日期和时间数据类型及工具 (datetiem & timedelta & strftime & strptime & parse & date_range & shift & rollforward & rollback & 时区 & 时期period & resample重采样 & 移动窗口函数)](#日期和时间数据类型及工具-datetiem-timedelta-strftime-strptime-parse-daterange-shift-rollforward-rollback-时区-时期period-resample重采样-移动窗口函数)
+  	- [datetime.now 当前时间 year & month & day & date & time 属性](#datetimenow-当前时间-year-month-day-date-time-属性)
   	- [datetime.timedelta表示两个datetime对象之间的时间差](#datetimetimedelta表示两个datetime对象之间的时间差)
-  	- [str / strftime / strptime / datetime格式定义](#str-strftime-strptime-datetime格式定义)
+  	- [str & strftime & strptime & datetime格式定义](#str-strftime-strptime-datetime格式定义)
   	- [dateutil包中的parser.parse方法可以解析任何格式的字符串](#dateutil包中的parserparse方法可以解析任何格式的字符串)
   	- [使用datetime的时间序列](#使用datetime的时间序列)
   	- [date_range生成日期范围](#daterange生成日期范围)
-  	- [shift / rollforward / rollback 移动 Series / DataFrame沿时间轴将数据前移或后移](#shift-rollforward-rollback-移动-series-dataframe沿时间轴将数据前移或后移)
-  	- [时区处理 (pytz库 / common_timezones / timezone / tz_localize / tz_convert)](#时区处理-pytz库-commontimezones-timezone-tzlocalize-tzconvert)
-  	- [时期period及其算术运算 (period / asfreq / 季度 / to_period / to_timestamp / PeriodIndex)](#时期period及其算术运算-period-asfreq-季度-toperiod-totimestamp-periodindex)
-  	- [resample / groupby重采样 (降采样 / OHLC重采样 / 升采样和插值)](#resample-groupby重采样-降采样-ohlc重采样-升采样和插值)
-  	- [移动窗口函数 (rolling_mean / rolling_std / ewma / rolling_corr / rolling_apply)](#移动窗口函数-rollingmean-rollingstd-ewma-rollingcorr-rollingapply)
+  	- [shift & rollforward & rollback 移动 Series & DataFrame沿时间轴将数据前移或后移](#shift-rollforward-rollback-移动-series-dataframe沿时间轴将数据前移或后移)
+  	- [时区处理 (pytz库 & common_timezones & timezone & tz_localize & tz_convert)](#时区处理-pytz库-commontimezones-timezone-tzlocalize-tzconvert)
+  	- [时期period及其算术运算 (period & asfreq & 季度 & to_period & to_timestamp & PeriodIndex)](#时期period及其算术运算-period-asfreq-季度-toperiod-totimestamp-periodindex)
+  	- [resample & groupby重采样 (降采样 & OHLC重采样 & 升采样和插值)](#resample-groupby重采样-降采样-ohlc重采样-升采样和插值)
+  	- [移动窗口函数 (rolling_mean & rolling_std & ewma & rolling_corr & rolling_apply)](#移动窗口函数-rollingmean-rollingstd-ewma-rollingcorr-rollingapply)
   	- [性能和内存使用方面的注意事项](#性能和内存使用方面的注意事项)
-  - [NumPy内部机理与其他类 (issubdtype / mro / 排列顺序C / Fortran / broadcasting广播 / np.newaxis / dtype / matrix / memmap / Cython)](#numpy内部机理与其他类-issubdtype-mro-排列顺序c-fortran-broadcasting广播-npnewaxis-dtype-matrix-memmap-cython)
+  - [NumPy内部机理与其他类 (issubdtype & mro & 排列顺序C & Fortran & broadcasting广播 & np.newaxis & dtype & matrix & memmap & Cython)](#numpy内部机理与其他类-issubdtype-mro-排列顺序c-fortran-broadcasting广播-npnewaxis-dtype-matrix-memmap-cython)
   	- [ndarray对象的内部机理](#ndarray对象的内部机理)
-  	- [NumPy数据类型体系 (issubdtype / mro)](#numpy数据类型体系-issubdtype-mro)
-  	- [数组的排列顺序 C / Fortran](#数组的排列顺序-c-fortran)
-  	- [broadcasting广播 / np.newaxis属性添加新轴](#broadcasting广播-npnewaxis属性添加新轴)
+  	- [NumPy数据类型体系 (issubdtype & mro)](#numpy数据类型体系-issubdtype-mro)
+  	- [数组的排列顺序 C & Fortran](#数组的排列顺序-c-fortran)
+  	- [broadcasting广播 & np.newaxis属性添加新轴](#broadcasting广播-npnewaxis属性添加新轴)
   	- [结构化和记录式数组 (dtype)](#结构化和记录式数组-dtype)
   	- [NumPy的matrix类](#numpy的matrix类)
   	- [内存映像文件 memmap](#内存映像文件-memmap)
-  	- [其他加速方法 Cython / f2py / C](#其他加速方法-cython-f2py-c)
-  - [Numpy其他方法 (r_ / c_ / tile / repeat / reduce / accumulate / outer / reduceat / fromoyfunc / vectorize / argsort / lexsort / searchsorted / digitize)](#numpy其他方法-r-c-tile-repeat-reduce-accumulate-outer-reduceat-fromoyfunc-vectorize-argsort-lexsort-searchsorted-digitize)
-  	- [r_ / c_ 堆叠辅助类](#r-c-堆叠辅助类)
-  	- [tile / repeat 元素的重复操作](#tile-repeat-元素的重复操作)
-  	- [ufunc实例方法 reduce / accumulate / outer / reduceat](#ufunc实例方法-reduce-accumulate-outer-reduceat)
-  	- [frompyfunc / vectorize 自定义ufunc](#frompyfunc-vectorize-自定义ufunc)
-  	- [argsort / lexsort 间接排序](#argsort-lexsort-间接排序)
-  	- [searchsorted 在有序数组中查找元素 (searchsorte / digitize)](#searchsorted-在有序数组中查找元素-searchsorte-digitize)
+  	- [其他加速方法 Cython & f2py & C](#其他加速方法-cython-f2py-c)
+  - [Numpy其他方法 (r_ & c_ & tile & repeat & reduce & accumulate & outer & reduceat & fromoyfunc & vectorize & argsort & lexsort & searchsorted & digitize)](#numpy其他方法-r-c-tile-repeat-reduce-accumulate-outer-reduceat-fromoyfunc-vectorize-argsort-lexsort-searchsorted-digitize)
+  	- [r_ & c_ 堆叠辅助类](#r-c-堆叠辅助类)
+  	- [tile & repeat 元素的重复操作](#tile-repeat-元素的重复操作)
+  	- [ufunc实例方法 reduce & accumulate & outer & reduceat](#ufunc实例方法-reduce-accumulate-outer-reduceat)
+  	- [frompyfunc & vectorize 自定义ufunc](#frompyfunc-vectorize-自定义ufunc)
+  	- [argsort & lexsort 间接排序](#argsort-lexsort-间接排序)
+  	- [searchsorted 在有序数组中查找元素 (searchsorte & digitize)](#searchsorted-在有序数组中查找元素-searchsorte-digitize)
   - [美国农业部（USDA）食品数据库JSON版解析](#美国农业部usda食品数据库json版解析)
   	- [可执行代码](#可执行代码)
   	- [代码分析](#代码分析)
-  - [Yahooc财经数据分析 (DataFrame / finance)](#yahooc财经数据分析-dataframe-finance)
-  	- [matplotlib.finance 获取雅虎财经数据 / 数据整理 (datetime) / merge合并](#matplotlibfinance-获取雅虎财经数据-数据整理-datetime-merge合并)
+  - [Yahooc财经数据分析 (DataFrame & finance)](#yahooc财经数据分析-dataframe-finance)
+  	- [matplotlib.finance 获取雅虎财经数据 & 数据整理 (datetime) & merge合并](#matplotlibfinance-获取雅虎财经数据-数据整理-datetime-merge合并)
   	- [数据统计分析](#数据统计分析)
   - [Basemap 绘制地图：图形化显示海地地震危机数据](#basemap-绘制地图图形化显示海地地震危机数据)
   	- [可执行代码](#可执行代码)
@@ -203,7 +203,7 @@
   	- [hello world](#hello-world)
   	- [组件](#组件)
   	- [事件处理机制(Event Handling)](#事件处理机制event-handling)
-  	- [组件介绍 (按钮 / 菜单 / 文本 / 列表 / 单选 / 复选框)](#组件介绍-按钮-菜单-文本-列表-单选-复选框)
+  	- [组件介绍 (按钮 & 菜单 & 文本 & 列表 & 单选 & 复选框)](#组件介绍-按钮-菜单-文本-列表-单选-复选框)
   	- [布局管理](#布局管理)
   	- [其他GUI库](#其他gui库)
   		- [PyQt](#pyqt)
@@ -214,7 +214,7 @@
 ***
 nonzero / where / choose
 
-# Q / A
+# Q & A
   - GitHub上的数据文件及相关资料 http://github.com/pydata/pydata-book
   - JSON JavaScript Object Notation 一种常用的Web数据格式
   - XML（Extensible Markup Language） 一种常见的支持分层、嵌套数据以及元数据的结构化数据格式
@@ -269,7 +269,7 @@ nonzero / where / choose
     ```
 ***
 
-# python扩展库 numpy / pandas / matplotlib / ipython / scipy / Biopython简介
+# python扩展库 numpy & pandas & matplotlib & ipython & scipy & Biopython简介
   - 基于Python的软件生态圈，开源，主要为数学、科学和工程服务
   - 介绍
     ```python
@@ -381,7 +381,7 @@ nonzero / where / choose
     In [12]: foo = 'test*'
     In [13]: !ls $foo
     ```
-## ? 用于显示信息 / 搜索命名空间
+## ? 用于显示信息 & 搜索命名空间
   - 在变量的前面或后面加上一个问号（?），可以将有关该对象的一些通用信息显示出来
   - 函数或实例方法docstring会显示出来
   - 使用??将显示出该函数的源代码（如果可能的话）
@@ -531,7 +531,7 @@ nonzero / where / choose
           3     return tmp / z
     ipdb>
     ```
-## %time / %timeit 测试代码的执行时间
+## %time & %timeit 测试代码的执行时间
   - %time一次执行一条语句，然后报告总体执行时间(Wall time)
     ```python
     In [42]: strings = ['foo', 'foobar', 'baz', 'qux', 'python', 'Guido Van Rossum'] * 100000
@@ -719,8 +719,8 @@ nonzero / where / choose
     ```
 ***
 
-# NumPy 基本数据结构 (ndarray / random / 视图 / 索引 / take / put / reshape / ravel / flatten / resize / 轴变换transpose / swapaxes)
-## ndarray：一种多维数组对象 (dtype / shape / array / zeros / ones / eye / diag / empty / arange / astype / linspace)
+# NumPy 基本数据结构 (ndarray & random & 视图 & 索引 & take & put & reshape & ravel & flatten & resize & 轴变换transpose & swapaxes)
+## ndarray：一种多维数组对象 (dtype & shape & array & zeros & ones & eye & diag & empty & arange & astype & linspace)
   - NumPy最重要的一个特点就是其N维数组对象（即ndarray），该对象是一个快速而灵活的大数据集容器
   - 其中的所有元素必须是相同类型的
   - 矢量化（vectorization）：大小相等的数组之间的任何算术运算都会将运算应用到元素级，数组与标量的算术运算也会将那个标量值传播到各个元素
@@ -791,7 +791,7 @@ nonzero / where / choose
     array([ 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33,
         35, 37, 39, 41, 43, 45, 47, 49])
     ```
-## random模块 （random_sample / rand / randint / uniform / normal / randn / permutation / shuffle / choice)
+## random模块 （random_sample & rand & randint & uniform & normal & randn & permutation & shuffle & choice)
   - 对Python内置的random进行了补充，增加了一些用于高效生成多种概率分布的样本值的函数
   - random_sample / random / rand 返回[0.0, 1.0)区间内的随机数，可以指定形状
     ```
@@ -1019,7 +1019,7 @@ nonzero / where / choose
         [20, 23, 22],
         [15, 18, 17] ])
     ```
-## take / put 花式索引的等价函数
+## take & put 花式索引的等价函数
   - 专门用于获取和设置单个轴向上的选区，直到编写本书时为止，take和put函数的性能通常要比花式索引好得多(已修正？)
     ```python
     arr = np.arange(10) * 100
@@ -1054,7 +1054,7 @@ nonzero / where / choose
         [ 40, 500, 40, 43] ])
     ```
   - put不接受axis参数，它只会在数组的扁平化版本（一维，C顺序）上进行索引(这一点今后应该是会有所改善的)
-## 重新排列 (reshape / ravel / flatten)
+## 重新排列 (reshape & ravel & flatten)
   - reshape重新排列
     ```python
     np.arange(8).reshape((2, 4))
@@ -1110,7 +1110,7 @@ nonzero / where / choose
         [ 5, 6, 7, 8, 9, 0],
         [10, 11, 12, 13, 14, 0] ])
     ```
-## 数组转置和轴对换 (transpose / T / dot计算内积)
+## 数组转置和轴对换 (transpose & T & dot计算内积)
   - 转置（transpose）是重塑的一种特殊形式，它返回的是源数据的视图（不会进行任何复制操作）
     ```python
     data = np.arange(12).reshape(3, 4)
@@ -1193,8 +1193,8 @@ nonzero / where / choose
     ```
 ***
 
-# Numpy 数组方法 (ufunc / meshgrid / where / 数学方法 / any / all / sort / unique / concatention / vstack / split / fromfunction / 文件 / 线性代数 / fft / 随机数)
-## 通用函数 ufunc (一元 sqt / exp / modf / 二元 add / maximum)
+# Numpy 数组方法 (ufunc & meshgrid & where & 数学方法 & any & all & sort & unique & concatention & vstack & split & fromfunction & 文件 & 线性代数 & fft & 随机数)
+## 通用函数 ufunc (一元 sqt & exp & modf & 二元 add & maximum)
   - ufunc(universal function)是一种能对ndarray中的数据执行元素级运算的函数，可以看作简单函数的矢量化包装器
   - NumPy内置的许多ufunc函数都是在C语言级别实现的,计算速度非常快
   - 矢量化：NumPy数组可以将许多种数据处理任务表述为简洁的数组表达式（否则需要编写循环），用数组表达式代替循环的做法，通常被称为矢量化
@@ -1276,7 +1276,7 @@ nonzero / where / choose
           np.where(cond1, 1,        # elif cond1 --> 1
                np.where(cond2, 2, 3)))        # elif cond2 --> 2, else --> 3
     ```
-## 数学和统计方法 (sum / mean / std / var / add / sin / power / sign / cumsum / cumprod / diff)
+## 数学和统计方法 (sum & mean & std & var & add & sin & power & sign & cumsum & cumprod & diff)
   - 可以通过数组上的一组数学函数对整个数组或某个轴向的数据进行统计计算
   - 基本数学计算 + / * / >
     ```python
@@ -1354,7 +1354,7 @@ nonzero / where / choose
     np.diff(x, axis=0)        # 二维指定坐标轴
     array([ [-1, 2, 0, -2] ])
     ```
-## 用于布尔型数组的方法 (any / all / alltrue / allclose)
+## 用于布尔型数组的方法 (any & all & alltrue & allclose)
   - 布尔值会被强制转换为1（True）和0（False），因此sum可以被用来对布尔型数组中的True值计数
     ```python
     arr = np.random.randn(100)
@@ -1390,7 +1390,7 @@ nonzero / where / choose
     np.allclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
     Out[604]: True
     ```
-## 排序 (sort / sort_values / sort_index )
+## 排序 (sort & sort_values & sort_index )
   - 顶级方法np.sort返回的是数组的已排序副本，而就地排序则会修改数组本身
   - 跟Python内置的列表类型一样，NumPy数组也可以通过sort方法就地排序
     ```python
@@ -1422,7 +1422,7 @@ nonzero / where / choose
     by 参数指定用于排序的属性名
     sort_index 提供更多的选项，默认使用index排列
     ```
-## 唯一化以及其他的集合逻辑 (unique / in1d)
+## 唯一化以及其他的集合逻辑 (unique & in1d)
   - NumPy提供了一些针对一维ndarray的基本集合运算
   - np.unique 用于找出数组中的唯一值并返回已排序的结果
     ```python
@@ -1442,7 +1442,7 @@ nonzero / where / choose
     np.in1d(values, [2, 3, 6])
     Out[61]: array([ True, False, False, True, True, False, True], dtype=bool)
     ```
-## 数组合并与拆分concatentaion / vstack / row_stack / hstack / column_stack / split / hsplit / vsplit / dsplit
+## 数组合并与拆分concatentaion & vstack & row_stack & hstack & column_stack & split & hsplit & vsplit & dsplit
   - numpy.concatenate可以按指定轴将一个由数组组成的序列连接到一起
     ```python
     arr1 = np.arange(1, 7).reshape(2, 3)
@@ -1562,7 +1562,7 @@ nonzero / where / choose
         [ 8, 16, 24, 32, 40, 48, 56, 64, 72],
         [ 9, 18, 27, 36, 45, 54, 63, 72, 81] ])
     ```
-## save / load 存取二进制格式文件
+## save & load 存取二进制格式文件
   - np.save和np.load是读写磁盘数组数据的两个主要函数
   - 默认情况下，数组是以未压缩的原始二进制格式保存在扩展名为.npy的文件中的
     ```python
@@ -1596,7 +1596,7 @@ nonzero / where / choose
     arch.keys()
     Out[76]: ['a', 'b']
     ```
-## savetxt / loadtxt 存取文本文件
+## savetxt & loadtxt 存取文本文件
   - np.loadtxt或更为专门化的np.genfromtxt将数据加载到普通的NumPy数组中
   - 这些函数都有许多选项可供使用：指定各种分隔符、针对特定列的转换器函数、需要跳过的行数等
   - <br />
@@ -1606,7 +1606,7 @@ nonzero / where / choose
     ```
     np.savetxt 将数组写到以某种分隔符隔开的文本文件中
   - genfromtxt跟loadtxt差不多，只不过它面向的是结构化数组和缺失数据处理
-## 线性代数 (dot / linalg / inv / qr / var / det / eig / svd)
+## 线性代数 (dot & linalg & inv & qr & var & det & eig & svd)
   - NumPy提供了一个用于矩阵乘法的dot函数（既是一个数组方法也是numpy命名空间中的一个函数）
     ```python
     x = np.arange(6).reshape(2, 3)
@@ -1709,7 +1709,7 @@ nonzero / where / choose
     f = np.fft.fft(la)        # f = sp.fft(la)
     plt.plot(f)
     ```
-## 示例：随机漫步 (randint / where / cumsum / abs / any / argmax)
+## 示例：随机漫步 (randint & where & cumsum & abs & any & argmax)
   - 随机漫步：从0开始，步长1和－1出现的概率相等
   - 纯python实现
     ```python
@@ -1869,12 +1869,12 @@ nonzero / where / choose
     ```
 ***
 
-# pandas 表格数据结构DataFrame / Index对象 / 矢量化的字符串函数 / Panel
+# pandas 表格数据结构DataFrame & Index对象 & 矢量化的字符串函数 & Panel
   - 一个表格型的数据结构，含有一组有序的列(类似于index)
   - DataFrame既有行索引也有列索引，可看成共享同一个index的Series集合
   - 层次化索引的表格型结构：虽然DataFrame是以二维结构保存数据的，但仍然可以将其表示为更高维度的数据
   - 对于DataFrame df，查看列数据可以使用df.name / df['name']，但创建新列 / 删除列只能使用 df['name']这种方式
-## 创建 （zip / index / columns / 嵌套字典 / Series）
+## 创建 （zip & index & columns & 嵌套字典 & Series）
   - 使用zip创建DataFrame [ ??? ]
   - 使用字典数据创建
     ```python
@@ -1965,7 +1965,7 @@ nonzero / where / choose
     ```python
     DataFrame(np.random.randn(7,3),index=dates,columns = list('ABC'))
     ```
-## 数据查看 （index / columns / values / describe / ix / 切片）
+## 数据查看 （index & columns & values & describe & ix & 切片）
   - index / columns / values / describe 属性
     ```python
     type(df)
@@ -2091,7 +2091,7 @@ nonzero / where / choose
     1   Linling 5000   1   7
     2   Niuyun 6000   2   7
     ```
-## 数据删除 （del / drop）
+## 数据删除 （del & drop）
   - 关键字del用于删除列
     ```python
     del f['year']        # 不能是 del f.year
@@ -2150,7 +2150,7 @@ nonzero / where / choose
     1 admin   NaN  True -1.2
     2 admin   NaN  True -1.5
     ```
-## DataFrame的 index / columns 的name属性
+## DataFrame的 index & columns 的name属性
   - 指定索引 / 列名称
     ```python
     pop = {'Nevada': {2001: 2.4, 2002: 2.9}, 'Ohio': {2000: 1.5, 2001: 1.7, 2002: 3.6}}
@@ -2201,7 +2201,7 @@ nonzero / where / choose
     PeriodIndex        针对时间间隔Period数据的特殊Index
     ```
   - take / slice_indexer / slice_locs
-## pandas 矢量化的字符串函数 (contains / get / findall / extract)
+## pandas 矢量化的字符串函数 (contains & get & findall & extract)
   - 通过Series.map，所有字符串和正则表达式方法都能被应用于（传入lambda表达式或其他函数）各个值，但是如果存在NA就会报错
   - Series的str属性有一些能够跳过NA值的字符串操作方法 help(Series.str)
   - str.contains 返回是否包含子串
@@ -2266,8 +2266,8 @@ nonzero / where / choose
   - to_frame / to_panel方法用于转换Panel / DataFrame
 ***
 
-# Series / DataFrame 基本通用功能 (reindex / 索引 / ix / 算数运算 / 函数映射apply / 值计数 / 数据对齐 / 排序 / loc / at / iloc / iat)
-## reindex 重新索引 (插值method / ix)
+# Series & DataFrame 基本通用功能 (reindex & 索引 & ix & 算数运算 & 函数映射apply & 值计数 & 数据对齐 & 排序 & loc & at & iloc & iat)
+## reindex 重新索引 (插值method & ix)
   - 其作用是根据新索引进行重排，并创建一个适应新索引的新对象
   - 如果某个索引值当前不存在，就引入缺失值
     ```python
@@ -2333,7 +2333,7 @@ nonzero / where / choose
     c   4  NaN      5
     d   7  NaN      8
     ```
-## 索引、选取和过滤 (切片 / head / tail / 索引ix / is_unique)
+## 索引、选取和过滤 (切片 & head & tail & 索引ix & is_unique)
   - get_value / set_value 方法根据行列标签选取 / 设置值
   - Series索引（obj[...]）的工作方式类似于NumPy数组的索引，只不过Series的索引值可以是index，也可以是序号
     ```python
@@ -2432,7 +2432,7 @@ nonzero / where / choose
     obj.index.is_unique
     Out[69]: False
     ```
-## 汇总和计算描述统计 (ufunc / sum / idmax / describe / 相关系数与协方差)
+## 汇总和计算描述统计 (ufunc & sum & idmax & describe & 相关系数与协方差)
   - NumPy的ufuncs（元素级数组方法）可用于操作pandas对象
     ```python
     df = DataFrame([ [1.4, np.nan], [7.1, -4.5],
@@ -2484,7 +2484,7 @@ nonzero / where / choose
     传入一个Series将会返回一个相关系数值Series（针对各列进行计算）
     传入一个DataFrame则会计算按列名配对的相关系数
     ```
-## 函数映射 (apply / applymap)
+## 函数映射 (apply & applymap)
   - DataFrame的apply方法，用于将函数应用到由各列或行所形成的一维数组上
     ```python
     apply(self, func, axis=0, broadcast=False, raw=False, reduce=None, args=(), **kwds)
@@ -2528,7 +2528,7 @@ nonzero / where / choose
     c    NaN  NaN
     d   3.75  1.7
     ```
-## 唯一值、值计数以及成员资格 (unique / value_counts / isin / apply(pd.value_counts))
+## 唯一值、值计数以及成员资格 (unique & value_counts & isin & apply(pd.value_counts))
   - unique 可以得到Series中的唯一值数组
     ```python
     obj = Series(['c', 'a', 'd', 'a', 'a', 'b', 'b', 'c', 'c'])
@@ -2582,7 +2582,7 @@ nonzero / where / choose
     4 2.0 0.0 2.0
     5 0.0 0.0 1.0
     ```
-## 数据对齐和处理缺失数据 (isnull / notnull / dropna / fillna / DataFrame和Series之间的运算)
+## 数据对齐和处理缺失数据 (isnull & notnull & dropna & fillna & DataFrame和Series之间的运算)
   - pandas对象上的所有描述统计都排除了缺失数据
   - isnull / notnull 返回是否是空值
     ```python
@@ -2683,7 +2683,7 @@ nonzero / where / choose
     Texas -1.0 0.0 1.0
     Oregon -1.0 0.0 1.0
     ```
-## 排序 (sort_index / order / by)
+## 排序 (sort_index & order & by)
   - sort_index方法，对行或列索引进行排序，返回一个已排序的新对象
     ```python
     frame = DataFrame(np.arange(8).reshape((2, 4)), index=['three', 'one'], columns=['d', 'a', 'b', 'c'])
@@ -2740,7 +2740,7 @@ nonzero / where / choose
     frame = DataFrame(np.arange(12).reshape(3, 4), columns=list('abcd'))
     frame.rank(axis=1)
     ```
-## 整数索引 与 loc / at / iloc / iat方法
+## 整数索引 与 loc & at & iloc & iat方法
   - 为了保持良好的一致性，如果轴索引含有索引器，那么根据整数进行数据选取的操作将总是面向标签的，这包括用ix进行切片
     ```python
     ser = Series([0, 1, 1], index = [0, 1, 2])
@@ -2789,7 +2789,7 @@ nonzero / where / choose
     ```
 ***
 
-# Series / DataFrame 层次化索引 (MultiIndex / swaplevel / sortlevel / 根据级别汇总统计 / set_index / reset_index / stack / unstack / pivot)
+# Series & DataFrame 层次化索引 (MultiIndex & swaplevel & sortlevel & 根据级别汇总统计 & set_index & reset_index & stack & unstack & pivot)
 ## 层次化索引与MultiIndex
   - 层次化索引在数据重塑和基于分组的操作（如透视表生成）中扮演着重要的角色
   - 层次化索引（hierarchical indexing）能在一个轴上拥有多个（两个以上）索引级别
@@ -2882,7 +2882,7 @@ nonzero / where / choose
 
     这其实是利用了pandas的groupby功能
     ```
-## 使用DataFrame的列作为索引 (set_index / reset_index)
+## 使用DataFrame的列作为索引 (set_index & reset_index)
   - DataFrame的set_index函数会将其一个或多个列转换为行索引，并创建一个新的DataFrame
     ```python
     frame = DataFrame({'a': range(7), 'b': range(7, 0, -1),
@@ -2898,7 +2898,7 @@ nonzero / where / choose
     ```python
     frame2.reset_index()
     ```
-## stack / unstack 旋转层次化索引的轴，转换Series / DataFrame
+## stack & unstack 旋转层次化索引的轴，转换Series & DataFrame
   - stack：将数据的列“旋转”为行，将DataFrame压缩成Series
   - unstack：将数据的行“旋转”为列，将层次化结构的Series扩展成DataFrame
   - stack方法 将DataFrame列转换为行，得到一个Series
@@ -2943,7 +2943,7 @@ nonzero / where / choose
     y    1 4
     z    2 5
     ```
-## stack / unstack操作中的缺失值
+## stack & unstack操作中的缺失值
   - unstack操作，当不是所有的级别值都能在各分组中找到时，可能会引入缺失数据
     ```python
     s1 = Series([0, 1, 2, 3], index=list('abcd'))
@@ -3068,8 +3068,8 @@ nonzero / where / choose
     ```
 ***
 
-# 数据存取 （文本文档 / 二进制文件 / HDF5 / Excel / SQL数据库 / MongoDB）
-## pandas读写表格型文件 read_csv / read_table / 缺失值处理 / 逐块读取 / from_csv
+# 数据存取 （文本文档 & 二进制文件 & HDF5 & Excel & SQL数据库 & MongoDB）
+## pandas读写表格型文件 read_csv & read_table & 缺失值处理 & 逐块读取 & from_csv
   - csv 逗号分离值 comma separated values
   - pandas提供了一些用于将表格型数据读取为DataFrame对象的函数
     ```python
@@ -3152,7 +3152,7 @@ nonzero / where / choose
     ts.to_csv('ch06/tseries.csv')
     Series.from_csv('ch06/tseries.csv')
     ```
-## 手工处理分隔符格式 csv.reader / csv.writer
+## 手工处理分隔符格式 csv.reader & csv.writer
   - 对于任何单字符分隔符文件，可以直接使用Python内置的csv模块，将任意已打开的文件或文件型的对象传给csv.reader
     ```python
     import csv
@@ -3182,7 +3182,7 @@ nonzero / where / choose
     writer.writerow(('4', '5', '6'))
     writer.writerow(('7', '8', '9'))
     ```
-## 二进制文本文件读写 (pickle / save / load)
+## 二进制文本文件读写 (pickle & save & load)
   - 实现数据的二进制格式存储最简单的办法之一是使用Python内置的pickle序列化
   - pickle存储方式默认是二进制方式，python3中与文件交互需要指定'wb' / 'rb'
   - pandas对象都有一个用于将数据以pickle形式保存到磁盘上的save方法
@@ -3232,7 +3232,7 @@ nonzero / where / choose
     1 5  6  7  8  world
     2 9 10 11 12   foo
     ```
-## 读取 (read_excel / to_excel / ExcelFile类)
+## 读取 (read_excel & to_excel & ExcelFile类)
   - read_excel / to_excel
     ```python
     d = pd.read_excel('foo.xls')
@@ -3268,7 +3268,7 @@ nonzero / where / choose
     1 5  6  7  8  world
     2 9 10 11 12   foo
     ```
-## SQL数据库 (sqlite3 / read_sql)
+## SQL数据库 (sqlite3 & read_sql)
   - 将数据从SQL加载到DataFrame
     ```python
     # 通过sqlite3创建一个嵌入式的SQLite数据库
@@ -3353,7 +3353,7 @@ nonzero / where / choose
     ```
 ***
 
-# 网络相关数据处理 (json / urllib / request / html / xml)
+# 网络相关数据处理 (json & urllib & request & html & xml)
 ## json库读取JSON数据
   - JSON（JavaScript Object Notation的简称）已经成为通过HTTP请求在Web浏览器和其他应用程序之间发送数据的标准格式之一，是一种比表格型文本格式（如CSV）灵活得多的数据格式
   - JSON非常接近于有效的Python代码，基本类型有对象（字典）、数组（列表）、字符串、数值、布尔值以及null，对象中所有的键都必须是字符串
@@ -3385,7 +3385,7 @@ nonzero / where / choose
     0 Scott  25
     1 Katie  33
     ```
-## Python获取网络数据 (urllib / requests)
+## Python获取网络数据 (urllib & requests)
   - 抓取网页,解析网页内容
     ```python
     urllib / urllib2 (Python 3中被urllib.request代替)
@@ -3554,11 +3554,11 @@ nonzero / where / choose
     ```
 ***
 
-# 数据合并 (merge / join / concat / combine_first)
+# 数据合并 (merge & join & concat & combine_first)
   - merge(left, right, how='inner', on=None, left_on=None, right_on=None, left_index=False, right_index=False, sort=False, suffixes=('_x', '_y'), copy=True, indicator=False) __
   - join(self, other, on=None, how='left', lsuffix='', rsuffix='', sort=False)
   - concat(objs, axis=0, join='outer', join_axes=None, ignore_index=False, keys=None, levels=None, names=None, verify_integrity=False, copy=True)
-## merge 根据指定的列名 / 索引合并DataFrame重名数据项
+## merge 根据指定的列名 & 索引合并DataFrame重名数据项
   - merge做的是"inner"连接，结果中的键默认是交集inner，其他方式还有"left"、"right"以及"outer"
   - outer外连接求取的是键的并集，组合了左连接和右连接的效果
   - 在进行列－列连接时，DataFrame对象中的索引会被丢弃
@@ -3740,7 +3740,7 @@ nonzero / where / choose
     caller.columns=['A', 'key_caller']
     caller.join([other, other2])
     ```
-## concat Series / DataFrame 横轴或纵轴上的数据堆叠
+## concat Series & DataFrame 横轴或纵轴上的数据堆叠
   - 这种数据合并运算也被称作连接concatenation \ 绑定binding \ 堆叠stacking
   - concat(objs, axis=0, join='outer', join_axes=None, ignore_index=False, keys=None, levels=None, names=None, verify_integrity=False, copy=True)
   - 数据堆叠，不论有没有重复列
@@ -3845,7 +3845,7 @@ nonzero / where / choose
         b   11
     dtype: int64
     ```
-## DataFrame分别使用 join / merge / concat
+## DataFrame分别使用 join & merge & concat
   - df1 / df2
     ```python
     df1 = DataFrame(np.arange(6).reshape(3, 2), index=['a', 'b', 'c'], columns=['one', 'two'])
@@ -3982,8 +3982,8 @@ nonzero / where / choose
     ```
 ***
 
-# 数据整理 (duplicated / drop_duplicates / map / replace / rename / cut / qcut / 过滤异常值 / 随机采样 / get_dummies)
-## duplicated / drop_duplicates 处理重复数据
+# 数据整理 (duplicated & drop_duplicates & map & replace & rename & cut & qcut & 过滤异常值 & 随机采样 & get_dummies)
+## duplicated & drop_duplicates 处理重复数据
   - DataFrame的duplicated方法返回一个布尔型Series，表示各行是否是重复行
     ```python
     data = DataFrame({'k1': ['one'] * 3 + ['two'] * 4, 'k2': [1, 1, 2, 3, 3, 4, 4]})
@@ -4090,7 +4090,7 @@ nonzero / where / choose
     ```python
     data.replace({-999: np.nan, -1000: 0})
     ```
-## Index.map / rename重命名轴索引
+## Index.map & rename重命名轴索引
   - 轴标签也可以通过函数或映射进行转换，从而得到一个新对象
   - pd.Index.map方法修改轴索引
     ```python
@@ -4144,7 +4144,7 @@ nonzero / where / choose
     5  3
     Name: hh, dtype: int64
     ```
-## cut / qcut离散化和面元划分
+## cut & qcut离散化和面元划分
   - 将连续数据离散化或拆分为“面元”(bin)
     ```python
     ages = [20, 22, 25, 27, 21, 23, 37, 31, 61, 45, 41, 32]
@@ -4246,7 +4246,7 @@ nonzero / where / choose
     [0.019, 0.11]  5
     dtype: int64'''
     ```
-## 数组运算过滤 / 变换异常值
+## 数组运算过滤 & 变换异常值
   - 随机数据
     ```python
     np.random.seed(12345)
@@ -4281,7 +4281,7 @@ nonzero / where / choose
     将超出(-3, 3)的值限制在区间内
     data[(np.abs(data) > 3).any(1)] = np.sign(data) * 3
     ```
-## 通过permutation / randint随机数排列和随机采样
+## 通过permutation & randint随机数排列和随机采样
   - 通过需要排列的轴的长度调用permutation，可产生一个表示新顺序的整数数组
     ```python
     df = DataFrame(np.arange(5 * 4).reshape(5, 4), columns=list('abcd'))
@@ -4311,7 +4311,7 @@ nonzero / where / choose
     a  5
     dtype: int64
     ```
-## get_dummies 计算指标/哑变量
+## get_dummies 计算指标&哑变量
   - 一种常用于统计建模或机器学习的转换方式：将分类变量(categorical variable)转换为“哑变量矩阵”(dummy matrix)或“指标矩阵”(indicator matrix)
   - get_dummies函数用于生成指标矩阵 (dummy/indicator variables)
     ```python
@@ -4437,7 +4437,7 @@ nonzero / where / choose
 ***
 
 # matplotlib 绘图
-## pyplot / pylab
+## pyplot & pylab
   - 主要用于二维绘图，画图质量高，方便快捷的绘图模块
     ```python
     绘图API： pyplot模块
@@ -4464,7 +4464,7 @@ nonzero / where / choose
     x = np.linspace(-np.pi, np.pi, 60)
     pl.plot(x, np.sin(x))
     ```
-## 绘图对象Figure / 子图Subplot
+## 绘图对象Figure & 子图Subplot
   - Figure对象
     ```python
     matplotlib的图像都位于Figure对象中，使用plt.figure创建一个新的Figure
@@ -4527,7 +4527,7 @@ nonzero / where / choose
     ```
 
   ![](images/figure_3.png)
-## 颜色 color / 线型 linestyle(ls) / 标记 marker / 线宽 linewidth / 标签 label
+## 颜色 color & 线型 linestyle(ls) & 标记 marker & 线宽 linewidth & 标签 label
   - matplotlib的plot函数接受一组X和Y坐标，还可以接受一个表示颜色和线型的字符串缩写
     ```python
     ax.plot(x, y, 'g--')
@@ -4559,7 +4559,7 @@ nonzero / where / choose
     ```
 
   ![](images/figure_1-7.png)
-## 刻度 set_xticks / set_xtickslabels / 标题 set_title / set_xlabel / 范围 set_xlim / 图例 legend
+## 刻度 set_xticks & set_xtickslabels & 标题 set_title & set_xlabel & 范围 set_xlim & 图例 legend
   - pyplot接口的设计目的就是交互式使用，如xlim / xticks / xticklabels / xlabel / title方法，分别控制图表的范围 / 刻度位置 / 刻度标签 / 轴名称 / 图标题
   - 使用方式有以下两种：
     ```python
@@ -4623,7 +4623,7 @@ nonzero / where / choose
     plt.axes([.3,.15,0.4,0.4], facecolor = 'r')
     plt.plot(x, np.cos(x), 'y+')
     ```
-## 注释text / arrow / annotate
+## 注释text & arrow & annotate
   - 通过text、arrow和annotate等函数进行添加注释
   - text可以将文本绘制在图表的指定坐标(x,y)，还可以加上一些自定义格式
     ```python
@@ -4702,7 +4702,7 @@ nonzero / where / choose
 ***
 
 # pandas 绘图
-## Series / DataFrame的plot方法直接绘图
+## Series & DataFrame的plot方法直接绘图
   - y = 4 * pi * x + e^(-5 * x)
     ```python
     x = np.linspace(0, 1)
@@ -4750,7 +4750,7 @@ nonzero / where / choose
     ax = fig.add_subplot(1, 1, 1)
     Series(np.sin(np.arange(0, np.pi, 0.1))).plot(ax = ax, style = 'k--')
     ```
-## 柱状图 bar / barh
+## 柱状图 bar & barh
   - kind='bar'（垂直柱状图）或kind='barh'（水平柱状图）即可生成柱状图，Series和DataFrame的索引将会被用作X（bar）或Y（barh）刻度
     ```python
     fig, axes = plt.subplots(2, 2)
@@ -4770,7 +4770,7 @@ nonzero / where / choose
     ```
 
   ![](images/figure_3-2.png)
-## 直方图 hist / 密度图 kde
+## 直方图 hist & 密度图 kde
   - 直方图（histogram）是一种可以对值频率进行离散化显示的柱状图
   - Series的hist / kind = 'hist'方法用于生成直方图
   - 密度图也被称作KDE（Kernel Density Estimate，核密度估计）
@@ -4834,7 +4834,7 @@ nonzero / where / choose
     ```
 ***
 
-# GroupBy数据聚合与分组运算(groupby / aggregate / transform / apply / cut / qcut / pivot_table / crosstab)
+# GroupBy数据聚合与分组运算(groupby & aggregate & transform & apply & cut & qcut & pivot_table & crosstab)
 ## GroupBy技术
   - groupby(self, by=None, axis=0, level=None, as_index=True, sort=True, group_keys=True, squeeze=False, ** kwargs)
   - 用于表示分组运算的术语"split-apply-combine"（拆分－应用－合并）
@@ -5156,7 +5156,7 @@ nonzero / where / choose
 
     GroupBy会高效地对Series进行切片，然后对各片调用piece.quantile(0.9)，最后将这些结果组装成最终结果
     ```
-## aggregate / agg 聚合，将多个函数应用于多个列，只接受能够将一维数组简化为标量值的函数
+## aggregate & agg 聚合，将多个函数应用于多个列，只接受能够将一维数组简化为标量值的函数
   - aggregate或agg方法，调用自定义的聚合函数
     ```python
     def peak_to_peak(arr):
@@ -5364,7 +5364,7 @@ nonzero / where / choose
     178    9.60 4.00 Female  Yes  Sun Dinner   2 0.416667
     67     3.07 1.00 Female  Yes  Sat Dinner   1 0.325733
     ```
-## cut / qcut 桶 bucket / 分位数 quantile 分析
+## cut & qcut 桶 bucket & 分位数 quantile 分析
   - cut / qcut 根据指定面元或样本分位数将数据拆分成多块，与groupby结合实现对数据集的桶或分位数分析
   - 利用cut将数据装入长度相等的桶中
     ```python
@@ -5504,7 +5504,7 @@ nonzero / where / choose
   4S   4
   dtype: int64
   ```
-## 透视表pivot table (pivot_table / margins / aggfunc / fill_value)
+## 透视表pivot table (pivot_table & margins & aggfunc & fill_value)
   - 透视表pivot table是各种电子表格程序和其他数据分析软件中一种常见的数据汇总工具，根据一个或多个键对数据进行聚合，并根据行和列上的分组键将数据分配到各个矩形区域中
   - DataFrame有一个pivot_table方法，此外还有一个顶级的pandas.pivot_table函数
     ```python
@@ -5616,10 +5616,10 @@ nonzero / where / choose
     ```
 ***
 
-# 日期和时间数据类型及工具 (datetiem / timedelta / strftime / strptime / parse / date_range / shift / rollforward / rollback / 时区 / 时期period / resample重采样 / 移动窗口函数)
+# 日期和时间数据类型及工具 (datetiem & timedelta & strftime & strptime & parse & date_range & shift & rollforward & rollback & 时区 & 时期period & resample重采样 & 移动窗口函数)
   - Python标准库包含用于日期（date）和时间（time）数据的数据类型，主要会用到datetime、time以及calendar模块
   - datetime以毫秒形式存储日期和时间
-## datetime.now 当前时间 year / month / day / date / time 属性
+## datetime.now 当前时间 year & month & day & date & time 属性
   - datetime.now 返回当前时间
     ```python
     from datetime import datetime
@@ -5655,7 +5655,7 @@ nonzero / where / choose
     start + timedelta(12)
     Out[26]: datetime.datetime(2017, 3, 21, 0, 0)
     ```
-## str / strftime / strptime / datetime格式定义
+## str & strftime & strptime & datetime格式定义
   - str或strftime方法（传入一个格式化字符串），datetime对象和pandas的Timestamp对象（稍后就会介绍）可以被格式化为字符串
     ```python
     str(now)
@@ -5845,7 +5845,7 @@ nonzero / where / choose
     pd.date_range('5/28/2017 05:28', '5/30/2017', normalize=True)[0].time()
     Out[175]: datetime.time(0, 0)
     ```
-## shift / rollforward / rollback 移动 Series / DataFrame沿时间轴将数据前移或后移
+## shift & rollforward & rollback 移动 Series & DataFrame沿时间轴将数据前移或后移
   - shift通常用于计算一个时间序列或多个时间序列（如DataFrame的列）中的百分比变化
     ```python
     ts / ts.shift(1) - 1
@@ -5930,7 +5930,7 @@ nonzero / where / choose
     2017-08-31 16:29:46.231903  18.0
     dtype: float64
     ```
-## 时区处理 (pytz库 / common_timezones / timezone / tz_localize / tz_convert)
+## 时区处理 (pytz库 & common_timezones & timezone & tz_localize & tz_convert)
   - 在Python中，时区信息来自第三方库pytz，它使Python可以使用Olson数据库，也叫时区信息数据库，以创始人David Olson命名译注6，汇编了世界时区信息，这对历史数据非常重要
     ```python
     common_timezones / timezone方法
@@ -6007,7 +6007,7 @@ nonzero / where / choose
     result.index.tz
     Out[301]: <UTC>
     ```
-## 时期period及其算术运算 (period / asfreq / 季度 / to_period / to_timestamp / PeriodIndex)
+## 时期period及其算术运算 (period & asfreq & 季度 & to_period & to_timestamp & PeriodIndex)
   - 时期period表示的是时间区间，比如数日、数月、数季、数年
     ```python
     p = pd.Period(2007, freq='A-DEC')        # 2007整年的时间
@@ -6119,7 +6119,7 @@ nonzero / where / choose
     2010Q4 0.061349    4 2010
     2011Q1 -1.573411    1 2011
     ```
-## resample / groupby重采样 (降采样 / OHLC重采样 / 升采样和插值)
+## resample & groupby重采样 (降采样 & OHLC重采样 & 升采样和插值)
   - 重采样(resampling)指的是将时间序列从一个频率转换到另一个频率的处理过程
   - 将高频率数据聚合到低频率称为降采样(downsampling)
   - 而将低频率数据转换到高频率则称为升采样(upsampling)
@@ -6237,7 +6237,7 @@ nonzero / where / choose
     2017-05-28 00:02:00  2
     Freq: 30S, dtype: int64
     ```
-## 移动窗口函数 (rolling_mean / rolling_std / ewma / rolling_corr / rolling_apply)
+## 移动窗口函数 (rolling_mean & rolling_std & ewma & rolling_corr & rolling_apply)
   - 在移动窗口（可以带有指数衰减权数）上计算的各种统计函数也是一类常见于时间序列的数组变换，移动窗口函数（moving window function）
   - 其中还包括那些窗口不定长的函数（如指数加权移动平均），跟其他统计函数一样，移动窗口函数也会自动排除缺失值
   - rolling_mean / rolling_std
@@ -6285,7 +6285,7 @@ nonzero / where / choose
   - 性能方面，pandas对数据对齐（两个不同索引的ts1+ts2的幕后工作）和重采样运算进行了高度优化
 ***
 
-# NumPy内部机理与其他类 (issubdtype / mro / 排列顺序C / Fortran / broadcasting广播 / np.newaxis / dtype / matrix / memmap / Cython)
+# NumPy内部机理与其他类 (issubdtype & mro & 排列顺序C & Fortran & broadcasting广播 & np.newaxis & dtype & matrix & memmap & Cython)
 ## ndarray对象的内部机理
   - NumPy的ndarray提供了一种将同质数据块解释为多维数组对象的方式
   - 数据类型（dtype）决定了数据的解释方式，比如浮点数、整数、布尔值等
@@ -6302,7 +6302,7 @@ nonzero / where / choose
       np.ones((3, 4, 5), dtype=np.float64).strides
       Out[467]: (160, 40, 8)
     ```
-## NumPy数据类型体系 (issubdtype / mro)
+## NumPy数据类型体系 (issubdtype & mro)
   - dtype都有一个超类（比如np.integer和np.floating），它们可以跟np.issubdtype函数结合使用
     ```python
     ints = np.ones(10, dtype=np.uint16)
@@ -6327,7 +6327,7 @@ nonzero / where / choose
      object]
     ```
     ![](images/numpy_dtype.jpg)
-## 数组的排列顺序 C / Fortran
+## 数组的排列顺序 C & Fortran
   - 默认情况下，NumPy数组是按行优先顺序创建的
   - 在空间方面，这就意味着，对于一个二维数组，每行中的数据项是被存放在相邻内存位置上的
   - 另一种顺序是列优先顺序，它意味着每列中的数据项是被存放在相邻内存位置上的
@@ -6385,7 +6385,7 @@ nonzero / where / choose
      ALIGNED : True
      UPDATEIFCOPY : False
     ```
-## broadcasting广播 / np.newaxis属性添加新轴
+## broadcasting广播 & np.newaxis属性添加新轴
   - 广播broadcasting 指的是不同形状的数组之间的算术运算的执行方式
     ```python
     arr = np.arange(5)
@@ -6592,7 +6592,7 @@ nonzero / where / choose
     ```python
     mmap = np.memmap('mymmap', dtype='float64', shape=(10000, 10000))
     ```
-## 其他加速方法 Cython / f2py / C
+## 其他加速方法 Cython & f2py & C
   - Cython项目（http://cython.org）已经受到了许多Python程序员的认可，用它实现的代码运行速度很快（可能需要与C或C++库交互，但无需编写纯粹的C代码）
   - 可以将Cython看成是带有静态类型并能嵌入C函数的Python
   - Cython函数用于对一个一维数组的所有元素求和：
@@ -6614,8 +6614,8 @@ nonzero / where / choose
   - 其他有关NumPy的高性能代码编写手段还有f2py（FORTRAN 77和90的包装器生成器）以及利用纯C语言编写Python扩展
 ***
 
-# Numpy其他方法 (r_ / c_ / tile / repeat / reduce / accumulate / outer / reduceat / fromoyfunc / vectorize / argsort / lexsort / searchsorted / digitize)
-## r_ / c_ 堆叠辅助类
+# Numpy其他方法 (r_ & c_ & tile & repeat & reduce & accumulate & outer & reduceat & fromoyfunc & vectorize & argsort & lexsort & searchsorted & digitize)
+## r_ & c_ 堆叠辅助类
   - NumPy命名空间中有两个特殊的对象r_和c_，它们可以使数组的堆叠操作更为简洁
     ```python
     arr = np.arange(6)
@@ -6649,7 +6649,7 @@ nonzero / where / choose
         [ 4, -7],
         [ 5, -6] ])
     ```
-## tile / repeat 元素的重复操作
+## tile & repeat 元素的重复操作
   - 对数组进行重复以产生更大数组的工具主要是repeat和tile这两个函数
   - repeat会将数组中的各个元素重复一定次数，从而产生一个更大的数组
     ```python
@@ -6698,7 +6698,7 @@ nonzero / where / choose
         [0, 1, 0, 1, 0, 1],
         [2, 3, 2, 3, 2, 3] ])
     ```
-## ufunc实例方法 reduce / accumulate / outer / reduceat
+## ufunc实例方法 reduce & accumulate & outer & reduceat
   - NumPy的各个二元ufunc都有一些用于执行特定矢量化运算的特殊方法
   - reduce接受一个数组参数，并通过一系列的二元运算在指定轴向上对其值进行聚合
     ```python
@@ -6767,7 +6767,7 @@ nonzero / where / choose
         [ 2, 10, 8],
         [ 3, 15, 12] ])
     ```
-## frompyfunc / vectorize 自定义ufunc
+## frompyfunc & vectorize 自定义ufunc
   - 这两个函数提供了一种创建ufunc型函数的手段，但在计算每个元素时都要执行一次Python函数调用，比NumPy自带的基于C的ufunc慢很多
   - numpy.frompyfunc接受一个Python函数以及两个分别表示输入输出参数数量的整数
     ```python
@@ -6786,7 +6786,7 @@ nonzero / where / choose
     add_them(np.arange(8), np.arange(8))
     Out[46]: array([ 0.,  2.,  4.,  6.,  8., 10., 12., 14.])
     ```
-## argsort / lexsort 间接排序
+## argsort & lexsort 间接排序
   - argsort 根据指定的一个或多个键，得到一个由整数组成的索引数组(索引器)，其中的索引值指明数据在新顺序下的位置
     ```python
     values = np.array([5, 0, 1, 3, 2])
@@ -6837,7 +6837,7 @@ nonzero / where / choose
     indexer = key.argsort(kind='mergesort')        # 默认排序算法是quicksort
     values.take(indexer)
     ```
-## searchsorted 在有序数组中查找元素 (searchsorte / digitize)
+## searchsorted 在有序数组中查找元素 (searchsorte & digitize)
   - searchsorted是一个在有序数组上执行二分查找的数组方法
   - 将新值插入到返回的位置可以维持数组的有序性
     ```python
@@ -7113,8 +7113,8 @@ nonzero / where / choose
   ```
 ***
 
-# Yahooc财经数据分析 (DataFrame / finance)
-## matplotlib.finance 获取雅虎财经数据 / 数据整理 (datetime) / merge合并
+# Yahooc财经数据分析 (DataFrame & finance)
+## matplotlib.finance 获取雅虎财经数据 & 数据整理 (datetime) & merge合并
   ```python
   #!/usr/bin/python3
 
@@ -7720,7 +7720,7 @@ nonzero / where / choose
       frame.Show(True)
       app.MainLoop()
     ```
-## 组件介绍 (按钮 / 菜单 / 文本 / 列表 / 单选 / 复选框)
+## 组件介绍 (按钮 & 菜单 & 文本 & 列表 & 单选 & 复选框)
   - 按钮 (Button及其家族)
     ```python
     功能:接受用户的点击事件,触发相应的操作
