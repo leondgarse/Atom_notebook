@@ -189,3 +189,4 @@ def basket_html2md(filename, output = 'foo.md', categories = True):
             f_md.write(' ' * level + '  ' + '```\n')
             block_flag = False
 ```
+sed -i 's/^\(#\+\) \(.*\)$/\1 <span id="\2">\2/' 08-06_sql_table_test.md

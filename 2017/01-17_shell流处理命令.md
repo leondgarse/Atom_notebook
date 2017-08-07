@@ -456,7 +456,7 @@
 
     '&' 表示插入整个匹配的规则表达式
     sed -ie 's/.*/foo: &/' foo 在每一行的前面加上foo:
-    sed -ie 's/bar/foo&amp;&amp;&amp;/' foo 在所有bar前添加foo，并重复bar三次
+    sed -ie 's/bar/foo&&&/' foo 在所有bar前添加foo，并重复bar三次
 
     sed -i.bak -e 's/\([^ ]*\) \([^ ]*\) /A: \1 B: \2\n/g' foo 使用捕获组将每组2个的单词，重新组合成A: B:的形式
     ```
