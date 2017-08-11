@@ -185,7 +185,7 @@
     3个状态位全部为0时，说明状态正常
     ```
   - 位检测方法：
-    ```c++
+    ```
     good()         所有位都为0时，返回true
     eof()        eofbit被设置，返回true
     bad()        badbit被设置，返回true
@@ -584,7 +584,7 @@
 ***
 
 # <span style="color:#ff0000;">string类
-  - string类位于名称空间std中。
+  - string类位于名称空间std中
   - 类设计让程序能够自动处理string的大小，即自动调整string对象的长度
   - string类的操作方法由头文件cstring提供，如 c语言中的strxxx() 方法、size()
   - string类的很多方法被重载，可以同时处理string类或c风格字符串
@@ -593,16 +593,25 @@
 ## <span style="color:#ff8000;">构造函数
   - size_type是一个依赖于实现的整型，头文件string中定义
   - string::npos定义为字符串的最大长度，通常为unsigned int最大值
-  - string(const char * s)
-  - string(size_type n, char c)
-  - string(const string & str)
-  - string()
-  - string(const char * s, size_type n)        // 初始化为s的前n个字符，可以超过s的长度，将复制s后面的内容到字符串结尾
-  - template<class Iter> string(Iter begin, Iter end)        // 初始化为begin到end区间的字符，begin / end作用相当于指针，范围包括begin，不包括end
-  - string(const string & str, size_type pos = 0, size_type n = npos) // 初始化为str从pos到结尾，或从pos开始的n个字符
+  - 构造函数类型
+    ```c++
+    string(const char * s)
+    string(size_type n, char c)
+    string(const string & str)
+    string()
+    // 初始化为s的前n个字符，可以超过s的长度，将复制s后面的内容到字符串结尾
+    string(const char * s, size_type n)
 
-  - string(string && str) noexcept        // 初始化为str，并可能修改str的值（移动构造函数）
-  - string(initializer_list<cahr> il)        // 初始化为初始化列表il中的值
+    // 初始化为begin到end区间的字符，begin / end作用相当于指针，范围包括begin，不包括end
+    template<class Iter> string(Iter begin, Iter end)
+
+    // 初始化为str从pos到结尾，或从pos开始的n个字符    
+    string(const string & str, size_type pos = 0, size_type n = npos)
+    // 初始化为str，并可能修改str的值（移动构造函数）
+    string(string && str) noexcept
+    // 初始化为初始化列表il中的值
+    string(initializer_list<cahr> il)
+    ```
   - 用例：
     ```c++
     char ar[30] = 'For the love of a princess!'
@@ -670,15 +679,15 @@
     size_type find(const char * s, size_type pos = 0) const        // pos处查找s
     size_type find(const char * s, size_type pos = 0, size_type n) const // pos处查找s的前n个字符
     size_type find(char ch, size_type pos = 0) const                // 查找ch
-
+    ```
     类似函数还有：
+    ```c++
     rfind()         // 查找最后一次出现位置
     find_first_of()         // 查找参数中任何一个字符首次出现的位置
     find_last_of()         // 查找参数中任何一个字符最后出现的位置
     find_first_not_of()        // 查找参数中不包含字符首次出现的位置
     find_last_not_of()        // 查找参数中不包含字符最后出现的位置
     ```
-    <br />
   - capacity() 返回当前分配给字符串的实际内存大小，通常是比size()大，空字符串也有默认最小容量
   - reserve(new_size) 可以重新申请new_size长度的字符串，实际的内存大小也要大于new_size
   - c_str() 返回一个指向c风格字符串的指针，可以用于如open()等要求c风格字符串参数的方法中：

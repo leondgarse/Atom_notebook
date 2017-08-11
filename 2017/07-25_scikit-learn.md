@@ -1,4 +1,4 @@
-# ___2017 - 07 - 30 R语言基础___
+x# ___2017 - 07 - 25 scikit-learn___
 ***
 
 # 目录
@@ -18,6 +18,7 @@
 
 ## scikit-learn 介绍
   - scikit-learn是Python的一个开源机器学习模块，建立在NumPy，SciPy和matplotlib模块之上
+## sklearn 约定规则
   - 除非专门指定，输入数据被转化为float64类型
     ```python
     import numpy as np
@@ -83,83 +84,122 @@
     clf.predict(X_test)
     Out[15]: array([0, 0, 0, 1, 0])
     ```
-  - Multiclass vs. multilabel fitting
-    ```python
-    from sklearn.svm import SVC
-    from sklearn.multiclass import OneVsRestClassifier
-    from sklearn.preprocessing import LabelBinarizer
-    X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
-    y = [0, 0, 1, 1, 2]
-    classif = OneVsRestClassifier(estimator=SVC(random_state=0))
-    classif.fit(X, y).predict(X)
-    Out[23]: array([0, 0, 1, 1, 2])
+  - Multiclass 与 multilabel fitting
+    - 当使用 [multiclass classifiers](http://scikit-learn.org/stable/modules/classes.html#module-sklearn.multiclass) 时训练与预测的结果取决于目标值的形式
+      ```python
+      from sklearn.svm import SVC
+      from sklearn.multiclass import OneVsRestClassifier
+      from sklearn.preprocessing import LabelBinarizer
 
-    y = LabelBinarizer().fit_transform(y)
-    y
-    Out[25]:
-    array([[1, 0, 0],
-           [1, 0, 0],
-           [0, 1, 0],
-           [0, 1, 0],
-           [0, 0, 1]])
+      # 一维目标值
+      X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
+      y = [0, 0, 1, 1, 2]
+      classif = OneVsRestClassifier(estimator=SVC(random_state=0))
+      classif.fit(X, y).predict(X)
+      Out[23]: array([0, 0, 1, 1, 2])
 
-    classif.fit(X, y).predict(X)
-    Out[26]:
-    array([[1, 0, 0],
-           [1, 0, 0],
-           [0, 1, 0],
-           [0, 0, 0],
-           [0, 0, 0]])
+      # 二维二进制目标值
+      y = LabelBinarizer().fit_transform(y)
+      y
+      Out[25]:
+      array([[1, 0, 0],
+             [1, 0, 0],
+             [0, 1, 0],
+             [0, 1, 0],
+             [0, 0, 1]])
 
-    from sklearn.preprocessing import MultiLabelBinarizer
-    y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
-    y = MultiLabelBinarizer().fit_transform(y)
-    y
-    Out[31]:
-    array([[1, 1, 0, 0, 0],
-           [1, 0, 1, 0, 0],
-           [0, 1, 0, 1, 0],
-           [1, 0, 1, 1, 0],
-           [0, 0, 1, 0, 1]])
+      classif.fit(X, y).predict(X)
+      Out[26]:
+      array([[1, 0, 0],
+             [1, 0, 0],
+             [0, 1, 0],
+             [0, 0, 0],
+             [0, 0, 0]])
+      ```
+    - 当使用多组标签 **multiple labels** 时，预测结果中可能有全0值，表示不符合任何一个标签，或者多个1值，表示符合多个分组
+      ```python
+      from sklearn.preprocessing import MultiLabelBinarizer
+      y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+      y = MultiLabelBinarizer().fit_transform(y)
+      y
+      Out[31]:
+      array([[1, 1, 0, 0, 0],
+             [1, 0, 1, 0, 0],
+             [0, 1, 0, 1, 0],
+             [1, 0, 1, 1, 0],
+             [0, 0, 1, 0, 1]])
 
-    classif.fit(X, y).predict(X)
-    Out[32]:
-    array([[1, 1, 0, 0, 0],
-           [1, 0, 1, 0, 0],
-           [0, 1, 0, 1, 0],
-           [1, 0, 1, 0, 0],
-           [1, 0, 1, 0, 0]])
-    ```
+      classif.fit(X, y).predict(X)
+      Out[32]:
+      array([[1, 1, 0, 0, 0],
+             [1, 0, 1, 0, 0],
+             [0, 1, 0, 1, 0],
+             [1, 0, 1, 0, 0],
+             [1, 0, 1, 0, 0]])
+      ```
 ## scikit-learn 载入数据集
-  - scikit-learn内包含了常用的机器学习数据集，比如做分类的 iris 和 digit 数据集，用于回归的经典数据集 Boston house prices
+  - scikit-learn 处理的数据集是二维的，其中行向量表示多个采样值 **samples axis**，列向量表示特征值 **features axis**
+  - scikit-learn 内包含了常用的机器学习数据集，比如做分类的 iris 和 digit 数据集，用于回归的经典数据集 Boston house prices
+  - scikit-learn 载入的数据集是以类似于 **字典的形式** 存放的，该对象中包含了所有有关该数据的数据信息 (甚至还有参考文献)
+  - **鸢尾花 iris 数据集**，通过花瓣petal 与 萼片sepal 的长宽，划分鸢尾花的三个种类 Setosa / Versicolour / Virginica
     ```python
     from sklearn import datasets
     iris = datasets.load_iris()
     ```
-  - scikit-learn载入的数据集是以类似于字典的形式存放的，该对象中包含了所有有关该数据的数据信息 (甚至还有参考文献)
   - **数据值统一存放在.data的成员中**，iris数据中每个实例有4维特征，分别为：sepal length、sepal width、petal length和petal width
     ```python
     type(iris.data)
     Out[34]: numpy.ndarray
 
+    iris.data.shape
+    Out[35]: (150, 4)
+
     iris.data[:3]
-    Out[35]:
+    Out[36]:
     array([[ 5.1,  3.5,  1.4,  0.2],
            [ 4.9,  3. ,  1.4,  0.2],
            [ 4.7,  3.2,  1.3,  0.2]])
     ```
   - 对于监督学习，比如分类问题，**数据对应的分类结果存在.target成员中**
     ```python
+    np.unique(iris.target)
+    Out[37]: array([0, 1, 2])
+
     iris.target[45:55]
     Out[46]: array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
     ```
+  - 如果数据集的形式不是(n_samples, n_features)，需要进行 **预处理**
+    ```python
+    # digits 数据集的 image 数据是 1797 x 8 x 8 的形式
+    digits = datasets.load_digits()
+    digits.data.shape
+    Out[12]: (1797, 64)
+
+    digits.images.shape
+    Out[13]: (1797, 8, 8)
+    # 转化为 1797 * 64 的数据集
+    data = digits.images.reshape(digits.images.shape[0], -1)
+    data.shape
+    Out[15]: (1797, 64)
+    ```
 ## scikit-learn学习和预测一般流程
-  - scikit-learn提供了各种机器学习算法的接口，每个算法的调用就像一个黑箱，只需要根据自己的需求，设置相应的参数
+  - scikit-learn 实现的主要API就是各种估计模型，提供了各种机器学习算法的接口，每个算法的调用就像一个黑箱，只需要根据自己的需求，设置相应的参数
+  - 模型的所有 **参数** 都可以在初始化时指定，或者通过相应的属性修改
+  - scikit-learn 每个模型都提供一个 **fit(X, Y)** 接口函数，可以接受一个二维数据集参数，用于 **模型训练**，模型通过 fit() 函数估计出的参数在模型的属性中以下划线 `_` 结尾
+    ```python
+    estimator.fit(data)
+    estimator.estimated_param_
+    ```
+  - 模型预测使用 **predict(T)** 函数
+  - **示例** digits手写数字数据集 与 支持向量机SVM
     ```python
     # 调用最常用的支撑向量分类机（SVC）
     from sklearn import svm
     # 不使用默认参数，使用用户自己给定的参数
     clf = svm.SVC(gamma=0.001, C=100.)
+    clf.gamma
+    Out[48]: 0.001
+
     # 分类器的具体信息和参数
     clf
     Out[49]:
@@ -168,7 +208,7 @@
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
     ```
-  - 分类器的学习和预测可以分别利用 **fit(X,Y)** 和 **predict(T)** 来实现
+    分类器的学习和预测可以分别利用 **fit(X,Y)** 和 **predict(T)** 来实现
     ```python
     # 将digit数据划分为训练集和测试集，前n-1个实例为训练集，最后一个为测试集
     from sklearn import datasets
@@ -177,6 +217,10 @@
     digits = datasets.load_digits()
     # 模型训练
     clf.fit(digits.data[:-1], digits.target[:-1])
+    # 模型训练后的参数
+    clf.classes_
+    Out[65]: array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     # 预测结果，使用列向量
     clf.predict(digits.data[-1:])
     # Out[66]: array([8])
@@ -483,3 +527,36 @@
     rsearch.best_estimator_.alpha
     Out[9]: 0.99827013993379388
     ```
+## 监督学习算法
+- **监督学习算法** 一般用于学习两个数据集之间的关系，**观测集X** 与 **目标集 Y**，预测结果通常称为 **target** 或 **labels**，通常情况下，Y是一个一维向量
+- scikit-learn 中所有的监督学习算法都实现了 **fit(X, y)** 方法用于模型训练，以及 **predict(X)** 方法用于预测未分组(unlabeled)数据 X 的标签值(labels) Y
+- **分类算法** 预测的目标值是离散的，即将观测值划分成有限多个目标值，分类算法中的目标值y是一个数字或字符串组成的向量
+- **回归算法** 预测的目标值是连续的
+- **训练集与测试集** 在实验任何机器学习算法时，应避免使用训练模型的数据来测试预测结果，这无法反应模型在新数据上的预测效果
+- **示例** KNN k-近邻算法
+  ```python
+  import numpy as np
+  from sklearn import datasets
+
+  iris = datasets.load_iris()
+  iris_X = iris.data
+  iris_y = iris.target
+
+  # Split iris data in train and test data randomly
+  np.random.seed(0)
+  indices = np.random.permutation(len(iris_X))
+  iris_X_train = iris_X[indices[:-10]]
+  iris_y_train = iris_y[indices[:-10]]
+  iris_X_test  = iris_X[indices[-10:]]
+  iris_y_test  = iris_y[indices[-10:]]
+
+  # Create and fit a nearest-neighbor classifier
+  from sklearn.neighbors import KNeighborsClassifier
+  knn = KNeighborsClassifier()
+  knn.fit(iris_X_train, iris_y_train)
+  knn.predict(iris_X_test)
+  # Out[32]: array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
+
+  iris_y_test
+  # Out[33]: array([1, 1, 1, 0, 0, 0, 2, 1, 2, 0])
+  ```
