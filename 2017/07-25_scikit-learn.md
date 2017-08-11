@@ -4,16 +4,18 @@
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2017 - 07 - 30 R语言基础___](#2017-07-30-r语言基础)
+  - [___2017 - 07 - 25 scikit-learn___](#2017-07-25-scikit-learn)
   - [目录](#目录)
   	- [scikit-learn 介绍](#scikit-learn-介绍)
+  	- [sklearn 约定规则](#sklearn-约定规则)
   	- [scikit-learn 载入数据集](#scikit-learn-载入数据集)
   	- [scikit-learn学习和预测一般流程](#scikit-learn学习和预测一般流程)
   	- [数据预处理](#数据预处理)
   	- [sklearn库中的算法](#sklearn库中的算法)
   	- [优化算法的参数](#优化算法的参数)
+  	- [监督学习算法](#监督学习算法)
 
-  <!-- /TOC -->
+<!-- /TOC -->
 ***
 
 ## scikit-learn 介绍
