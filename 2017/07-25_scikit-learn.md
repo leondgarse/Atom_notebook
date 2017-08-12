@@ -783,9 +783,7 @@
     # RBF kernel (Radial Basis Function)
     svc = svm.SVC(kernel='rbf')
     ```
-    ![](images/linear_kernel.png)
-    ![](images/polynomial_kernel.png)
-    ![](images/RBF_kernel.png)
+    ![](images/svm_kernels.png)
   - 其他链接
     - [plot iris exercise](http://scikit-learn.org/stable/_downloads/plot_iris_exercise.py)
     - [Libsvm GUI]( http://scikit-learn.org/stable/auto_examples/applications/svm_gui.html#sphx-glr-auto-examples-applications-svm-gui-py)
