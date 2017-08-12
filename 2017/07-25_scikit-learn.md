@@ -143,7 +143,7 @@
   - scikit-learn 处理的数据集是二维的，其中行向量表示多个采样值 **samples axis**，列向量表示特征值 **features axis**
   - scikit-learn 内包含了常用的机器学习数据集，比如做分类的 iris 和 digit 数据集，用于回归的经典数据集 Boston house prices
   - scikit-learn 载入的数据集是以类似于 **字典的形式** 存放的，该对象中包含了所有有关该数据的数据信息 (甚至还有参考文献)
-  - **鸢尾花 iris 数据集**，通过花瓣petal 与 萼片sepal 的长宽，划分鸢尾花的三个种类 Setosa / Versicolour / Virginica
+  - **鸢尾花 iris 数据集**，是一类多重变量分析的数据集，通过花瓣petal 与 萼片sepal 的长宽，划分鸢尾花的三个种类 山鸢尾Setosa / 杂色鸢尾Versicolour / 维吉尼亚鸢尾Virginica
     ```python
     from sklearn import datasets
     iris = datasets.load_iris()
@@ -325,7 +325,7 @@
     rfe.ranking_
     Out[21]: array([1, 2, 3, 5, 6, 1, 1, 4])
     ```
-## sklearn库中的算法
+## sklearn 库中的算法
   - 除了分类和回归问题，Scikit-Learn还有海量的更复杂的算法，包括了聚类，以及建立混合算法的实现技术，如 Bagging 和 Boosting
   - **逻辑回归** 大多数情况下被用来解决分类问题（二元分类），但多类的分类（所谓的一对多方法）也适用，优点是对于每一个输出的对象都有一个对应类别的概率
     ```python
@@ -529,36 +529,263 @@
     rsearch.best_estimator_.alpha
     Out[9]: 0.99827013993379388
     ```
-## 监督学习算法
-- **监督学习算法** 一般用于学习两个数据集之间的关系，**观测集X** 与 **目标集 Y**，预测结果通常称为 **target** 或 **labels**，通常情况下，Y是一个一维向量
-- scikit-learn 中所有的监督学习算法都实现了 **fit(X, y)** 方法用于模型训练，以及 **predict(X)** 方法用于预测未分组(unlabeled)数据 X 的标签值(labels) Y
-- **分类算法** 预测的目标值是离散的，即将观测值划分成有限多个目标值，分类算法中的目标值y是一个数字或字符串组成的向量
-- **回归算法** 预测的目标值是连续的
-- **训练集与测试集** 在实验任何机器学习算法时，应避免使用训练模型的数据来测试预测结果，这无法反应模型在新数据上的预测效果
-- **示例** KNN k-近邻算法
-  ```python
-  import numpy as np
-  from sklearn import datasets
+## sklearn 中的评价尺度
+  - 在sklearn中包含四种评价尺度
+    - explained_variance_score()
+    - mean_absolute_error()
+    - mean_squared_error()
+    - r2_score()
+  - 均方差 mean-squared-error
+    ```python
+    MSE(y, yp) = 1 / N * Σ(1, N)(y - yp)^2
+    ```
+  - 平均绝对值误差 mean_absolute_error
+    ```python
+    MAE(y, yp) = 1 / N * Σ(1, N)|y - yp|
+    ```
+  - 可释方差得分 explained_variance_score
+    ```python
+    EVS(y, yp) = 1 - var(y - yp) / var(y)
+    ```
+    最大值是1，表示模型的拟合程度最好，值越小则效果越差
+  - 中值绝对误差 Median absolute error
+    ```python
+    MedAE(y, yp) = median(|y1 - yp1|, ... , |yN - ypN|)
+    ```
+    适应含有离群点的数据集
+  - R2 决定系数（拟合优度）
+    ```python
+    R2(y, yp) = 1 - Σ(1, N)(y - yp)^2 / Σ(1, N)(y - mean(y))^2
+    ```
+    表征回归方程在多大程度上解释了因变量的变化，或者说方程对观测值的拟合程度
+  - **参数 multioutput**
+    - 用来指定在多目标回归问题中，若干单个目标变量的损失或得分以什么样的方式被平均起来
+    - 默认值 **uniform_average**，将所有预测目标值的损失以等权重的方式平均起来
+    - 指定一个 **shape 为（n_oupputs,）的ndarray**，那么数组内的数将被视为是对每个输出预测损失（或得分）的加权值，最终的损失按照指定的加权方式来计算
+    - 指定为 **raw_values**，那么所有的回归目标的预测损失或预测得分都会被单独返回一个shape是（n_output）的数组中
+***
 
-  iris = datasets.load_iris()
-  iris_X = iris.data
-  iris_y = iris.target
+# sklearn 中的监督学习算法
+## 基本概念
+  - **监督学习算法** 一般用于学习两个数据集之间的关系，**观测集X** 与 **目标集 Y**，预测结果通常称为 **target** 或 **labels**，通常情况下，Y是一个一维向量
+  - scikit-learn 中所有的监督学习算法都实现了 **fit(X, y)** 方法用于模型训练，以及 **predict(X)** 方法用于预测未分组(unlabeled)数据 X 的标签值(labels) Y
+  - **分类算法** 预测的目标值是离散的，即将观测值划分成有限多个目标值，分类算法中的目标值y是一个数字或字符串组成的向量
+  - **回归算法** 预测的目标值是连续的
+  - **训练集与测试集** 在实验任何机器学习算法时，应避免使用训练模型的数据来测试预测结果，这无法反应模型在新数据上的预测效果
+## 分类算法 KNN
+  - [KNN](http://scikit-learn.org/stable/modules/neighbors.html#neighbors) k-Nearest neighbors classifier k-近邻，是最简单的分类算法
+  - 对于新的预测数据，在已分类数据的训练集中寻找距离最近的数据，将其对应的分类标签作为新数据的预测分类
+  - iris 数据集上的 KNN 示例
+    ```python
+    import numpy as np
+    from sklearn import datasets
 
-  # Split iris data in train and test data randomly
-  np.random.seed(0)
-  indices = np.random.permutation(len(iris_X))
-  iris_X_train = iris_X[indices[:-10]]
-  iris_y_train = iris_y[indices[:-10]]
-  iris_X_test  = iris_X[indices[-10:]]
-  iris_y_test  = iris_y[indices[-10:]]
+    iris = datasets.load_iris()
+    iris_X = iris.data
+    iris_y = iris.target
 
-  # Create and fit a nearest-neighbor classifier
-  from sklearn.neighbors import KNeighborsClassifier
-  knn = KNeighborsClassifier()
-  knn.fit(iris_X_train, iris_y_train)
-  knn.predict(iris_X_test)
-  # Out[32]: array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
+    # Split iris data in train and test data randomly
+    np.random.seed(0)
+    indices = np.random.permutation(len(iris_X))
+    iris_X_train = iris_X[indices[:-10]]
+    iris_y_train = iris_y[indices[:-10]]
+    iris_X_test  = iris_X[indices[-10:]]
+    iris_y_test  = iris_y[indices[-10:]]
 
-  iris_y_test
-  # Out[33]: array([1, 1, 1, 0, 0, 0, 2, 1, 2, 0])
-  ```
+    # Create and fit a nearest-neighbor classifier
+    from sklearn.neighbors import KNeighborsClassifier
+    knn = KNeighborsClassifier()
+    knn.fit(iris_X_train, iris_y_train)
+    knn.predict(iris_X_test)
+    # Out[32]: array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
+
+    iris_y_test
+    # Out[33]: array([1, 1, 1, 0, 0, 0, 2, 1, 2, 0])
+    ```
+## 维数灾难 The curse of dimensionality
+  - 当维数增大时，**高维空间数据会变得更稀疏**
+    - 维数 p=1 时，N 个样本数据间的平均距离是 1 / N
+    - 维数 p=2 时，N 个样本数据间的平均距离是 (1 / N) ^ (1 / 2)，即需要 N ^ 2 个点才能维持距离为 1 / N
+    - 维数 p=p 时，N 个样本数据间的平均距离是 (1 / N) ^ (1 / p)，即需要 N ^ p 个点才能维持距离为 1 / N
+  - 在以距离作为预测依据的机器学习算法(如 KNN)中，当维数增大时，空间数据会变得更稀疏，各个分组间的界限会变小，算法预测的效率会降低
+## 线型回归模型 Linear regression model
+  - **diabetes 糖尿病数据集** 包含442个病人的10个生理特征数据 (age, sex, weight, blood pressure)，以及一年后的病情指标
+    ```python
+    diabetes = datasets.load_diabetes()
+    diabetes.data.shape
+    Out[35]: (442, 10)
+
+    diabetes_X_train = diabetes.data[:-20]
+    diabetes_X_test  = diabetes.data[-20:]
+    diabetes_y_train = diabetes.target[:-20]
+    diabetes_y_test  = diabetes.target[-20:]
+    ```
+  - 线型回归模型 Linear models，将数据集拟合成一个一阶模型，使得预测的总方差最小
+    ```python
+    y = Xβ + ε
+    其中
+        X: 数据集
+        y: 目标向量
+        β: 预测系数
+        ε: 观测噪声
+    ```
+  - 使用示例
+    ```python
+    from sklearn import linear_model
+    regr = linear_model.LinearRegression()
+    regr.fit(diabetes_X_train, diabetes_y_train)
+    # Out[42]: LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+
+    # 线型回归模型的预测系数
+    print(regr.coef_)
+
+    # 预测错误均方差
+    np.mean((regr.predict(diabetes_X_test) - diabetes_y_test) ** 2)
+    # Out[46]: 2004.5676026898223
+
+    # Explained variance score: 1表示完美拟合，0表示没有线型关系
+    regr.score(diabetes_X_test, diabetes_y_test)
+    # Out[50]: 0.58507530226905713
+    ```
+## 岭回归 Ridge 缩减 shrinkage 与过拟合
+  - 如果数据集中的观测值过少，会使模型预测中产生较大的方差，即模型之间的差异会变大
+    ```python
+    X = np.c_[ .5, 1].T
+    y = [.5, 1]
+    test = np.c_[ 0, 2].T
+    regr = linear_model.LinearRegression()
+
+    import matplotlib.pyplot as plt
+    plt.figure()
+
+    np.random.seed(0)
+    for _ in range(6):
+        # 随机添加噪声
+        this_X = .1 * np.random.normal(size=(2, 1)) + X
+        regr.fit(this_X, y)
+        plt.plot(test, regr.predict(test))
+        plt.scatter(this_X, y, s=3)
+    ```
+    ![](images/sk_linear_model.png)
+  - **岭回归 Ridge** 在高维数据中的一种解决方法是 **将一部分回归系数 β 缩减到0**，减少了模型的复杂度，但同时增大了模型偏差
+    ```python
+    # 使用岭回归 Ridge 模型
+    regr = linear_model.Ridge(alpha=.1)
+    plt.figure()
+
+    np.random.seed(0)
+    for _ in range(6):
+        this_X = .1*np.random.normal(size=(2, 1)) + X
+        regr.fit(this_X, y)
+        plt.plot(test, regr.predict(test))
+        plt.scatter(this_X, y, s=3)
+    ```
+    ![](images/sk_ridge.png)
+  - **权衡偏差与方差 bias/variance tradeoff** 岭回归模型中的 alpha 参数增大，会导致更大的偏差与更小的方差，调整 alpha 参数可以使得模型的效果最好
+    ```python
+    # 调整alpha值，在 diabetes 数据集上测试模型拟合效果
+    alphas = np.logspace(-4, -1, 6)
+    from __future__ import print_function
+    [regr.set_params(alpha=alpha
+               ).fit(diabetes_X_train, diabetes_y_train,
+               ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]
+    Out[77]:
+    [0.58511106838835292, 0.58520730154446765,
+     0.58546775406984908, 0.58555120365039159,
+     0.58307170855541623, 0.57058999437280111]
+    ```
+  - **过拟合 overfitting** 模型过拟合，对新数据的预测效果变差
+  - **正则化 regularization** 岭回归中引入的偏差称为正则化 regularization，降低模型的过拟合
+## Lasso 缩减与稀疏 Sparsity 降低模型复杂度
+  - **Lasso 缩减** least absolute shrinkage and selection operator，只选取与预测目标关联度高的特征，而将不重要的特征系数缩减到0，lasso estimate 具有 shrinkage 和 selection 两种功能
+  - 岭回归会减小数据集中不重要特征的系数，但不会缩减到0，lasso缩减会将某些系数缩减到0，即特征选择 selection
+  - 减小问题的复杂度，防止过拟合，是一种 **稀疏方法 sparse method**
+  - 稀疏 Sparsity 可以看作是奥卡姆剃刀原则的应用
+    ```
+    Occam’s razor: prefer simpler models
+    ```
+  - lasso 回归示例
+    ```python
+    # 使用 lasso 回归模型
+    regr = linear_model.Lasso()
+    scores = [regr.set_params(alpha=alpha
+               ).fit(diabetes_X_train, diabetes_y_train
+               ).score(diabetes_X_test, diabetes_y_test)
+            for alpha in alphas]
+    best_alpha = alphas[scores.index(max(scores))]
+    best_alpha
+    # Out[86]: 0.025118864315095794
+
+    regr.alpha = best_alpha
+    regr.fit(diabetes_X_train, diabetes_y_train)
+    # 某些系数缩减到了0
+    regr.coef_
+    Out[88]:
+    array([   0.        , -212.43764548,  517.19478111,  313.77959962,
+           -160.8303982 ,   -0.        , -187.19554705,   69.38229038,
+            508.66011217,   71.84239008])
+    ```
+  - **不同的算法可以用于解决同样的数学问题**
+    - scikit-learn 中的 **Lasso 对象** 使用坐标下降的方法 coordinate descent method 解决 lasso 回归问题，这在大数据集上很有效
+    - scikit-learn 中同样提供了 **LassoLars 对象**，使用 **LARS 算法** ((Least Angle Regression 最小角回归)，在估计的权重向量非常稀疏，如观测值很少的数据集中很有效
+## Logistic 回归与sigmoid函数，回归算法用于分类
+  - 在分类预测中，线型回归模型通常并不适用，因为模型会给远离决策边界的数据更大的权重
+  - **sigmoid or logistic** 将线型回归模型的结果转化成分类结果，类似与阶跃函数
+    ```
+    sigmoid(z) = 1 / (1 + e^(-z))
+    ```
+  - iris数据集上 Logistic 回归用于分类示例
+    ```python
+    logistic = linear_model.LogisticRegression(C=1e5)
+    logistic.fit(iris_X_train, iris_y_train)
+    Out[90]:
+    LogisticRegression(C=100000.0, class_weight=None, dual=False,
+              fit_intercept=True, intercept_scaling=1, max_iter=100,
+              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
+              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+
+    logistic.predict(iris_X_test)
+    Out[91]: array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
+
+    iris_y_test
+    Out[92]: array([1, 1, 1, 0, 0, 0, 2, 1, 2, 0])
+    ```
+  - Logistic 回归中的 **缩减 shrinkage 与稀疏 sparsity**
+    - **参数 C**，默认1.0，指定数据正则化的程度，值越小正则化越低
+    - **参数 penalty**，默认'l2'，指定惩罚的基准 the norm used in the penalization，'l2'指定缩减 Shrinkage，'l1'指定稀疏 Sparsity
+## 支持向量机 SVM Support vector machines
+  - SVM 包含 **回归模型 SVR** Support Vector Regression，以及 **分类模型 SVC** Support Vector Classification
+  - **SVM 线性模型** SVM 模型试图找到一组样本值，来建立两个分组间的分隔超平面，使得该组样本值与分隔超平面的间隔最大，正则化程度通过 **参数 C** 设定
+    - C 值越小，正则化程度高，使用分隔超平面附近更多或全部的点来计算间隔
+    - C 值越大，正则化程度低，使用分隔超平面最近的点来计算间隔
+    - [Plot different SVM classifiers in the iris dataset](http://scikit-learn.org/stable/auto_examples/svm/plot_iris.html#sphx-glr-auto-examples-svm-plot-iris-py)
+  - iris数据集上 SVM 示例
+    ```python
+    from sklearn import svm
+    svc = svm.SVC(kernel='linear')
+    svc.fit(iris_X_train, iris_y_train)
+    Out[96]:
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+      decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
+
+    svc.predict(iris_X_test)
+    Out[97]: array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
+    ```
+  - **核函数 kernels**，数据集的特征并不总是线性可分的，可以使用 **核技巧 kernel trick** 在特征空间上应用一个决策函数 decision function，将数据映射到另一个特征空间，通常会将 **低维特征空间映射到高维空间**
+  - 示例 [SVM-Kernels](http://scikit-learn.org/stable/auto_examples/svm/plot_svm_kernels.html)
+    ```python
+    # Linear kernel
+    svc = svm.SVC(kernel='linear')
+    # Polynomial kernel
+    svc = svm.SVC(kernel='poly', degree=3)
+    # RBF kernel (Radial Basis Function)
+    svc = svm.SVC(kernel='rbf')
+    ```
+    ![](images/linear_kernel.png)
+    ![](images/polynomial_kernel.png)
+    ![](images/RBF_kernel.png)
+  - 其他链接
+    - [plot iris exercise](http://scikit-learn.org/stable/_downloads/plot_iris_exercise.py)
+    - [Libsvm GUI]( http://scikit-learn.org/stable/auto_examples/applications/svm_gui.html#sphx-glr-auto-examples-applications-svm-gui-py)
