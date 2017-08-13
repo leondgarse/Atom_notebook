@@ -8,14 +8,31 @@
   - [目录](#目录)
   	- [scikit-learn 介绍](#scikit-learn-介绍)
   	- [sklearn 约定规则](#sklearn-约定规则)
-  	- [scikit-learn 载入数据集](#scikit-learn-载入数据集)
-  	- [scikit-learn学习和预测一般流程](#scikit-learn学习和预测一般流程)
+  	- [sklearn 载入数据集](#sklearn-载入数据集)
+  	- [sklearn学习和预测一般流程](#sklearn学习和预测一般流程)
   	- [数据预处理](#数据预处理)
-  	- [sklearn库中的算法](#sklearn库中的算法)
+  	- [sklearn 库中的算法](#sklearn-库中的算法)
   	- [优化算法的参数](#优化算法的参数)
-  	- [监督学习算法](#监督学习算法)
+  	- [sklearn 中的评价尺度](#sklearn-中的评价尺度)
+  - [sklearn 中的监督学习算法](#sklearn-中的监督学习算法)
+  	- [基本概念](#基本概念)
+  	- [分类算法 KNN](#分类算法-knn)
+  	- [维数灾难 The curse of dimensionality](#维数灾难-the-curse-of-dimensionality)
+  	- [线型回归模型 Linear regression model](#线型回归模型-linear-regression-model)
+  	- [岭回归 Ridge 缩减 shrinkage 与过拟合](#岭回归-ridge-缩减-shrinkage-与过拟合)
+  	- [Lasso 缩减与稀疏 Sparsity 降低模型复杂度](#lasso-缩减与稀疏-sparsity-降低模型复杂度)
+  	- [Logistic 回归与sigmoid函数，回归算法用于分类](#logistic-回归与sigmoid函数回归算法用于分类)
+  	- [支持向量机 SVM Support vector machines](#支持向量机-svm-support-vector-machines)
+  - [交叉验证与模型参数选择](#交叉验证与模型参数选择)
+  	- [score 方法与交叉验证 cross-validated scores](#score-方法与交叉验证-cross-validated-scores)
+  	- [sklearn 库中的交叉验证生成器使用 Cross-validation generators](#sklearn-库中的交叉验证生成器使用-cross-validation-generators)
+  	- [sklearn 库中的交叉验证生成器类别](#sklearn-库中的交叉验证生成器类别)
+  	- [网格搜索 Grid-search 寻找模型的最佳参数](#网格搜索-grid-search-寻找模型的最佳参数)
+  	- [自动使用交叉验证选择参数的估计模型 Cross-validated estimators](#自动使用交叉验证选择参数的估计模型-cross-validated-estimators)
+  - [sklearn 中的无监督学习算法](#sklearn-中的无监督学习算法)
+  	- [聚类 Clustering 将数据分成离散的组](#聚类-clustering-将数据分成离散的组)
 
-<!-- /TOC -->
+  <!-- /TOC -->
 ***
 
 ## scikit-learn 介绍
@@ -139,7 +156,7 @@
              [1, 0, 1, 0, 0],
              [1, 0, 1, 0, 0]])
       ```
-## scikit-learn 载入数据集
+## sklearn 载入数据集
   - scikit-learn 处理的数据集是二维的，其中行向量表示多个采样值 **samples axis**，列向量表示特征值 **features axis**
   - scikit-learn 内包含了常用的机器学习数据集，比如做分类的 iris 和 digit 数据集，用于回归的经典数据集 Boston house prices
   - scikit-learn 载入的数据集是以类似于 **字典的形式** 存放的，该对象中包含了所有有关该数据的数据信息 (甚至还有参考文献)
@@ -184,7 +201,7 @@
     data.shape
     Out[15]: (1797, 64)
     ```
-## scikit-learn学习和预测一般流程
+## sklearn学习和预测一般流程
   - scikit-learn 实现的主要API就是各种估计模型，提供了各种机器学习算法的接口，每个算法的调用就像一个黑箱，只需要根据自己的需求，设置相应的参数
   - 模型的所有 **参数** 都可以在初始化时指定，或者通过相应的属性修改
   - scikit-learn 每个模型都提供一个 **fit(X, Y)** 接口函数，可以接受一个二维数据集参数，用于 **模型训练**，模型通过 fit() 函数估计出的参数在模型的属性中以下划线 `_` 结尾
@@ -787,3 +804,224 @@
   - 其他链接
     - [plot iris exercise](http://scikit-learn.org/stable/_downloads/plot_iris_exercise.py)
     - [Libsvm GUI]( http://scikit-learn.org/stable/auto_examples/applications/svm_gui.html#sphx-glr-auto-examples-applications-svm-gui-py)
+***
+
+# 交叉验证与模型参数选择
+## score 方法与交叉验证 cross-validated scores
+  - 每个模型都有一个 **score()方法** 用于评估模型在新数据上的预测质量，值越大模型估计越好
+    ```python
+    from sklearn import datasets, svm
+    digits = datasets.load_digits()
+    X_digits = digits.data
+    y_digits = digits.target
+    svc = svm.SVC(C=1, kernel='linear')
+    svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
+    Out[12]: 0.97999999999999998
+    ```
+  - **kfold 交叉验证** 将数据的特征与目标划分成连续的k个部分 fold，其中 K-1 个子集作为训练数据，另一个作为测试数据，可以更好的估计模型效果
+    ```python
+    X_fold = np.split(X_digits, 3)
+    y_fold = np.split(y_digits, 3)
+    scores = lsit()
+    scores = list()
+    for k in range(3):
+        # We use 'list' to copy, in order to 'pop' later on
+        X_train = list(X_fold)
+        X_test = X_train.pop(k)
+        X_train = np.concatenate(X_train)
+        y_train = list(y_fold)
+        y_test = y_train.pop(k)
+        y_train = np.concatenate(y_train)
+        scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
+    scores
+    Out[22]: [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    ```
+## sklearn 库中的交叉验证生成器使用 Cross-validation generators
+  - 对于流行的交叉验证策略，scikit-learn 中有几个类可以用于生成训练集 / 测试集的索引列表
+  - **split 方法** 接受一个待划分的数据集，产生(yields 返回)一个训练 / 测试数据索引的列表生成器
+    ```python
+    from sklearn.model_selection import KFold, cross_val_score
+    X = ["a", "a", "b", "c", "c", "c"]
+    k_fold = KFold(n_splits=3)
+    for train_indice, test_indices in k_fold.split(X):
+        print('Train: %s | test: %s' % (train_indices, test_indices))
+    Out[]
+    Train: [2 3 4 5] | Test [0 1]
+    Train: [0 1 4 5] | Test [2 3]
+    Train: [0 1 2 3] | Test [4 5]
+
+    # The cross-validation can then be performed easily:
+    [svc.fit(X_digits[test], y_digits[test]).score(X_digits[train], y_digits[train])
+    for test, train in k_fold.split(X_digits)]
+    Out[38]: [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    ```
+  - **cross_val_score 方法** 计算交叉验证的得分 cross-validation score，参数指定一个 **估计模型**，**交叉验证生成器** 与 **待验证数据集**，cross_val_score 方法会自动使用每个训练数据集训练模型，在测试集上测试并返回得分 score
+    ```python
+    cross_val_score(estimator, X, y=None, groups=None, scoring=None,
+        cv=None, n_jobs=1, verbose=0, fit_params=None,
+        pre_dispatch='2*n_jobs')
+    ```
+    **参数 n_jobs** -1 表示使用当前计算机上的所有 CPU
+    ```python
+    cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
+    Out[39]: array([ 0.93489149,  0.95659432,  0.93989983])
+    ```
+
+    **参数 scoring** 默认计算独立的得分 individual scores，可以指定其他可以选择的方法，模块 metrics 中获取更多 scoring 方法
+    ```python
+    cross_val_score(svc, X_digits, y_digits, cv=k_fold, scoring='precision_macro')
+    Out[40]: array([ 0.93969761,  0.95911415,  0.94041254])
+    ```
+## sklearn 库中的交叉验证生成器类别
+  - **KFold (n_splits, shuffle, random_state)** 将数据集划分成 K 个子集 folds，其中 K-1 个子集作为训练数据，另一个作为测试数据
+  - **StratifiedKFold (n_splits, shuffle, random_state)** 类似于 KFold，但在每个子集中尽量包含每一个分类
+    ```python
+    from sklearn.model_selection import StratifiedKFold
+    sk_fold = StratifiedKFold(n_splits=2)
+    # 参数必须有目标分类
+    for train_indice, test_indices in sk_fold.split(X, [1, 1, 2, 3, 3, 2]):
+        print('Train: %s | test: %s' % (train_indices, test_indices))
+
+    Out[]
+    Train: [0 1 2 3] | test: [0 2 3]
+    Train: [0 1 2 3] | test: [1 4 5]
+    ```
+  - **GroupKFold (n_splits)** 可以指定一个groups参数，相同分组的数据不会分在同一个子集中
+    ```python
+    from sklearn.model_selection import GroupKFold
+    gk_fold = GroupKFold(n_splits=3)
+    # 参数指定 groups
+    for train_indice, test_indices in gk_fold.split(X, groups=[1, 1, 2, 3, 3, 2]):
+        print('Train: %s | test: %s' % (train_indices, test_indices))
+
+    Out[]
+    Train: [0 1 2 3] | test: [3 4]
+    Train: [0 1 2 3] | test: [2 5]
+    Train: [0 1 2 3] | test: [0 1]
+    ```
+  - **ShuffleSplit (n_splits, test_size, train_size, random_state)** 随机产生训练 / 测试集索引
+  - **StratifiedShuffleSplit** 类似于 ShuffleSplit，但在每个子集中尽量包含每一个分类
+  - **GroupShuffleSplit** 可以指定一个groups参数，相同分组的数据不会分在同一个子集中
+  - **LeaveOneGroupOut ()** 根据goups参数提供的分组划分数据
+    ```python
+    from sklearn.model_selection import LeaveOneGroupOut
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y = np.array([1, 2, 1, 2])
+    groups = np.array([1, 1, 2, 2])
+    logo = LeaveOneGroupOut()
+    logo.get_n_splits(X, y, groups)
+    # Out[98]: 2
+
+    for tr, te in logo.split(X, y, groups):
+        print('TRAIN: ', tr, 'TEST: ', te)
+
+    Out[]
+    TRAIN:  [2 3] TEST:  [0 1]
+    TRAIN:  [0 1] TEST:  [2 3]
+    ```
+  - **LeavePGroupsOut (n_groups)** 测试集中包含 P 个分组，n_groups参数指定p，groups参数指定分组
+    ```python
+    from sklearn.model_selection import LeavePGroupsOut
+    lpgo = LeavePGroupsOut(n_groups=2)
+    lpgo.get_n_splits(X, y, groups)
+    # Out[103]: 1
+    # goups中的分组类别数量必须大于n_groups
+    for tr, te in lpgo.split(X, y, [1, 1, 2, 3]):
+         print('TRAIN: ', tr, 'TEST: ', te)
+    Out[]
+    TRAIN:  [3] TEST:  [0 1 2]
+    TRAIN:  [2] TEST:  [0 1 3]
+    TRAIN:  [0 1] TEST:  [2 3]
+    ```
+  - **LeaveOneOut ()** 测试集使用一个样本值，对于大数据集效率很低
+    ```python
+    from sklearn.model_selection import LeaveOneOut
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
+    # Out[110]: 4
+
+    for tr, te in loo.split(X, y, groups):
+        print('TRAIN: ', tr, 'TEST: ', te)
+
+    Out[]
+    TRAIN:  [1 2 3] TEST:  [0]
+    TRAIN:  [0 2 3] TEST:  [1]
+    TRAIN:  [0 1 3] TEST:  [2]
+    TRAIN:  [0 1 2] TEST:  [3]
+    ```
+  - **LeavePOut (p)** 测试集使用 p 个样本值，对于大数据集效率很低
+  - **PredefinedSplit** 通过参数 test_fold 指定预定义的划分方式，不使用原数据集划分数据
+    ```python
+    from sklearn.model_selection import PredefinedSplit
+    test_fold = [0, 1, -1, 1]
+    ps = PredefinedSplit(test_fold)
+    ps.get_n_splits()
+    # Out[115]: 2
+
+    for tr, te in ps.split():
+        print('TRAIN: ', tr, 'TEST: ', te)
+
+    Out[]
+    TRAIN:  [1 2 3] TEST:  [0]
+    TRAIN:  [0 2] TEST:  [1 3]
+    ```
+  - **使用示例**
+    - [Cross-validation on Digits Dataset Exercise]( http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_digits.html#sphx-glr-auto-examples-exercises-plot-cv-digits-py)
+## 网格搜索 Grid-search 寻找模型的最佳参数
+  - scikit-learn 提供的对象，在指定的数据集与估计模型上，通过 **参数 param_grid** 指定估计模型某个参数的一组数据，寻找使得交叉验证得分 cross-validation score 最大的参数值
+    ```python
+    from sklearn.model_selection import GridSearchCV, cross_val_score
+    # 生成10个随机数，作为svc的参数C
+    Cs = np.logspace(-6, -1, 10)
+    # 通过 param_grid 将 svc 的参数 C 指定成一个列表
+    clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs), n_jobs=-1)
+    clf.fit(X_digits[:1000], y_digits[:1000])
+    clf.best_score_
+    # Out[124]: 0.92500000000000004
+
+    clf.best_estimator_.C
+    # Out[125]: 0.0077426368268112772
+
+    # 在测试集上的预测结果，可能没有训练集上的效果好
+    clf.score(X_digits[1000:], y_digits[1000:])
+    # Out[126]: 0.94353826850690092
+    ```
+  - GridSearchCV 默认使用 3-fold (KFold, k = 3) 交叉验证，在分类任务中会自动使用 stratified 3-fold
+  - **嵌套的交叉验证**
+    ```python
+    cross_val_score(clf, X_digits, y_digits)
+    Out[127]: array([ 0.93853821,  0.96327212,  0.94463087])
+    ```
+    两个交叉验证的循环并行运行，GridSearchCV 用交叉验证获得最佳参数，cross_val_score 检验模型的预测效果，可以很好的估计出模型在新数据上的表现
+## 自动使用交叉验证选择参数的估计模型 Cross-validated estimators
+  - 交叉验证选择参数的实现可以是基于算法的，因此对于一些估计模型，scikit-learn 提供了可以自动根据交叉验证选择参数的版本，通常是 **以 CV 结尾的**
+    ```python
+    from sklearn import linear_model, datasets
+    lasso = linear_model.LassoCV()
+    diabetes = datasets.load_diabetes()
+    lasso.fit(diabetes.data, diabetes.target)
+    # 模型自动选择参数
+    lasso.alpha_
+    Out[134]: 0.012291895087486173
+    ```
+  - 使用示例
+    - [Cross-validation: evaluating estimator performance](http://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)
+    - [Cross-validation on diabetes Dataset Exercise](http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py)
+***
+
+# sklearn 中的无监督学习算法
+## 聚类 Clustering 将数据分成离散的组
+  - K-means
+    ```python
+    from sklearn import cluster, datasets
+    iris = datasets.load_iris()
+    X_iris = iris.data
+    y_iris = iris.target
+    k_means = cluster.KMeans(n_clusters=3)
+    k_means.fit(X_iris)
+    k_means.labels_[::10]
+    # Out[144]: array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2], dtype=int32)
+
+    y_iris[::10]
+    # Out[145]: array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+    ```
