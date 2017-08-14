@@ -1011,7 +1011,9 @@
 
 # sklearn 中的无监督学习算法
 ## 聚类 Clustering 将数据分成离散的组
-  - K-means
+  - 聚类的结果不能保证完全恢复原数据的分类，首先合适的聚类数目很难确定，算法对初始化的参数也很敏感
+  - the algorithm is sensitive to initialization, and can fall into local minima, although scikit-learn employs several tricks to mitigate this issue
+  - K-means 最简单的聚类算法
     ```python
     from sklearn import cluster, datasets
     iris = datasets.load_iris()
@@ -1025,3 +1027,132 @@
     y_iris[::10]
     # Out[145]: array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
     ```
+## 矢量量化 VQ vector quantization
+  - 一种数据压缩技术，指从N维实空间RN到RN中L个离散矢量的映射，也可称为分组量化，将若干个标量数据组构成一个矢量，然后在矢量空间给以整体量化，从而压缩了数据而不损失多少信息，标量量化是矢量量化在维数为1时的特例
+  - 聚类可以看作选取一小部分样本来压缩整体的信息，即矢量量化 VQ
+    ```python
+    # 聚类用于图像处理
+    # 不同的 python 版本中，face 可能位于不同的库中
+    import scipy as sp
+    try:
+      face = sp.face(gray=True)
+    except AttributeError:
+      from scipy import misc
+      face = misc.face(gray=True)
+
+    X = face.reshape((-1, 1))
+    k_means = cluster.KMeans(n_clusters=5, n_init=1)
+    k_means.fit(X)
+    values = k_means.cluster_centers_.squeeze()
+    labels = k_means.labels_
+    face_compressed = np.choose(labels, values)
+    face_compressed.shape = face.shape
+    ```
+  - VQ 示例
+    - [Vector Quantization Example]( http://scikit-learn.org/stable/auto_examples/cluster/plot_face_compress.html)
+## 层次聚类 Hierarchical clustering Ward
+  - **层次聚类 Hierarchical clustering** 是层次化的聚类，得出来的结构是一棵树
+    - **Agglomerative 自底向上的方法**，一开始所有的样本值属于单独的的分类，随后根据相关程度合并分类，直到最后只剩下一个类别，完成一棵树的构造，当样本较少，分类数目大时，计算会比 k-means 更有效
+    - **Divisive 自顶向下的方法**，初始所有的样本位于同一类，随着分级将数据迭代划分成更多分类，通常在分类数目不多时考虑这种方法，如 **二分k均值**（bisecting Ｋ-means）算法
+  - **Connectivity-constrained clustering** Agglomerative 算法中可以根据一个连接图 connectivity graph 来指定哪些样本可以划分成同一类，通常会使用一个稀疏矩阵作为连接图，如用于图片处理
+    ```python
+    import matplotlib.pyplot as plt
+    from sklearn.feature_extraction.image import grid_to_graph
+    from sklearn.cluster import AgglomerativeClustering
+
+    # Generate data
+    try:  # SciPy >= 0.16 have face in misc
+        from scipy.misc import face
+        face = face(gray=True)
+    except ImportError:
+        face = sp.face(gray=True)
+
+    # Resize it to 10% of the original size to speed up the processing
+    face = sp.misc.imresize(face, 0.10) / 255.
+    X = np.reshape(face, (-1, 1))
+
+    # Define the structure A of the data. Pixels connected to their neighbors.
+    # * 表示解包，将一个元组解开成单独的元素
+    connectivity = grid_to_graph(*face.shape)
+    ```
+## 特征合并 Feature agglomeration
+  - 在样本值与特征值相比数量不足时，**稀疏方法** 可以用于减小 **维数灾难** 的影响，另一种方法是 **合并相似的特征**，这可以通过在特征值轴向上使用聚类实现，即 **在转置的数据集上聚类**
+    ```python
+    # 使用手写数字数据集
+    digits = datasets.load_digits()
+    images = digits.images
+    # 将 images 数据转化为二维
+    X = np.reshape(images, (len(images), -1))
+    # * 表示解包，将一个元组解开成单独的元素
+    connectivity = grid_to_graph(*images[0].shape)
+    agglo = cluster.FeatureAgglomeration(connectivity=connectivity, n_clusters=32)
+    agglo.fit(X)
+
+    # transform / inverse_transform 方法
+    X_reduced = agglo.transform(X)
+    X_approx = agglo.inverse_transform(X_reduced)
+    images_approx = np.reshape(X_approx, images.shape)
+    ```
+    **transform / inverse_transform 方法** 有些估计模型提供的方法，可以用于减小数据集的维度
+## 降维分解 Decompositions
+  Components and loadings
+
+  If X is our multivariate data, then the problem that we are trying to solve is to rewrite it on a different observational basis: we want to learn loadings L and a set of components C such that X = L C. Different criteria exist to choose the components
+  - 主成分分析 Principal component analysis PCA selects the successive components that explain the maximum variance in the signal.
+  - The point cloud spanned by the observations above is very flat in one direction: one of the three univariate features can almost be exactly computed using the other two. PCA finds the directions in which the data is not flat
+
+  When used to transform data, PCA can reduce the dimensionality of the data by projecting on a principal subspace.
+  ```python
+  # Create a signal with only 2 useful dimensions
+  x1 = np.random.normal(size=100)
+  x2 = np.random.normal(size=100)
+  x3 = x1 + x2
+  X = np.c_[x1, x2, x3]
+  from sklearn import decomposition
+  pca = decomposition.PCA()
+  pca.fit(X)
+  print(pca.explained_variance_)  
+  # As we can see, only the 2 first components are useful
+  pca.n_components = 2
+  X_reduced = pca.fit_transform(X)
+  X_reduced.shape
+  ```
+  [Principal components analysis (PCA)](http://scikit-learn.org/stable/auto_examples/decomposition/plot_pca_3d.html)
+  - 独立成分分析 Independent Component Analysis ICA  selects components so that the distribution of their loadings carries a maximum amount of independent information. It is able to recover non-Gaussian 高斯 independent signals
+  ```python
+  # Generate sample data
+  import numpy as np
+  from scipy import signal
+  time = np.linspace(0, 10, 2000)
+  s1 = np.sin(2 * time)  # Signal 1 : sinusoidal signal
+  s2 = np.sign(np.sin(3 * time))  # Signal 2 : square signal
+  s3 = signal.sawtooth(2 * np.pi * time)  # Signal 3: saw tooth signal
+  S = np.c_[s1, s2, s3]
+  S += 0.2 * np.random.normal(size=S.shape)  # Add noise
+  S /= S.std(axis=0)  # Standardize data
+  # Mix data
+  A = np.array([[1, 1, 1], [0.5, 2, 1], [1.5, 1, 2]])  # Mixing matrix
+  X = np.dot(S, A.T)  # Generate observations
+  # Compute ICA
+  ica = decomposition.FastICA()
+  S_ = ica.fit_transform(X)  # Get the estimated sources
+  A_ = ica.mixing_.T
+  np.allclose(X,  np.dot(S_, A_) + ica.mean_)
+  ```
+  [Blind source separation using FastICA](http://scikit-learn.org/stable/auto_examples/decomposition/plot_ica_blind_source_separation.html)
+***
+
+# Pipelining
+***
+
+# Choosing the right estimator
+
+  Often the hardest part of solving a machine learning problem can be finding the right estimator for the job.
+
+  Different estimators are better suited for different types of data and different problems.
+
+  The flowchart below is designed to give users a bit of a rough guide on how to approach problems with regard to which estimators to try on your data.
+
+  Click on any estimator in the chart below to see its documentation.
+  [Choosing the right estimator](http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html)
+  ![](images/ml_map.png)
