@@ -31,6 +31,12 @@
   	- [自动使用交叉验证选择参数的估计模型 Cross-validated estimators](#自动使用交叉验证选择参数的估计模型-cross-validated-estimators)
   - [sklearn 中的无监督学习算法](#sklearn-中的无监督学习算法)
   	- [聚类 Clustering 将数据分成离散的组](#聚类-clustering-将数据分成离散的组)
+  	- [矢量量化 VQ vector quantization](#矢量量化-vq-vector-quantization)
+  	- [层次聚类 Hierarchical clustering Ward](#层次聚类-hierarchical-clustering-ward)
+  	- [特征合并 Feature agglomeration](#特征合并-feature-agglomeration)
+  	- [降维分解 Decompositions](#降维分解-decompositions)
+  - [Pipelining](#pipelining)
+  - [Choosing the right estimator](#choosing-the-right-estimator)
 
   <!-- /TOC -->
 ***
@@ -1146,7 +1152,6 @@
 ***
 
 # Choosing the right estimator
-
   Often the hardest part of solving a machine learning problem can be finding the right estimator for the job.
 
   Different estimators are better suited for different types of data and different problems.
