@@ -2,49 +2,7 @@
 ***
 
 # 目录
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [___2017 - 07 - 25 scikit-learn___](#2017-07-25-scikit-learn)
-- [目录](#目录)
-- [scikit-learn 介绍](#scikit-learn-介绍)
-	- [基本概念](#基本概念)
-	- [sklearn 载入数据集 Loading an example dataset](#sklearn-载入数据集-loading-an-example-dataset)
-	- [sklearn学习和预测一般流程 Learning and predicting](#sklearn学习和预测一般流程-learning-and-predicting)
-	- [模型存储 Model persistence](#模型存储-model-persistence)
-	- [sklearn 数据类型约定规则 Conventions](#sklearn-数据类型约定规则-conventions)
-	- [模型参数修改 Refitting and updating parameters](#模型参数修改-refitting-and-updating-parameters)
-	- [多组标签的数据学习 Multiclass 与 multilabel fitting](#多组标签的数据学习-multiclass-与-multilabel-fitting)
-- [sklearn 中的监督学习算法](#sklearn-中的监督学习算法)
-	- [分类算法 KNN](#分类算法-knn)
-	- [维数灾难 The curse of dimensionality](#维数灾难-the-curse-of-dimensionality)
-	- [线型回归模型 Linear regression model](#线型回归模型-linear-regression-model)
-	- [岭回归 Ridge 缩减 shrinkage 与过拟合](#岭回归-ridge-缩减-shrinkage-与过拟合)
-	- [Lasso 缩减与稀疏 Sparsity 降低模型复杂度](#lasso-缩减与稀疏-sparsity-降低模型复杂度)
-	- [Logistic 回归与sigmoid函数，回归算法用于分类](#logistic-回归与sigmoid函数回归算法用于分类)
-	- [支持向量机 SVM Support vector machines](#支持向量机-svm-support-vector-machines)
-- [交叉验证与模型参数选择](#交叉验证与模型参数选择)
-	- [score 方法与交叉验证 cross-validated scores](#score-方法与交叉验证-cross-validated-scores)
-	- [sklearn 库中的交叉验证生成器使用 Cross-validation generators](#sklearn-库中的交叉验证生成器使用-cross-validation-generators)
-	- [sklearn 库中的交叉验证生成器类别](#sklearn-库中的交叉验证生成器类别)
-	- [网格搜索 Grid-search 寻找模型的最佳参数](#网格搜索-grid-search-寻找模型的最佳参数)
-	- [自动使用交叉验证选择参数的估计模型 Cross-validated estimators](#自动使用交叉验证选择参数的估计模型-cross-validated-estimators)
-- [sklearn 中的无监督学习算法](#sklearn-中的无监督学习算法)
-	- [聚类 Clustering 将数据分成离散的组](#聚类-clustering-将数据分成离散的组)
-	- [矢量量化 VQ vector quantization 数据压缩](#矢量量化-vq-vector-quantization-数据压缩)
-	- [层次聚类 Hierarchical clustering Ward](#层次聚类-hierarchical-clustering-ward)
-	- [聚类用于特征合并 Feature agglomeration](#聚类用于特征合并-feature-agglomeration)
-	- [降维分解 Decompositions PCA ICA](#降维分解-decompositions-pca-ica)
-- [Pipelining 组合多个估计模型](#pipelining-组合多个估计模型)
-- [Working With Text Data](#working-with-text-data)
-- [其他相关教程链接](#其他相关教程链接)
-- [根据数据以及问题类型选取合适的估计模型](#根据数据以及问题类型选取合适的估计模型)
-- [foo](#foo)
-	- [数据预处理](#数据预处理)
-	- [sklearn 库中的算法](#sklearn-库中的算法)
-	- [优化算法的参数](#优化算法的参数)
-	- [sklearn 中的评价尺度](#sklearn-中的评价尺度)
-
-<!-- /TOC -->
 ***
 
 # scikit-learn 介绍
@@ -63,6 +21,7 @@
     - **密度估计 density estimation** 进一步分析数据的分布 distribution
     - 无监督学习也可用于 数据降维，如将高维数据将到二维或三维空间，方便数据可视化 visualization
   - scikit-learn 中所有的监督学习算法都实现了 **fit(X, y)** 方法用于模型训练，以及 **predict(X)** 方法用于预测未分组(unlabeled)数据 X 的标签值(labels) Y
+  - 除了分类和回归问题，Scikit-Learn还有海量的更复杂的算法，包括了聚类，以及建立混合算法的实现技术，如 **Bagging 和 Boosting**
 ## sklearn 载入数据集 Loading an example dataset
   - scikit-learn 内包含了常用的机器学习数据集，比如做分类的 iris 和 digit 数据集，用于回归的经典数据集 Boston house prices
   - **鸢尾花 iris 数据集**，是一类多重变量分析的数据集，通过花瓣petal 与 萼片sepal 的长宽，划分鸢尾花的三个种类 山鸢尾Setosa / 杂色鸢尾Versicolour / 维吉尼亚鸢尾Virginica
@@ -292,6 +251,192 @@
            [0, 1, 0, 1, 0],
            [1, 0, 1, 0, 0],
            [1, 0, 1, 0, 0]])
+    ```
+## sklearn 中的评价尺度
+  - 在sklearn中包含四种评价尺度
+    - explained_variance_score()
+    - mean_absolute_error()
+    - mean_squared_error()
+    - r2_score()
+  - 均方差 mean-squared-error
+    ```python
+    MSE(y, yp) = 1 / N * Σ(1, N)(y - yp)^2
+    ```
+  - 平均绝对值误差 mean_absolute_error
+    ```python
+    MAE(y, yp) = 1 / N * Σ(1, N)|y - yp|
+    ```
+  - 可释方差得分 explained_variance_score
+    ```python
+    EVS(y, yp) = 1 - var(y - yp) / var(y)
+    ```
+    最大值是1，表示模型的拟合程度最好，值越小则效果越差
+  - 中值绝对误差 Median absolute error
+    ```python
+    MedAE(y, yp) = median(|y1 - yp1|, ... , |yN - ypN|)
+    ```
+    适应含有离群点的数据集
+  - R2 决定系数（拟合优度）
+    ```python
+    R2(y, yp) = 1 - Σ(1, N)(y - yp)^2 / Σ(1, N)(y - mean(y))^2
+    ```
+    表征回归方程在多大程度上解释了因变量的变化，或者说方程对观测值的拟合程度
+  - **参数 multioutput**
+    - 用来指定在多目标回归问题中，若干单个目标变量的损失或得分以什么样的方式被平均起来
+    - 默认值 **uniform_average**，将所有预测目标值的损失以等权重的方式平均起来
+    - 指定一个 **shape 为（n_oupputs,）的ndarray**，那么数组内的数将被视为是对每个输出预测损失（或得分）的加权值，最终的损失按照指定的加权方式来计算
+    - 指定为 **raw_values**，那么所有的回归目标的预测损失或预测得分都会被单独返回一个shape是（n_output）的数组中
+***
+
+# sklearn 库中的算法举例
+## 逻辑回归
+  - 大多数情况下被用来解决分类问题（二元分类），但多类的分类（所谓的一对多方法）也适用，优点是对于每一个输出的对象都有一个对应类别的概率
+    ```python
+    from sklearn import metrics
+    from sklearn.linear_model import LogisticRegression
+    model = LogisticRegression()
+    model.fit(x, y)
+    Out[27]:
+    LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+              intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
+              penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
+              verbose=0, warm_start=False)
+
+    # make predictions
+    expected = y
+    predicted = model.predict(x)
+    # summarize the fit of the model
+    print(metrics.classification_report(expected, predicted))
+                 precision    recall  f1-score   support
+
+            0.0       0.79      0.90      0.84       500
+            1.0       0.74      0.55      0.63       268
+
+    avg / total       0.77      0.77      0.77       768
+
+    metrics.confusion_matrix(expected, predicted)
+    Out[33]:
+    array([[448,  52],
+           [121, 147]])
+    ```
+## 朴素贝叶斯
+  - 主要任务是恢复训练样本的数据分布密度，这个方法通常在多类的分类问题上表现的很好
+    ```python
+    from sklearn import metrics
+    from sklearn.naive_bayes import GaussianNB
+    model = GaussianNB()
+    model.fit(x, y)
+    Out[36]: GaussianNB(priors=None)
+
+    # make predictions
+    expected = y
+    predicted = model.predict(x)
+    # summarize the fit of the model
+    print(metrics.classification_report(expected, predicted))
+                 precision    recall  f1-score   support
+
+            0.0       0.80      0.84      0.82       500
+            1.0       0.68      0.62      0.64       268
+
+    avg / total       0.76      0.76      0.76       768
+
+    metrics.confusion_matrix(expected, predicted)
+    Out[40]:
+    array([[421,  79],
+           [103, 165]])
+    ```
+## k-最近邻 KNN
+  - 通常用于一个更复杂分类算法的一部分，例如，可以用它的估计值做为一个对象的特征，有时候，一个简单的kNN算法在良好选择的特征上会有很出色的表现，当参数（主要是metrics）被设置得当，这个算法在回归问题中通常表现出最好的质量
+    ```python
+    from sklearn import metrics
+    from sklearn.neighbors import KNeighborsClassifier
+    # fit a k-nearest neighbor model to the data
+    model = KNeighborsClassifier()
+    model.fit(x, y)
+    Out[43]:
+    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
+               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               weights='uniform')
+
+    # make predictions
+    expected = y
+    predicted = model.predict(x)
+    # summarize the fit of the model
+    print(metrics.classification_report(expected, predicted))
+                 precision    recall  f1-score   support
+
+            0.0       0.83      0.88      0.85       500
+            1.0       0.75      0.65      0.70       268
+
+    avg / total       0.80      0.80      0.80       768
+
+    metrics.confusion_matrix(expected, predicted)
+    Out[46]:
+    array([[442,  58],
+           [ 93, 175]])
+    ```
+## 决策树 分类和回归树 CART
+  - 适用的分类问题中对象有可分类的特征，且被用于回归和分类，决策树很适用于多类分类
+    ```python
+    from sklearn import metrics
+    from sklearn.tree import DecisionTreeClassifier
+    # fit a CART model to the data
+    model = DecisionTreeClassifier()
+    model.fit(x, y)
+    Out[49]:
+    DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=None,
+                max_features=None, max_leaf_nodes=None,
+                min_impurity_split=1e-07, min_samples_leaf=1,
+                min_samples_split=2, min_weight_fraction_leaf=0.0,
+                presort=False, random_state=None, splitter='best')
+
+    # make predictions
+    expected = y
+    predicted = model.predict(x)
+    # summarize the fit of the model
+    print(metrics.classification_report(expected, predicted))
+                 precision    recall  f1-score   support
+
+            0.0       1.00      1.00      1.00       500
+            1.0       1.00      1.00      1.00       268
+
+    avg / total       1.00      1.00      1.00       768
+
+    metrics.confusion_matrix(expected, predicted)
+    Out[52]:
+    array([[500,   0],
+           [  0, 268]])
+    ```
+## 支持向量机 SVM
+  - 是最流行的机器学习算法之一，主要用于分类问题，同样也用于逻辑回归，SVM在一对多方法的帮助下可以实现多类分类
+    ```python
+    from sklearn import metrics
+    from sklearn.svm import SVC
+    # fit a SVM model to the data
+    model = SVC()
+    model.fit(x, y)
+    Out[54]:
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
+
+    # make predictions
+    expected = y
+    predicted = model.predict(x)
+    # summarize the fit of the model
+    print(metrics.classification_report(expected, predicted))
+                   precision    recall  f1-score   support
+
+            0.0       1.00      1.00      1.00       500
+            1.0       1.00      1.00      1.00       268
+
+    avg / total       1.00      1.00      1.00       768
+
+    metrics.confusion_matrix(expected, predicted)
+    Out[56]:
+    array([[500,   0],
+           [  0, 268]])
     ```
 ***
 
@@ -675,6 +820,7 @@
   - **使用示例**
     - [Cross-validation on Digits Dataset Exercise]( http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_digits.html#sphx-glr-auto-examples-exercises-plot-cv-digits-py)
 ## 网格搜索 Grid-search 寻找模型的最佳参数
+  - 在编写高效的算法的过程中最难的步骤之一就是正确参数的选择
   - scikit-learn 提供的对象，在指定的数据集与估计模型上，通过 **参数 param_grid** 指定估计模型某个参数的一组数据，寻找使得交叉验证得分 cross-validation score 最大的参数值
     ```python
     from sklearn.model_selection import GridSearchCV, cross_val_score
@@ -683,15 +829,37 @@
     # 通过 param_grid 将 svc 的参数 C 指定成一个列表
     clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs), n_jobs=-1)
     clf.fit(X_digits[:1000], y_digits[:1000])
+		# 最佳结果
     clf.best_score_
     # Out[124]: 0.92500000000000004
 
+		# 最佳参数 C
     clf.best_estimator_.C
     # Out[125]: 0.0077426368268112772
 
     # 在测试集上的预测结果，可能没有训练集上的效果好
     clf.score(X_digits[1000:], y_digits[1000:])
     # Out[126]: 0.94353826850690092
+    ```
+  - 随机地从既定的范围内选取一个参数有时候更为高效，估计在这个参数下算法的质量，然后选出最好的
+    ```python
+    import numpy as np
+    from scipy.stats import uniform as sp_rand
+    from sklearn.linear_model import Ridge
+    from sklearn.grid_search import RandomizedSearchCV
+    # prepare a uniform distribution to sample for the alpha parameter
+    param_grid = {'alpha': sp_rand()}
+    # create and fit a ridge regression model, testing random alpha values
+    model = Ridge()
+    rsearch = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=100)
+    rsearch.fit(x, y)
+
+    # summarize the results of the random parameter search
+    rsearch.best_score_
+    Out[8]: 0.27961752547790575
+
+    rsearch.best_estimator_.alpha
+    Out[9]: 0.99827013993379388
     ```
   - GridSearchCV 默认使用 3-fold (KFold, k = 3) 交叉验证，在分类任务中会自动使用 stratified 3-fold
   - **嵌套的交叉验证**
@@ -1113,11 +1281,48 @@
   ![](images/ml_map.png)
 ***
 
-# foo
-## 数据预处理
+# 数据预处理
+## 特征选取 和 特征工程
+  - **特征工程** 解决的一个问题最重要的是恰当选取特征、甚至创造特征的能力
+  - 特征工程是一个相当有创造性的过程，有时候更多的是靠直觉和专业的知识，但对于特征的选取，已经有很多的算法可供直接使用，如 **树算法计算特征的信息量**
+    ```python
+    from sklearn import metrics
+    from sklearn.ensemble import ExtraTreesClassifier
+    model = ExtraTreesClassifier()
+    model.fit(x, y)
+    Out[15]:
+    ExtraTreesClassifier(bootstrap=False, class_weight=None, criterion='gini',
+               max_depth=None, max_features='auto', max_leaf_nodes=None,
+               min_impurity_split=1e-07, min_samples_leaf=1,
+               min_samples_split=2, min_weight_fraction_leaf=0.0,
+               n_estimators=10, n_jobs=1, oob_score=False, random_state=None,
+               verbose=0, warm_start=False)
+    # display the relative importance of each attribute
+    model.feature_importances_
+    Out[16]:
+    array([ 0.10275952,  0.25440925,  0.09016066,  0.07965089,
+            0.0757741 , 0.13128523,  0.11951687,  0.14644348])
+    ```
+  - 其他所有的方法都是基于对 **特征子集的高效搜索**，从而找到最好的子集，意味着演化了的模型在这个子集上有最好的质量，**递归特征消除算法**（RFE）是这些搜索算法的其中之一
+    ```python
+    from sklearn.feature_selection import RFE
+    from sklearn.linear_model import LogisticRegression
+    model = LogisticRegression()
+    # create the RFE model and select 3 attributes
+    rfe = RFE(model, 3)
+    rfe = rfe.fit(x, y)
+    # summarize the selection of the attributes
+    rfe.support_
+    Out[20]: array([ True, False, False, False, False,  True,  True, False], dtype=bool)
+
+    rfe.ranking_
+    Out[21]: array([1, 2, 3, 5, 6, 1, 1, 4])
+    ```
+## 标准化或规格化
   - 大多数的梯度方法（几乎所有的机器学习算法都基于此）对于数据的缩放很敏感，因此在运行算法之前，应该进行 **标准化或规格化**
-    - 标准化包括替换所有特征的名义值，让它们每一个的值在0和1之间
-    - 规格化包括数据的预处理，使得每个特征的值有0和1的离差
+  - 标准化包括替换所有特征的名义值，让它们每一个的值在0和1之间
+  - 规格化包括数据的预处理，使得每个特征的值有0和1的离差
+  - 示例
     ```python
     # 数据获取
     import numpy as np
@@ -1157,276 +1362,6 @@
     y[1]
     Out[9]: 0.0
     ```
-  - **特征选取和特征工程** 解决一个问题最重要的是恰当选取特征、甚至创造特征的能力，特征工程是一个相当有创造性的过程，有时候更多的是靠直觉和专业的知识，但对于特征的选取，已经有很多的算法可供直接使用，如树算法就可以计算特征的信息量
-    ```python
-    from sklearn import metrics
-    from sklearn.ensemble import ExtraTreesClassifier
-    model = ExtraTreesClassifier()
-    model.fit(x, y)
-    Out[15]:
-    ExtraTreesClassifier(bootstrap=False, class_weight=None, criterion='gini',
-               max_depth=None, max_features='auto', max_leaf_nodes=None,
-               min_impurity_split=1e-07, min_samples_leaf=1,
-               min_samples_split=2, min_weight_fraction_leaf=0.0,
-               n_estimators=10, n_jobs=1, oob_score=False, random_state=None,
-               verbose=0, warm_start=False)
-    # display the relative importance of each attribute
-    model.feature_importances_
-    Out[16]:
-    array([ 0.10275952,  0.25440925,  0.09016066,  0.07965089,
-            0.0757741 , 0.13128523,  0.11951687,  0.14644348])
-    ```
-  - 其他所有的方法都是基于对 **特征子集的高效搜索**，从而找到最好的子集，意味着演化了的模型在这个子集上有最好的质量，**递归特征消除算法**（RFE）是这些搜索算法的其中之一
-    ```python
-    from sklearn.feature_selection import RFE
-    from sklearn.linear_model import LogisticRegression
-    model = LogisticRegression()
-    # create the RFE model and select 3 attributes
-    rfe = RFE(model, 3)
-    rfe = rfe.fit(x, y)
-    # summarize the selection of the attributes
-    rfe.support_
-    Out[20]: array([ True, False, False, False, False,  True,  True, False], dtype=bool)
-
-    rfe.ranking_
-    Out[21]: array([1, 2, 3, 5, 6, 1, 1, 4])
-    ```
-## sklearn 库中的算法
-  - 除了分类和回归问题，Scikit-Learn还有海量的更复杂的算法，包括了聚类，以及建立混合算法的实现技术，如 Bagging 和 Boosting
-  - **逻辑回归** 大多数情况下被用来解决分类问题（二元分类），但多类的分类（所谓的一对多方法）也适用，优点是对于每一个输出的对象都有一个对应类别的概率
-    ```python
-    from sklearn import metrics
-    from sklearn.linear_model import LogisticRegression
-    model = LogisticRegression()
-    model.fit(x, y)
-    Out[27]:
-    LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-              intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
-              penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
-              verbose=0, warm_start=False)
-
-    # make predictions
-    expected = y
-    predicted = model.predict(x)
-    # summarize the fit of the model
-    print(metrics.classification_report(expected, predicted))
-                 precision    recall  f1-score   support
-
-            0.0       0.79      0.90      0.84       500
-            1.0       0.74      0.55      0.63       268
-
-    avg / total       0.77      0.77      0.77       768
-
-    metrics.confusion_matrix(expected, predicted)
-    Out[33]:
-    array([[448,  52],
-           [121, 147]])
-    ```
-  - **朴素贝叶斯** 主要任务是恢复训练样本的数据分布密度，这个方法通常在多类的分类问题上表现的很好
-    ```python
-    from sklearn import metrics
-    from sklearn.naive_bayes import GaussianNB
-    model = GaussianNB()
-    model.fit(x, y)
-    Out[36]: GaussianNB(priors=None)
-
-    # make predictions
-    expected = y
-    predicted = model.predict(x)
-    # summarize the fit of the model
-    print(metrics.classification_report(expected, predicted))
-                 precision    recall  f1-score   support
-
-            0.0       0.80      0.84      0.82       500
-            1.0       0.68      0.62      0.64       268
-
-    avg / total       0.76      0.76      0.76       768
-
-    metrics.confusion_matrix(expected, predicted)
-    Out[40]:
-    array([[421,  79],
-           [103, 165]])
-    ```
-  - **k-最近邻 KNN** 通常用于一个更复杂分类算法的一部分，例如，可以用它的估计值做为一个对象的特征，有时候，一个简单的kNN算法在良好选择的特征上会有很出色的表现，当参数（主要是metrics）被设置得当，这个算法在回归问题中通常表现出最好的质量
-    ```python
-    from sklearn import metrics
-    from sklearn.neighbors import KNeighborsClassifier
-    # fit a k-nearest neighbor model to the data
-    model = KNeighborsClassifier()
-    model.fit(x, y)
-    Out[43]:
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform')
-
-    # make predictions
-    expected = y
-    predicted = model.predict(x)
-    # summarize the fit of the model
-    print(metrics.classification_report(expected, predicted))
-                 precision    recall  f1-score   support
-
-            0.0       0.83      0.88      0.85       500
-            1.0       0.75      0.65      0.70       268
-
-    avg / total       0.80      0.80      0.80       768
-
-    metrics.confusion_matrix(expected, predicted)
-    Out[46]:
-    array([[442,  58],
-           [ 93, 175]])
-    ```
-  - **决策树 分类和回归树（CART）** 适用的分类问题中对象有可分类的特征，且被用于回归和分类，决策树很适用于多类分类
-    ```python
-    from sklearn import metrics
-    from sklearn.tree import DecisionTreeClassifier
-    # fit a CART model to the data
-    model = DecisionTreeClassifier()
-    model.fit(x, y)
-    Out[49]:
-    DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=None,
-                max_features=None, max_leaf_nodes=None,
-                min_impurity_split=1e-07, min_samples_leaf=1,
-                min_samples_split=2, min_weight_fraction_leaf=0.0,
-                presort=False, random_state=None, splitter='best')
-
-    # make predictions
-    expected = y
-    predicted = model.predict(x)
-    # summarize the fit of the model
-    print(metrics.classification_report(expected, predicted))
-                 precision    recall  f1-score   support
-
-            0.0       1.00      1.00      1.00       500
-            1.0       1.00      1.00      1.00       268
-
-    avg / total       1.00      1.00      1.00       768
-
-    metrics.confusion_matrix(expected, predicted)
-    Out[52]:
-    array([[500,   0],
-           [  0, 268]])
-    ```
-  - **支持向量机 SVM** 是最流行的机器学习算法之一，主要用于分类问题，同样也用于逻辑回归，SVM在一对多方法的帮助下可以实现多类分类
-    ```python
-    from sklearn import metrics
-    from sklearn.svm import SVC
-    # fit a SVM model to the data
-    model = SVC()
-    model.fit(x, y)
-    Out[54]:
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
-
-    # make predictions
-    expected = y
-    predicted = model.predict(x)
-    # summarize the fit of the model
-    print(metrics.classification_report(expected, predicted))
-                   precision    recall  f1-score   support
-
-            0.0       1.00      1.00      1.00       500
-            1.0       1.00      1.00      1.00       268
-
-    avg / total       1.00      1.00      1.00       768
-
-    metrics.confusion_matrix(expected, predicted)
-    Out[56]:
-    array([[500,   0],
-           [  0, 268]])
-    ```
-## 优化算法的参数
-  - 在编写高效的算法的过程中最难的步骤之一就是正确参数的选择，Scikit-Learn提供了很多函数来帮助解决这个问题
-    ```python
-    # 规则化参数的选择，在其中不少数值被相继搜索了
-    import numpy as np
-    from sklearn.linear_model import Ridge
-    # This module will be removed in 0.20
-    from sklearn.grid_search import GridSearchCV
-    # prepare a range of alpha values to test
-    alphas = np.array([1, 0.1, 0.01, 0.001, 0.0001, 0])
-    # create and fit a ridge regression model, testing each alpha
-    model = Ridge()
-    grid = GridSearchCV(estimator=model, param_grid=dict(alpha=alphas))
-    grid.fit(x, y)
-    Out[66]:
-    GridSearchCV(cv=None, error_score='raise',
-           estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-       normalize=False, random_state=None, solver='auto', tol=0.001),
-           fit_params={}, iid=True, n_jobs=1,
-           param_grid={'alpha': array([  1.00000e+00,   1.00000e-01,   1.00000e-02,   1.00000e-03,
-             1.00000e-04,   0.00000e+00])},
-           pre_dispatch='2*n_jobs', refit=True, scoring=None, verbose=0)
-
-    # summarize the results of the grid search
-    grid.best_score_
-    Out[68]: 0.27961755931297216
-
-    grid.best_estimator_.alpha
-    Out[69]: 1.0
-    ```
-  - 随机地从既定的范围内选取一个参数有时候更为高效，估计在这个参数下算法的质量，然后选出最好的
-    ```python
-    import numpy as np
-    from scipy.stats import uniform as sp_rand
-    from sklearn.linear_model import Ridge
-    from sklearn.grid_search import RandomizedSearchCV
-    # prepare a uniform distribution to sample for the alpha parameter
-    param_grid = {'alpha': sp_rand()}
-    # create and fit a ridge regression model, testing random alpha values
-    model = Ridge()
-    rsearch = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=100)
-    rsearch.fit(x, y)
-    Out[7]:
-    RandomizedSearchCV(cv=None, error_score='raise',
-              estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-       normalize=False, random_state=None, solver='auto', tol=0.001),
-              fit_params={}, iid=True, n_iter=100, n_jobs=1,
-              param_distributions={'alpha': <scipy.stats._distn_infrastructure.rv_frozen object at 0x7f3aff8469e8>},
-              pre_dispatch='2*n_jobs', random_state=None, refit=True,
-              scoring=None, verbose=0)
-
-    # summarize the results of the random parameter search
-    rsearch.best_score_
-    Out[8]: 0.27961752547790575
-
-    rsearch.best_estimator_.alpha
-    Out[9]: 0.99827013993379388
-    ```
-## sklearn 中的评价尺度
-  - 在sklearn中包含四种评价尺度
-    - explained_variance_score()
-    - mean_absolute_error()
-    - mean_squared_error()
-    - r2_score()
-  - 均方差 mean-squared-error
-    ```python
-    MSE(y, yp) = 1 / N * Σ(1, N)(y - yp)^2
-    ```
-  - 平均绝对值误差 mean_absolute_error
-    ```python
-    MAE(y, yp) = 1 / N * Σ(1, N)|y - yp|
-    ```
-  - 可释方差得分 explained_variance_score
-    ```python
-    EVS(y, yp) = 1 - var(y - yp) / var(y)
-    ```
-    最大值是1，表示模型的拟合程度最好，值越小则效果越差
-  - 中值绝对误差 Median absolute error
-    ```python
-    MedAE(y, yp) = median(|y1 - yp1|, ... , |yN - ypN|)
-    ```
-    适应含有离群点的数据集
-  - R2 决定系数（拟合优度）
-    ```python
-    R2(y, yp) = 1 - Σ(1, N)(y - yp)^2 / Σ(1, N)(y - mean(y))^2
-    ```
-    表征回归方程在多大程度上解释了因变量的变化，或者说方程对观测值的拟合程度
-  - **参数 multioutput**
-    - 用来指定在多目标回归问题中，若干单个目标变量的损失或得分以什么样的方式被平均起来
-    - 默认值 **uniform_average**，将所有预测目标值的损失以等权重的方式平均起来
-    - 指定一个 **shape 为（n_oupputs,）的ndarray**，那么数组内的数将被视为是对每个输出预测损失（或得分）的加权值，最终的损失按照指定的加权方式来计算
-    - 指定为 **raw_values**，那么所有的回归目标的预测损失或预测得分都会被单独返回一个shape是（n_output）的数组中
 ***
+
+[foo](01-14_github.md)
