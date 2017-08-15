@@ -427,6 +427,7 @@ nonzero / where / choose
     %bookmark：创建目录书签，以在cd命令时使用，会自动持久化
             In [14]: %bookmark db /home/leondgarse/practice_code/python/data_analysis/pydata-book/
             In [15]: cd db
+    % doctest_mode : 直接粘贴 python 控制台格式命令，不必去除提示符 >>>
     ```
 ## %run命令
   - 执行python脚本，之后该文件中所定义的全部变量（还有各种import、函数和全局变量）就可以在当前IPython shell中访问 In [139]:
