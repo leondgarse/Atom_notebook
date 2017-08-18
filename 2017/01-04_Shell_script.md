@@ -232,7 +232,7 @@
     if test "1" -ne "2"; then echo 6; fi
     if ! test "1" -eq "2"; then echo 6; fi
 
-    if [ "1" -ne "2" ] &amp;&amp; [ 1 -eq "1" ]; then echo 6; fi
+    if [ "1" -ne "2" ] && [ 1 -eq "1" ]; then echo 6; fi
     if [ "1" -ne "2" -a 1 -eq 1 ]; then echo 6; fi
     if [[ "1" -eq "2" || "1" -eq "1" ]]; then echo 6; fi
     if test "1" -eq "2" -o "1" -eq "1"; then echo 6; fi

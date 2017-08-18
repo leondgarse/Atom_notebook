@@ -286,6 +286,50 @@
     - 默认值 **uniform_average**，将所有预测目标值的损失以等权重的方式平均起来
     - 指定一个 **shape 为（n_oupputs,）的ndarray**，那么数组内的数将被视为是对每个输出预测损失（或得分）的加权值，最终的损失按照指定的加权方式来计算
     - 指定为 **raw_values**，那么所有的回归目标的预测损失或预测得分都会被单独返回一个shape是（n_output）的数组中
+## 标准化或规格化
+  - 大多数的梯度方法（几乎所有的机器学习算法都基于此）对于数据的缩放很敏感，因此在运行算法之前，应该进行 **标准化或规格化**
+  - 标准化包括替换所有特征的名义值，让它们每一个的值在0和1之间
+  - 规格化包括数据的预处理，使得每个特征的值有0和1的离差
+  - 示例
+    ```python
+    # 数据获取
+    import numpy as np
+    import urllib.request
+    # url with dataset
+    url = "http://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data"
+    # download the file
+    raw_data = urllib.request.urlopen(url)
+    # load the CSV file as a numpy matrix
+    dataset = np.loadtxt(raw_data, delimiter=",")
+    # separate the data from the target attributes
+    x = dataset[:,:-1]
+    y = dataset[:,-1]
+
+    # 标准化与规格化
+    from sklearn import preprocessing
+    # normalize the data attributes
+    normalized_x = preprocessing.normalize(x)
+    # standardize the data attributes
+    standardized_x = preprocessing.scale(x)
+    ```
+    运行结果
+    ```python
+    x[1]
+    Out[6]: array([ 1., 85., 66., 29., 0., 26.6, 0.351, 31. ])
+
+    normalized_x[1]
+    Out[7]:
+    array([ 0.008424, 0.71604034, 0.55598426, 0.24429612,
+            0., 0.22407851, 0.00295683, 0.26114412])
+
+    standardized_x[1]
+    Out[8]:
+    array([-0.84488505, -1.12339636, -0.16054575, 0.53090156,
+           -0.69289057, -0.68442195, -0.36506078, -0.19067191])
+
+    y[1]
+    Out[9]: 0.0
+    ```
 ***
 
 # sklearn 库中的算法举例
@@ -438,6 +482,10 @@
     array([[500,   0],
            [  0, 268]])
     ```
+## 根据数据以及问题类型选取合适的估计模型
+  - [Choosing the right estimator](http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html)
+
+  ![](images/ml_map.png)
 ***
 
 # sklearn 中的监督学习算法
@@ -882,6 +930,42 @@
   - 使用示例
     - [Cross-validation: evaluating estimator performance](http://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)
     - [Cross-validation on diabetes Dataset Exercise](http://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py)
+## 特征选取 和 特征工程
+  - **特征工程** 解决的一个问题最重要的是恰当选取特征、甚至创造特征的能力
+  - 特征工程是一个相当有创造性的过程，有时候更多的是靠直觉和专业的知识，但对于特征的选取，已经有很多的算法可供直接使用，如 **树算法计算特征的信息量**
+    ```python
+    from sklearn import metrics
+    from sklearn.ensemble import ExtraTreesClassifier
+    model = ExtraTreesClassifier()
+    model.fit(x, y)
+    Out[15]:
+    ExtraTreesClassifier(bootstrap=False, class_weight=None, criterion='gini',
+               max_depth=None, max_features='auto', max_leaf_nodes=None,
+               min_impurity_split=1e-07, min_samples_leaf=1,
+               min_samples_split=2, min_weight_fraction_leaf=0.0,
+               n_estimators=10, n_jobs=1, oob_score=False, random_state=None,
+               verbose=0, warm_start=False)
+    # display the relative importance of each attribute
+    model.feature_importances_
+    Out[16]:
+    array([ 0.10275952,  0.25440925,  0.09016066,  0.07965089,
+            0.0757741 , 0.13128523,  0.11951687,  0.14644348])
+    ```
+  - 其他所有的方法都是基于对 **特征子集的高效搜索**，从而找到最好的子集，意味着演化了的模型在这个子集上有最好的质量，**递归特征消除算法**（RFE）是这些搜索算法的其中之一
+    ```python
+    from sklearn.feature_selection import RFE
+    from sklearn.linear_model import LogisticRegression
+    model = LogisticRegression()
+    # create the RFE model and select 3 attributes
+    rfe = RFE(model, 3)
+    rfe = rfe.fit(x, y)
+    # summarize the selection of the attributes
+    rfe.support_
+    Out[20]: array([ True, False, False, False, False,  True,  True, False], dtype=bool)
+
+    rfe.ranking_
+    Out[21]: array([1, 2, 3, 5, 6, 1, 1, 4])
+    ```
 ***
 
 # sklearn 中的无监督学习算法
@@ -1092,179 +1176,273 @@
     plt.show()
     ```
     ![](images/pipe_pca.png)
-  - **特征脸 eigenfaces 用于人脸识别** 使用的数据集是一个预处理好的 LFW Labeled Faces in the Wild 户外脸部检测数据库 [lfw-funneled (233MB)](http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz)
-    ```python
-    """
-    ===================================================
-    Faces recognition example using eigenfaces and SVMs
-    ===================================================
-
-    The dataset used in this example is a preprocessed excerpt of the
-    "Labeled Faces in the Wild", aka LFW_:
-
-      http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz (233MB)
-
-    .. _LFW: http://vis-www.cs.umass.edu/lfw/
-
-    Expected results for the top 5 most represented people in the dataset:
-
-    ================== ============ ======= ========== =======
-                       precision    recall  f1-score   support
-    ================== ============ ======= ========== =======
-         Ariel Sharon       0.67      0.92      0.77        13
-         Colin Powell       0.75      0.78      0.76        60
-      Donald Rumsfeld       0.78      0.67      0.72        27
-        George W Bush       0.86      0.86      0.86       146
-    Gerhard Schroeder       0.76      0.76      0.76        25
-          Hugo Chavez       0.67      0.67      0.67        15
-           Tony Blair       0.81      0.69      0.75        36
-
-          avg / total       0.80      0.80      0.80       322
-    ================== ============ ======= ========== =======
-
-    """
-    from __future__ import print_function
-
-    from time import time
-    import logging
-    import matplotlib.pyplot as plt
-
-    from sklearn.model_selection import train_test_split
-    from sklearn.model_selection import GridSearchCV
-    from sklearn.datasets import fetch_lfw_people
-    from sklearn.metrics import classification_report
-    from sklearn.metrics import confusion_matrix
-    from sklearn.decomposition import PCA
-    from sklearn.svm import SVC
-
-
-    print(__doc__)
-
-    # Display progress logs on stdout
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-
-
-    # #############################################################################
-    # Download the data, if not already on disk and load it as numpy arrays
-
-    lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
-
-    # introspect the images arrays to find the shapes (for plotting)
-    n_samples, h, w = lfw_people.images.shape
-
-    # for machine learning we use the 2 data directly (as relative pixel
-    # positions info is ignored by this model)
-    X = lfw_people.data
-    n_features = X.shape[1]
-
-    # the label to predict is the id of the person
-    y = lfw_people.target
-    target_names = lfw_people.target_names
-    n_classes = target_names.shape[0]
-
-    print("Total dataset size:")
-    print("n_samples: %d" % n_samples)
-    print("n_features: %d" % n_features)
-    print("n_classes: %d" % n_classes)
-
-
-    # #############################################################################
-    # Split into a training set and a test set using a stratified k fold
-
-    # split into a training and testing set
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=42)
-
-
-    # #############################################################################
-    # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
-    # dataset): unsupervised feature extraction / dimensionality reduction
-    n_components = 150
-
-    print("Extracting the top %d eigenfaces from %d faces"
-          % (n_components, X_train.shape[0]))
-    t0 = time()
-    pca = PCA(n_components=n_components, svd_solver='randomized',
-              whiten=True).fit(X_train)
-    print("done in %0.3fs" % (time() - t0))
-
-    eigenfaces = pca.components_.reshape((n_components, h, w))
-
-    print("Projecting the input data on the eigenfaces orthonormal basis")
-    t0 = time()
-    X_train_pca = pca.transform(X_train)
-    X_test_pca = pca.transform(X_test)
-    print("done in %0.3fs" % (time() - t0))
-
-
-    # #############################################################################
-    # Train a SVM classification model
-
-    print("Fitting the classifier to the training set")
-    t0 = time()
-    param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
-                  'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
-    clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
-    clf = clf.fit(X_train_pca, y_train)
-    print("done in %0.3fs" % (time() - t0))
-    print("Best estimator found by grid search:")
-    print(clf.best_estimator_)
-
-
-    # #############################################################################
-    # Quantitative evaluation of the model quality on the test set
-
-    print("Predicting people's names on the test set")
-    t0 = time()
-    y_pred = clf.predict(X_test_pca)
-    print("done in %0.3fs" % (time() - t0))
-
-    print(classification_report(y_test, y_pred, target_names=target_names))
-    print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
-
-
-    # #############################################################################
-    # Qualitative evaluation of the predictions using matplotlib
-
-    def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
-        """Helper function to plot a gallery of portraits"""
-        plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
-        plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
-        for i in range(n_row * n_col):
-            plt.subplot(n_row, n_col, i + 1)
-            plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
-            plt.title(titles[i], size=12)
-            plt.xticks(())
-            plt.yticks(())
-
-
-    # plot the result of the prediction on a portion of the test set
-
-    def title(y_pred, y_test, target_names, i):
-        pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
-        true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
-        return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
-
-    prediction_titles = [title(y_pred, y_test, target_names, i)
-                         for i in range(y_pred.shape[0])]
-
-    plot_gallery(X_test, prediction_titles, h, w)
-
-    # plot the gallery of the most significative eigenfaces
-
-    eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
-    plot_gallery(eigenfaces, eigenface_titles, h, w)
-
-    plt.show()
-    ```
-  - [Visualizing the stock market structure](http://scikit-learn.org/stable/auto_examples/applications/plot_stock_market.html#stock-market)
 ***
 
-# Working With Text Data
+# FOO
+## 特征脸 eigenfaces 用于人脸识别 KFold-PCA-SVC-GridSearchCV-plot
+  - 使用的数据集是一个预处理好的 LFW Labeled Faces in the Wild 户外脸部检测数据库 [lfw-funneled (233MB)](http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz)
+  - **主要步骤**
+    - lfw 载入数据
+    - KFold 划分训练 / 测试集
+    - PCA 特征值分析
+    - SVC 估计模型
+    - GridSearchCV 选取模型最佳参数
+    - predict 预测
+    - 数据可视化
+  ```python
+  """
+  ===================================================
+  Faces recognition example using eigenfaces and SVMs
+  ===================================================
+
+  The dataset used in this example is a preprocessed excerpt of the
+  "Labeled Faces in the Wild", aka LFW_:
+
+    http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz (233MB)
+
+  .. _LFW: http://vis-www.cs.umass.edu/lfw/
+
+  Expected results for the top 5 most represented people in the dataset:
+
+  ================== ============ ======= ========== =======
+                     precision    recall  f1-score   support
+  ================== ============ ======= ========== =======
+       Ariel Sharon       0.67      0.92      0.77        13
+       Colin Powell       0.75      0.78      0.76        60
+    Donald Rumsfeld       0.78      0.67      0.72        27
+      George W Bush       0.86      0.86      0.86       146
+  Gerhard Schroeder       0.76      0.76      0.76        25
+        Hugo Chavez       0.67      0.67      0.67        15
+         Tony Blair       0.81      0.69      0.75        36
+
+        avg / total       0.80      0.80      0.80       322
+  ================== ============ ======= ========== =======
+
+  """
+  from __future__ import print_function
+
+  from time import time
+  import logging
+  import matplotlib.pyplot as plt
+
+  from sklearn.model_selection import train_test_split
+  from sklearn.model_selection import GridSearchCV
+  from sklearn.datasets import fetch_lfw_people
+  from sklearn.metrics import classification_report
+  from sklearn.metrics import confusion_matrix
+  from sklearn.decomposition import PCA
+  from sklearn.svm import SVC
+
+
+  print(__doc__)
+
+  # Display progress logs on stdout
+  logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+
+
+  # #############################################################################
+  # Download the data, if not already on disk and load it as numpy arrays
+
+  lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
+
+  # introspect the images arrays to find the shapes (for plotting)
+  n_samples, h, w = lfw_people.images.shape
+
+  # for machine learning we use the 2 data directly (as relative pixel
+  # positions info is ignored by this model)
+  X = lfw_people.data
+  n_features = X.shape[1]
+
+  # the label to predict is the id of the person
+  y = lfw_people.target
+  target_names = lfw_people.target_names
+  n_classes = target_names.shape[0]
+
+  print("Total dataset size:")
+  print("n_samples: %d" % n_samples)
+  print("n_features: %d" % n_features)
+  print("n_classes: %d" % n_classes)
+
+
+  # #############################################################################
+  # Split into a training set and a test set using a stratified k fold
+
+  # split into a training and testing set
+  X_train, X_test, y_train, y_test = train_test_split(
+      X, y, test_size=0.25, random_state=42)
+
+
+  # #############################################################################
+  # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
+  # dataset): unsupervised feature extraction / dimensionality reduction
+  n_components = 150
+
+  print("Extracting the top %d eigenfaces from %d faces"
+        % (n_components, X_train.shape[0]))
+  t0 = time()
+  pca = PCA(n_components=n_components, svd_solver='randomized',
+            whiten=True).fit(X_train)
+  print("done in %0.3fs" % (time() - t0))
+
+  eigenfaces = pca.components_.reshape((n_components, h, w))
+
+  print("Projecting the input data on the eigenfaces orthonormal basis")
+  t0 = time()
+  X_train_pca = pca.transform(X_train)
+  X_test_pca = pca.transform(X_test)
+  print("done in %0.3fs" % (time() - t0))
+
+
+  # #############################################################################
+  # Train a SVM classification model
+
+  print("Fitting the classifier to the training set")
+  t0 = time()
+  param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+                'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
+  clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
+  clf = clf.fit(X_train_pca, y_train)
+  print("done in %0.3fs" % (time() - t0))
+  print("Best estimator found by grid search:")
+  print(clf.best_estimator_)
+
+
+  # #############################################################################
+  # Quantitative evaluation of the model quality on the test set
+
+  print("Predicting people's names on the test set")
+  t0 = time()
+  y_pred = clf.predict(X_test_pca)
+  print("done in %0.3fs" % (time() - t0))
+
+  print(classification_report(y_test, y_pred, target_names=target_names))
+  print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
+
+
+  # #############################################################################
+  # Qualitative evaluation of the predictions using matplotlib
+
+  def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
+      """Helper function to plot a gallery of portraits"""
+      plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+      plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+      for i in range(n_row * n_col):
+          plt.subplot(n_row, n_col, i + 1)
+          plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
+          plt.title(titles[i], size=12)
+          plt.xticks(())
+          plt.yticks(())
+
+
+  # plot the result of the prediction on a portion of the test set
+
+  def title(y_pred, y_test, target_names, i):
+      pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
+      true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
+      return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
+
+  prediction_titles = [title(y_pred, y_test, target_names, i)
+                       for i in range(y_pred.shape[0])]
+
+  plot_gallery(X_test, prediction_titles, h, w)
+
+  # plot the gallery of the most significative eigenfaces
+
+  eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
+  plot_gallery(eigenfaces, eigenface_titles, h, w)
+
+  plt.show()
+  ```
+  运行结果
+  ```python
+  Total dataset size:
+  n_samples: 1288
+  n_features: 1850
+  n_classes: 7
+  Extracting the top 150 eigenfaces from 966 faces
+  done in 0.247s
+  Projecting the input data on the eigenfaces orthonormal basis
+  done in 0.043s
+  Fitting the classifier to the training set
+  done in 23.998s
+  Best estimator found by grid search:
+  SVC(C=1000.0, cache_size=200, class_weight='balanced', coef0=0.0,
+    decision_function_shape=None, degree=3, gamma=0.005, kernel='rbf',
+    max_iter=-1, probability=False, random_state=None, shrinking=True,
+    tol=0.001, verbose=False)
+  Predicting people's names on the test set
+  done in 0.102s
+                     precision    recall  f1-score   support
+
+       Ariel Sharon       1.00      0.69      0.82        13
+       Colin Powell       0.89      0.92      0.90        60
+    Donald Rumsfeld       0.92      0.81      0.86        27
+      George W Bush       0.87      1.00      0.93       146
+  Gerhard Schroeder       0.94      0.64      0.76        25
+        Hugo Chavez       1.00      0.73      0.85        15
+         Tony Blair       0.91      0.81      0.85        36
+
+        avg / total       0.90      0.89      0.89       322
+
+  [[  9   2   0   1   0   0   1]
+   [  0  55   0   4   0   0   1]
+   [  0   2  22   3   0   0   0]
+   [  0   0   0 146   0   0   0]
+   [  0   0   1   7  16   0   1]
+   [  0   2   0   2   0  11   0]
+   [  0   1   1   4   1   0  29]]
+  ```
+  ![](images/eigenface_predict.png)
+
+  ![](images/eigenface_faces.png)
+## 20个新闻组数据集 20 newsgroups dataset 文本分析
+- 该数据集包含大约 20,000 新闻组文档，平均分布在20个不同的新闻组，主要用于文本分析的机器学习算法实验，如文本分类与文本聚类
+- **主要步骤**
+  - 加载文件内容与分类
+  - 提取特征向量
+  - 训练线性模型用于分类
+  - 网格搜索查找特征提取与分类器的最佳参数
+- **加载数据集** 可以通过 **sklearn.datasets.load_files** 加载从网站获取的数据集，或使用 scikit-learn 内置的方法 **sklearn.datasets.fetch_20newsgroups**
+  ```python
+  # 使用20个分类中的 4 个作为练习
+  categories = ['alt.atheism', 'soc.religion.christian',
+               'comp.graphics', 'sci.med']
+  # 加载指定的对应类别
+  from sklearn.datasets import fetch_20newsgroups
+  twenty_train = fetch_20newsgroups(subset='train',
+     categories=categories, shuffle=True, random_state=42)
+
+  # 返回值类型是 bunch，可以通过字典形式访问，或当作对象使用
+  type(twenty_train)
+  # Out[19]: sklearn.datasets.base.Bunch
+  type(twenty_train.data)
+  # Out[16]: list
+  len(twenty_train.data)
+  # Out[17]: 2257
+  len(twenty_train.filenames)
+  # Out[18]: 2257
+  twenty_train.target.shape
+  # Out[20]: (2257,)
+
+  # target_names 存储 target 中对应 id 的名称
+  twenty_train.target_names
+  # Out[30]: ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
+  # 将 target 中的 id 转化为字符串名称
+  [ twenty_train.target_names[t] for t in twenty_train.target[:10] ]
+
+  # 第一份文档的前三项数据
+  print('\n'.join(twenty_train.data[0].split('\n')[:3]))
+  From: sd345@city.ac.uk (Michael Collier)
+  Subject: Converting images to HP LaserJet III?
+  Nntp-Posting-Host: hampton
+  ```
+- 从文本数据中提取特征
+
   - [Working With Text Data](http://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html)
 ***
 
 # 其他相关教程链接
+  - [Visualizing the stock market structure](http://scikit-learn.org/stable/auto_examples/applications/plot_stock_market.html#stock-market)
   - [Scipy Lecture Notes](http://www.scipy-lectures.org/)
   - [Quora.com:	Quora has a topic for Machine Learning related questions that also features some interesting discussion](https://www.quora.com/topic/Machine-Learning)
   - [Stack Exchange: The Stack Exchange family of sites hosts multiple subdomains for Machine Learning questions](https://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms)
@@ -1274,94 +1452,3 @@
   - [Tutorial for astronomy data processing with scikit-learn](https://github.com/astroML/sklearn_tutorial)
   - [External Resources, Videos and Talks](http://scikit-learn.org/stable/presentations.html)
 ***
-
-# 根据数据以及问题类型选取合适的估计模型
-  - [Choosing the right estimator](http://scikit-learn.org/stable/tutorial/machine_learning_map/index.html)
-
-  ![](images/ml_map.png)
-***
-
-# 数据预处理
-## 特征选取 和 特征工程
-  - **特征工程** 解决的一个问题最重要的是恰当选取特征、甚至创造特征的能力
-  - 特征工程是一个相当有创造性的过程，有时候更多的是靠直觉和专业的知识，但对于特征的选取，已经有很多的算法可供直接使用，如 **树算法计算特征的信息量**
-    ```python
-    from sklearn import metrics
-    from sklearn.ensemble import ExtraTreesClassifier
-    model = ExtraTreesClassifier()
-    model.fit(x, y)
-    Out[15]:
-    ExtraTreesClassifier(bootstrap=False, class_weight=None, criterion='gini',
-               max_depth=None, max_features='auto', max_leaf_nodes=None,
-               min_impurity_split=1e-07, min_samples_leaf=1,
-               min_samples_split=2, min_weight_fraction_leaf=0.0,
-               n_estimators=10, n_jobs=1, oob_score=False, random_state=None,
-               verbose=0, warm_start=False)
-    # display the relative importance of each attribute
-    model.feature_importances_
-    Out[16]:
-    array([ 0.10275952,  0.25440925,  0.09016066,  0.07965089,
-            0.0757741 , 0.13128523,  0.11951687,  0.14644348])
-    ```
-  - 其他所有的方法都是基于对 **特征子集的高效搜索**，从而找到最好的子集，意味着演化了的模型在这个子集上有最好的质量，**递归特征消除算法**（RFE）是这些搜索算法的其中之一
-    ```python
-    from sklearn.feature_selection import RFE
-    from sklearn.linear_model import LogisticRegression
-    model = LogisticRegression()
-    # create the RFE model and select 3 attributes
-    rfe = RFE(model, 3)
-    rfe = rfe.fit(x, y)
-    # summarize the selection of the attributes
-    rfe.support_
-    Out[20]: array([ True, False, False, False, False,  True,  True, False], dtype=bool)
-
-    rfe.ranking_
-    Out[21]: array([1, 2, 3, 5, 6, 1, 1, 4])
-    ```
-## 标准化或规格化
-  - 大多数的梯度方法（几乎所有的机器学习算法都基于此）对于数据的缩放很敏感，因此在运行算法之前，应该进行 **标准化或规格化**
-  - 标准化包括替换所有特征的名义值，让它们每一个的值在0和1之间
-  - 规格化包括数据的预处理，使得每个特征的值有0和1的离差
-  - 示例
-    ```python
-    # 数据获取
-    import numpy as np
-    import urllib.request
-    # url with dataset
-    url = "http://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data"
-    # download the file
-    raw_data = urllib.request.urlopen(url)
-    # load the CSV file as a numpy matrix
-    dataset = np.loadtxt(raw_data, delimiter=",")
-    # separate the data from the target attributes
-    x = dataset[:,:-1]
-    y = dataset[:,-1]
-
-    # 标准化与规格化
-    from sklearn import preprocessing
-    # normalize the data attributes
-    normalized_x = preprocessing.normalize(x)
-    # standardize the data attributes
-    standardized_x = preprocessing.scale(x)
-    ```
-    运行结果
-    ```python
-    x[1]
-    Out[6]: array([ 1., 85., 66., 29., 0., 26.6, 0.351, 31. ])
-
-    normalized_x[1]
-    Out[7]:
-    array([ 0.008424, 0.71604034, 0.55598426, 0.24429612,
-            0., 0.22407851, 0.00295683, 0.26114412])
-
-    standardized_x[1]
-    Out[8]:
-    array([-0.84488505, -1.12339636, -0.16054575, 0.53090156,
-           -0.69289057, -0.68442195, -0.36506078, -0.19067191])
-
-    y[1]
-    Out[9]: 0.0
-    ```
-***
-
-[foo](01-14_github.md)
