@@ -2,7 +2,59 @@
 ***
 
 # 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
+  - [___2017 - 07 - 25 scikit-learn___](#2017-07-25-scikit-learn)
+  - [目录](#目录)
+  - [scikit-learn 介绍](#scikit-learn-介绍)
+  	- [基本概念](#基本概念)
+  	- [sklearn 载入数据集 Loading an example dataset](#sklearn-载入数据集-loading-an-example-dataset)
+  	- [sklearn学习和预测一般流程 Learning and predicting](#sklearn学习和预测一般流程-learning-and-predicting)
+  	- [模型存储 Model persistence](#模型存储-model-persistence)
+  	- [sklearn 数据类型约定规则 Conventions](#sklearn-数据类型约定规则-conventions)
+  	- [模型参数修改 Refitting and updating parameters](#模型参数修改-refitting-and-updating-parameters)
+  	- [多组标签的数据学习 Multiclass 与 multilabel fitting](#多组标签的数据学习-multiclass-与-multilabel-fitting)
+  	- [sklearn 中的评价尺度与 metrics 模块](#sklearn-中的评价尺度与-metrics-模块)
+  	- [标准化或规格化](#标准化或规格化)
+  - [sklearn 库中的算法举例](#sklearn-库中的算法举例)
+  	- [逻辑回归](#逻辑回归)
+  	- [朴素贝叶斯](#朴素贝叶斯)
+  	- [k-最近邻 KNN](#k-最近邻-knn)
+  	- [决策树 分类和回归树 CART](#决策树-分类和回归树-cart)
+  	- [支持向量机 SVM](#支持向量机-svm)
+  	- [根据数据以及问题类型选取合适的估计模型](#根据数据以及问题类型选取合适的估计模型)
+  - [sklearn 中的监督学习算法](#sklearn-中的监督学习算法)
+  	- [分类算法 KNN](#分类算法-knn)
+  	- [维数灾难 The curse of dimensionality](#维数灾难-the-curse-of-dimensionality)
+  	- [线型回归模型 Linear regression model](#线型回归模型-linear-regression-model)
+  	- [岭回归 Ridge 缩减 shrinkage 与过拟合](#岭回归-ridge-缩减-shrinkage-与过拟合)
+  	- [Lasso 缩减与稀疏 Sparsity 降低模型复杂度](#lasso-缩减与稀疏-sparsity-降低模型复杂度)
+  	- [Logistic 回归与sigmoid函数，回归算法用于分类](#logistic-回归与sigmoid函数回归算法用于分类)
+  	- [支持向量机 SVM Support vector machines](#支持向量机-svm-support-vector-machines)
+  - [交叉验证与模型参数选择](#交叉验证与模型参数选择)
+  	- [score 方法与交叉验证 cross-validated scores](#score-方法与交叉验证-cross-validated-scores)
+  	- [sklearn 库中的交叉验证生成器使用 Cross-validation generators](#sklearn-库中的交叉验证生成器使用-cross-validation-generators)
+  	- [sklearn 库中的交叉验证生成器类别](#sklearn-库中的交叉验证生成器类别)
+  	- [网格搜索 Grid-search 寻找模型的最佳参数](#网格搜索-grid-search-寻找模型的最佳参数)
+  	- [自动使用交叉验证选择参数的估计模型 Cross-validated estimators](#自动使用交叉验证选择参数的估计模型-cross-validated-estimators)
+  	- [特征选取 和 特征工程](#特征选取-和-特征工程)
+  - [sklearn 中的无监督学习算法](#sklearn-中的无监督学习算法)
+  	- [聚类 Clustering 将数据分成离散的组](#聚类-clustering-将数据分成离散的组)
+  	- [矢量量化 VQ vector quantization 数据压缩](#矢量量化-vq-vector-quantization-数据压缩)
+  	- [层次聚类 Hierarchical clustering Ward](#层次聚类-hierarchical-clustering-ward)
+  	- [聚类用于特征合并 Feature agglomeration](#聚类用于特征合并-feature-agglomeration)
+  	- [降维分解 Decompositions PCA ICA](#降维分解-decompositions-pca-ica)
+  - [Pipelining 组合多个估计模型](#pipelining-组合多个估计模型)
+  - [综合使用示例](#综合使用示例)
+  	- [特征脸 eigenfaces 用于人脸识别 KFold-PCA-SVC-GridSearchCV-plot](#特征脸-eigenfaces-用于人脸识别-kfold-pca-svc-gridsearchcv-plot)
+  	- [20个新闻组数据集 20 newsgroups dataset 文本分析](#20个新闻组数据集-20-newsgroups-dataset-文本分析)
+  - [其他相关教程链接](#其他相关教程链接)
+  	- [Where to from here by scikit-learn tutorials](#where-to-from-here-by-scikit-learn-tutorials)
+  	- [Q&A communities with Machine Learning practitioners](#qa-communities-with-machine-learning-practitioners)
+  	- [External Tutorials](#external-tutorials)
+  	- [Videos](#videos)
+
+  <!-- /TOC -->
 ***
 
 # scikit-learn 介绍
@@ -118,6 +170,8 @@
     plt.imshow(digits.images[-1], cmap=plt.cm.gray_r, interpolation='nearest')
     ```
     ![](images/sikit-learn_digit8.png)
+
+  - **transform / fit_transform 方法** 在数据转化 / 分解等模型中通常使用 **fit 方法** 训练模型，**transform 方法** 转化数据，**fit_transform 方法** 是合并 fit 与 transform 的方法
 ## 模型存储 Model persistence
   - 可以使用python内置的二进制存储模块 **pickle 存储模型**
   - 对于scikit，可以使用 **joblib (joblib.dump & joblib.load)**，在大数据集上更有效，但只能存储到文件中，随后可以在其他程序中使用存储的模型
@@ -252,7 +306,8 @@
            [1, 0, 1, 0, 0],
            [1, 0, 1, 0, 0]])
     ```
-## sklearn 中的评价尺度
+## sklearn 中的评价尺度与 metrics 模块
+  - metrics 模块提供更详细的结果性能分析
   - 在sklearn中包含四种评价尺度
     - explained_variance_score()
     - mean_absolute_error()
@@ -870,6 +925,8 @@
 ## 网格搜索 Grid-search 寻找模型的最佳参数
   - 在编写高效的算法的过程中最难的步骤之一就是正确参数的选择
   - scikit-learn 提供的对象，在指定的数据集与估计模型上，通过 **参数 param_grid** 指定估计模型某个参数的一组数据，寻找使得交叉验证得分 cross-validation score 最大的参数值
+  - **fit / predict 方法** 同样用于参数搜索的模型适配与预测
+  - **best_score_ / best_estimator_ / cv_results_** 分别表示 最佳得分 / 最佳参数 / 搜索结果
     ```python
     from sklearn.model_selection import GridSearchCV, cross_val_score
     # 生成10个随机数，作为svc的参数C
@@ -877,17 +934,25 @@
     # 通过 param_grid 将 svc 的参数 C 指定成一个列表
     clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs), n_jobs=-1)
     clf.fit(X_digits[:1000], y_digits[:1000])
-		# 最佳结果
+    # 最佳结果
     clf.best_score_
     # Out[124]: 0.92500000000000004
 
-		# 最佳参数 C
+    # 最佳参数 C
     clf.best_estimator_.C
     # Out[125]: 0.0077426368268112772
 
+    # cv_results_ 中保存了更详细的搜索结果
+    clf.cv_results_
+
+    # 可以将结果转化为 DataFrame，用于分析
+    df_cvr = pd.DataFrame(clf.cv_results_)
+    df_cvr.shape
+    # Out[128]: (10, 17)
+
     # 在测试集上的预测结果，可能没有训练集上的效果好
     clf.score(X_digits[1000:], y_digits[1000:])
-    # Out[126]: 0.94353826850690092
+    # Out[129]: 0.94353826850690092
     ```
   - 随机地从既定的范围内选取一个参数有时候更为高效，估计在这个参数下算法的质量，然后选出最好的
     ```python
@@ -1178,7 +1243,7 @@
     ![](images/pipe_pca.png)
 ***
 
-# FOO
+# 综合使用示例
 ## 特征脸 eigenfaces 用于人脸识别 KFold-PCA-SVC-GridSearchCV-plot
   - 使用的数据集是一个预处理好的 LFW Labeled Faces in the Wild 户外脸部检测数据库 [lfw-funneled (233MB)](http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz)
   - **主要步骤**
@@ -1396,59 +1461,239 @@
 
   ![](images/eigenface_faces.png)
 ## 20个新闻组数据集 20 newsgroups dataset 文本分析
-- 该数据集包含大约 20,000 新闻组文档，平均分布在20个不同的新闻组，主要用于文本分析的机器学习算法实验，如文本分类与文本聚类
-- **主要步骤**
-  - 加载文件内容与分类
-  - 提取特征向量
-  - 训练线性模型用于分类
-  - 网格搜索查找特征提取与分类器的最佳参数
-- **加载数据集** 可以通过 **sklearn.datasets.load_files** 加载从网站获取的数据集，或使用 scikit-learn 内置的方法 **sklearn.datasets.fetch_20newsgroups**
-  ```python
-  # 使用20个分类中的 4 个作为练习
-  categories = ['alt.atheism', 'soc.religion.christian',
-               'comp.graphics', 'sci.med']
-  # 加载指定的对应类别
-  from sklearn.datasets import fetch_20newsgroups
-  twenty_train = fetch_20newsgroups(subset='train',
-     categories=categories, shuffle=True, random_state=42)
+  - 该数据集包含大约 20,000 新闻组文档，平均分布在20个不同的新闻组，主要用于文本分析的机器学习算法实验，如文本分类与文本聚类
+  - **主要步骤**
+    - 加载文件内容与分类
+    - 提取特征向量
+    - 训练线性模型用于分类
+    - 网格搜索查找特征提取与分类器的最佳参数
+  - **加载数据集** 可以通过 **sklearn.datasets.load_files** 加载从网站获取的数据集，或使用 scikit-learn 内置的方法 **sklearn.datasets.fetch_20newsgroups**
+    ```python
+    # 使用20个分类中的 4 个作为练习
+    categories = ['alt.atheism', 'soc.religion.christian',
+                 'comp.graphics', 'sci.med']
+    # 加载指定的对应类别
+    from sklearn.datasets import fetch_20newsgroups
+    twenty_train = fetch_20newsgroups(subset='train',
+       categories=categories, shuffle=True, random_state=42)
 
-  # 返回值类型是 bunch，可以通过字典形式访问，或当作对象使用
-  type(twenty_train)
-  # Out[19]: sklearn.datasets.base.Bunch
-  type(twenty_train.data)
-  # Out[16]: list
-  len(twenty_train.data)
-  # Out[17]: 2257
-  len(twenty_train.filenames)
-  # Out[18]: 2257
-  twenty_train.target.shape
-  # Out[20]: (2257,)
+    # 返回值类型是 bunch，可以通过字典形式访问，或当作对象使用
+    type(twenty_train)
+    # Out[19]: sklearn.datasets.base.Bunch
+    type(twenty_train.data)
+    # Out[16]: list
+    len(twenty_train.data)
+    # Out[17]: 2257
+    len(twenty_train.filenames)
+    # Out[18]: 2257
+    twenty_train.target.shape
+    # Out[20]: (2257,)
 
-  # target_names 存储 target 中对应 id 的名称
-  twenty_train.target_names
-  # Out[30]: ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
-  # 将 target 中的 id 转化为字符串名称
-  [ twenty_train.target_names[t] for t in twenty_train.target[:10] ]
+    # target_names 存储 target 中对应 id 的名称
+    twenty_train.target_names
+    # Out[30]: ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
+    # 将 target 中的 id 转化为字符串名称
+    [ twenty_train.target_names[t] for t in twenty_train.target[:10] ]
 
-  # 第一份文档的前三项数据
-  print('\n'.join(twenty_train.data[0].split('\n')[:3]))
-  From: sd345@city.ac.uk (Michael Collier)
-  Subject: Converting images to HP LaserJet III?
-  Nntp-Posting-Host: hampton
-  ```
-- 从文本数据中提取特征
+    # 第一份文档的前三项数据
+    print('\n'.join(twenty_train.data[0].split('\n')[:3]))
+    From: sd345@city.ac.uk (Michael Collier)
+    Subject: Converting images to HP LaserJet III?
+    Nntp-Posting-Host: hampton
+    ```
+  - **从文本数据中提取特征** 将文本内容转化为数字表示的特征向量
+    - **Bag of words**
+      - 将训练集文本中所有单词编号，如使用字典
+      - 对文本中每个单词的频数存放在数据集 X(i, j) 中，其中 i 是文档编号，j 是单词编号
+      - 当单词数量很多时，存储将占用很大的空间
+      - X 中大部分值将是0，因此是一个高维稀疏矩阵 high-dimensional sparse datasets，可以只保存其中的非零值以节省空间
+      - scipy.sparse 矩阵模型可以用于保存这种数据，scikit-learn 提供了对这种数据结构的支持
+    - **标记化与停用词过滤** tokenizing and filtering of stopwords，文本的预处理过程，可以使用scikit-learn的功能完成创建 **特征字典以及将文本转化为特征向量**
+    - **sklearn.feature_extraction.text.CountVectorizer** 支持计数N元模型 N-grams of words 或连续的字符，模型完成特征的矢量化，创建一个包含特征索引的字典，其中单词索引与频数相关
+    ```python
+    from sklearn.feature_extraction.text import CountVectorizer
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(twenty_train.data)
+    type(X_train_counts)
+    # Out[44]: scipy.sparse.csr.csr_matrix
 
-  - [Working With Text Data](http://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html)
+    X_train_counts.shape
+    # Out[45]: (2257, 35788)
+
+    # 查找对应单词的索引
+    count_vect.vocabulary_.get(u'algorithm')
+    # Out[49]: 4690
+    ```
+  - **文本数据处理 TF-IDF** 将频数转化为频率 from occurrences to frequencies
+    - **词频 TF Term Frequencies** 某一个给定的词语在该文件中出现的次数，相对于更短的文本，同一个单词在长文本中的 **频数** 更高，因此可以用每个单词的频数除以文本中的单词总数，将其转化为 **频率**，这些新的特征称为 **词频**，能更好地反应单词的重要程度
+    - **词频 - 逆向文件频率 TF-IDF Term Frequency times Inverse Document Frequency**
+      - 一种统计方法，用以评估一字词对于一个文件集或一个语料库中的其中一份文件的重要程度
+      - **主要思想**：如果某个词或短语在一篇文章中出现的频率TF高，并且在其他文章中很少出现，则认为此词或者短语具有很好的类别区分能力，适合用来分类
+      - 字词的重要性随着它在文件中出现的次数成正比增加，但同时会随着它在语料库中出现的频率成反比下降
+      - TF-IDF 加权的各种形式常被 **搜索引擎** 应用，作为文件与用户查询之间相关程度的度量或评级
+      - **sklearn.feature_extraction.text.TfidfTransformer** 用于实现 TF / TF-IDF 转化
+    ```python
+    from sklearn.feature_extraction.text import TfidfTransformer
+    # 模型适配，TF
+    tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
+    # 数据转化
+    X_train_tf = tf_transformer.transform(X_train_counts)
+
+    # TF-IDF 数据转化
+    tfidf_transformer = TfidfTransformer()
+    # 使用 fit_transform 方法，合并 fit 与 transform 步骤
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+
+    X_train_tfidf.shape
+    # Out[57]: (2257, 35788)
+    ```
+  - **模型训练 Training a classifier** 预测未分类的数据
+    - **朴素贝叶斯模型 naïve Bayes classifier** scikit-learn 实现了多种不同版本的朴素贝叶斯分类器，其中更适合用于单词计数的是 **multinomial** 版本
+    - 在预测新的文本时，需要先进行 **特征提取**，由于转化模型已经在训练集上适配过，因此只需要在新文本上使用 **transform** 方法
+    ```python
+    from sklearn.naive_bayes import MultinomialNB
+    clf = MultinomialNB().fit(X_train_tfidf, twenty_train.target)
+
+    docs_new = ['God is love', 'OpenGL on the GPU is fast']
+    X_new_counts = count_vect.transform(docs_new)
+    X_new_tfidf = tfidf_transformer.transform(X_new_counts)
+    predicted = clf.predict(X_new_tfidf)
+    for doc, category in zip(docs_new, predicted):
+       print('%r => %s' % (doc, twenty_train.target_names[category]))
+
+    # Out[]
+    'God is love' => soc.religion.christian
+    'OpenGL on the GPU is fast' => comp.graphics
+    ```
+  - **创建 pipeline** 将 矢量化 -> 转化 -> 分类器模型训练 合并
+    - Pipeline 中的名称 vect / tfidf / clf (classifier) 可以随意指定，在网格搜索 grid search 中会使用到
+    ```python
+    from sklearn.pipeline import Pipeline
+    text_clf = Pipeline([('vect', CountVectorizer()),
+                        ('tfidf', TfidfTransformer()),
+                        ('clf', MultinomialNB()),
+    ])
+
+    text_clf.fit(twenty_train.data, twenty_train.target)
+    # 预测时使用原始文本数据
+    predicted = text_clf.predict(docs_new)
+    [ (doc, twenty_train.target_names[cate]) for doc, cate in zip(docs_new, predicted) ]
+    Out[79]:
+    [('God is love', 'soc.religion.christian'),
+     ('OpenGL on the GPU is fast', 'comp.graphics')]
+    ```
+  - **测试集上评估模型效果**
+    - 计算测试集上预测的准确率 = 正确预测的数量 / 总数
+      ```python
+      import numpy as np
+      twenty_test = fetch_20newsgroups(subset='test',
+         categories=categories, shuffle=True, random_state=42)
+      docs_test = twenty_test.data
+      predicted = text_clf.predict(docs_test)
+      np.mean(predicted == twenty_test.target)
+      Out[81]: 0.83488681757656458
+      ```
+    - **Pipeline 中的分类器改为支持向量机** 使用朴素贝叶斯模型准确率在 83.4%，一般线性支持向量机 linear support vector machine 在文本分类上会有更好地表现，但运行速度更慢
+      ```python
+      from sklearn.linear_model import SGDClassifier
+      text_clf = Pipeline([('vect', CountVectorizer()),
+                ('tfidf', TfidfTransformer()),
+                ('clf', SGDClassifier(loss='hinge', penalty='l2',
+                          alpha=1e-3, random_state=42, n_iter=5)),
+      ])
+      text_clf.fit(twenty_train.data, twenty_train.target)
+      predicted = text_clf.predict(docs_test)
+      np.mean(predicted == twenty_test.target)
+      Out[83]: 0.9127829560585885
+      ```
+    - scikit-learn.metrics 可以提供更详细的结果性能分析
+      ```python
+      from sklearn import metrics
+      print(metrics.classification_report(twenty_test.target,
+              predicted, target_names=twenty_test.target_names))
+      # Out[]
+                              precision    recall  f1-score   support
+
+                 alt.atheism       0.95      0.81      0.87       319
+               comp.graphics       0.88      0.97      0.92       389
+                     sci.med       0.94      0.90      0.92       396
+      soc.religion.christian       0.90      0.95      0.93       398
+
+                 avg / total       0.92      0.91      0.91      1502
+
+      metrics.confusion_matrix(twenty_test.target, predicted)
+      # 结果显示，对于 1 类，更容易被错分成 4 类
+      Out[85]:
+      array([[258,  11,  15,  35],
+             [  4, 379,   3,   3],
+             [  5,  33, 355,   3],
+             [  5,  10,   4, 379]])
+      ```
+  - **网格搜索调整参数 Parameter tuning using grid search**
+    - 对于模型中用到的参数，可以完全搜索 exhaustive search 找到最佳值
+      - CountVectorizer 中的 ngram_range，指定使用单词或更大的元组
+      - TfidfTransformer 中的 use_idf，指定是否启用 IDF
+      - MultinomialNB 中的 alpha，指定平滑度 Additive smoothing
+      - SGDClassifier 中的 alpha，指定正则化常数
+      - SGDClassifier 中的 loss，指定损失函数 loss function
+      - SGDClassifier 中的 penalty，指定惩罚级别
+    ```python
+    from sklearn.model_selection import GridSearchCV
+    # 指定搜索的参数列表
+    parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
+                  'tfidf__use_idf': (True, False),
+                  'clf__alpha': (1e-2, 1e-3),
+    }
+    # 指定使用的 CPU 数量，-1使用所有的
+    gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+
+    # fit 方法在训练集上寻找最佳参数，使用较小的数据集加快速度
+    gs_clf = gs_clf.fit(twenty_train.data[:400], twenty_train.target[:400])
+
+    # GridSearchCV.fit 的结果是一个分类器，可以使用 predict 方法预测
+    twenty_train.target_names[gs_clf.predict(['God is love'])[0]]
+    # Out[92]: 'soc.religion.christian'
+
+    # best_score_ 是模型的最佳参数下的得分 score
+    gs_clf.best_score_
+    # Out[93]: 0.90000000000000002
+
+    # best_params_ 是模型的最佳参数
+    for param_name in sorted(parameters.keys()):
+        print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
+    # Out[]
+    # clf__alpha: 0.001
+    # tfidf__use_idf: True
+    # vect__ngram_range: (1, 1)
+
+    # cv_results_ 中保存了更详细的搜索结果
+    gs_clf.cv_results_
+
+    # 可以将结果转化为 DataFrame，用于分析
+    df_cvr = pd.DataFrame(gs_clf.cv_results_)
+    df_cvr.shape
+    # Out[102]: (8, 19)
+    ```
 ***
 
 # 其他相关教程链接
-  - [Visualizing the stock market structure](http://scikit-learn.org/stable/auto_examples/applications/plot_stock_market.html#stock-market)
-  - [Scipy Lecture Notes](http://www.scipy-lectures.org/)
+## Where to from here by scikit-learn tutorials
+  - Try playing around with the analyzer and token normalisation under [CountVectorizer](http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html#sklearn.feature_extraction.text.CountVectorizer)
+  - If you don’t have labels, try using [Clustering](http://scikit-learn.org/stable/auto_examples/text/document_clustering.html#sphx-glr-auto-examples-text-document-clustering-py) on your problem
+  - If you have multiple labels per document, e.g categories, have a look at the [Multiclass and multilabel section](http://scikit-learn.org/stable/modules/multiclass.html#multiclass)
+  - Try using [Truncated SVD](http://scikit-learn.org/stable/modules/decomposition.html#lsa) for [latent semantic analysis](https://en.wikipedia.org/wiki/Latent_semantic_analysis)
+  - Have a look at using [Out-of-core Classification](http://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html#sphx-glr-auto-examples-applications-plot-out-of-core-classification-py) to learn from data that would not fit into the computer main memory
+  - Have a look at the [Hashing Vectorizer](http://scikit-learn.org/stable/modules/feature_extraction.html#hashing-vectorizer) as a memory efficient alternative to [CountVectorizer](http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html#sklearn.feature_extraction.text.CountVectorizer)
+## Q&A communities with Machine Learning practitioners
   - [Quora.com:	Quora has a topic for Machine Learning related questions that also features some interesting discussion](https://www.quora.com/topic/Machine-Learning)
   - [Stack Exchange: The Stack Exchange family of sites hosts multiple subdomains for Machine Learning questions](https://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms)
+## External Tutorials
+  - [Scipy Lecture Notes](http://www.scipy-lectures.org/)
+  - [Visualizing the stock market structure](http://scikit-learn.org/stable/auto_examples/applications/plot_stock_market.html#stock-market)
   - [An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford](https://www.coursera.org/learn/machine-learning)
   - [Another excellent free online course that takes a more general approach to Artificial Intelligence](https://www.udacity.com/course/intro-to-artificial-intelligence--cs271)
   - [Machine learning for Neuro-Imaging in Python](http://nilearn.github.io/)
   - [Tutorial for astronomy data processing with scikit-learn](https://github.com/astroML/sklearn_tutorial)
-  - [External Resources, Videos and Talks](http://scikit-learn.org/stable/presentations.html)
+## Videos
+  - [External Resources, Videos and Talks](http://scikit-learn.org/stable/presentations.html#videos)
 ***
