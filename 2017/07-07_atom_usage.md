@@ -1,4 +1,4 @@
-# ___71 Shortcuts for Atom (text editor) 1.0 (win/en)___
+# ___2017 - 07 - 07 Shortcuts for Atom (text editor) 1.0 (win/en)___
 
 # Table of Contents:
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
