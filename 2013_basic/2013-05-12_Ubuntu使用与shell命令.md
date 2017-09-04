@@ -188,9 +188,16 @@
   - ssh user@host | tee -a logfile
 ### <span style="color:#00ff00;">no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
   - possible solution
-    ```c
+    ```
     The problem isn't the cipher as much as the key exchange.
-    Newer open ssh dropped support (by default) for "insecure" key exchanges (SHA1) which are all that are supported by older ios/etc. gear. <br />        I've been updating code on boxes where possible to eliminate this issue but it's really an easy fix. <br /><br />        In /etc/ssh/ssh_config: <br /><br />        Host * <br />        GSSAPIAuthentication yes <br />        KexAlgorithms +diffie-hellman-group1-sha1 <br /><br />        That will add the old kex to your ssh (outbound) and should work ok.
+    Newer open ssh dropped support (by default) for "insecure" key exchanges (SHA1) which are all that are supported by older ios/etc. gear.
+    I've been updating code on boxes where possible to eliminate this issue but it's really an easy fix.
+    In /etc/ssh/ssh_config:
+    Host *
+    GSSAPIAuthentication yes
+    KexAlgorithms +diffie-hellman-group1-sha1
+
+    That will add the old kex to your ssh (outbound) and should work ok.
     ```
 ### <span style="color:#00ff00;">no matching host key type found. Their offer: ssh-dss
   - possible solution
@@ -477,7 +484,10 @@
     UUID=629AFA8D9AFA5D4B /media/E ntfs defaults,codepage=936,iocharset=gb2312 0 0
     ```
 ## <span style="color:#ff8000;">mtd 设备
-  - cd /run/user/1000/gvfs/mtp:host=%5Busb%3A003%2C003%5D/
+  ```shell
+  cd /run/user/1000/gvfs/mtp:host=%5Busb%3A003%2C003%5D/
+  alias Myphone='cd /run/user/*/gvfs/* && PRINTF_CYAN `pwd -P` && ls'
+  ```
 ## <span style="color:#ff8000;">JPEG error
   - Not a JPEG file: starts with 0x89 0x50
   - The file is actually a PNG with the wrong file extension. "0x89 0x50" is how a PNG file starts. Rename it to png
