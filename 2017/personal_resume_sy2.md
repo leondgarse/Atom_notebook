@@ -1,7 +1,6 @@
-# ___个人简历 - 王少颖___
 ***
 
-# 个人信息
+## 个人信息
   - **姓名**：王少颖
   - **性别**： 女
   - **出生年月**：1985.09
@@ -11,7 +10,7 @@
   - **邮箱**：18678969015@163.com
 ***
 
-# 个人技能
+## 个人技能
   - 熟练掌握 **C / C++ / Python** 语言，以及 Linux 环境下的应用开发，具有良好的编程风格
   - 掌握 **Linux** 下常用命令，以及 shell 脚本编写
   - 掌握网络相关技术，**SIP** 通信开发等
@@ -22,12 +21,12 @@
   - 了解大数据 **MapReduce / Spark** 等框架
 ***
 
-# 教育经历
+## 教育经历
   - `2009.09 - 2012.04` - `北京理工大学` - `概率论与数理统计专业` - `理学硕士`
 ***
 
-# 工作经历　          　
-## 2015.01 --- 2017.05 - 青岛百灵信息科技有限公司 - 软件开发工程师
+## 工作经历　          　
+#### 2015.01 --- 2017.05 - 青岛百灵信息科技有限公司 - 软件开发工程师
   - **北京爱立信5G Radio AAS 项目**
     - LO本振频率模块
     - Jesdlink Supervision模块Rx部分
@@ -45,7 +44,7 @@
     - 涉及到的3GPP标准有3GPP TS 29.109 3GPP TS 35.205 3GPP TS 35.206
     - SCG 2.0 Feature 99731测试
     - Heat based Cloud System of LCP
-## 2014.04 --- 2015.01 - 青岛海信电器股份有限公司 - 软件研发工程师
+#### 2014.04 --- 2015.01 - 青岛海信电器股份有限公司 - 软件研发工程师
   - **项目名称**：海外出口机型Whale项目
   - **项目介绍**：德国机型Loewe及北美US机型设计研发
   - **工作内容**：
@@ -54,7 +53,7 @@
     - 负责项目开发过程中音视频相关bug的分析及解决
     - 参与论证阶段相关软件模块PRD等文档的评审
     - 与硬件工程师共同排查与分析某些功能缺陷问题
-## 2012.04 --- 2014.04 - 青岛海信电器股份有限公司 - 算法设计师
+#### 2012.04 --- 2014.04 - 青岛海信电器股份有限公司 - 算法设计师
   - **项目名称**：高清数字电视SOC芯片
   - **项目介绍**：
     - 开发高清数字电视SOC芯片，支持全球全制式模拟电视信号和高清数字电视传输流（TS）信号的解码以及音视频后处理功能
@@ -79,16 +78,16 @@
       - **主要负责** MEMC运动补偿和MVR运动矢量提取模块的算法设计工作
 ***
 
-# ___English Version___
+## ___English Version___
 ***
 
-# Personal Information
+## Personal Information
   - **Name**: Wang ShaoYing
   - **Tel**: (86) 18678969015
   - **Email**: 18678969015@163.com
 ***
 
-# Computer Abilities
+## Computer Abilities
   - Skilled in **C / C++ / Python**, and Linux application development, with advanced coding style
   - Skilled in **Linux** commands and shell script
   - Familiar with network related technology and **SIP** protocol related development
@@ -98,12 +97,12 @@
   - Mastered in statistical analysis, and using of SPSS, R, SAS and MATLAB emulation
 ***
 
-# Education background
+## Education background
   - `2009.09 - 2012.04` - `Mathematical statistics, Beijing institute of technology` - `M.E`
 ***
 
-# Work & Practice experience
-## 2015.01 --- 2017.05 - Qing Dao Centling Information and Technology CO. - Software R&D Engineer
+## Work & Practice experience
+#### 2015.01 --- 2017.05 - Qing Dao Centling Information and Technology CO. - Software R&D Engineer
   - **Beijing Ericsson 5G Radio AAS project**
     - LO Local Oscillator Module
     - Jesdlink Supervision Module Rx
@@ -122,7 +121,7 @@
     - 3GPP related protocol includes 3GPP TS 29.109 3GPP TS 35.205 3GPP TS 35.206
     - SCG 2.0 Feature 99731 test
     - Heat based Cloud System of LCP
-## 2012.04 --- 2015.01 - HISENSE ELECTRIC CO.,LTD - Algorithm designer & Software R&D Engineer
+#### 2012.04 --- 2015.01 - HISENSE ELECTRIC CO.,LTD - Algorithm designer & Software R&D Engineer
   - Mainly engaged in R&D video post-processing algorithm and has been responsible for DI, SCALER, FRC, video compression algorithms, etc.
   - **Video compression algorithm**
     - In order to save the bandwidth of the DDR, we compress the brightness and chroma data of images
