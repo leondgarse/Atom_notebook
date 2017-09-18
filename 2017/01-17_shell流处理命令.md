@@ -95,6 +95,19 @@
     ```
     grep --exclude=tags -rinI "xp_fn_fillerrtone"
     ```
+  - A / B / C
+    ```
+    -B, --before-context=NUM  print NUM lines of leading context
+    -A, --after-context=NUM   print NUM lines of trailing context
+    -C, --context=NUM         print NUM lines of output context
+    -NUM                      same as --context=NUM
+    ```
+    ```bash
+    grep -sI -A 2 strcpy ./*  # 后2行
+    grep -sI -B 2 strcpy ./*  # 前2行
+    grep -sI -C 2 strcpy ./*  # 前后2行
+    grep -sI -2 strcpy ./*  # 前后2行
+    ```
   - 其他
     ```
     grep -Ern '^(PRIVATE|PUBLIC) *S16\s*\S* *$|^(PRIVATE|PUBLIC) *S16\s*\S* *\(' zc_bdy4.c
