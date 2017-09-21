@@ -165,7 +165,8 @@
     Out[46]: 0.0
     ```
 ## tf.train API
-  TensorFlow provides optimizers that slowly change each variable in order to minimize the loss function. The simplest optimizer is gradient descent. It modifies each variable according to the magnitude of the derivative of loss with respect to that variable. In general, computing symbolic derivatives manually is tedious and error-prone. Consequently, TensorFlow can automatically produce derivatives given only a description of the model using the function tf.gradients. For simplicity, optimizers typically do this for you. For example,
+  - **优化器 optimizers** 用于缓慢改变变量的值，使得 **损失函数 loss function** 最小
+  - **梯度下降算法 gradient descent** 沿损失函数梯度下降最大的方向调整参数，**tf.gradients 方法** 用于计算模型的导数，**tf.train.GradientDescentOptimizer 方法** 用于自动完成参数选取
   ```python
   optimizer = tf.train.GradientDescentOptimizer(0.01)
   train = optimizer.minimize(loss)
@@ -183,71 +184,196 @@
    array([ 0.99999082], dtype=float32),
    5.6999738e-11)
   ```
-  Now we have done actual machine learning! Although doing this simple linear regression doesn't require much TensorFlow core code, more complicated models and methods to feed data into your model necessitate more code. Thus TensorFlow provides higher level abstractions for common patterns, structures, and functionality. We will learn how to use some of these abstractions in the next section.
 ## tf.estimator API
-  tf.estimator is a high-level TensorFlow library that simplifies the mechanics of machine learning, including the following:
-
-      running training loops
-      running evaluation loops
-      managing data sets
-
-  tf.estimator defines many common models.
-  Basic usage
-
-  Notice how much simpler the linear regression program becomes with tf.estimator:
-
+  - **tf.estimator** TensorFlow 提供的上层接口，简化机器学习的架构，如训练 / 评估 / 管理数据集
   ```python
+  # tf.estimator 实现线性模型
+  # 声明特征列表，只包含一列数值型特征
   feature_columns = [tf.feature_column.numeric_column("x", shape=[1])]
+
+  # tf.estimator 方法提供训练 / 评估模型，包含很多预定义的模型
+  # LinearRegressor 用于线性回归
   estimator = tf.estimator.LinearRegressor(feature_columns=feature_columns)
+
+  # TensorFlow 提供一些用于读取 / 设置数据集的方法，分别定义训练集与测试集
   x_train = np.array([1., 2., 3., 4.])
   y_train = np.array([0., -1., -2., -3.])
   x_eval = np.array([2., 5., 8., 1.])
   y_eval = np.array([-1.01, -4.1, -7, 0.])
+  # num_epochs 指定 batches 数量，batch_size 指定每个 batch 大小
   input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
   train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=True)
   eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_eval}, y_eval, batch_size=4, num_epochs=1000, shuffle=True)
 
+  # 模型训练，指定训练数据集，并指定迭代1000次
   estimator.train(input_fn=input_fn, steps=1000)
+  # 分别在训练集与测试集上评估模型
   estimator.evaluate(input_fn=train_input_fn)
-  Out[19]: {'average_loss': 1.3505429e-08, 'global_step': 1000, 'loss': 5.4021715e-08}
+  # Out[19]: {'average_loss': 1.3505429e-08, 'global_step': 1000, 'loss': 5.4021715e-08}
 
   estimator.evaluate(input_fn=eval_input_fn)
-  Out[20]: {'average_loss': 0.0025362344, 'global_step': 1000, 'loss': 0.010144938}
+  # Out[20]: {'average_loss': 0.0025362344, 'global_step': 1000, 'loss': 0.010144938}
   ```
 ## 自定义模型 custom model
-  tf.estimator does not lock you into its predefined models. Suppose we wanted to create a custom model that is not built into TensorFlow. We can still retain the high level abstraction of data set, feeding, training, etc. of tf.estimator. For illustration, we will show how to implement our own equivalent model to LinearRegressor using our knowledge of the lower level TensorFlow API.
-
-  To define a custom model that works with tf.estimator, we need to use tf.estimator.Estimator. tf.estimator.LinearRegressor is actually a sub-class of tf.estimator.Estimator. Instead of sub-classing Estimator, we simply provide Estimator a function model_fn that tells tf.estimator how it can evaluate predictions, training steps, and loss. The code is as follows:
+  - 除 tf.estimator 的预定义模型，可以定义自己的模型 custom model，并保持 tf.estimator 的上层接口
+  - **tf.estimator.Estimator** 用于定义模型，tf.estimator.LinearRegressor 是 tf.estimator.Estimator 的一个子类，自定义的模型不需要定义成一个子类，只需要实现一个 **model_fn 方法** 指定预测 / 训练步骤 / 损失函数等方法
   ```python
+  # 自定义的线性回归模型
+  # 参数：数据集, 目标值, mode
   def model_fn(features, labels, mode):
+      # 线型模型与预测方法
       W = tf.get_variable("W", [1], dtype=tf.float64)
       b = tf.get_variable("b", [1], dtype=tf.float64)
       y = W * features['x'] + b
-
+      # 损失子图 Loss sub-graph
       loss = tf.reduce_sum(tf.square(y-labels))
+      # 训练子图 Training sub-graph
       global_step = tf.train.get_global_step()
       optimizer = tf.train.GradientDescentOptimizer(0.01)
       train = tf.group(optimizer.minimize(loss), tf.assign_add(global_step, 1))
-
+      # EstimatorSpec 方法指定对应的方法
       return tf.estimator.EstimatorSpec(
           mode = mode,
           predictions = y,
           loss = loss,
           train_op = train)
-  estimator = tf.estimator.Estimator(model_fn=model_fn)
 
+  # Estimator 指定 model_fn
+  estimator = tf.estimator.Estimator(model_fn=model_fn)
+  # 定义数据集与训练 / 评估流程
   x_train = np.array([1., 2., 3., 4.])
   y_train = np.array([0., -1., -2., -3.])
   x_eval = np.array([2., 5., 8., 1.])
   y_eval = np.array([-1.01, -4.1, -7, 0.])
+
   input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
   train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=True)
   eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_eval}, y_eval, batch_size=4, num_epochs=1000, shuffle=True)
 
+  # 训练与评估模型
   estimator.train(input_fn=input_fn, steps=1000)
   estimator.evaluate(input_fn=train_input_fn)
-  Out[22]: {'global_step': 1000, 'loss': 1.0836827e-11}
+  # Out[22]: {'global_step': 1000, 'loss': 1.0836827e-11}
 
   estimator.evaluate(input_fn=eval_input_fn)
   Out[23]: {'global_step': 1000, 'loss': 0.010100709}
   ```
+***
+
+# MNIST
+	- MNIST 手写数字数据集，每组数据包含两部分，手写图像数据 x 与对应的标签 y，每个图像包含 28x28 像素，所有数据划分成三部分
+		- 训练数据集 training data，55,000 组数据，mnist.train
+		- 测试数据集 test data，10,000 组数据，mnist.test
+		- 验证数据集 validation data，5,000 组数据，mnist.validation
+		```python
+		# Load MNIST Data
+		from tensorflow.examples.tutorials.mnist import input_data
+		mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+		mnist.train.images.shape
+		# Out[3]: (55000, 784)	# 28 * 28 = 784
+		mnist.train.labels.shape
+		# Out[4]: (55000, 10)	# one-hot vectors，只在对应的数字处为1
+		mnist.train.labels[0]
+		# Out[5]: array([ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.])
+		```
+	- Softmax Regression
+		-
+We know that every image in MNIST is of a handwritten digit between zero and nine. So there are only ten possible things that a given image can be. We want to be able to look at an image and give the probabilities for it being each digit. For example, our model might look at a picture of a nine and be 80% sure it's a nine, but give a 5% chance to it being an eight (because of the top loop) and a bit of probability to all the others because it isn't 100% sure.
+
+This is a classic case where a softmax regression is a natural, simple model. If you want to assign probabilities to an object being one of several different things, softmax is the thing to do, because softmax gives us a list of values between 0 and 1 that add up to 1. Even later on, when we train more sophisticated models, the final step will be a layer of softmax.
+
+A softmax regression has two steps: first we add up the evidence of our input being in certain classes, and then we convert that evidence into probabilities.
+
+To tally up the evidence that a given image is in a particular class, we do a weighted sum of the pixel intensities. The weight is negative if that pixel having a high intensity is evidence against the image being in that class, and positive if it is evidence in favor.
+
+The following diagram shows the weights one model learned for each of these classes. Red represents negative weights, while blue represents positive weights.
+
+
+# FOO
+Here mnist is a lightweight class which stores the training, validation, and testing sets as NumPy arrays. It also provides a function for iterating through data minibatches, which we will use below.
+Start TensorFlow InteractiveSession
+
+TensorFlow relies on a highly efficient C++ backend to do its computation. The connection to this backend is called a session. The common usage for TensorFlow programs is to first create a graph and then launch it in a session.
+
+Here we instead use the convenient InteractiveSession class, which makes TensorFlow more flexible about how you structure your code. It allows you to interleave operations which build a computation graph with ones that run the graph. This is particularly convenient when working in interactive contexts like IPython. If you are not using an InteractiveSession, then you should build the entire computation graph before starting a session and launching the graph.
+
+import tensorflow as tf
+sess = tf.InteractiveSession()
+
+Computation Graph
+
+To do efficient numerical computing in Python, we typically use libraries like NumPy that do expensive operations such as matrix multiplication outside Python, using highly efficient code implemented in another language. Unfortunately, there can still be a lot of overhead from switching back to Python every operation. This overhead is especially bad if you want to run computations on GPUs or in a distributed manner, where there can be a high cost to transferring data.
+
+TensorFlow also does its heavy lifting outside Python, but it takes things a step further to avoid this overhead. Instead of running a single expensive operation independently from Python, TensorFlow lets us describe a graph of interacting operations that run entirely outside Python. This approach is similar to that used in Theano or Torch.
+
+The role of the Python code is therefore to build this external computation graph, and to dictate which parts of the computation graph should be run. See the Computation Graph section of Getting Started With TensorFlow for more detail.
+Build a Softmax Regression Model
+
+In this section we will build a softmax regression model with a single linear layer. In the next section, we will extend this to the case of softmax regression with a multilayer convolutional network.
+Placeholders
+
+We start building the computation graph by creating nodes for the input images and target output classes.
+
+x = tf.placeholder(tf.float32, shape=[None, 784])
+y_ = tf.placeholder(tf.float32, shape=[None, 10])
+
+Here x and y_ aren't specific values. Rather, they are each a placeholder -- a value that we'll input when we ask TensorFlow to run a computation.
+
+The input images x will consist of a 2d tensor of floating point numbers. Here we assign it a shape of [None, 784], where 784 is the dimensionality of a single flattened 28 by 28 pixel MNIST image, and None indicates that the first dimension, corresponding to the batch size, can be of any size. The target output classes y_ will also consist of a 2d tensor, where each row is a one-hot 10-dimensional vector indicating which digit class (zero through nine) the corresponding MNIST image belongs to.
+
+The shape argument to placeholder is optional, but it allows TensorFlow to automatically catch bugs stemming from inconsistent tensor shapes.
+Variables
+
+We now define the weights W and biases b for our model. We could imagine treating these like additional inputs, but TensorFlow has an even better way to handle them: Variable. A Variable is a value that lives in TensorFlow's computation graph. It can be used and even modified by the computation. In machine learning applications, one generally has the model parameters be Variables.
+
+W = tf.Variable(tf.zeros([784,10]))
+b = tf.Variable(tf.zeros([10]))
+
+We pass the initial value for each parameter in the call to tf.Variable. In this case, we initialize both W and b as tensors full of zeros. W is a 784x10 matrix (because we have 784 input features and 10 outputs) and b is a 10-dimensional vector (because we have 10 classes).
+
+Before Variables can be used within a session, they must be initialized using that session. This step takes the initial values (in this case tensors full of zeros) that have already been specified, and assigns them to each Variable. This can be done for all Variables at once:
+
+sess.run(tf.global_variables_initializer())
+
+Predicted Class and Loss Function
+
+We can now implement our regression model. It only takes one line! We multiply the vectorized input images x by the weight matrix W, add the bias b.
+
+y = tf.matmul(x,W) + b
+
+We can specify a loss function just as easily. Loss indicates how bad the model's prediction was on a single example; we try to minimize that while training across all the examples. Here, our loss function is the cross-entropy between the target and the softmax activation function applied to the model's prediction. As in the beginners tutorial, we use the stable formulation:
+
+cross_entropy = tf.reduce_mean(
+    tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
+
+Note that tf.nn.softmax_cross_entropy_with_logits internally applies the softmax on the model's unnormalized model prediction and sums across all classes, and tf.reduce_mean takes the average over these sums.
+Train the Model
+
+Now that we have defined our model and training loss function, it is straightforward to train using TensorFlow. Because TensorFlow knows the entire computation graph, it can use automatic differentiation to find the gradients of the loss with respect to each of the variables. TensorFlow has a variety of built-in optimization algorithms. For this example, we will use steepest gradient descent, with a step length of 0.5, to descend the cross entropy.
+
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+What TensorFlow actually did in that single line was to add new operations to the computation graph. These operations included ones to compute gradients, compute parameter update steps, and apply update steps to the parameters.
+
+The returned operation train_step, when run, will apply the gradient descent updates to the parameters. Training the model can therefore be accomplished by repeatedly running train_step.
+
+for _ in range(1000):
+  batch = mnist.train.next_batch(100)
+  train_step.run(feed_dict={x: batch[0], y_: batch[1]})
+
+We load 100 training examples in each training iteration. We then run the train_step operation, using feed_dict to replace the placeholder tensors x and y_ with the training examples. Note that you can replace any tensor in your computation graph using feed_dict -- it's not restricted to just placeholders.
+Evaluate the Model
+
+How well did our model do?
+
+First we'll figure out where we predicted the correct label. tf.argmax is an extremely useful function which gives you the index of the highest entry in a tensor along some axis. For example, tf.argmax(y,1) is the label our model thinks is most likely for each input, while tf.argmax(y_,1) is the true label. We can use tf.equal to check if our prediction matches the truth.
+
+correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
+
+That gives us a list of booleans. To determine what fraction are correct, we cast to floating point numbers and then take the mean. For example, [True, False, True, True] would become [1,0,1,1] which would become 0.75.
+
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+Finally, we can evaluate our accuracy on the test data. This should be about 92% correct.
+
+print(accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
