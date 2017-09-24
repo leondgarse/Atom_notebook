@@ -377,9 +377,6 @@
     print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))    
     ```
 ## MNIST 多层卷积神经网络 CNN Multilayer Convolutional Neural Network
-
-
-## FOO
   - **权重初始化 Weight Initialization** 初始化时加入少量的噪声，以 **打破对称性 Symmetry Breaking** 以及避免倒数为 0
     ```python
     def weight_variable(shape):
@@ -414,7 +411,6 @@
     ```python
     x_image = tf.reshape(x, [-1,28,28,1])
     ```
-
 
 We then convolve x_image with the weight tensor, add the bias, apply the ReLU function, and finally max pool. 我们把x_image和权值向量进行卷积，加上偏置项，然后应用ReLU激活函数，最后进行max pooling
 
