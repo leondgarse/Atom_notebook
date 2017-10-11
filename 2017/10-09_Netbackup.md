@@ -72,11 +72,13 @@
     configurePorts -httpPort http_port | -httpsPort https_port | -shutdownPort shutdown_port
     ```
   - Port sets for NetBackup Web Services
+    ```python
     | Port set   | HTTP port | HTTPS port | shutdown port |
     | ---------- | --------- | ---------- | ------------- |
     | First set  | 8080      | 8443       | 8205          |
     | Second set | 8181      | 8553       | 8305          |
     | Third set  | 8282      | 8663       | 8405          |
+    ```
   - Check if port in use
     ```python
     $ lsof -i | grep 8015
