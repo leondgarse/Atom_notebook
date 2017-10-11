@@ -653,76 +653,84 @@
   if __name__ == "__main__":
       main()
   ```
+  - 使用 Iris 数据集，该数据集随机分割成两个 csv 文件
+    - 训练数据集，120 个样本
+    - 测试数据集，30 个样本
+  - **导入模块 / 数据集**
+    ```python
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
 
-  For this tutorial, the Iris data has been randomized and split into two separate CSVs:
+    import os
+    import urllib
 
-      A training set of 120 samples (iris_training.csv)
-      A test set of 30 samples (iris_test.csv).
+    import tensorflow as tf
+    import numpy as np
 
-  To get started, first import all the necessary modules, and define where to download and store the dataset:
+    IRIS_TRAINING = "iris_training.csv"
+    IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
 
-  from __future__ import absolute_import
-  from __future__ import division
-  from __future__ import print_function
+    IRIS_TEST = "iris_test.csv"
+    IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
 
-  import os
-  import urllib
+    if not os.path.exists(IRIS_TRAINING):
+        raw = urllib.request.urlopen(IRIS_TRAINING_URL).read()
+        raw = raw.decode()
+        with open(IRIS_TRAINING,'w') as f:
+            f.write(raw)
 
-  import tensorflow as tf
-  import numpy as np
+    if not os.path.exists(IRIS_TEST):
+        raw = urllib.request.urlopen(IRIS_TEST_URL).read()
+        raw = raw.decode()
+        with open(IRIS_TEST,'w') as f:
+            f.write(raw)
+    ```
+  - **learn.datasets.base.load_csv_with_header 方法加载csv文件**，需要三个参数
+    - **文件名 filename** 指向 CSV 文件
+    - **目标值类型 target_dtype** 数据集中目标值 target 的类型
+    - **特征值类型 features_dtype** 数据集中特征值 feature 的类型
+    ```python
+    # Load datasets.
+    training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
+        filename=IRIS_TRAINING,
+        target_dtype=np.int,
+        features_dtype=np.float32)
+    test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
+        filename=IRIS_TEST,
+        target_dtype=np.int,
+        features_dtype=np.float32)
+    ```
+  - **tf.contrib.learn** 中的数据集是 **命名元组 named tuples**，通过 **data** 与 **target** 域可以访问数据集的特征值与目标值
+    ```python
+    training_set.data.shape
+    Out[3]: (120, 4)
 
-  IRIS_TRAINING = "iris_training.csv"
-  IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
+    training_set.target.shape
+    Out[4]: (120,)
 
-  IRIS_TEST = "iris_test.csv"
-  IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
+    training_set.data[:3]
+    Out[6]:
+    array([[ 6.4000001 ,  2.79999995,  5.5999999 ,  2.20000005],
+           [ 5.        ,  2.29999995,  3.29999995,  1.        ],
+           [ 4.9000001 ,  2.5       ,  4.5       ,  1.70000005]], dtype=float32)
 
-  Then, if the training and test sets aren't already stored locally, download them.
-
-  if not os.path.exists(IRIS_TRAINING):
-    raw = urllib.urlopen(IRIS_TRAINING_URL).read()
-    with open(IRIS_TRAINING,'w') as f:
-      f.write(raw)
-
-  if not os.path.exists(IRIS_TEST):
-    raw = urllib.urlopen(IRIS_TEST_URL).read()
-    with open(IRIS_TEST,'w') as f:
-      f.write(raw)
-
-  Next, load the training and test sets into Datasets using the load_csv_with_header() method in learn.datasets.base. The load_csv_with_header() method takes three required arguments:
-
-      filename, which takes the filepath to the CSV file
-      target_dtype, which takes the numpy datatype of the dataset's target value.
-      features_dtype, which takes the numpy datatype of the dataset's feature values.
-
-  Here, the target (the value you're training the model to predict) is flower species, which is an integer from 0–2, so the appropriate numpy datatype is np.int:
-
-  # Load datasets.
-  training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-      filename=IRIS_TRAINING,
-      target_dtype=np.int,
-      features_dtype=np.float32)
-  test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-      filename=IRIS_TEST,
-      target_dtype=np.int,
-      features_dtype=np.float32)
-
-  Datasets in tf.contrib.learn are named tuples; you can access feature data and target values via the data and target fields. Here, training_set.data and training_set.target contain the feature data and target values for the training set, respectively, and test_set.data and test_set.target contain feature data and target values for the test set.
-
-  Later on, in "Fit the DNNClassifier to the Iris Training Data," you'll use training_set.data and training_set.target to train your model, and in "Evaluate Model Accuracy," you'll use test_set.data and test_set.target. But first, you'll construct your model in the next section.
-  Construct a Deep Neural Network Classifier
+    training_set.target[:3]
+    Out[7]: array([2, 1, 2])
+    ```
+  - **构造深度神经网络分类模型 Deep Neural Network Classifier** tf.estimator 提供多种预定义的模型，称为 **Estimators**，用于训练 / 评估时类似黑盒操作
 
   tf.estimator offers a variety of predefined models, called Estimators, which you can use "out of the box" to run training and evaluation operations on your data. Here, you'll configure a Deep Neural Network Classifier model to fit the Iris data. Using tf.estimator, you can instantiate your tf.estimator.DNNClassifier with just a couple lines of code:
+    ```python
+    # Specify that all features have real-value data
+    feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
 
-  # Specify that all features have real-value data
-  feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
-
-  # Build 3 layer DNN with 10, 20, 10 units respectively.
-  classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                          hidden_units=[10, 20, 10],
-                                          n_classes=3,
-                                          model_dir="/tmp/iris_model")
-
+    # Build 3 layer DNN with 10, 20, 10 units respectively.
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
+                                            hidden_units=[10, 20, 10],
+                                            n_classes=3,
+                                            model_dir="/tmp/iris_model")
+    ```
   The code above first defines the model's feature columns, which specify the data type for the features in the data set. All the feature data is continuous, so tf.feature_column.numeric_column is the appropriate function to use to construct the feature columns. There are four features in the data set (sepal width, sepal height, petal width, and petal height), so accordingly shape must be set to [4] to hold all the data.
 
   Then, the code creates a DNNClassifier model using the following arguments:
@@ -732,7 +740,7 @@
       n_classes=3. Three target classes, representing the three Iris species.
       model_dir=/tmp/iris_model. The directory in which TensorFlow will save checkpoint data and TensorBoard summaries during model training.
 
-  Describe the training input pipeline
+  - Describe the training input pipeline
 
   The tf.estimator API uses input functions, which create the TensorFlow operations that generate data for the model. We can use tf.estimator.inputs.numpy_input_fn to produce the input pipeline:
 
