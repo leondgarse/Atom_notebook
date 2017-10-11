@@ -384,7 +384,7 @@
 ## <span style="color:#ff8000;">using 变量别名
   - typedef const char * pc1;
   - using pc2 = const char * ;
-  - typedef condt int *(*pa1)[10];
+  - typedef condt int *(* pa1)[10];
   - using pa2 = const int *(*)[10]; :=(
 ## <span style="color:#ff8000;">类型转换运算符
   - 更严格的控制类型转换，可以根据目的选择一个适合的运算符，而不是使用通用的类型转换

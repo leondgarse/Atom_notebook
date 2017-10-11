@@ -6,6 +6,7 @@
 - TensorBoard
 # 目录
 # FOO
+  ```python
   ===
   a placeholder, a value that we'll input when we ask TensorFlow to run a computation.
   The shape argument to placeholder is optional, but it allows TensorFlow to automatically catch bugs stemming from inconsistent tensor shapes.
@@ -38,6 +39,7 @@
   We then run the train_step operation, using feed_dict to replace the placeholder tensors x and y_ with the training examples. Note that you can replace any tensor in your computation graph using feed_dict -- it's not restricted to just placeholders
   ===
   For this small convolutional network, performance is actually nearly identical with and without dropout. Dropout is often very effective at reducing overfitting, but it is most useful when training very large neural networks.
+  ```
 ***
 
 # TensorFlow 基础
@@ -381,7 +383,8 @@
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))    
     ```
-## MNIST 多层卷积神经网络 CNN Multilayer Convolutional Neural Network
+## MNIST 多层卷积神经网络 CNN
+  - **CNN** 多层卷积神经网络 Multilayer Convolutional Neural Network
   - **权重初始化 Weight Initialization** 初始化时加入少量的噪声，以 **打破对称性 Symmetry Breaking** 以及避免倒数为 0
     ```python
     def weight_variable(shape):
@@ -558,101 +561,7 @@
     test accuracy 0.9922
     ```
     最终测试集上的准确率大概是 99.2%
-***
-
-# TensorFlow Mechanics 101
-
-***
-# tf.estimator Quickstart
-  ```python
-  from __future__ import absolute_import
-  from __future__ import division
-  from __future__ import print_function
-
-  import os
-  import urllib
-
-  import numpy as np
-  import tensorflow as tf
-
-  # Data sets
-  IRIS_TRAINING = "iris_training.csv"
-  IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
-
-  IRIS_TEST = "iris_test.csv"
-  IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
-
-  def main():
-    # If the training and test sets aren't stored locally, download them.
-    if not os.path.exists(IRIS_TRAINING):
-      raw = urllib.urlopen(IRIS_TRAINING_URL).read()
-      with open(IRIS_TRAINING, "w") as f:
-        f.write(raw)
-
-    if not os.path.exists(IRIS_TEST):
-      raw = urllib.urlopen(IRIS_TEST_URL).read()
-      with open(IRIS_TEST, "w") as f:
-        f.write(raw)
-
-    # Load datasets.
-    training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TRAINING,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-    test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TEST,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-
-    # Specify that all features have real-value data
-    feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
-
-    # Build 3 layer DNN with 10, 20, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                            hidden_units=[10, 20, 10],
-                                            n_classes=3,
-                                            model_dir="/tmp/iris_model")
-    # Define the training inputs
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(training_set.data)},
-        y=np.array(training_set.target),
-        num_epochs=None,
-        shuffle=True)
-
-    # Train model.
-    classifier.train(input_fn=train_input_fn, steps=2000)
-
-    # Define the test inputs
-    test_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(test_set.data)},
-        y=np.array(test_set.target),
-        num_epochs=1,
-        shuffle=False)
-
-    # Evaluate accuracy.
-    accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
-
-    print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
-
-    # Classify two new flower samples.
-    new_samples = np.array(
-        [[6.4, 3.2, 4.5, 1.5],
-         [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
-    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": new_samples},
-        num_epochs=1,
-        shuffle=False)
-
-    predictions = list(classifier.predict(input_fn=predict_input_fn))
-    predicted_classes = [p["classes"] for p in predictions]
-
-    print(
-        "New Samples, Class Predictions:    {}\n"
-        .format(predicted_classes))
-
-  if __name__ == "__main__":
-      main()
-  ```
+## tf.estimator DNNClassifier 用于 Iris 数据集
   - 使用 Iris 数据集，该数据集随机分割成两个 csv 文件
     - 训练数据集，120 个样本
     - 测试数据集，30 个样本
@@ -718,9 +627,13 @@
     training_set.target[:3]
     Out[7]: array([2, 1, 2])
     ```
-  - **构造深度神经网络分类模型 Deep Neural Network Classifier** tf.estimator 提供多种预定义的模型，称为 **Estimators**，用于训练 / 评估时类似黑盒操作
-
-  tf.estimator offers a variety of predefined models, called Estimators, which you can use "out of the box" to run training and evaluation operations on your data. Here, you'll configure a Deep Neural Network Classifier model to fit the Iris data. Using tf.estimator, you can instantiate your tf.estimator.DNNClassifier with just a couple lines of code:
+  - **构造深度神经网络分类模型 Deep Neural Network Classifier** tf.estimator 提供多种预定义的模型用于训练 / 评估，称为 **Estimators**
+    - **tf.feature_column.numeric_column** 定义特征列为数字类型，每一项数据有 4 个特征
+    - 使用 **tf.estimator.DNNClassifier** Deep Neural Network Classifier model
+      - **feature_columns** 特征列
+      - **hidden_units** 隐含层，分别定义每一层的神经元数量
+      - **n_classes** 目标值数量
+      - **model_dir** 模型训练中的数据以及 TensorBoard 的结果目录
     ```python
     # Specify that all features have real-value data
     feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
@@ -731,86 +644,154 @@
                                             n_classes=3,
                                             model_dir="/tmp/iris_model")
     ```
-  The code above first defines the model's feature columns, which specify the data type for the features in the data set. All the feature data is continuous, so tf.feature_column.numeric_column is the appropriate function to use to construct the feature columns. There are four features in the data set (sepal width, sepal height, petal width, and petal height), so accordingly shape must be set to [4] to hold all the data.
+  - **定义输入的 pipeline** tf.estimator API 使用输入功能为模型提供数据，**tf.estimator.inputs.numpy_input_fn** 用于定义输入的 pipeline
+    ```python
+    # Define the training inputs
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(training_set.data)},
+        y=np.array(training_set.target),
+        num_epochs=None,
+        shuffle=True)
+    ```
+  - **DNNClassifier 模型训练 fit** 使用模型的 train 方法，train_input_fn 作为 input_fn
+    ```python
+    # Train model.
+    classifier.train(input_fn=train_input_fn, steps=2000)
+    # The state of the model is preserved in the classifier
+    # which means you can train iteratively if you like
+    # For example, the above is equivalent to the following
+    # classifier.train(input_fn=train_input_fn, steps=1000)
+    # classifier.train(input_fn=train_input_fn, steps=1000)
+    ```
+  - **评估模型准确率 Evaluate Model Accuracy** 使用 **evaluate 方法** 在测试数据集上验证模型准确率
+    ```python
+    # Define the test inputs
+    test_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(test_set.data)},
+        y=np.array(test_set.target),
+        num_epochs=1,
+        shuffle=False)
 
-  Then, the code creates a DNNClassifier model using the following arguments:
+    # Evaluate accuracy.
+    accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
 
-      feature_columns=feature_columns. The set of feature columns defined above.
-      hidden_units=[10, 20, 10]. Three hidden layers, containing 10, 20, and 10 neurons, respectively.
-      n_classes=3. Three target classes, representing the three Iris species.
-      model_dir=/tmp/iris_model. The directory in which TensorFlow will save checkpoint data and TensorBoard summaries during model training.
+    print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
+    ```
+    运行结果
+    ```python
+    Test Accuracy: 0.966667
+    ```
+    其中参数中的 **num_epochs=1** 指定 test_input_fn 遍历数据一次，然后抛出异常 **OutOfRangeError**，该异常通知分类器停止评估
+  - **分类新数据 Classify New Samples** 模型的 **predict 方法** 用于分类新数据
+    ```python
+    # Classify two new flower samples.
+    new_samples = np.array(
+        [[6.4, 3.2, 4.5, 1.5],
+         [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
+    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": new_samples},
+        num_epochs=1,
+        shuffle=False)
 
-  - Describe the training input pipeline
+    predictions = list(classifier.predict(input_fn=predict_input_fn))
+    predicted_classes = [p["classes"] for p in predictions]
 
-  The tf.estimator API uses input functions, which create the TensorFlow operations that generate data for the model. We can use tf.estimator.inputs.numpy_input_fn to produce the input pipeline:
+    print(
+        "New Samples, Class Predictions:    {}\n"
+        .format(predicted_classes))
+    ```
+    运行结果
+    ```python
+    New Samples, Class Predictions:    [array([b'1'], dtype=object), array([b'2'], dtype=object)]
+    ```
+  - **完整代码**
+    ```python
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
 
-  # Define the training inputs
-  train_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": np.array(training_set.data)},
-      y=np.array(training_set.target),
-      num_epochs=None,
-      shuffle=True)
+    import os
+    import urllib
 
-  Fit the DNNClassifier to the Iris Training Data
+    import tensorflow as tf
+    import numpy as np
 
-  Now that you've configured your DNN classifier model, you can fit it to the Iris training data using the train method. Pass train_input_fn as the input_fn, and the number of steps to train (here, 2000):
+    IRIS_TRAINING = "iris_training.csv"
+    IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
 
-  # Train model.
-  classifier.train(input_fn=train_input_fn, steps=2000)
+    IRIS_TEST = "iris_test.csv"
+    IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
 
-  The state of the model is preserved in the classifier, which means you can train iteratively if you like. For example, the above is equivalent to the following:
+    if not os.path.exists(IRIS_TRAINING):
+        raw = urllib.request.urlopen(IRIS_TRAINING_URL).read()
+        raw = raw.decode()
+        with open(IRIS_TRAINING,'w') as f:
+            f.write(raw)
 
-  classifier.train(input_fn=train_input_fn, steps=1000)
-  classifier.train(input_fn=train_input_fn, steps=1000)
+    if not os.path.exists(IRIS_TEST):
+        raw = urllib.request.urlopen(IRIS_TEST_URL).read()
+        raw = raw.decode()
+        with open(IRIS_TEST,'w') as f:
+            f.write(raw)
 
-  However, if you're looking to track the model while it trains, you'll likely want to instead use a TensorFlow SessionRunHook to perform logging operations.
-  Evaluate Model Accuracy
+    # Load datasets.
+    training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
+        filename=IRIS_TRAINING,
+        target_dtype=np.int,
+        features_dtype=np.float32)
+    test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
+        filename=IRIS_TEST,
+        target_dtype=np.int,
+        features_dtype=np.float32)
 
-  You've trained your DNNClassifier model on the Iris training data; now, you can check its accuracy on the Iris test data using the evaluate method. Like train, evaluate takes an input function that builds its input pipeline. evaluate returns a dicts with the evaluation results. The following code passes the Iris test data—test_set.data and test_set.target—to evaluate and prints the accuracy from the results:
+    # Specify that all features have real-value data
+    feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
 
-  # Define the test inputs
-  test_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": np.array(test_set.data)},
-      y=np.array(test_set.target),
-      num_epochs=1,
-      shuffle=False)
+    # Build 3 layer DNN with 10, 20, 10 units respectively.
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
+                              hidden_units=[10, 20, 10],
+                              n_classes=3,
+                              model_dir="/tmp/iris_model")
 
-  # Evaluate accuracy.
-  accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
+    # Define the training inputs
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(training_set.data)},
+        y=np.array(training_set.target),
+        num_epochs=None,
+        shuffle=True)
 
-  print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
+    # Train model.
+    classifier.train(input_fn=train_input_fn, steps=2000)
 
-  Note: The num_epochs=1 argument to numpy_input_fn is important here. test_input_fn will iterate over the data once, and then raise OutOfRangeError. This error signals the classifier to stop evaluating, so it will evaluate over the input once.
+    # Define the test inputs
+    test_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(test_set.data)},
+        y=np.array(test_set.target),
+        num_epochs=1,
+        shuffle=False)
 
-  When you run the full script, it will print something close to:
+    # Evaluate accuracy.
+    accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
 
-  Test Accuracy: 0.966667
+    print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
 
-  Your accuracy result may vary a bit, but should be higher than 90%. Not bad for a relatively small data set!
-  Classify New Samples
+    # Classify two new flower samples.
+    new_samples = np.array(
+        [[6.4, 3.2, 4.5, 1.5],
+         [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
+    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": new_samples},
+        num_epochs=1,
+        shuffle=False)
 
-  Use the estimator's predict() method to classify new samples. For example, say you have these two new flower samples:
+    predictions = list(classifier.predict(input_fn=predict_input_fn))
+    predicted_classes = [p["classes"] for p in predictions]
 
-  You can predict their species using the predict() method. predict returns a generator of dicts, which can easily be converted to a list. The following code retrieves and prints the class predictions:
+    print(
+        "New Samples, Class Predictions:    {}\n"
+        .format(predicted_classes))
+    ```
+***
 
-  # Classify two new flower samples.
-  new_samples = np.array(
-      [[6.4, 3.2, 4.5, 1.5],
-       [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
-  predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": new_samples},
-      num_epochs=1,
-      shuffle=False)
-
-  predictions = list(classifier.predict(input_fn=predict_input_fn))
-  predicted_classes = [p["classes"] for p in predictions]
-
-  print(
-      "New Samples, Class Predictions:    {}\n"
-      .format(predicted_classes))
-
-  Your results should look as follows:
-
-  New Samples, Class Predictions:    [1 2]
-
-  The model thus predicts that the first sample is Iris versicolor, and the second sample is Iris virginica.
+# TensorFlow Mechanics 101
+***
