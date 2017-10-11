@@ -61,7 +61,8 @@
 - **Q: configurePorts:  WmcPortsUpdater failed with exit status 254**
   - A: NetBackup Web Services on the master server require port 1024 or higher.
     ```python
-    $ ./configurePorts -status                                                                                                                
+    $ cd /usr/openv/wmc/bin/install/
+    $ ./configurePorts -status
     Current Http Port: 80
     Current Https Port: 443
     Current Shutdown Port: 8105
@@ -76,7 +77,11 @@
     | First set  | 8080      | 8443       | 8205          |
     | Second set | 8181      | 8553       | 8305          |
     | Third set  | 8282      | 8663       | 8405          |
-  - Command
+  - Check if port in use
+    ```python
+    $ lsof -i | grep 8015
+    ```
+  - Commands
     ```python
     $ ./configurePorts -httpPort 8080 -httpsPort 8443 -shutdownPort 8105                                                                      
     Old Shutdown Port: 8105
@@ -90,4 +95,6 @@
     Current Http Port: 8080
     Current Https Port: 8443
     Current Shutdown Port: 8105
+
+    $ ./configureWmc
     ```
