@@ -3,8 +3,36 @@
 
 - [Getting Started With TensorFlow](https://www.tensorflow.org/get_started/get_started)
 - [TensorFlow 官方文档中文版](http://www.tensorfly.cn/tfdoc/get_started/introduction.html)
-- TensorBoard
+
 # 目录
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [___2017 - 08 - 20 TensorFlow___](#2017-08-20-tensorflow)
+- [目录](#目录)
+- [FOO](#foo)
+- [TensorFlow 基础](#tensorflow-基础)
+	- [安装](#安装)
+	- [启用 GPU 支持](#启用-gpu-支持)
+	- [Hello World](#hello-world)
+	- [基本概念 Tensors / Graph / Session](#基本概念-tensors-graph-session)
+	- [placeholders / Variables](#placeholders-variables)
+	- [损失函数 loss function](#损失函数-loss-function)
+	- [tf.train API](#tftrain-api)
+	- [tf.estimator API](#tfestimator-api)
+	- [自定义模型 custom model](#自定义模型-custom-model)
+	- [tf.estimator 的输入功能 Input Function](#tfestimator-的输入功能-input-function)
+	- [模型使用 input_fn 的数据 ???](#模型使用-inputfn-的数据-)
+- [应用示例](#应用示例)
+	- [MNIST Softmax Regression](#mnist-softmax-regression)
+	- [MNIST 多层卷积神经网络 CNN](#mnist-多层卷积神经网络-cnn)
+	- [tf.estimator DNNClassifier 用于 Iris 数据集](#tfestimator-dnnclassifier-用于-iris-数据集)
+	- [预测 Boston 房价的神经网络模型](#预测-boston-房价的神经网络模型)
+- [TensorFlow Mechanics 101](#tensorflow-mechanics-101)
+- [TensorBoard](#tensorboard)
+
+<!-- /TOC -->
+***
+
 # FOO
   ```python
   ===
@@ -133,7 +161,7 @@
     sess.run(node3 + node3)
     Out[20]: 14.0
     ```
-## FOO
+## placeholders / Variables
   - **占位符 placeholders** 可以在运行时指定的参数
     ```python
     a = tf.placeholder(tf.float32)
@@ -163,6 +191,18 @@
     sess.run(linear_model, {x : [1, 2, 3, 4]})
     Out[37]: array([ 0.        ,  0.30000001,  0.60000002,  0.90000004], dtype=float32)
     ```
+  - **调整变量值 assign** 变量值可以通过 **tf.assign** 等函数修改
+    ```python
+    # W = -1, b = 1 是该模型的理想值
+    fixW = tf.assign(W, [-1.])
+    fixb = tf.assign(b, [1.])
+    sess.run([fixW, fixb])
+    Out[45]: [array([-1.], dtype=float32), array([ 1.], dtype=float32)]
+
+    sess.run(loss, {x : [1, 2, 3, 4], y : [0, -1, -2, -3]})
+    Out[46]: 0.0
+    ```
+## 损失函数 loss function
   - **损失函数 loss function** 评估当前模型的预测结果与目标值的距离
     ```python
     # 标准损失模型 standard loss model
@@ -174,17 +214,6 @@
     loss = tf.reduce_sum(squared_deltas)
     sess.run(loss, {x : [1, 2, 3, 4], y : [0, -1, -2, -3]})
     Out[42]: 23.66
-    ```
-  - **调整变量值 assign** 变量值可以通过 **tf.assign** 等函数修改
-    ```python
-    # W = -1, b = 1 是该模型的理想值
-    fixW = tf.assign(W, [-1.])
-    fixb = tf.assign(b, [1.])
-    sess.run([fixW, fixb])
-    Out[45]: [array([-1.], dtype=float32), array([ 1.], dtype=float32)]
-
-    sess.run(loss, {x : [1, 2, 3, 4], y : [0, -1, -2, -3]})
-    Out[46]: 0.0
     ```
 ## tf.train API
   - **优化器 optimizers** 用于缓慢改变变量的值，使得 **损失函数 loss function** 最小
@@ -280,9 +309,108 @@
   estimator.evaluate(input_fn=eval_input_fn)
   Out[23]: {'global_step': 1000, 'loss': 0.010100709}
   ```
+## tf.estimator 的输入功能 Input Function
+  - **input_fn** 用于向 Estimator 中训练 train / 评估 evaluate / 预测 predict 方法传递特征 / 目标数据，包括数据预处理，如清除异常值
+  - Input functions 的返回值中必须包含最终的特征 / 目标值
+    - **feature_cols** 键值对的字典值，特征列名对应包含特征数据的 Tensors / SparseTensors
+    - **labels** 用于预测的目标值 Tensor
+  - **特征数据转化为 Tensors** 如果输入数据类型是 pandas dataframes / numpy arrays，可以使用 pandas_input_fn / numpy_input_fn 狗找 input_fn
+    ```python
+    import numpy as np
+    # numpy input_fn.
+    my_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(x_data)},
+        y=np.array(y_data),
+        ...)
+    ```
+    ```python
+    import pandas as pd
+    # pandas input_fn.
+    my_input_fn = tf.estimator.inputs.pandas_input_fn(
+        x=pd.DataFrame({"x": x_data}),
+        y=pd.Series(y_data),
+        ...)
+    ```
+  - 对于稀疏数据集 sparse data，大多数数据值为0，可以使用 **SparseTensor**
+    - **dense_shape** Tensor 的形状，如 dense_shape=[3,6]
+    - **indices** 非0值的位置，如 indices=[[1,3], [2,4]]
+    - **values** 非0值的值，如 values=[18, 3.6]
+    ```python
+    sparse_tensor = tf.SparseTensor(indices=[[0,1], [2,4]],
+                                    values=[6, 0.5],
+                                    dense_shape=[3, 5])
+    # 定义的 tensor 数据
+    sess = tf.Session()
+    sess.run(tf.sparse_tensor_to_dense(sparse_tensor))
+    Out[30]:
+    array([[ 0. ,  6. ,  0. ,  0. ,  0. ],
+           [ 0. ,  0. ,  0. ,  0. ,  0. ],
+           [ 0. ,  0. ,  0. ,  0. ,  0.5]], dtype=float32)
+    ```
+## 模型使用 input_fn 的数据 ???
+  - 模型 train / evaluate / predict 方法的 input_fn 参数用于传递用户自定义的 input function
+    ```python
+    classifier.train(input_fn=my_input_fn, steps=2000)
+    ```
+  - 通过创建接受一个 dataset 参数的 input_fn，train / evaluate / predict 数据可以使用统一的接口
+    ```python
+    # 分别定义的输入功能函数
+    classifier.train(input_fn=input_fn_train, steps=2000)
+    classifier.evaluate(input_fn=input_fn_test, steps=2000)
+    classifier.predict(input_fn=input_fn_predict, steps=2000)
+    ```
+    input_fn 参数的值必须是一个函数，而不能是函数的返回值，如果需要向定义的 input_fn 中传递参数，直接在参数中传递将产生类型错误 TypeError
+    ```python
+    def my_input_fn(data_set):
+        ...
+
+    # 将产生类型错误 TypeError    
+    classifier.train(input_fn=my_input_fn(training_set), steps=2000)
+    ```
+  - **方法一** 定义一个包装函数 wrapper function
+    ```python
+    def my_input_fn(data_set):
+        ...
+
+    def my_input_fn_training_set():
+        return my_input_fn(training_set)
+
+    classifier.train(input_fn=my_input_fn_training_set, steps=2000)
+    ```
+  - **方法二** 使用 python 的 functools.partial 方法，构造一个所有参数固定的新函数
+    ```python
+    classifier.train(
+        input_fn=functools.partial(my_input_fn, data_set=training_set),
+        steps=2000)
+    ```
+  - **方法三** 使用 lambda 包装函数
+    ```python
+    classifier.train(input_fn=lambda: my_input_fn(training_set), steps=2000)
+    ```
+  - 使用 pandas dataframes / numpy arrays 数据的 input_fn 示例
+    ```python
+    # num_epochs and shuffle control how the input_fn iterates over the data
+    import pandas as pd
+
+    def get_input_fn_from_pandas(data_set, num_epochs=None, shuffle=True):
+      return tf.estimator.inputs.pandas_input_fn(
+          x=pdDataFrame(...),
+          y=pd.Series(...),
+          num_epochs=num_epochs,
+          shuffle=shuffle)
+
+    import numpy as np
+
+    def get_input_fn_from_numpy(data_set, num_epochs=None, shuffle=True):
+      return tf.estimator.inputs.numpy_input_fn(
+          x={...},
+          y=np.array(...),
+          num_epochs=num_epochs,
+          shuffle=shuffle)
+    ```
 ***
 
-# MNIST
+# 应用示例
 ## MNIST Softmax Regression
   - **MNIST 手写数字数据集**，每组数据包含两部分，手写图像数据 x 与对应的标签 y，每个图像包含 28x28 像素，所有数据划分成三部分
   	- 训练数据集 training data，55,000 组数据，mnist.train
@@ -644,7 +772,7 @@
                                             n_classes=3,
                                             model_dir="/tmp/iris_model")
     ```
-  - **定义输入的 pipeline** tf.estimator API 使用输入功能为模型提供数据，**tf.estimator.inputs.numpy_input_fn** 用于定义输入的 pipeline
+  - **定义输入的 pipeline** tf.estimator API 使用 **输入功能 input function** 为模型提供数据，**tf.estimator.inputs.numpy_input_fn** 用于定义输入的 pipeline
     ```python
     # Define the training inputs
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -791,9 +919,99 @@
         "New Samples, Class Predictions:    {}\n"
         .format(predicted_classes))
     ```
+## 预测 Boston 房价的神经网络模型
+  - [boston.py](https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/examples/tutorials/input_fn/boston.py)
+  - [boston_train.csv](download.tensorflow.org/data/boston_train.csv)
+  - [boston_test.csv](download.tensorflow.org/data/boston_test.csv)
+  - [boston_predict.csv](download.tensorflow.org/data/boston_predict.csv)
+  - 特征
+    ```markdown
+    | Feature | Description                                                     |
+    | ------- | --------------------------------------------------------------- |
+    | CRIM    | Crime rate per capita                                           |
+    | ZN      | Fraction of residential land zoned to permit 25,000+ sq ft lots |
+    | INDUS   | Fraction of land that is non-retail business                    |
+    | NOX     | Concentration of nitric oxides in parts per 10 million          |
+    | RM      | Average Rooms per dwelling                                      |
+    | AGE     | Fraction of owner-occupied residences built before 1940         |
+    | DIS     | Distance to Boston-area employment centers                      |
+    | TAX     | Property tax rate per $10,000                                   |
+    | PTRATIO | Student-teacher ratio                                           |
+    ```
+  - 预测的目标值 median value MEDV
+  - 加载数据集，并将 log 等级设置为 INFO
+    ```python
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
+
+    import itertools
+    import pandas as pd
+    import tensorflow as tf
+
+    tf.logging.set_verbosity(tf.logging.INFO)
+
+    COLUMNS = ["crim", "zn", "indus", "nox", "rm", "age",
+               "dis", "tax", "ptratio", "medv"]
+    FEATURES = ["crim", "zn", "indus", "nox", "rm",
+                "age", "dis", "tax", "ptratio"]
+    LABEL = "medv"
+
+    training_set = pd.read_csv("boston_train.csv", skipinitialspace=True,
+                               skiprows=1, names=COLUMNS)
+    test_set = pd.read_csv("boston_test.csv", skipinitialspace=True,
+                           skiprows=1, names=COLUMNS)
+    prediction_set = pd.read_csv("boston_predict.csv", skipinitialspace=True,
+                                 skiprows=1, names=COLUMNS)
+    ```
+  - 定义 FeatureColumns，创建回归模型 Regressor
+    ```python
+    feature_cols = [tf.feature_column.numeric_column(k) for k in FEATURES]
+    regressor = tf.estimator.DNNRegressor(feature_columns=feature_cols,
+                                        hidden_units=[10, 10],
+                                        model_dir="/tmp/boston_model")
+    ```
+  - 定义输入功能 input_fn
+    - 参数 data_set，可以用于training_set / test_set / prediction_set
+    - 参数 num_epochs，控制数据集迭代的次数，用于训练时置为 None，表示不限迭代次数，评估与预测时，置为1
+    - 参数 shuffle，是否进行数据混洗，用于训练时置为 True，评估与预测时置为 False
+    ```python
+    def get_input_fn(data_set, num_epochs=None, shuffle=True):
+      tf.estimator.inputs.pandas_input_fn(
+        x=pd.DataFrame({k: data_set[k].values for k in FEATURES}),
+        y = pd.Series(data_set[LABEL].values),
+        num_epochs=num_epochs,
+        shuffle=shuffle)
+    ```
+  - 模型训练
+    ```python
+    regressor.train(input_fn=get_input_fn(training_set), steps=5000)
+    ```
+  - 模型评估
+    ```python
+    ev = regressor.evaluate(
+      input_fn=get_input_fn(test_set, num_epochs=1, shuffle=False))
+    loss_score = ev["loss"]
+    print("Loss: {0:f}".format(loss_score))
+    # Loss: 1608.965698
+    ```
+  - 预测
+    ```python
+    y = regressor.predict(
+        input_fn=get_input_fn(prediction_set, num_epochs=1, shuffle=False))
+    # .predict() returns an iterator of dicts; convert to a list and print
+    # predictions
+    predictions = list(p["predictions"][0] for p in itertools.islice(y, 6))
+    print("Predictions: {}".format(str(predictions)))
+    ```
+    运行结果
+    ```python
+    Predictions: [35.306267, 18.697575, 24.233162, 35.991249, 16.141064, 20.229273]
+    ```
 ***
 
 # TensorFlow Mechanics 101
 ***
 
-# tf.estimator 的输入功能 Input Function
+# TensorBoard
+***
