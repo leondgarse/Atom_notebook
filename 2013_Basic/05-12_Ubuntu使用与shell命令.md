@@ -306,6 +306,26 @@
     linux下tftp默认格式是ascii，尝试指定mode 为 binary
         tftp -m binary 127.0.0.1 -c put foo
     ```
+## <span style="color:#ff8000;">NFS
+  - 安装 NFS server
+    ```shell
+    sudo apt-get install nfs-kernel-server
+    ```
+  - 添加目标系统的根文件系统映射目
+    ```shell
+    sudo vi /etc/exports
+    # 添加
+    /opt/rootfs/ *(subtree_check,rw,no_root_squash,async)
+    ```
+  - 重启服务
+    ```shell
+    sudo /etc/init.d/nfs-kernel-server restart
+    sudo exportfs -a
+    ```
+  - 挂载测试
+    ```shell
+    sudo mount 127.0.0.1:/opt/rootfs /media/cdrom0/ -t nfs
+    ```
 ## <span style="color:#ff8000;">Checking conflict IP
   - $ sudo apt-get install arp-scan
   - $ arp-scan -I eth0 -l | grep 192.168.1.42
