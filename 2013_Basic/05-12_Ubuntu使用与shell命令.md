@@ -108,6 +108,7 @@
 ***
 
 # <span style="color:#ff0000;">配置
+## Q / A
   - 使用 PS1=user$: 命令临时更改显示的命令提示符
     ```c
     PS1='[\u@\h: $PWD]# '
@@ -117,6 +118,28 @@
     ```c
     sudo apt-get install manpages-posix-dev
     ```
+  - 发行版本信息
+    ```shell
+    $ cat /proc/version
+    ```
+  - 禁用PrintScreen截屏
+    ```shell
+    系统设置 ---> 键盘 ----> 快捷键 ----> 截图
+    ```
+  - 通过 DNS 来读取 Wikipedia 的词条
+    ```shell
+    dig +short txt <keyword>.wp.dg.cx
+    ```
+  - Windows下拷贝ubuntu镜像到u盘，会造成文件名被截短，在安装过程中提示md5验证失败
+    - 解决： 将镜像文件在ubuntu下挂载后复制到u盘
+  - mtd 设备
+    ```shell
+    cd /run/user/1000/gvfs/mtp:host=%5Busb%3A003%2C003%5D/
+    alias Myphone='cd /run/user/*/gvfs/* && PRINTF_CYAN `pwd -P` && ls'
+    ```
+  - JPEG error
+    - Not a JPEG file: starts with 0x89 0x50
+    - The file is actually a PNG with the wrong file extension. "0x89 0x50" is how a PNG file starts. Rename it to png
 ## <span style="color:#ff8000;">grub配置文件
   - grub配置文件/etc/default/grub与/etc/grub.d目录下的对应文件，如修改分辨率、等待时间等可通过修改/etc/default/grub实现
   - 修改grub背景图片：
@@ -141,84 +164,106 @@
     命令：/usr/bin/sudo /usr/bin/vi /etc/environment
     ```
 ## <span style="color:#ff8000;">SSH
-  - Ubuntu使用SSH访问远程Linux服务器： $ ssh leondgarse@192.168.7.11
-  - ssh配置文件：man ssh_config
-### <span style="color:#00ff00;">ssh key fingerprint
-  - $ ssh-keygen -lf ~/.ssh/id_rsa.pub
-    ```c
+  - Ubuntu使用SSH访问远程Linux服务器
+    ```shell
+    $ ssh leondgarse@192.168.7.11
+    ```
+  - ssh配置文件
+    ```shell
+    man ssh_config
+    ```
+  - ssh key fingerprint
+    ```shell
+    $ ssh-keygen -lf ~/.ssh/id_rsa.pub
+    其中
     -l means "list" instead of create a new key
     -f means "filename"
+    ```
+    With newer versions of ssh-keygen, run
+    ```shell
+    ssh-keygen -E md5 -lf <fileName>
+    ```
+    if you want the same format as old ssh-keygen -lf also works on known_hosts and authorized_keys files
+  - **ssh-add -l** is very similar but lists the fingerprints of keys added to your agent
+  - ssh Escape character
+    - **~?** 显示所有
+    - **~.** 退出SSH连接
+    - **~~** 输入~
+  - Save ssh output to a local file
+    ```shell
+    ssh user@host | tee -a logfile
+    ```
+## <span style="color:#ff8000;">SSH Q / A
+  - Q: ssh: connect to host 135.251.168.141 port 22: Connection refused
+    ```shell
+    apt-get install openssh-server
+    ```
+  - Q: 解决ssh的 **Write failed: Broken pipe** 问题
+    - 用 ssh 命令连接服务器之后，如果一段时间不操作，再次进入 Terminal 时会有一段时间没有响应，然后就出现错误提示
+      ```c
+      Write failed: Broken pipe
+      ```
+      只能重新用 ssh 命令进行连接
+    - 方法一 如果您有多台服务器，不想在每台服务器上设置，只需在客户端的 ~/.ssh/ 文件夹中添加 config 文件，并添加下面的配置：
+      ```shell
+      ServerAliveInterval 60
+      ```
+    - 方法二 如果您有多个人管理服务器，不想在每个客户端进行设置，只需在服务器的 /etc/ssh/sshd_config 中添加如下的配置：
+      ```shell
+      ClientAliveInterval 60
+      ```
+    - 方法三 如果您只想让当前的 ssh 保持连接，可以使用以下的命令：
+      ```shell
+      $ ssh -o ServerAliveInterval=60 user@sshserver
+      ```
+    - If you use tmux + ssh, you can use the following configuration file to make all the ssh session keep alive:
+      ```shell
+      $ cat ~/.ssh/config
+      Host *
+      ServerAliveInterval 60
+      ```
+  - Q: ssh-add :Could not open a connection to your authentication agent
+    - 执行ssh-add /path/to/xxx.pem出现错误
+      ```shell
+      Could not open a connection to your authentication agent
+      ```
+    - 执行如下命令
+      ```shell
+      ssh-agent bash
+      ```
+  - Q: no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
+    - possible solution
+      ```
+      The problem isn't the cipher as much as the key exchange.
+      Newer open ssh dropped support (by default) for "insecure" key exchanges (SHA1) which are all that are supported by older ios/etc. gear.
+      I've been updating code on boxes where possible to eliminate this issue but it's really an easy fix.
+      In /etc/ssh/ssh_config:
+      Host *
+      GSSAPIAuthentication yes
+      KexAlgorithms +diffie-hellman-group1-sha1
 
-    With newer versions of ssh-keygen, run ssh-keygen -E md5 -lf <fileName> if you want the same format as old
-    ssh-keygen -lf also works on known_hosts and authorized_keys files.
-    ```
-  - ssh-add -l is very similar but lists the fingerprints of keys added to your agent.
-### <span style="color:#00ff00;">Escape character:
-  - ~?        显示所有
-  - ~.        退出SSH连接
-  - ~~        输入~
-### <span style="color:#00ff00;">解决ssh的" Write failed: Broken pipe"问题
-  - < Q > 用 ssh 命令连接服务器之后，如果一段时间不操作，再次进入 Terminal 时会有一段时间没有响应，然后就出现错误提示：
-    ```c
-    Write failed: Broken pipe
-    只能重新用 ssh 命令进行连接。
-    ```
-    < A >
-    ```c
-    方法一：如果您有多台服务器，不想在每台服务器上设置，只需在客户端的 ~/.ssh/ 文件夹中添加 config 文件，并添加下面的配置：
-    ServerAliveInterval 60
-
-    方法二：如果您有多个人管理服务器，不想在每个客户端进行设置，只需在服务器的 /etc/ssh/sshd_config 中添加如下的配置：
-    ClientAliveInterval 60
-
-    方法三：如果您只想让当前的 ssh 保持连接，可以使用以下的命令：
-    $ ssh -o ServerAliveInterval=60 user@sshserver
-
-    If you use tmux + ssh, you can use the following configuration file to make all the ssh session keep alive:
-    [tonyaw@qdbuild3 ~]$ cat ~/.ssh/config
-    Host *
-    ServerAliveInterval 60
-    ```
-### <span style="color:#00ff00;">ssh-add :Could not open a connection to your authentication agent
-  - 若执行ssh-add /path/to/xxx.pem是出现这个错误:Could not open a connection to your authentication agent，则先执行如下命令即可：
-    ```c
-    ssh-agent bash
-    ```
-### <span style="color:#00ff00;">Save ssh output to a local file
-  - ssh user@host | tee -a logfile
-### <span style="color:#00ff00;">no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
-  - possible solution
-    ```
-    The problem isn't the cipher as much as the key exchange.
-    Newer open ssh dropped support (by default) for "insecure" key exchanges (SHA1) which are all that are supported by older ios/etc. gear.
-    I've been updating code on boxes where possible to eliminate this issue but it's really an easy fix.
-    In /etc/ssh/ssh_config:
-    Host *
-    GSSAPIAuthentication yes
-    KexAlgorithms +diffie-hellman-group1-sha1
-
-    That will add the old kex to your ssh (outbound) and should work ok.
-    ```
-### <span style="color:#00ff00;">no matching host key type found. Their offer: ssh-dss
-  - possible solution
-    ```c
-    The recent openssh version deprecated DSA keys by default.
-    You should pursuit your GIT provider to add some reasonable host key. Relying only on DSA is not a good idea.
-    As a workaround, you need to tell your ssh client that you want to accept DSA host keys, as described in the official documentation for legacy usage.
-    You have few possibilities, but I recommend to add these lines into your ~/.ssh/config file:
-    Host your-host
-      HostkeyAlgorithms +ssh-dss
-    ```
-### <span style="color:#00ff00;">ssh: connect to host 135.251.168.141 port 22: Connection refused
-  - apt-get install openssh-server
+      That will add the old kex to your ssh (outbound) and should work ok.
+      ```
+  - Q: no matching host key type found. Their offer: ssh-dss
+    - possible solution
+      ```c
+      The recent openssh version deprecated DSA keys by default.
+      You should pursuit your GIT provider to add some reasonable host key. Relying only on DSA is not a good idea.
+      As a workaround, you need to tell your ssh client that you want to accept DSA host keys, as described in the official documentation for legacy usage.
+      You have few possibilities, but I recommend to add these lines into your ~/.ssh/config file:
+      Host your-host
+        HostkeyAlgorithms +ssh-dss
+      ```
 ## <span style="color:#ff8000;">samba
-### <span style="color:#00ff00;">samba 的安装
-  - $ sudo apt-get install samba smbfs samba-common smbclient
-### <span style="color:#00ff00;">创建 Samba 配置文件
-  - 保存现有的配置文件: $ sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
-  - 打开现有的文件: $ sudo vim /etc/samba/smb.conf
-  - 在 smb.conf 最后添加
-    ```c
+  - **samba 安装**
+    ```shell
+    $ sudo apt-get install samba smbfs samba-common smbclient
+    ```
+  - **创建 Samba 配置文件**
+    ```shell
+    $ sudo vim /etc/samba/smb.conf
+
+    # 在 smb.conf 最后添加
     [username]
     path = /home/username
     available = yes
@@ -226,17 +271,30 @@
     public = yes
     writable = yes
     ```
-### <span style="color:#00ff00;">重启 samba 服务器
-  - $ sudo /etc/init.d/smbd reload (修改过 smb.conf 的话要执行一次)
-  - $ sudo /etc/init.d/smbd restart
-### <span style="color:#00ff00;">查看目标服务器所有的共享目录
-  - $ smbclient -L 192.168.7.11 -U leondgarse%123456
-### <span style="color:#00ff00;">将目标服务器的共享目录挂载到/media/samba目录下
-  - $ sudo mount -t cifs -o username=leondgarse,password=123456 //192.168.7.11/leondgarse /media/samba/
-### <span style="color:#00ff00;">开机自动启动samba服务
-  - sudo vi /etc/init/samba.conf
-  - 加入 start on (local-filesystems and net-device-up)
-  - 关闭： sudo sed -i 's/start on/# &/' /etc/init/smbd.conf
+  - **重启 samba 服务器**
+    ```shell
+    $ sudo /etc/init.d/smbd reload (修改过 smb.conf 的话要执行一次)
+    $ sudo /etc/init.d/smbd restart
+    ```
+  - **查看目标服务器所有的共享目录**
+    ```shell
+    $ smbclient -L 192.168.7.11 -U leondgarse%123456
+    ```
+  - **将目标服务器的共享目录挂载到/media/samba目录下**
+    ```shell
+    $ sudo mount -t cifs -o username=leondgarse,password=123456 //192.168.7.11/leondgarse /media/samba/
+    ```
+  - **开机自动启动samba服务**
+    ```shell
+    sudo vi /etc/init/samba.conf
+
+    # 添加一行
+    start on (local-filesystems and net-device-up)
+    ```
+  - **关闭**
+    ```shell
+    sudo sed -i 's/start on/# &/' /etc/init/smbd.conf
+    ```
 ## <span style="color:#ff8000;">TFTP
   - tftp / tftpd 设置TFTP 服务
     ```c
@@ -348,9 +406,7 @@
     SSH-2.0-OpenSSH_5.5p1 Debian-4ubuntu5
     ```
     This means ssh is running on 2424.
-## <span style="color:#ff8000;">通过 DNS 来读取 Wikipedia 的词条
-  - dig +short txt <keyword>.wp.dg.cx
-## <span style="color:#ff8000;">Ubuntu11.04+ 中开机打开小键盘
+## <span style="color:#ff8000;">Ubuntu 中开机打开小键盘
   - 解决方法
     ```c
     $ sudo apt-get install numlockx
@@ -368,15 +424,16 @@
     ```
 ## <span style="color:#ff8000;">Ubuntu下汇编方法
   - as / objdump
-    ```c
+    ```shell
     $ vi hello.s
     $ as -o hello.o hello.s
     $ ld -s -o hello hello.o
     $ ./hello
-    反汇编：$ objdump -D hello
     ```
-## <span style="color:#ff8000;">Windows下拷贝ubuntu镜像到u盘，会造成文件名被截短，在安装过程中提示md5验证失败
-  - 解决： 将镜像文件在ubuntu下挂载后复制到u盘
+  - 反汇编
+    ```shell
+    $ objdump -D hello
+    ```
 ## <span style="color:#ff8000;">注销用户
   - kill / pkill / pgrep
     ```c
@@ -385,8 +442,6 @@
     $ pgrep -u {username} -l        // 查找当前进程中用户名为{username}的进程，并列出进程pid与名称
     $ pkill -kill -t pts/1                // 注销指定的远程终端
     ```
-## <span style="color:#ff8000;">禁用PrintScreen截屏
-  - 系统设置 ---> 键盘 ----> 快捷键 ----> 截图
 ## <span style="color:#ff8000;">恢复/克隆的系统中用户文件(图片/文档等)未出现在【位置】列表中，且图标是默认文件夹图标
   - 创建软连接
     ```shell
@@ -411,8 +466,7 @@
     如果在执行xdg-user-dirs-gtk-update命令时选择了不再提示，可执行一下命令恢复：
     echo zh_CN > ~/.config/user-dirs.locale
     ```
-## <span style="color:#ff8000;">迁移用户文件夹
-  - 方法
+  - 迁移用户文件夹
     ```c
     vi ~/.config/user-dirs.dirs 填入相应路径
     创建目标路径软连接到用户目录
@@ -503,14 +557,6 @@
     UUID=46D07D1ED07D1601 /media/D ntfs defaults,codepage=936,iocharset=gb2312 0 0
     UUID=629AFA8D9AFA5D4B /media/E ntfs defaults,codepage=936,iocharset=gb2312 0 0
     ```
-## <span style="color:#ff8000;">mtd 设备
-  ```shell
-  cd /run/user/1000/gvfs/mtp:host=%5Busb%3A003%2C003%5D/
-  alias Myphone='cd /run/user/*/gvfs/* && PRINTF_CYAN `pwd -P` && ls'
-  ```
-## <span style="color:#ff8000;">JPEG error
-  - Not a JPEG file: starts with 0x89 0x50
-  - The file is actually a PNG with the wrong file extension. "0x89 0x50" is how a PNG file starts. Rename it to png
 ## <span style="color:#ff8000;">swap
   - How do I add a swap file?
     ```
@@ -800,8 +846,12 @@
     ```
 ## <span style="color:#ff8000;">evolution
   - 相关文件夹
-  ```shell
-  du -hd1 .local/share/evolution/
-  du -hd1 .config/evolution/
-  du -hd1 .cache/evolution/
-  ```
+    ```shell
+    du -hd1 .local/share/evolution/
+    du -hd1 .config/evolution/
+    du -hd1 .cache/evolution/
+    ```
+  - 删除
+    ```shell
+    rm -rf .local/share/evolution/ .config/evolution/ .cache/evolution/
+    ```
