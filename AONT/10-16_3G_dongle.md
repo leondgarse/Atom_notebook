@@ -41,25 +41,25 @@
     typedef struct {
 
     #if BOS_CFG_BIG_ENDIAN
-        VRG_UINT8  version:2;   /* protocol version * /
-        VRG_UINT8  p:1;         /* padding flag * /
-        VRG_UINT8  x:1;         /* header extension flag * /
-        VRG_UINT8  cc:4;        /* CSRC count * /
-        VRG_UINT8  m:1;         /* marker bit * /
-        VRG_UINT8  pt:7;        /* payload type * /
+        VRG_UINT8  version:2;   // protocol version
+        VRG_UINT8  p:1;         // padding flag
+        VRG_UINT8  x:1;         // header extension flag
+        VRG_UINT8  cc:4;        // CSRC count
+        VRG_UINT8  m:1;         // marker bit
+        VRG_UINT8  pt:7;        // payload type
     #elif BOS_CFG_LITTLE_ENDIAN
-        VRG_UINT8  cc:4;        /* CSRC count * /
-        VRG_UINT8  x:1;         /* header extension flag * /
-        VRG_UINT8  p:1;         /* padding flag * /
-        VRG_UINT8  version:2;   /* protocol version * /
-        VRG_UINT8  pt:7;        /* payload type * /
-        VRG_UINT8  m:1;         /* marker bit * /
+        VRG_UINT8  cc:4;        // CSRC count
+        VRG_UINT8  x:1;         // header extension flag
+        VRG_UINT8  p:1;         // padding flag
+        VRG_UINT8  version:2;   // protocol version
+        VRG_UINT8  pt:7;        // payload type
+        VRG_UINT8  m:1;         // marker bit
     #else
        #error "BOS_CFG_xxx_ENDIAN not defined!"
     #endif
-        VRG_UINT8  seq[2];      /* 16-bit sequence number * /
-        VRG_UINT8  ts[4];       /* 32-bit timestamp * /
-        VRG_UINT8  ssrc[4];     /* synchronization source * /
+        VRG_UINT8  seq[2];      // 16-bit sequence number
+        VRG_UINT8  ts[4];       // 32-bit timestamp
+        VRG_UINT8  ssrc[4];     // synchronization source
     } RTPPACKET;
     ```
   - Command used to change codec and payload type
@@ -172,7 +172,7 @@
 ## TR98 Standard Parameters
   - InternetGatewayDevice.Services.VoiceService.{i}.VoiceProfile.{i}.Line.{i}.CallingFeatures.CallerIDName
     - Requires: Need to support this new tr104 node
-    - Progress: not supported yet, but in ALU02329107([TELMEX] additional TR-104 objects), it will be implemented as read only, and the real Display name used for the From-header should be used for this TR104 object. Display name used for the From-header should be used for this TR104 object.
+    - Progress: not supported yet, but in ALU02329107([TELMEX] additional TR-104 objects), it will be implemented as read only, and the real Display name used for the From-header should be used for this TR104 object.
   - InternetGatewayDevice.Services.VoiceService.{i}.VoiceProfile.{i}.Line.{i}.Stats.ReceivePacketLossRate
   - InternetGatewayDevice.Services.VoiceService.{i}.VoiceProfile.{i}.Line.{i}.Stats.FarEndPacketLossRate
   - InternetGatewayDevice.Services.VoiceService.{i}.VoiceProfile.{i}.Line.{i}.Stats.RoundTripDelay
@@ -234,7 +234,7 @@
       ```python
       Actually now we have the following tr104 cli command to get the status:
       cfgcli –g InternetGatewayDevice.Services.VoiceService.{i}.VoiceProfile.{i}.Line.{i}.Status
-      Currently, we have supported these values: “Up”,”Registering”,”Error”,”Testing”,”Disabled”.
+      Currently, we have supported these val.ues: “Up”,”Registering”,”Error”,”Testing”,”Disabled”.
       In TR98 Standard Parameters part, we still need to support new range quiescent.
       Need to confirm if we can use this tr104 command as alternative command.
       ```
