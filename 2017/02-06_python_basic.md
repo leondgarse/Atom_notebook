@@ -97,18 +97,16 @@
     (4) Wes McKinney, Python for Data Analysis. 东南大学出版社. （英文影印本，中译版名为《利用Python进行数据分析》）
     ```
   - 基本
-    ```python
-    $ python -V # 显示版本
-    $ python3
-    help(str) 显示str帮助信息
-    help('print') print帮助信息
-    python2 中print不需要加()，python3中需要使用print( ... )
-    python3中不再支持raw_input，使用input
-    print('Area is'， length * width) # 输出会在is后面自动添加空格 Area is 10
-    python中没有 ++ / -- 运算符
-    获取变量类型： type() / isinstance(var, type)
-    python下载模块： easy_install-3.6 wx
-    ```
+    - $ python -V # 显示版本
+    - $ python3
+    - help(str) 显示str帮助信息
+    - help('print') print帮助信息
+    - python2 中print不需要加()，python3中需要使用print( ... )
+    - python3中不再支持raw_input，使用input
+    - print('Area is'， length * width) # 输出会在is后面自动添加空格 Area is 10
+    - python中没有 ++ / -- 运算符
+    - 获取变量类型： type() / isinstance(var, type)
+    - python下载模块： easy_install-3.6 wx
   - Q： SyntaxError: Missing parentheses in call to 'print'
     ```python
     $ python3 hello.py
