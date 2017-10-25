@@ -1,12 +1,14 @@
 # ___2016 - 10 - 28 Primier C++ plus Basic___
-- C++头文件没有扩展名，对于C的头文件前面加c， math.h --> cmath
-- 循环中在栈中创建的对象其地址相同，为避免这种情况可使用堆
-- pthread_cond_wait
-- nullptr        C++空指针
-- static_assert 用于在编译阶段对断言进行测试
+
+# Q / A
+  - C++头文件没有扩展名，对于C的头文件前面加c， math.h --> cmath
+  - 循环中在栈中创建的对象其地址相同，为避免这种情况可使用堆
+  - pthread_cond_wait
+  - nullptr        C++空指针
+  - static_assert 用于在编译阶段对断言进行测试
 ***
 
-# <span style="color:#ff0000;">输入输出 cin / cout
+# 输入输出 cin / cout
   - 包含头文件iostream：
     ```c++
     #include <iostream>        //使用iostream而不是iostream.h，相对的，c标准库的头文件名加前缀c，如<cmath>
