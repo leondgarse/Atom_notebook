@@ -6,6 +6,15 @@
   - pthread_cond_wait
   - nullptr        C++空指针
   - static_assert 用于在编译阶段对断言进行测试
+  - Q:使用类似 for (int x : {1, 2, 3, 4, 5}) { ... } 时编译警告
+    ```c++
+    g++ test_for.cpp
+    warning: range-based ‘for’ loops only available with -std=c++11 or -std=gnu++11
+    ```
+    A: 使用编译选项 **-std=c++11**
+    ```c++
+    g++ test_for.cpp -std=c++11
+    ```
 ***
 
 # 输入输出 cin / cout
@@ -574,7 +583,7 @@
   - 基于范围的for循环：
     ```c++
     为用于STL而设计，对 数组 / vector / array 的每个元素进行相同操作时：
-    double prices[5] = { ... };
+    double prices[5] = {1, 2, 3, 4, 5};
     for (double x : prices) { cout << x << endl; }
     for (double &x : prices) { ...} // 使用引用实现对元素的修改
 
