@@ -1,5 +1,7 @@
 # ___2017 - 02 - 06 Python Basic___
 ***
+flush() does not necessarily write the file’s data to disk. Use flush() followed by os.fsync() to ensure this behavior.
+https://docs.python.org/2/library/stdtypes.html?highlight=file%20flush#file.flush
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -101,36 +103,10 @@
     - $ python3
     - help(str) 显示str帮助信息
     - help('print') print帮助信息
-    - python2 中print不需要加()，python3中需要使用print( ... )
-    - python3中不再支持raw_input，使用input
     - print('Area is'， length * width) # 输出会在is后面自动添加空格 Area is 10
     - python中没有 ++ / -- 运算符
     - 获取变量类型： type() / isinstance(var, type)
     - python下载模块： easy_install-3.6 wx
-  - Q： SyntaxError: Missing parentheses in call to 'print'
-    ```python
-    $ python3 hello.py
-    File "hello.py", line 4
-    print 'Hello World!'
-         ^
-    SyntaxError: Missing parentheses in call to 'print'
-    ```
-    A： python3中使用
-    ```python
-    print('Hello World!')
-    ```
-  - Q： SyntaxError: invalid syntax
-    ```python
-    $ python2 hello.py
-    File "hello.py", line 5
-    print(5, end = ' ') # assign end character as ' ', instead of '\n'
-        ^
-    SyntaxError: invalid syntax
-    ```
-    A： Python2不支持该语法，使用python3运行
-    ```python
-    python3 hello.py
-    ```
   - Q： IndentationError: unexpected indent
     ```python
     $ python hello.py
@@ -140,11 +116,6 @@
     IndentationError: unexpected indent
     ```
     A： 检查行首是否有多余的空格，Python中行首的空白是重要的，在逻辑行首的空白(空格和制表符)用来决定逻辑行的缩进层次，从而用来决定语句的分组
-  - Q： NameError: name 'xrange' is not defined
-    ```python
-
-    ```
-    A： xrange() was renamed to range() in Python 3
   - Q: Encoding error while reading a file
     ```python
     UnicodeDecodeError: 'utf-8' codec can't decode byte 0xae in position 199: invalid start byte
@@ -153,6 +124,56 @@
     ```python
     f = open(path + 'foo', errors='ignore')
     ```
+***
+
+# Python2 to Python3
+  - Python3 中不再支持 **raw_input**，使用 **input**
+  - Python2 中 **print** 不需要加()，python3 中需要使用print( ... )
+    ```python
+    print 'Hello World!'
+         ^
+    SyntaxError: Missing parentheses in call to 'print'
+    ```
+    python3 中使用
+    ```python
+    print('Hello World!')
+    ```
+  - Python3 print 语法 **end = ' '**
+    ```python
+    $ python2 hello.py
+    File "hello.py", line 5
+    print(5, end = ' ') # assign end character as ' ', instead of '\n'
+        ^
+    SyntaxError: invalid syntax
+    ```
+    Python2 不支持该语法，使用 Python3 运行
+    ```python
+    python3 hello.py
+    ```
+  - Python2 中的 **commands** 模块
+    ```python
+    ImportError: No module named 'commands'
+    ```
+    在 Python3 中不再使用 commands，而改用 subprocess 模块，使用 subprocess 替换 commands
+  - Python2 中的 **file** 类
+    ```python
+    name 'file' is not defined    
+    ```
+    Python3 中不再使用 file 类，使用 open 打开文件
+  - Python2 中 **dict** 的键值类型
+    ```python
+    TypeError: 'dict_keys' object does not support indexing
+    ```
+    Python3 中改变了dict.keys，返回的是 **dict_keys 对象**，支持 **iterable** 但不支持 **indexable**，可以将其明确的转化成 list
+    ```python
+    list(dict.keys)
+    list(dict.values)
+    ```
+  - Python2 中的 **xrange**
+    ```python
+    NameError: name 'xrange' is not defined
+    ```
+    xrange() was renamed to **range()** in Python 3
 ***
 
 # python程序的执行方式

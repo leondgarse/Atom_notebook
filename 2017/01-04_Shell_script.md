@@ -81,6 +81,15 @@
     echo "$FileWithTimeStamp"
     # >outout: /tmp/my-dir/file_2017-01-04.txt
     ```
+  - alias中每次使用命令更新为不同值
+    ```bash
+    alias UPDATEWORKSPACE='export __WORKSPACE="`hg root 2>/dev/null`"'
+    ```
+    将每次执行""中的命令，更新为不同的值
+    ```bash
+    alias UPDATEWORKSPACE=“export __WORKSPACE=`hg root 2>/dev/null`”
+    ```
+    只会在创建alias时执行一次，命令执行的结果作为固定的字符串
   - () 创建字符数组
     ```
     my_array=(apple banana "Fruit Basket" orange)
@@ -146,7 +155,19 @@
 # 计算
   - expr 3 \ * 2 expr 用于对一个表达式求值，乘法符号必须被转义
   - echo $? 显示结果
-  - <a name="inner-text"></a>$((expression)) 双括号代替 expr 命令计算表达式的值
+  - $((expression)) 双括号代替 expr 命令计算表达式的值
+  - 计算时间间隔
+    ```bash
+    DA=`date +%s`
+    echo $DA  # 1510222879
+    DB=`date +%s`
+    echo $DB  # 1510224086
+    TM=$(expr \( $DB - $DA \) / 60)
+    echo $TM # 20
+    TS=$(expr \( $DB - $DA \) % 60)
+    echo $TS # 7
+    echo $TM"m"$TS"s"  # 20m7s
+    ```
 ***
 
 # 字符串 长度 / index / 抽取 / 替换
@@ -221,7 +242,7 @@
     ```
   - expression 条件语法：
     ```
-    [] 相当于test命令别名，条件语句中不能有 || &amp;&amp; 连接多个表达式
+    [] 相当于test命令别名，条件语句中不能有 || && 连接多个表达式
     [[]] 是[]的扩展形式，支持更复杂的表达式
     test 使用 -a 表示且， -o 表示或，! 表示非
     "" 可以加也可以不加
@@ -276,6 +297,21 @@
 
     [ -w $1 -a $0 ]  #检查两个文件是否同时可写
     ```
+  - 正则表达式比较 =~
+    ```shell
+    # 判断字符串是数字
+    FF=abc123
+    if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
+    string
+
+    FF=123
+    if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
+    number
+
+    FF=1ba23
+    if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
+    number
+    ```
 ***
 
 # case 选择语句
@@ -305,7 +341,7 @@
 
 # for / while / until 循环
   - for 语法：
-    ```
+    ```shell
     # basic construct
     for arg in [list]
     do
@@ -313,22 +349,40 @@
     done
     ```
   - for 示例：
-    ```
+    ```shell
     for FILE in $(ls); do
       echo "File is : $FILE"
     done
+    ```
+    [list]可以是一个空格分割的字符串，不能是数组
+    ```shell
+    NUMBERS=(951 402 ...)
+    # 此时$NUMBER代表的值是951，即只有第一个元素
+    for num in $NUMBERS; do echo $num; done # --> 951
 
-    其中[list]可以是一个空格分割的字符串，不能是数组
-            NUMBERS=(951 402 ...)
-            for num in $NUMBERS; do ...         # 此时$NUMBER代表的值是951，即只有第一个元素
-
-    遍历数组使用：
-            for num in ${NUMBERS[@]}; do echo $num; done
-            或：
-            for ((i=0; $i<${#NUMBERS[*]}; i=$i+1)); do echo ${NUMBERS[i]}; done
+    # 遍历数组使用
+    for num in ${NUMBERS[@]}; do echo $num; done
+    # 或使用
+    for ((i=0; $i<${#NUMBERS[*]}; i=$i+1)); do echo ${NUMBERS[i]}; done
+    ```
+  - 字符串数组与 for 循环
+    ```shell
+    FOO=(`ls`)  # 字符串数组
+    echo $FOO   # 输出第一个元素
+    echo ${FOO[@]}  # 输出全部元素，空格分隔
+    for FILE in ${FOO[@]}; do echo $FILE; done  # 遍历输出全部元素
+    for ((i=0; $i<${#FOO[@]}; i=$i+1)); do echo ${FOO[i]}; done # 遍历输出全部元素
+    ```
+    ```shell
+    FOO=`ls`  # 空格分隔的字符串
+    echo $FOO # 输出全部元素，空格分隔
+    echo ${#FOO}  # --> 775，字符串中的字符数量 [ ? ]
+    echo ${#FOO[@]} # --> 92，字符串的单词数量
+    for FILE in $FOO; do echo $FILE; done  # 遍历输出全部元素，第一个元素是全部字符
+    for ((i=0; $i<${#FOO[@]}; i=$i+1)); do echo ${FOO[i]}; done # [ ? ]
     ```
   - while 语法：
-    ```
+    ```shell
     # basic construct
     while [ condition ]
     do
@@ -336,7 +390,7 @@
     done
     ```
   - while 示例：
-    ```
+    ```shell
     COUNT=4
     while [ $COUNT -gt 0 ]; do
       echo "Value of count is: $COUNT"
@@ -344,7 +398,7 @@
     done
     ```
   - until 语法：
-    ```
+    ```shell
     # basic construct
     until [ condition ]
     do
@@ -352,7 +406,7 @@
     done
     ```
   - until 示例：
-    ```
+    ```shell
     COUNT=1
     until [ $COUNT -gt 5 ]; do
       echo "Value of count is: $COUNT"
@@ -360,7 +414,7 @@
     done
     ```
   - break / continue：
-    ```
+    ```shell
     # Prints out only odd numbers - 1,3,5,7,9
     COUNT=0
     while [ $COUNT -lt 10 ]; do
@@ -375,14 +429,16 @@
 ***
 
 # function 函数
-  - 语法：
-    ```
+  - 语法
+    ```bash
     # basic construct
-    function_name {
-     command...
+    [function] function_name [()] {
+        action;
+        [return int;]
     }
-
-    调用直接使用函数名，可以传递参数
+    ```
+  - 调用直接使用函数名，可以传递参数
+    ```bash
     function adder {
      echo "$(($1 + $2))"
     }
@@ -390,8 +446,23 @@
     # Pass two parameters to function adder
     adder 12 56         # 68
     ```
+  - 返回值 return / echo
+    - 函数中使用 **echo** 可以将值返回给变量 **r=$(func)**
+    - 函数中使用 **return** 返回的值，只能通过 **echo $?** 得到
+    ```shell
+    function fAdd() {
+        echo $1, $2
+        return $(($1+$2))
+    }
+
+    fAdd 2 3  # 2, 3
+    echo $?   # 5
+    r=$(fAdd 2 3)
+    echo $r   # 2, 3
+    echo $?   # 5   
+    ```    
   - 示例1，计算：
-    ```
+    ```shell
     function ENGLISH_CALC {
       case "$2" in
         "plus") echo "$1 + $3 = $(($1+$3))" ;;
@@ -406,7 +477,7 @@
     ENGLISH_CALC 4 times 6
     ```
   - 示例2，变量：
-    ```
+    ```shell
     #!/bin/bash
     echo "Script Name: $0"
     function func {

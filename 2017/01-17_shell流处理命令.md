@@ -1,6 +1,13 @@
 # ___2017 - 01 - 17 shell流处理命令___
 ***
 
+xargs
+set -o vi,这个时候整个命令状态就是是VI编辑器了
+rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/thumbdrive/
+rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
+rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
+http://wanwentao.blog.51cto.com/2406488/582432/
+
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -44,7 +51,7 @@
   <!-- /TOC -->
 ***
 
-# Three ways finding a string in a file:
+# Three ways finding a string in a file
   ```
   $ grep -n root /etc/passwd
   $ sed -n "/root/=;/root/p" /etc/passwd
@@ -80,6 +87,22 @@
   - 当前文件夹中所有目录压缩为单独文件
     ```
     find ./* -maxdepth 0 -type d -exec zip -r {}.zip {} \;
+    ```
+  - Q: find 在目标路径下存在匹配的文件时
+    ```bash
+    find: paths must precede expression
+    ```
+    A: shell的通配符扩展 wildcard expansion 会将 * 这些通配符扩展成完整名称，因此在执行
+    ```bash
+    find . -name *test.c
+    ```
+    会用实际文件的名称扩展成
+    ```bash
+    find . -name bobtest.c cattest.c snowtest.c
+    ```
+    此时应使用引号
+    ```bash
+    find . -name '*test.c'
     ```
 ***
 
@@ -128,22 +151,34 @@
   - 接着开始读入第二条记录，直到所有的记录都读完
   - 最后执行END操作。
 ## 示例：
-  ```
+  ```bash
   awk -F ':' '{print $1}' /etc/passwd
   awk -F ':' '{print $1"\t"$7}' /etc/passwd
   awk -F ':' 'BEGIN {print "name,shell"} {print $1","$7} END {print "blue,/bin/nosh"}' /etc/passwd
   ```
-  ```
+  ```bash
   awk -F: '/root/' /etc/passwd        # 查找root，并打印整行
   awk -F: '/root/{print $7}' /etc/passwd        # 查找root，并打印第7个分割的字符串
   ```
-  ```
+  ```bash
   echo "this is a test" | awk '$0~/test/{print $0}'        # 匹配正则表达式则打印
 
   awk -F : '$0~/leondgarse/{print $1}' /etc/group         # 查找用户属于的组
 
   awk -F: '$3~/[0-9][0-9]$/{print $1"\t"$3}' /etc/passwd 第三个域以两个数字结束就打印这个记录。
   awk -F: '$3>200 || $4==65534' /etc/passwd 第三个域大于200或者第四个域等于65534，则打印该行。
+  ```
+  在 shell 脚本中，$ 需要转义
+  ```bash
+  DD="fff ggg  hhh"
+  for (( i=1; ; i=$i+1 ))
+  do
+      FDD=$(echo $DD | awk -F ' ' "{print \$$i}")
+      if [ -z $FDD ]; then
+          break
+      fi
+      echo "FDD = $FDD"
+  done
   ```
 ## awk内置变量：
   ```
@@ -262,7 +297,7 @@
   - 打印文件中有且只有三个字母连续出现的行
     ```
     awk -vn=3 '{s=$0}gsub(/[a-z]/,"",s)==n' foo # fail
-    awk -vn=3 'gsub(/[a-z]+/,"&amp;")==1&amp;&amp;gsub(/[a-z]/,"&amp;")==n' foo # done
+    awk -vn=3 'gsub(/[a-z]+/,"&")==1&&gsub(/[a-z]/,"&")==n' foo # done
     awk -F "" -vs=3 '{for(i=1;i<=NF;i++)if($i~/:alpha:/)num++;if(num==3)print $0;num=0}' foo # fail
     awk --posix '{if($0~/^[^[:alpha:]]*:alpha:{3}[^[:alpha:]]*$/)print $0}' foo # done
     ```
@@ -485,15 +520,15 @@
 # sed - stream editor for filtering and transforming text
   - 将文本处理命令应用到每一行
   - 若使用shell变量，应使用""，而不是''，并做转义：
-    ```
+    ```shell
     /bin/sed -i "\$a\\Match User $newUserName" /etc/ssh/sshd_config
     ```
     应用到每个文件
-    ```
+    ```shell
     find ./* -type f -exec sed -i 's:/home/leondgarse:~:g' {} \;        # 使用xargs会报错
     ```
   - -e 表示使用sed脚本，后面紧跟sed脚本，可使用 ; 链接多个命令，或者使用多个 -e
-    ```
+    ```shell
     sed -n -e '=' -e 'p' foo
     ```
     -n 输出时指定为不打印原文
@@ -501,7 +536,7 @@
   - -f 指定使用脚本文件
   - -r 使用扩展的正则表达式
   - s/// 替换命令，可以使用不同的分隔符s:::：
-    ```
+    ```shell
     sed -ie 's/foo/bar/' foo 替换每一行的第一个foo为bar
     sed -ie 's:foo:bar:g' foo 替换全部foo为bar
 
@@ -519,12 +554,12 @@
     sed -i.bak -e 's/\([^ ]*\) \([^ ]*\) /A: \1 B: \2\n/g' foo 使用捕获组将每组2个的单词，重新组合成A: B:的形式
     ```
   - d 删除：
-    ```
+    ```shell
     sed '1d' foo 删除第一行
     sed '2,$d' foo 删除第二行到最后一行
     ```
   - p 打印，通常与 -n一起使用，=打印行号：
-    ```
+    ```shell
     sed -n '1p' foo 显示第一行
     sed -n '/bash/p' foo 显示包含bash的行
     sed -n '/sed/=;/sed/p' foo 打印包含sed的行号与行
@@ -532,34 +567,45 @@
     sed -n '/bash/p' foo | sed -e 's/bash/zsh/g' 只提取包含bash的行，将其中的bash替换为zsh
     ```
   - i 当前行之前插入一行：
-    ```
+    ```shell
     sed -i.bak -e 'i\ FOO: ' foo 每一行前面插入新行FOO:
     sed -i.bak -n -e 'i\ FOO: ' -e 'p' foo 使用p打印
     ```
   - a 当前行之后插入一行：
-    ```
+    ```shell
     sed -i.bak -e '1a\Insert this line after each line. Thanks!' foo 第一行后插入新行
     ```
   - c 替换当前行：
-    ```
+    ```shell
     sed -i.bak -e 'c\neeeew!' foo
     ```
   - n 读取下一行
-    ```
+    ```shell
     sed -n '1,$n;p' foo 显示偶数行
     sed -n '1,$p;n' foo 显示奇数行
     ```
   - addr1,+N Will match addr1 and the N lines following addr1.
   - addr1,~N Will match addr1 and the lines following addr1 until the next line whose input line number is a multiple of N.
-    ```
+    ```shell
     sed '2~2d' file 显示奇数行
     sed -n '1~2p' file 显示奇数行
     sed '1~2d' file 显示偶数行
     sed -n '2~2p' file 显示偶数行
     ```
   - l List out the current line in a ''visually unambiguous'' form.
-    ```
+    ```shell
     sed -n l foo Printing '\t' for TAB
+    ```
+  - sed 只在匹配的第一行后添加一行
+    ```shell
+    printf "foo\ntest\ntest\ntest\nfoo\n" | sed '0,/test/s/.*test.*/&\n\tnothing/'
+    [Out]
+    foo
+    test
+    	nothing
+    test
+    test
+    foo
     ```
 ***
 
@@ -594,17 +640,35 @@
     $ cut -d1 -sf1 /etc/passwd # ignore lines dont contain '1'
     ```
   - 如果文件里面的某些域是由若干个空格来间隔的，那么用cut就有点麻烦了，因为cut只擅长处理“以一个字符间隔”的文本内容
+    ```shell
+    echo "   fff  ggg  hhh" > foo
+    cat foo #    fff  ggg  hhh
+    # cut 只能切割单个字符，分隔符有多个连续时，使用 awk
+    cut -d' ' -f 4 foo  # fff
+    awk -F' ' '{print $1}' foo  # fff
+    ```
 ***
 
 # wc
   - 统计给定文件中的字节数、字数、行数。如果没有给出文件名，则从标准输入读取
-  - - c 统计字节数<br />- l 统计行数<br />- w 统计字数
-  - 这些选项可以组合使用, 输出列的顺序和数目不受选项的顺序和数目的影响, 总是按下述顺序显示并且每项最多一列<br />        行数、字数、字节数、文件名 
+  - c 统计字节数
+  - l 统计行数
+  - w 统计字数
+  - 这些选项可以组合使用, 输出列的顺序和数目不受选项的顺序和数目的影响, 总是按下述顺序显示并且每项最多一列
+    ```bash
+    行数 字数 字节数 文件名
+
+    wc -lcw foo
+    4 4 40 foo
+    ```
   - 如果命令行中没有文件名，则输出中不出现文件名
   - 省略选项wc命令的执行 -lcw
-  - $ wc -lcw foo
-    ```
-    4 4 40 foo
+  - 统计文件夹下的文件数量
+    ```shell
+    # HOME 目录下隐藏文件的数量
+    ls -d ~/.* | wc -w  # 88
+    # 当前文件夹下包括子目录下的文件夹数量
+    ls -lR | grep "^d" | wc -l
     ```
 ***
 
@@ -664,42 +728,41 @@
   - 目标字符串：将文件名中含有的原字符替换成目标字符串
   - 文件：指定要改变文件名的文件列表
   - 将main1.c重命名为main.c
-    ```
+    ```shell
     $ rename main1.c main.c main1.c
     ```
   - ? 可替代单个字符
   - * 可替代多个字符
   - [charset] 可替代charset集中的任意单个字符
-  - $ rename foo foo0 foo?
-    ```
-    把foo1到foo9的文件重命名为foo01到foo09，重命名的文件只是有4个字符长度名称的文件，文件名中的foo被替换为foo0
-    ```
+  - 用例
+    ```shell
+    # 把foo1到foo9的文件重命名为foo01到foo09，重命名的文件只是有4个字符长度名称的文件，文件名中的foo被替换为foo0
+    $ rename foo foo0 foo?
+
+    # foo01到foo99的所有文件都被重命名为foo001到foo099，只重命名5个字符长度名称的文件，文件名中的foo被替换为foo0
     $ rename foo foo0 foo??
-    ```
-    foo01到foo99的所有文件都被重命名为foo001到foo099，只重命名5个字符长度名称的文件，文件名中的foo被替换为foo0
-    ```
+
+    # foo001到foo278的所有文件都被重命名为foo0001到foo0278，所有以foo开头的文件都被重命名
     $ rename foo foo0 foo*
-    ```
-    foo001到foo278的所有文件都被重命名为foo0001到foo0278，所有以foo开头的文件都被重命名
-    ```
+
+    # 从foo0200到foo0278的所有文件都被重命名为foo200到foo278，文件名中的foo0被替换为foo
     $ rename foo0 foo foo0[2]*
     ```
-    从foo0200到foo0278的所有文件都被重命名为foo200到foo278，文件名中的foo0被替换为foo
-    ```
   - rename支持正则表达式:
-    ```
-    rename "s/AA/aa/" * //把文件名中的AA替换成aa
-    rename "s//.html//.php/" * //把.html 后缀的改成 .php后缀
-    rename "s/$//.txt/" * //把所有的文件名都以txt结尾
-    rename "s//.txt//" * //把所有以.txt结尾的文件名的.txt删掉
+    ```shell
+    rename "s/AA/aa/" *        # 把文件名中的AA替换成aa
+    rename "s//.html//.php/" * # 把.html 后缀的改成 .php后缀
+    rename "s/$//.txt/" *      # 把所有的文件名都以txt结尾
+    rename "s//.txt//" *       # 把所有以.txt结尾的文件名的.txt删掉
     ```
   - Ubuntu命令 rename foo foo0 foo? 这样使用不对，报错：
-    ```
-    Bareword “foo” not allowed while “strict subs” in use at (eval 1) line 1.
+    ```md
+    Bareword "foo" not allowed while "strict subs" in use at (eval 1) line 1.
     ```
     经过Google之后发现有这样的说法：
-    ```
-    On Debian-based distros it takes a perl expression and a list of files. you need to would need to use:<br />        rename ‘s/foo/foo0/’ foo?
+    ```shell
+    On Debian-based distros it takes a perl expression and a list of files. you need to would need to use:
+    rename 's/foo/foo0/' foo?
     ```
 ***
 

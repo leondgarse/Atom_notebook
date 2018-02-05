@@ -67,13 +67,83 @@
   - **项目描述**：
     - Python 语言基础
     - Numpy / SciPy / Pandas / Matplotlib 用于数据分析
-    - 监督 / 无监督机器学习算法，特征提取，性能分析，MapReduce 框架等
+    - 监督 / 无监督机器学习算法，特征提取，性能分析，MapReduce / Spark 框架等
     - scikit-learn 中的机器学习算法，交叉验证，Grid-search，pipeline等
-    - Spark 快速大数据分析
+    - Tensorflow 的应用
 ***
 
 ### 自我评价
   - 积极乐观，为人随和，做事踏实，学习能力强，接受新事物快
   - 在大学中接收过系统全面的软硬件学习，业余比较关注新技术发展
   - 期待一份更有挑战性的工作，以在大数据 / 物联网行业有更好的发展
+***
+
+## __Personal Resume__
+***
+
+### Personal Information
+  - **Name**: Wang Guowei
+  - **Tel**: (86) 18663920929
+  - **Email**: leondgarse@gmail.com
+***
+
+### Computer Abilities
+  - Skilled with **Python** Data analysis and machine leaning, **scikit-learn** / **Tensorflow** module for ML, **Mapreduce** / **Spark** big data structure.
+  - Skilled in **C / C++**, and Linux application development, with advanced coding style
+  - Skilled in **Linux** commands and **shell** script. Familiar with network related technology / Socket / IPC / multiple thread usage.
+  - Familiar with **ARM** embedded development, including Bootloader / filesystem / kernel transplanting.
+  - Database related **SQL** usage.
+  - Familiar with **QT GUI** and curses development.
+  - Knowledge in **hardware** related courses.
+  - Skilled in using of **git / hg** and other distributed revision control system
+  - Good **English** reading and writing ability, and daily communication is well
+***
+
+### Education background
+  - `2007.09 - 2011.07` - `ShanDong University` - `Automation` - `Bachelor`
+***
+
+### Work experience
+  - 2016/07 -- Now: **Nokia Sbell CO.** | Software R&D Engineer
+    - AONT voice service development.
+    - Based on **ARM**, including drivers / network / SIP development and realizing customers' requirement. Analyze and give solution depending on customer issues.
+  - 2014/09 -- 2016/07: **Qing Dao Centling Information and Technology CO.** | Software R&D Engineer
+    - Communication software development.
+    - Participate in user authentication / authorization system development, cloud system maintenance, AONT and other communication softwares development.
+  - 2012/05 -- 2014/07: **Shen Zhen Comen Medical Equipment CO.** | Software R&D Engineer
+    - Embedded medical equipments development.
+    - Graphical user interface, digitized data waveform, alarm and other sensor adapt development.
+
+### Project experience
+#### CM90 / CM100 cardiograph software development
+  - **Role**: Hardware drivers adapt and software application development, device functional and software debug.
+  - **Project summary**:
+    - Improvement on hardware from current devices, with better display effect, more convenient applications, touch and shuttle operator. Supporting more joint devices.
+    - Use Minigui to develop software GUI display. Realizing functional split, waveform plot and showing data in multiple form.
+    - Integrated third party medical library, realizing cardiograph waveform plot. Supporting hematopneic, blood pressure and other abnormal status detect and alarm.
+    - multiple joint devices, supporting different scenarios usage.
+    - Print function and communicating with server development.
+#### Radius + LDAM + PAM user authentication and authorization
+  - **Role**: Cloud user authentication and authorization, make solution, realizing remote and locale user's authentication and authorization.
+  - **Project summary**:
+    - User authentication and authorization based on FreeRADIUS or FreeRADIUS + OpenLDAP
+    - User info is stored in text or MySQL database, supporting multiple identification method.
+    - Configure system level authentication method using PAM module, and controlling authentication method within application.
+    - Openstack usage
+#### AONT
+  - **Role**: Driver adapt and software development on AONT devices, including network, SIP protocol, voice and realizing other customer requirements.
+  - **Project summary**:
+    - New equipments development, driver adapt for different hardwares and meet testing target.
+    - Voice related development, make solution and meet customer requirement. Multiple team corporation.
+    - FR fix for UT, FT and site issue from customers.
+    - Multiple configure method supporting different scenarios for different customers.
+    - Documents related works, including requirements analysis, project realizing, project summary and Knowledge sharing documents.
+#### Python data analysis, machine learning, big data related framework
+  - **Role**: part time self learning.
+  - **Project summary**:
+    - Python basic.
+    - Using Numpy / SciPy / Pandas / Matplotlib for data analysis.
+    - Supervised / unsupervised machine learning algorithm, feature extract, capability analysis, MapReduce / Spark framework.
+    - ML using scikit-learn library, including algorithm, cross validation, Grid-search, pipeline etc.
+    - Tensorflow usage in ML.
 ***

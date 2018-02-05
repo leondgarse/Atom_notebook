@@ -1,5 +1,36 @@
 # ___2013 - 05 - 12（Ubuntu使用与shell命令）___
 ***
+gcc -print-search-dirs
+/opt/toolchains/crosstools-mips-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21/usr/bin/mips-unknown-linux-uclibc-gcc -print-search-dirs
+
+使用/etc/ld.so.conf文档，将用到的库所在文档目录添加到此文档中，然后使用ldconfig命令刷新缓存。
+使用如下命令：export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/arm/2.95.3/arm-linux-lib
+
+dirname 获取文件夹名 basename 获取文件名 pwd 获取当前文件夹名
+badblocks
+-s 在检查时显示进度。
+-v 执行时显示详细的信息。
+
+badblocks -sv /dev/sdb
+1、fsck使用badblocks的信息
+
+badblocks只会在日志文件中标记出坏道的信息，但若希望在检测磁盘时也能跳过这些坏块不检测，可以使用fsck的-l参数：
+
+fsck.ext3 -l /tmp/hda-badblock-list.final /dev/hda1
+
+2、在创建文件系统前检测坏道
+
+badblocks可以随e2fsck和mke2fs的-c删除一起运行（对ext3文件系统也一样），在创建文件系统前就先检测坏道信息：
+
+mkfs.ext3 -c /dev/hda1
+
+代码表示使用-c在创建文件系统前检查坏道的硬盘。  
+
+扫描完成后，如果损坏区块被发现了，然后通过e2fsck命令使用“bad-blocks.txt”，强迫操作系统不使用这些损坏的区块存储数据。
+
+    # sudo e2fsck -l /tmp/bad-blocks.txt /dev/sdb
+
+注意：在运行e2fsck命令前，请保证设备没有被挂载。
 
 # <span style="color:#ff0000;">参数
   - 查看gcc版本号：gcc --version
@@ -80,24 +111,46 @@
   - ps aux 与 ps -aux 是不同的命令， ps -aux 将试图打印用户名为“x”的进程，如果该用户不存在则执行ps aux命令，并输出一条警告信息，ps -axj等是同样的结果
 ## <span style="color:#ff8000;">df / du / dd
   - df命令用于查看一级文件夹大小、使用比例、档案系统及其挂入点：
-    ```c
-    $ df -h        // -h表示Human-readable输出
+    ```bash
+    $ df -h  # -h表示 Human-readable 输出
     ```
-    du命令用于查询文件或文件夹的磁盘使用空间
-    ```c
-    $ du -hd1        // -d1表示深度为1，若直接使用不带参数的du命令，将会循环列出所有文件和文件夹所使用的空间
+  - du命令用于查询文件或文件夹的磁盘使用空间
+    ```bash
+    $ du -hd1  # -d1表示深度为1，若直接使用不带参数的du命令，将会循环列出所有文件和文件夹所使用的空间
     $ du -h --max-depth=1
     ```
   - 硬盘互刻
-    ```c
-    df                        //查看当前系统躲在硬盘设备节点
-    ls /dev/sd*                        //列出当前主机内所有硬盘
-    dd if=/dev/sdb of=/dev/sda        //将sdb硬盘内容复制到sda
+    ```bash
+    df  # 查看当前系统躲在硬盘设备节点
+    ls /dev/sd*  # 列出当前主机内所有硬盘
+    dd if=/dev/sdb of=/dev/sda  # 将sdb硬盘内容复制到sda
     ```
+  - 在已有分区上创建回环设备
+    ```bash
+    dd if=/dev/zero of=/dev/vdc bs=1024 count=0 seek=15000000
+    mkfs.ext4 /dev/vdc
+    mount /dev/vdc /media/cdrom0/
+    ```
+    - if=/dev/zero 表示空输入，即自动填充0
+    - of= /srv/swift-disk 表示输出到指定文件
+    - bs=1024 表示同时设置读入 / 输出的块大小（字节），即每次读入 / 输出1024字节的数据块
+    - count=0 表示拷贝 0 个块，块大小由 bs 指定
+    - seek=15000000 从输出文件开头跳过 15000000 个块后再开始复制
+    - 命令的结果是创建了一个 15000000*1024 字节大小的文件（约15GB）
 ## <span style="color:#ff8000;">date
+  - 格式化输出
+    ```bash
+    date "+%F %T %N %Z"
+    2017-11-09 17:28:00 888225034 CST
+    ```
   - 将日期转换为星期：
     ```c
     date -d "Jan 1 2000" +%A
+    ```
+  - 转换时区
+    ```bash
+    date -d "09:00 CET" +'%T %Z'
+    16:00:00 CST
     ```
 ## <span style="color:#ff8000;">head / tail
   - 显示文件中间几行内容:
@@ -140,6 +193,12 @@
   - JPEG error
     - Not a JPEG file: starts with 0x89 0x50
     - The file is actually a PNG with the wrong file extension. "0x89 0x50" is how a PNG file starts. Rename it to png
+  - useradd -p 指定的密码无效
+    - 此时 /etc/shadow 中的密码是明文，需要通过 passwd / chpasswd 修改
+      ```bash
+      useradd -p 'pass' test
+      echo 'test:pass' | chpasswd
+      ```
 ## <span style="color:#ff8000;">grub配置文件
   - grub配置文件/etc/default/grub与/etc/grub.d目录下的对应文件，如修改分辨率、等待时间等可通过修改/etc/default/grub实现
   - 修改grub背景图片：
