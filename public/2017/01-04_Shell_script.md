@@ -188,9 +188,12 @@
     STRING="this is a string"
     POS=1
     LEN=3
-    echo ${STRING:$POS:$LEN}  #从$STRING中$POS处开始的$LEN个字符
+    echo ${STRING:$POS:$LEN}  # 从 $STRING 中 $POS 处开始的 $LEN 个字符
     # >output: his
 
+    echo ${STRING:0:-1}  # 长度可以是负值，表示倒数第几个字符
+    # >getstatusoutput: this is a strin
+    
     echo ${STRING:12}     # 省略$LEN，抽取到结尾
     # >output: ring
 

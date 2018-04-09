@@ -139,11 +139,10 @@ http://wanwentao.blog.51cto.com/2406488/582432/
 ***
 
 # awk
-  - \# awk
+## awk工作流程：
   - awk '{pattern + action}' {filenames}
   - awk [-F field-separator] 'commands' input-file(s)
   - awk -f awk-script-file input-file(s)
-## awk工作流程：
   - 先执行BEGING
   - 然后读取文件，读入有/n换行符分割的一条记录
   - 然后将记录按指定的域分隔符划分域，填充域，$0则表示所有域,$1表示第一个域,$n表示第n个域
@@ -340,7 +339,6 @@ http://wanwentao.blog.51cto.com/2406488/582432/
 ***
 
 # awk内置函数
-  - awk内置函数，主要分以下3种类似：算数函数、字符串函数、其它一般函数、时间函数
 ## 算术函数
   - 以下算术函数执行与 C 语言中名称相同的子例程相同的操作：
     | 函数名 | 说明 |
@@ -526,6 +524,12 @@ http://wanwentao.blog.51cto.com/2406488/582432/
     应用到每个文件
     ```shell
     find ./* -type f -exec sed -i 's:/home/leondgarse:~:g' {} \;        # 使用xargs会报错
+    ```
+  - 在既使用正则表达式又使用 shell 变量时米可以将 sed 命令字符串分割开
+    ```shell
+    HOST_NAME=`cat /etc/hostname`
+    NEW_HOST_NAME=$HOST_NAME"_NEW"
+    sed 's/^127.0.1.1\s*'$HOST_NAME'/127.0.1.1\t'$NEW_HOST_NAME'/' /etc/hosts    
     ```
   - -e 表示使用sed脚本，后面紧跟sed脚本，可使用 ; 链接多个命令，或者使用多个 -e
     ```shell

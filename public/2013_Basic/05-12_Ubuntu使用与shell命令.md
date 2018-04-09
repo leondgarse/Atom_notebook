@@ -1,40 +1,71 @@
 # ___2013-05-12 Ubuntu使用与shell命令___
 ***
-gcc -print-search-dirs
-/opt/toolchains/crosstools-mips-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21/usr/bin/mips-unknown-linux-uclibc-gcc -print-search-dirs
 
-使用/etc/ld.so.conf文档，将用到的库所在文档目录添加到此文档中，然后使用ldconfig命令刷新缓存。
-使用如下命令：export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/arm/2.95.3/arm-linux-lib
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-dirname 获取文件夹名 basename 获取文件名 pwd 获取当前文件夹名
-badblocks
--s 在检查时显示进度。
--v 执行时显示详细的信息。
+  - [___2013-05-12 Ubuntu使用与shell命令___](#2013-05-12-ubuntu使用与shell命令)
+  - [目录](#目录)
+  - [参数](#参数)
+  	- [Q / A](#q-a)
+  	- [apt-get](#apt-get)
+  	- [echo](#echo)
+  	- [ps](#ps)
+  	- [df / du / dd](#df-du-dd)
+  	- [date](#date)
+  	- [head / tail](#head-tail)
+  	- [gcc](#gcc)
+  - [配置](#配置)
+  	- [Q / A](#q-a)
+  	- [grub 配置文件](#grub-配置文件)
+  	- [环境变量](#环境变量)
+  	- [SSH](#ssh)
+  	- [SSH Q / A](#ssh-q-a)
+  	- [samba 配置](#samba-配置)
+  	- [samba Q / A](#samba-q-a)
+  	- [TFTP](#tftp)
+  	- [NFS](#nfs)
+  	- [Checking conflict IP](#checking-conflict-ip)
+  	- [Service running on server](#service-running-on-server)
+  	- [Ubuntu 中开机打开小键盘](#ubuntu-中开机打开小键盘)
+  	- [Ubuntu 下汇编方法](#ubuntu-下汇编方法)
+  	- [注销用户](#注销用户)
+  	- [恢复/克隆的系统中用户文件(图片/文档等)未出现在【位置】列表中，且图标是默认文件夹图标](#恢复克隆的系统中用户文件图片文档等未出现在位置列表中且图标是默认文件夹图标)
+  	- [Ubuntu 系统的一种备份还原方法](#ubuntu-系统的一种备份还原方法)
+  	- [ubuntu 12.04 开机自动挂载 windows 分区](#ubuntu-1204-开机自动挂载-windows-分区)
+  	- [swap](#swap)
+  	- [Apache](#apache)
+  	- [IBus 中文输入法](#ibus-中文输入法)
+  	- [触控板右键](#触控板右键)
+  	- [Ubuntu configure vpn](#ubuntu-configure-vpn)
+  	- [grub rescue](#grub-rescue)
+  	- [坏块检测 badblocks](#坏块检测-badblocks)
+  - [软件](#软件)
+  	- [自动更新无法下载 adobe flashplayer](#自动更新无法下载-adobe-flashplayer)
+  	- [wireshark 配置](#wireshark-配置)
+  	- [png 图片形式文档转文字](#png-图片形式文档转文字)
+  	- [compiz](#compiz)
+  	- [VLC 显示中文字幕](#vlc-显示中文字幕)
+  	- [minicom 无法保存配置](#minicom-无法保存配置)
+  	- [gedit 中文乱码](#gedit-中文乱码)
+  	- [安装 emerald](#安装-emerald)
+  	- [Install new cursor theme](#install-new-cursor-theme)
+  	- [Conky](#conky)
+  	- [Install SKY](#install-sky)
+  	- [7z compress & extract](#7z-compress-extract)
+  	- [evolution](#evolution)
+  	- [Stardict](#stardict)
+  	- [Cairo Dock](#cairo-dock)
+  	- [UCloner](#ucloner)
+  	- [Virtual box](#virtual-box)
+  	- [Chrome](#chrome)
+  	- [Numix](#numix)
+  - [系统备份恢复](#系统备份恢复)
+  	- [从 squashfs 恢复系统](#从-squashfs-恢复系统)
+  - [Configure New System](#configure-new-system)
 
-badblocks -sv /dev/sdb
-1、fsck使用badblocks的信息
-
-badblocks只会在日志文件中标记出坏道的信息，但若希望在检测磁盘时也能跳过这些坏块不检测，可以使用fsck的-l参数：
-
-fsck.ext3 -l /tmp/hda-badblock-list.final /dev/hda1
-
-2、在创建文件系统前检测坏道
-
-badblocks可以随e2fsck和mke2fs的-c删除一起运行（对ext3文件系统也一样），在创建文件系统前就先检测坏道信息：
-
-mkfs.ext3 -c /dev/hda1
-
-代码表示使用-c在创建文件系统前检查坏道的硬盘。  
-
-扫描完成后，如果损坏区块被发现了，然后通过e2fsck命令使用“bad-blocks.txt”，强迫操作系统不使用这些损坏的区块存储数据。
-
-    # sudo e2fsck -l /tmp/bad-blocks.txt /dev/sdb
-
-注意：在运行e2fsck命令前，请保证设备没有被挂载。
-
-export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
-
-
+  <!-- /TOC -->
+***
 
 # 参数
 ## Q / A
@@ -42,6 +73,7 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
   - 查看linux内核版本号：uname -a
   - exit 35     # 添加一个 exit 退出命令
   - 比较两个排序后的文件内容 comm
+  - **dirname** 获取文件夹名，**basename** 获取文件名，**pwd** 获取当前文件夹名
   - mp3info查找音频文件，并删除比特率大于320的
     ```c
     mp3info -x -p "%r#%f\n" *.mp3 | grep 320 | cut -d '#' -f 2- | sed 's/ /\\ /g' | xargs rm {} \;
@@ -162,6 +194,17 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
     ```c
     cat -n hug-tool.txt | head -n 10 | tail -n +5
     cat -n hug-tool.txt | sed -n '5,10p'
+    ```
+## gcc
+  - 显示 gcc 当前搜索库文件的路径
+    ```shell
+    gcc -print-search-dirs
+    /opt/toolchains/crosstools-mips-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21/usr/bin/mips-unknown-linux-uclibc-gcc -print-search-dirs
+    ```
+  - 使用 /etc/ld.so.conf 文档，将用到的库所在文档目录添加到此文档中，然后使用ldconfig命令刷新缓存
+    ```shell
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/arm/2.95.3/arm-linux-lib
+    export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
     ```
 ***
 
@@ -880,6 +923,27 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
   $ sudo grub-install /dev/sda3
   $ sudo grub-install /dev/sda
   ```
+## 坏块检测 badblocks
+  - badblocks
+    - **-s** 在检查时显示进度
+    - **-v** 执行时显示详细的信息
+    ```shell
+    badblocks -sv /dev/sdb
+    ```
+  - **fsck 使用 badblocks 的信息**，badblocks 只会在日志文件中标记出坏道的信息，但若希望在检测磁盘时也能跳过这些坏块不检测，可以使用 **fsck 的 -l 参数**
+    ```shell
+    fsck.ext3 -l /tmp/hda-badblock-list.final /dev/hda1
+    ```
+  - **在创建文件系统前检测坏道**，badblocks 可以随 e2fsck 和 mke2fs 的 -c 删除一起运行（对ext3文件系统也一样），在创建文件系统前就先检测坏道信息
+    ```shell
+    # -c 在创建文件系统前检查坏道的硬盘
+    mkfs.ext3 -c /dev/hda1
+    ```
+  - 扫描完成后，如果损坏区块被发现了，通过 e2fsck 命令使用“bad-blocks.txt”，强迫操作系统不使用这些损坏的区块存储数据
+    ```shell
+    sudo e2fsck -l /tmp/bad-blocks.txt /dev/sdb
+    ```
+    在运行e2fsck命令前，请保证设备没有被挂载
 ***
 
 # 软件
@@ -1098,6 +1162,7 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
     mkdir proc sys tmp mnt media media/cdrom0
     chmod 1777 tmp
 
+    sudo blkid /dev/sda2 -s UUID --output value
     cp /etc/fstab etc/fstab
     vi etc/fstab
 
@@ -1109,7 +1174,9 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
     grub-install /dev/sda3
     grub-install /dev/sda
     grub-install --boot-directory=/media/cdrom0/boot /dev/sda
+
     update-grub
+    update-grub -o /media/cdrom0/boot/grub/grub.cfg
     ```
   - **Restore**
     ```shell
@@ -1162,6 +1229,166 @@ export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
 
   # Set icon / theme as Numix using gnome-tweak-tool
   ```
+***
+
+# 系统备份恢复
+## 从 squashfs 恢复系统
+  ```shell
+  #!/bin/bash
+
+  DIST_ROOT_MOUNT_POINT='/tmp/mount_point_for_dist_root'
+  DIST_HOME_MOUNT_POINT=$DIST_ROOT_MOUNT_POINT'/home'
+  SOURCE_SQUASH_MOUNT_POINT='/tmp/mount_point_for_source_squash'
+  EXCLUDE_FILE='./rsync_excludes_file_list'
+  SYS_PATH_EXCLUDED='proc sys tmp mnt media media/cdrom0'
+
+  if [ $# -lt 5 ]; then
+  	echo "Usage: $0 source_squash_path dist_root_path dist_home_path dist_swap_path host_name"
+  	exit
+  fi
+
+  SOURCE_SQUASH_PATH=$1
+  DIST_ROOT_PATH=$2
+  DIST_HOME_PATH=$3
+  DIST_SWAP_PATH=$4
+  HOST_NAME=$5
+
+  echo "SOURCE_SQUASH_PATH = $SOURCE_SQUASH_PATH"
+  echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
+  echo "DIST_HOME_PATH = $DIST_HOME_PATH"
+  echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
+  echo "HOST_NAME = $HOST_NAME"
+
+  echo "whoami = "`whoami`
+  USER_NAME=`whoami`
+  if [ $USER_NAME != "root" ]; then
+      echo "Should be run as root!"
+      exit
+  fi
+
+  # Function to generate exclude file list
+  function generate_exclude_list {
+      printf "
+  /home
+  /opt
+  /proc
+  /sys
+  /tmp
+  /mnt
+  /media
+  /boot/grub
+  /etc/fstab
+  /etc/mtab
+  /etc/blkid.tab
+  /etc/udev/rules.d/70-persistent-net.rules
+  /host
+  /lost+found
+  /home/lost+found
+  /root/.gvfs
+  /home/*/.gvfs
+  /lib/modules/`uname -r`/volatile/*
+  /var/cache/apt/archives/*.deb
+  /var/cache/apt/archives/partial/*
+  " > $EXCLUDE_FILE    
+  }
+
+  # Format disks
+  umount $DIST_ROOT_PATH
+  umount $DIST_HOME_PATH
+
+  echo y | mkfs.ext4 $DIST_ROOT_PATH && \
+  echo y | mkfs.ext4 $DIST_HOME_PATH && \
+  mkswap $DIST_SWAP_PATH
+
+  if [ $? -ne 0 ]; then
+      echo "mkfs error"
+      exit
+  fi
+
+  # Mount source and dist fs
+  mkdir -p $DIST_ROOT_MOUNT_POINT && \
+  mkdir -p $DIST_HOME_MOUNT_POINT && \
+  mkdir -p $SOURCE_SQUASH_MOUNT_POINT && \
+  mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
+  mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT && \
+  mount $SOURCE_SQUASH_PATH $SOURCE_SQUASH_MOUNT_POINT -o loop
+
+  if [ $? -ne 0 ]; then
+      echo "mount error"
+      exit
+  fi
+
+  # rsync, need an exclude file list
+  generate_exclude_list
+  rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SQUASH_MOUNT_POINT $DIST_ROOT_MOUNT_POINT
+  if [ $? -ne 0 ]; then
+      echo "rsync error"
+      exit
+  fi
+
+  # Create excluded system path
+  cd $DIST_ROOT_MOUNT_POINT && \
+  mkdir $SYS_PATH_EXCLUDED && \
+  chmod 1777 tmp
+
+  if [ $? -ne 0 ]; then
+      echo "mkdir error"
+      exit
+  fi
+
+  # Create fstab and mtab
+  DIST_ROOT_UUID=`blkid $DIST_ROOT_PATH -s UUID --output value`
+  DIST_HOME_UUID=`blkid $DIST_HOME_PATH -s UUID --output value`
+  DIST_SWAP_UUID=`blkid $DIST_SWAP_PATH -s UUID --output value`
+
+  printf "
+  # /etc/fstab: static file system information.
+  #
+  # Use 'blkid -o value -s UUID' to print the universally unique identifier
+  # for a device; this may be used with UUID= as a more robust way to name
+  # devices that works even if disks are added and removed. See fstab(5).
+  #
+  # <file system> <mount point>   <type>  <options>       <dump>  <pass>
+  proc            /proc           proc    nodev,noexec,nosuid 0       0
+  #/dev/sda3
+  UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
+  #/dev/sda5
+  UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
+  #/dev/sda6
+  UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
+  " > etc/fstab && \
+  touch etc/mtab
+
+  if [ $? -ne 0 ]; then
+      echo "Create fstab error"
+      exit
+  fi
+
+  # Update hostname
+  OLD_HOSTNAME=`cat etc/hostname`
+  echo HOST_NAME > etc/hostname && \
+  sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
+
+  if [ $? -ne 0 ]; then
+      echo "Update hostname error"
+      exit
+  fi
+
+  # Install grub, grub-install may fail here
+  # [???]
+  # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
+  grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
+  update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg && \
+  update-grub
+
+  if [ $? -ne 0 ]; then
+      echo "Install grub error"
+      exit
+  fi
+
+  cd -
+  ```
+
 ***
 
 # Configure New System
