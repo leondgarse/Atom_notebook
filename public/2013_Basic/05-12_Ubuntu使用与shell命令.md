@@ -141,6 +141,12 @@
     ```
     exit(1)表示发生错误后退出程序， exit(0)表示正常退出。
     ```
+## ls
+  - 参数
+    - **-1** 每一项单独一行显示
+    - **-d** 只列出目录，不显示目录中的内容
+    - **-t** 时间顺序排序
+    - **-r** 反序排列
 ## ps
   - -a 显示有其他用户所拥有的进程的状态，
   - -x 显示没有控制终端的进程状态，
@@ -205,6 +211,12 @@
     ```shell
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/arm/2.95.3/arm-linux-lib
     export PATH=/usr/local/samba/bin/:/usr/local/samba/sbin/:$PATH
+    ```
+## chroot
+  - 切换根目录，并使用该目录下的文件 / 命令，需要有完整的命令与库支持
+    ```shell
+    chroot /media/cdrom0 ls /home
+    chroot /media/cdrom0 update-grub
     ```
 ***
 
@@ -1191,6 +1203,17 @@
         tmp = commands.getstatusoutput( 'mkdir -p %s'%(tmpdir+each) )
     tmp = commands.getstatusoutput( 'chmod 1777 %s/tmp' %tmpdir )
     cmd = 'mksquashfs %s %s -no-duplicates '%(tmpdir, backup_to)
+    ```
+    ```shell
+    sudo mksquashfs / /media/leondgarse/New\ Volume/foo.squashfs -no-duplicates -ef rsync_excludes_file_list -e /media/leondgarse/New\ Volume/foo.squashfs
+
+    mkdir /tmp/temp_system_dir
+    cd /tmp/temp_system_dir
+    mkdir proc sys tmp mnt media media/cdrom0
+    chmod 1777 tmp
+    mksquashfs /tmp/temp_system_dir/ /media/leondgarse/New\ Volume/foo.squashfs -no-duplicates
+
+    sudo mount /media/leondgarse/New\ Volume/foo.squashfs /media/cdrom0/
     ```
 ## Virtual box
   - Driver error starting  vm
