@@ -1010,6 +1010,11 @@
   - $ cd
   - $ ls -a                // 查看是否有.minirc.dfl文件
   - $ rm .minirc.dfl
+  - 将当前用户加入到dialout组（/dev/tty* 的用户组）
+    ```c
+    $ sudo vi /etc/group
+    dialout:x:20:leondgarse
+    ```
 ## gedit 中文乱码
   - 打开终端输入：
     ```c
@@ -1255,38 +1260,58 @@
 ***
 
 # 系统备份恢复
-## 从 squashfs 恢复系统
+## 从 squashfs 备份 / 恢复系统
   ```shell
   #!/bin/bash
 
   DIST_ROOT_MOUNT_POINT='/tmp/mount_point_for_dist_root'
   DIST_HOME_MOUNT_POINT=$DIST_ROOT_MOUNT_POINT'/home'
-  SOURCE_SQUASH_MOUNT_POINT='/tmp/mount_point_for_source_squash'
   EXCLUDE_FILE='./rsync_excludes_file_list'
   SYS_PATH_EXCLUDED='proc sys tmp mnt media media/cdrom0'
 
-  if [ $# -lt 5 ]; then
-  	echo "Usage: $0 source_squash_path dist_root_path dist_home_path dist_swap_path host_name"
+  if [ $# -ge 5 ]; then
+      # Restore mode
+      echo "Restore from a squashfs file."
+      WORK_MODE="RESTORE"
+      SOURCE_SQUASH_PATH=$1
+      DIST_ROOT_PATH=$2
+      DIST_HOME_PATH=$3
+      DIST_SWAP_PATH=$4
+      HOST_NAME=$5
+      SOURCE_SYSTEM_PATH='/tmp/mount_point_for_source_squash'
+
+      echo "SOURCE_SQUASH_PATH = $SOURCE_SQUASH_PATH"
+      echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
+      echo "DIST_HOME_PATH = $DIST_HOME_PATH"
+      echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
+      echo "HOST_NAME = $HOST_NAME"
+  elif [ $# -eq 4 ]; then
+      # Clone mode
+      echo "Clone current system."
+      WORK_MODE="CLONE"
+      DIST_ROOT_PATH=$1
+      DIST_HOME_PATH=$2
+      DIST_SWAP_PATH=$3
+      HOST_NAME=$4
+      SOURCE_SYSTEM_PATH='/'
+
+      echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
+      echo "DIST_HOME_PATH = $DIST_HOME_PATH"
+      echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
+      echo "HOST_NAME = $HOST_NAME"
+  elif [ $# -eq 1 ]; then
+      # Backup mode
+      echo "Backup current system to a squashfs file."
+      WORK_MODE="BACKUP"
+      SQUASHFS_BACKUP_TO=$1
+      TEMP_SYSTEM_DIR='/tmp/temp_system_dir'
+
+      echo "SQUASHFS_BACKUP_TO = $SQUASHFS_BACKUP_TO"
+  else
+  	echo "Restore Usage: $0 <source squash path> <dist root path> <dist home path> <dist swap path> <host name>"
+      echo "Clone   Usage: $0 <dist root path> <dist home path> <dist swap path> <host name>"
+      echo "Backup  Usage: $0 <squashfs file backup to>"
   	exit
-  fi
-
-  SOURCE_SQUASH_PATH=$1
-  DIST_ROOT_PATH=$2
-  DIST_HOME_PATH=$3
-  DIST_SWAP_PATH=$4
-  HOST_NAME=$5
-
-  echo "SOURCE_SQUASH_PATH = $SOURCE_SQUASH_PATH"
-  echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
-  echo "DIST_HOME_PATH = $DIST_HOME_PATH"
-  echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
-  echo "HOST_NAME = $HOST_NAME"
-
-  echo "whoami = "`whoami`
-  USER_NAME=`whoami`
-  if [ $USER_NAME != "root" ]; then
-      echo "Should be run as root!"
-      exit
   fi
 
   # Function to generate exclude file list
@@ -1308,110 +1333,166 @@
   /lost+found
   /home/lost+found
   /root/.gvfs
-  /home/*/.gvfs
-  /lib/modules/`uname -r`/volatile/*
-  /var/cache/apt/archives/*.deb
-  /var/cache/apt/archives/partial/*
-  " > $EXCLUDE_FILE    
+  `ls -1 /home/*/.gvfs 2>/dev/null`
+  `ls -1 /lib/modules/\`uname -r\`/volatile/ 2>/dev/null`
+  `ls -1 /var/cache/apt/archives/partial/ 2>/dev/null`
+  `find /run/user/* -maxdepth 1 -name gvfs 2>/dev/null`
+  " > $EXCLUDE_FILE
+
+      # This may contain special characters for printf
+      ls -1 /var/cache/apt/archives/*.deb 2>/dev/null >> $EXCLUDE_FILE
   }
 
-  # Format disks
-  umount $DIST_ROOT_PATH
-  umount $DIST_HOME_PATH
+  function clean_resource_and_exit {
+      echo $1
+      umount $DIST_HOME_MOUNT_POINT 2>/dev/null
+      umount $DIST_ROOT_MOUNT_POINT 2>/dev/null
+      rm $DIST_HOME_MOUNT_POINT $DIST_ROOT_MOUNT_POINT -rf
 
-  echo y | mkfs.ext4 $DIST_ROOT_PATH && \
-  echo y | mkfs.ext4 $DIST_HOME_PATH && \
-  mkswap $DIST_SWAP_PATH
+      if [ $WORK_MODE = "RESTORE" ]; then
+          umount $SOURCE_SYSTEM_PATH 2>/dev/null
+          # rm $SOURCE_SYSTEM_PATH -rf
+      fi
 
-  if [ $? -ne 0 ]; then
-      echo "mkfs error"
+      rm $EXCLUDE_FILE -rf
+
+      exit
+  }
+
+  function chroot_command {
+      mount --bind /proc $1/proc
+      mount --bind /dev $1/dev
+      mount --bind /sys $1/sys
+      chroot $*
+      umount $1/proc
+      umount $1/dev
+      umount $1/sys
+  }
+
+  # generate_exclude_list
+  # exit
+
+  # Check if it's run by root
+  USER_NAME=`whoami`
+  echo "USER_NAME = $USER_NAME"
+  if [ $USER_NAME != "root" ]; then
+      echo "Should be run as root!"
       exit
   fi
 
-  # Mount source and dist fs
-  mkdir -p $DIST_ROOT_MOUNT_POINT && \
-  mkdir -p $DIST_HOME_MOUNT_POINT && \
-  mkdir -p $SOURCE_SQUASH_MOUNT_POINT && \
-  mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
-  mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT && \
-  mount $SOURCE_SQUASH_PATH $SOURCE_SQUASH_MOUNT_POINT -o loop
+  if [ $WORK_MODE != "BACKUP" ]; then
+      # Clone and Restore mode
+      # Format disks
+      umount $DIST_HOME_PATH
+      umount $DIST_ROOT_PATH
 
-  if [ $? -ne 0 ]; then
-      echo "mount error"
-      exit
+      echo y | mkfs.ext4 $DIST_ROOT_PATH && \
+      echo y | mkfs.ext4 $DIST_HOME_PATH && \
+      mkswap $DIST_SWAP_PATH
+
+      if [ $? -ne 0 ]; then
+          echo "mkfs error"
+          exit
+      fi
+
+      # Mount dist disks
+      mkdir -p $DIST_ROOT_MOUNT_POINT && \
+      mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
+      mkdir -p $DIST_HOME_MOUNT_POINT && \
+      mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT
+
+      if [ $? -ne 0 ]; then clean_resource_and_exit "mount dist disks error"; fi
+
+      if [ $WORK_MODE = "RESTORE" ]; then
+          # It's Restore mode, mount source fs
+          mkdir -p $SOURCE_SYSTEM_PATH && \
+          mount "$SOURCE_SQUASH_PATH" $SOURCE_SYSTEM_PATH -o loop
+
+          if [ $? -ne 0 ]; then clean_resource_and_exit "mount source squashfs error"; fi
+      fi
+
+      # rsync, need an exclude file list
+      # generate_exclude_list
+      # exit
+      # rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
+      rsync -av \
+          --exclude "/lost+found" \
+          --exclude "/*/lost+found" \
+          --exclude "/lib/modules/*/volatile/*" \
+          $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
+      if [ $? -ne 0 ]; then clean_resource_and_exit "rsync error"; fi
+
+      # Create excluded system path
+      cd $DIST_ROOT_MOUNT_POINT && \
+      mkdir -p $SYS_PATH_EXCLUDED && \
+      chmod 1777 tmp
+
+      if [ $? -ne 0 ]; then clean_resource_and_exit "mkdir error"; fi
+
+      # Create fstab and mtab
+      DIST_ROOT_UUID=`blkid $DIST_ROOT_PATH -s UUID -o value`
+      DIST_HOME_UUID=`blkid $DIST_HOME_PATH -s UUID -o value`
+      DIST_SWAP_UUID=`blkid $DIST_SWAP_PATH -s UUID -o value`
+
+      mkdir -p etc
+      printf "
+      # /etc/fstab: static file system information.
+      #
+      # Use 'blkid -o value -s UUID' to print the universally unique identifier
+      # for a device; this may be used with UUID= as a more robust way to name
+      # devices that works even if disks are added and removed. See fstab(5).
+      #
+      # <file system> <mount point>   <type>  <options>       <dump>  <pass>
+      proc            /proc           proc    nodev,noexec,nosuid 0       0
+      #/dev/sda3
+      UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
+      #/dev/sda5
+      UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
+      #/dev/sda6
+      UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
+      " > etc/fstab && \
+      touch etc/mtab
+
+      if [ $? -ne 0 ]; then clean_resource_and_exit "Create fstab error"; fi
+
+      # Update hostname
+      OLD_HOSTNAME=`cat etc/hostname`
+      echo $HOST_NAME > etc/hostname && \
+      sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
+
+      if [ $? -ne 0 ]; then clean_resource_and_exit "Update hostname error"; fi
+
+      # Install grub, grub-install may fail here
+      # [???]
+      # chroot [???]
+      # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
+      # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
+      grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
+      chroot_command $DIST_ROOT_MOUNT_POINT update-grub
+
+      if [ $? -ne 0 ]; then clean_resource_and_exit "Install grub error"; fi
+
+      cd -
+      clean_resource_and_exit "Done!"
+  else
+      # Backup mode
+      generate_exclude_list
+      mksquashfs / "$SQUASHFS_BACKUP_TO" -no-duplicates -ef $EXCLUDE_FILE -e "$SQUASHFS_BACKUP_TO"
+      if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
+
+      mkdir -p $TEMP_SYSTEM_DIR && \
+      cd $TEMP_SYSTEM_DIR && \
+      mkdir -p $SYS_PATH_EXCLUDED && \
+      chmod 1777 tmp
+      if [ $? -ne 0 ]; then echo "make system dirs error"; exit; fi
+
+      mksquashfs $TEMP_SYSTEM_DIR "$SQUASHFS_BACKUP_TO" -no-duplicates
+      if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
+
+      cd -
+      rm $TEMP_SYSTEM_DIR -rf
   fi
-
-  # rsync, need an exclude file list
-  generate_exclude_list
-  rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SQUASH_MOUNT_POINT $DIST_ROOT_MOUNT_POINT
-  if [ $? -ne 0 ]; then
-      echo "rsync error"
-      exit
-  fi
-
-  # Create excluded system path
-  cd $DIST_ROOT_MOUNT_POINT && \
-  mkdir $SYS_PATH_EXCLUDED && \
-  chmod 1777 tmp
-
-  if [ $? -ne 0 ]; then
-      echo "mkdir error"
-      exit
-  fi
-
-  # Create fstab and mtab
-  DIST_ROOT_UUID=`blkid $DIST_ROOT_PATH -s UUID --output value`
-  DIST_HOME_UUID=`blkid $DIST_HOME_PATH -s UUID --output value`
-  DIST_SWAP_UUID=`blkid $DIST_SWAP_PATH -s UUID --output value`
-
-  printf "
-  # /etc/fstab: static file system information.
-  #
-  # Use 'blkid -o value -s UUID' to print the universally unique identifier
-  # for a device; this may be used with UUID= as a more robust way to name
-  # devices that works even if disks are added and removed. See fstab(5).
-  #
-  # <file system> <mount point>   <type>  <options>       <dump>  <pass>
-  proc            /proc           proc    nodev,noexec,nosuid 0       0
-  #/dev/sda3
-  UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
-  #/dev/sda5
-  UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
-  #/dev/sda6
-  UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
-  " > etc/fstab && \
-  touch etc/mtab
-
-  if [ $? -ne 0 ]; then
-      echo "Create fstab error"
-      exit
-  fi
-
-  # Update hostname
-  OLD_HOSTNAME=`cat etc/hostname`
-  echo HOST_NAME > etc/hostname && \
-  sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
-
-  if [ $? -ne 0 ]; then
-      echo "Update hostname error"
-      exit
-  fi
-
-  # Install grub, grub-install may fail here
-  # [???]
-  # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
-  grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-  update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg && \
-  update-grub
-
-  if [ $? -ne 0 ]; then
-      echo "Install grub error"
-      exit
-  fi
-
-  cd -
   ```
-
 ***
 
 # Configure New System
