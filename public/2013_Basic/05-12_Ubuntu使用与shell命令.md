@@ -916,25 +916,34 @@
   - Choose Use Point-to-Point encryption (MPPE)
 
     ![image](images/vpn_conf.png)
-## grub rescue
-  ```shell
-  # 查找 boot 目录
-  grub rescue > ls  # 查看当前磁盘信息
-  grub rescue > ls (hd0,msdos2)/boot  # boot 没有单独分区
-  grub rescue > ls (hd0,msdos2)/grub  # boot 单独分区
+## grub
+  - grub rescue
+    ```shell
+    # 查找 boot 目录
+    grub rescue > ls  # 查看当前磁盘信息
+    grub rescue > ls (hd0,msdos2)/boot  # boot 没有单独分区
+    grub rescue > ls (hd0,msdos2)/grub  # boot 单独分区
 
-  # 临时将 grub 的两部分关联起来
-  grub rescue > set root=(hd0,msdos2)
-  grub rescue > set prefix=(hd0,msdos2)/boot/grub   # boot 没有单独分区
-  grub rescue > set prefix=(hd0,msdos2)/grub   # boot 单独分区
-  grub rescue > insmod normal
-  grub rescue > normal
+    # 临时将 grub 的两部分关联起来
+    grub rescue > set root=(hd0,msdos2)
+    grub rescue > set prefix=(hd0,msdos2)/boot/grub   # boot 没有单独分区
+    grub rescue > set prefix=(hd0,msdos2)/grub   # boot 单独分区
+    grub rescue > insmod normal
+    grub rescue > normal
 
-  # 进入正常的 grub 模式，进入系统
-  $ sudo update-grub
-  $ sudo grub-install /dev/sda3
-  $ sudo grub-install /dev/sda
-  ```
+    # 进入正常的 grub 模式，进入系统
+    $ sudo update-grub
+    $ sudo grub-install /dev/sda3
+    $ sudo grub-install /dev/sda
+    ```
+  - grub-install 错误 /usr/lib/grub/i386-pc doesnt exist
+    ```shell
+    grub-install: error: /usr/lib/grub/i386-pc/modinfo.sh doesnt exist. Please specify --target or --directory.
+    ```
+    安装 grub-pc
+    ```shell
+    sudo apt-get isntall grub-pc
+    ```
 ## 坏块检测 badblocks
   - badblocks
     - **-s** 在检查时显示进度
@@ -1006,10 +1015,13 @@
     ```
     然后 把 自动检测 UTF－8 字幕 格式化字幕 前面的勾去掉
   - 保存
-## minicom 无法保存配置
-  - $ cd
-  - $ ls -a                // 查看是否有.minirc.dfl文件
-  - $ rm .minirc.dfl
+## Minicom
+  - minicom 无法保存配置
+    ```shell
+    cd
+    ls -a                # 查看是否有 .minirc.dfl 文件
+    rm .minirc.dfl
+    ```
   - 将当前用户加入到dialout组（/dev/tty* 的用户组）
     ```c
     $ sudo vi /etc/group
