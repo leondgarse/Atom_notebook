@@ -1122,15 +1122,15 @@
     -r 表示递归解压缩所有的子文件夹
     -o 是指定解压到的目录，-o后是没有空格的
     ```
-  - 压缩文件／文件夹
-    ```
+  - 压缩文件 / 文件夹
+    ```shell
     7za a -t7z -r Mytest.7z /opt/phpMyAdmin-3.3.8.1-all-languages/*
-    参数含义：
-        a  代表添加文件／文件夹到压缩包
-        -t 是指定压缩类型，这里定为7z，可不指定，因为7za默认压缩类型就是7z。
-        -r 表示递归所有的子文件夹
-        注意：7za不仅仅支持.7z压缩格式，还支持.tar.bz2等压缩类型的，用-t指定即可
     ```
+  - 参数
+    - a  代表添加文件／文件夹到压缩包
+    - -t 是指定压缩类型，这里定为7z，可不指定，因为 7za 默认压缩类型就是 7z
+    - -r 表示递归所有的子文件夹
+    - 7za 不仅仅支持 .7z 压缩格式，还支持 .tar .bz2 等压缩类型的，用 -t 指定即可
 ## evolution
   - 相关文件夹
     ```shell
@@ -1142,6 +1142,11 @@
     ```shell
     rm -rf .local/share/evolution/ .config/evolution/ .cache/evolution/
     ```
+  - EWS 邮箱插件
+    ```shell
+    sudo apt-get install evolution-ews
+    ```
+  - 163 邮箱配置客户端时，密码使用的是授权码，不是登陆密码
 ## Stardict
   - Dictionary directory
     ```shell

@@ -3,7 +3,7 @@
 DIST_ROOT_MOUNT_POINT='/tmp/mount_point_for_dist_root'
 DIST_HOME_MOUNT_POINT=$DIST_ROOT_MOUNT_POINT'/home'
 EXCLUDE_FILE='./rsync_excludes_file_list'
-SYS_PATH_EXCLUDED='proc sys tmp mnt media media/cdrom0'
+SYS_PATH_EXCLUDED='proc sys tmp mnt media cdrom media/cdrom0 snap'
 
 if [ $# -ge 5 ]; then
     # Restore mode
@@ -55,6 +55,8 @@ function generate_exclude_list {
     printf "
 /home
 /opt
+/snap
+/cdrom
 /proc
 /sys
 /tmp
@@ -200,9 +202,9 @@ if [ $WORK_MODE != "BACKUP" ]; then
 
     # Install grub, grub-install may fail here
     # [???]
-    # chroot [???]
     # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
     # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
+    # chroot_command $DIST_ROOT_MOUNT_POINT grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
     grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
     chroot_command $DIST_ROOT_MOUNT_POINT update-grub
 
@@ -229,3 +231,4 @@ else
     rm $TEMP_SYSTEM_DIR -rf
     rm $EXCLUDE_FILE -f
 fi
+

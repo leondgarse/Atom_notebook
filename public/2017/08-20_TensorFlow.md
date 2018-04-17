@@ -88,6 +88,7 @@
     ```
   - Anaconda update
     ```shell
+		conda update -n base conda
     conda update anaconda # update anaconda only
     conda update --all  # update all anaconda related packages
     conda clean --all # clean temporary fills

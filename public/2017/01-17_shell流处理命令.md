@@ -1006,4 +1006,8 @@ http://wanwentao.blog.51cto.com/2406488/582432/
     ```shell
     ls /home | grep -v '[+.]' | xargs -I '{}' sed -i '$a\[{}]\npath = /opt/{}\navailable = yes\nbrowseable = yes\npublic = yes\nwritable = yes\n' /etc/samba/smb.conf
     ```
+  - 将当前文件夹下所有文件夹压缩到单独的压缩文件
+    ```shell
+    ls | xargs -I {} zip {}.zip {}
+    ```
 ***
