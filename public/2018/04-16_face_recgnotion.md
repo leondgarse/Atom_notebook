@@ -1,7 +1,29 @@
-wangguowei@hope-pact.com
-Asdf@1234
-link.263em.com / 5222
-WIFI hpe123456
+# ___2018 - 04 - 16 Face Recognition___
+***
+
+# Opencv 视频处理
+## 环境
+  ```shell
+  conda create -n opencv
+  conda info --envs
+  source activate opencv
+
+  conda install -yc conda-forge opencv
+  pip install --upgrade pip
+
+  pip install face_recognition
+  pip install baidu-aip
+  ```
+## 使用
+  ```python
+  client.identifyUser(groupId, cv2.imencode('.jpg', frame[:, :, ::-1])[1].tobytes(), options)
+  known_face_encodings
+  unknown_encording = fr.face_encodings(fr.load_image_file("chai_jinlong.png"))[0]
+  unknown_encording = fr.face_encodings(fr.load_image_file("/home/leondgarse/Pictures/Selection_002.png"))[0]
+  fr.face_distance(known_face_encodings, unknown_encording)
+  image = get_file_content('/home/leondgarse/Pictures/Selection_002.png')
+  client.identifyUser(groupId, image, options)
+  ```
 ***
 
 # 百度人脸识别 Aip
@@ -140,7 +162,7 @@ WIFI hpe123456
     image = get_file_content('/home/leondgarse/workspace/face_recognition/examples/knn_examples/train/rose_leslie/img1.jpg')
 
     """ 调用人脸识别 """
-    client.identifyUser(groupId, image);
+    client.identifyUser(groupId, image)
 
     """ 如果有可选参数 """
     options = {}
@@ -207,7 +229,7 @@ WIFI hpe123456
     options = {}
     options["ext_fields"] = "faceliveness"
     options["detect_top_num"] = 3
-    options["user_top_num"] = 2
+    options["user_top_num"] = 1
 
     """ 带参数调用M:N 识别 """
     client.multiIdentify(groupId, image, options)
@@ -468,6 +490,7 @@ WIFI hpe123456
 
 # Face Recognition
 ## Installation
+  - [github 地址 face_recognition](https://github.com/ageitgey/face_recognition.git)
   ```shell
   pip install face_recognition
   ```
@@ -496,6 +519,24 @@ WIFI hpe123456
     ```shell
     face_detection  ./folder_with_pictures/
     ```
+## get_frontal_face_detector in dlib
+  ```python
+  from dlib import get_frontal_face_detector
+  import face_recognition as fr
+  detector = get_frontal_face_detector()
+
+  file_name = "two_people.jpg"
+  image = fr.load_image_file(file_name)
+  detector(image, 1)
+  face_location = detector(image, 1)
+
+  for ind, fl in enumerate(face_location):
+      print("ind = %d, fl = %s" % (ind, fl))
+      draw.rectangle(((fl.left(), fl.top()), (fl.right(), fl.bottom())), outline=(0, 0, 255))
+
+  del draw
+  pil_image.show()
+  ```
 ## Find faces in pictures
   - Find all the faces that appear in a picture
   ```python
@@ -517,6 +558,25 @@ WIFI hpe123456
       draw.rectangle(((left, top), (right, bottom)), outline=(0, 0, 255))
 
   del draw
+  pil_image.show()
+  ```
+  **只显示人脸部分**
+  ```python
+  file_name = "obama1.jpg"
+  image = fr.load_image_file(file_name)
+  face_location = fr.face_locations(image, model='hog')
+  (top, right, bottom, left) = face_location[0]
+
+  pil_image = Image.open(file_name)
+  tt = pil_image.crop((left, top, right, bottom))
+  tt.show()
+
+  pil_image = Image.fromarray(image[top:bottom, left:right])
+  pil_image.show()
+
+  import cv2
+  image = cv2.imread(file_name)
+  pil_image = Image.fromarray(image[top:bottom, left:right, ::-1])
   pil_image.show()
   ```
 ## Find and manipulate facial features in pictures
@@ -585,72 +645,207 @@ WIFI hpe123456
   ```
 ***
 
-# 刷机
-http://www.shuame.com/faq/beginner/14829-2012-12-27-02-18-42.html
-手机在关机的状态下，用usb数据线连接电脑，再按住音量-和关机键，等待大约10秒，手机会进入fastboot模式，此时注意看文字提示，显示红色‘PHONE Unlocked’手机就已经解锁了，显示绿色‘PHONE Locked’就是没解锁
+# 百度人脸识别 Aip 检测摄像头图像
+  ```python
+  import cv2
+  import os
+  from aip import AipFace
+  from PIL import Image, ImageDraw
+  import face_recognition as fr
 
-如何正确的填写产品型号
-如何正确填写产品序列号
-如何填写主IMEI或MEID号
-如何获得产品识别码？
+  FRAME_PER_DETECT = 3
+  FRAME_COMPRESS_RATE = 0.25
+  FRAME_RESTORE_RATE = 1 / FRAME_COMPRESS_RATE
+  APP_ID = "11108357"
+  API_KEY = 'PrurvVg3MUluX61sviVlSGha'
+  SECRET_KEY = 'VLKac9zzkcdkUcjSVZhwmPwEWLDLtQ92'
+  client = AipFace(APP_ID, API_KEY, SECRET_KEY)
 
-H60-L02
-DU2TAN149N018644
-864103023587121
-87674535
+  groupId = "examples,hpe_faces"
+  options = {}
+  options["ext_fields"] = "faceliveness"
+  options["detect_top_num"] = 3
+  options["user_top_num"] = 2
 
-您的解锁码为：1261015721511283
-  [刷机资源] 【HRT团队】荣耀6全系列 最新6.12.16 精简ROOT 流畅省电
-     [复制帖子标题和链接]
+  def get_file_content(filePath):
+      with open(filePath, 'rb') as fp:
+          return fp.read()
 
- 1694724067
- 电梯直达
- 跳转到指定楼层
- 楼主
- 只看该作者
- 八戒赏月  HRT团队  发表于 2016-12-15 21:53:18 来自：浏览器
+  def image_files_in_folder(folder):
+      return [os.path.join(folder, f) for f in os.listdir(folder) if re.match(r'.*\.(jpg|jpeg|png)', f, flags=re.I)]
 
- 最新回复 1 秒前
+  def display_face_locations(frame, face_locations, face_names):
+      # Display face locations
+      for (top, right, bottom, left), name in zip(face_locations, face_names):
+          # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+          top *= FRAME_RESTORE_RATE
+          right *= FRAME_RESTORE_RATE
+          bottom *= FRAME_RESTORE_RATE
+          left *= FRAME_RESTORE_RATE
 
- 【基本信息】
- ROM名称：【HRT团队】荣耀6全系列 最新6.12.16 精简ROOT 流畅省电
- ROM大小：775M
- 适配版本：荣耀6全系列
- 测试机型：荣耀6
- 作者简介：HRT团队_八戒赏月
- 论坛支持：花粉俱乐部   http://club.huawei.com/index.html
- 发布日期：2016/12/15
+          # Draw a box around the face
+          cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
- 【ROM详情】
- Emotion UI是华为基于Android进行开发的情感化用户界面。独创的Me Widget整合常用功能，一步到位；快速便捷的合一桌面，减少二级菜单；缤纷海量的主题，何止让你眼花缭乱。
+          # Draw a label with a name below the face
+          cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+          font = cv2.FONT_HERSHEY_DUPLEX
+          cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
- 【更新日志】
- 基于官方最新H60_EMUI4.0_Android6.0_6.12.16固件制作
- 解决安卓签名限制，安装优质软件不受阻
- 保持odex分离，开机速度快，运存占用小，发热低
- 小E助手，可在 设置/智能辅助 中开启
- 精简官方定制和不常用apk，释放内存
- 精简无用lib库文件和测试视屏、图片等
- 加入SuperSU授权，完美ROOT
- 集成busybox二进制程序，安装指令集，方便高级用户
- 优化WiFi信号和接收范围，减少断流
- 深度省电优化，降低待机功耗和待机频率，延长待机
- 优化APN，提升信号
- zipalign优化，减小分区占用，更流畅
- 内置几款实用软件，均支持RE管理卸载
+  def parse_multiIdentify_result(result):
+      # Found faces
+      face_locations = []
+      face_names = []
+      group_names = []
 
- 【已知bug】
- 无
+      if result.get('result') != None:
+          for face_result in result['result']:
+              face_position = face_result['position']
+              face_left = face_position['left']
+              face_top = face_position['top']
+              face_right = face_position['left'] + face_position['width']
+              face_bottom = face_position['top'] + face_position['height']
+              face_coord = [face_left, face_top, face_right, face_bottom]
 
- 【注意事项】
- 刷机前手机必须解锁
- 必须基于EMUI4.0底包刷入
- 必须刷入本机型基于EMUI4.0适配的第三方REC
+              if face_coord in face_locations:
+                  # Face already exist
+                  print("face_coord = %s" % face_coord)
+                  if face_result['scores'][0] < result['result'][face_locations.index(face_coord)]['scores'][0]:
+                      # And this has a worse score, skip this
+                      continue
+              else:
+                  # New face
+                  face_locations.append(face_coord)
 
- 【刷机教程】
- 解锁手机
- 刷入基于EMUI4.0适配的第三发recovery
- 关机状态下同时按住音量+和电源键，进入recovery
- 双清手机
- 选择下载好的zip格式包刷入
- 刷机后第一次重启比较慢，请耐心等待
+              face_name = "Unknown"
+              group_name = "Unknown"
+              if face_result['scores'][0] >= FACE_SCORE_TOLERANCE:
+                  face_name = face_result['uid']
+                  group_name = face_result['group_id']
+              print("face_name = %s, score = %d" % (face_name, face_result['scores'][0]))
+              face_names.append(face_name)
+              group_names.append(group_name)
+
+      return face_locations, face_names, group_names
+
+  video_capture = cv2.VideoCapture(0)
+  video_capture = cv2.VideoCapture("rtsp://admin:hpe.1234@192.168.136.205:554/MPEG-4/ch1/main/av_stream")
+  ret, frame = video_capture.read()
+
+  # Resize frame of video to 1/4 size for faster face recognition processing
+  small_frame = cv2.resize(frame, (0, 0), fx=FRAME_COMPRESS_RATE, fy=FRAME_COMPRESS_RATE)
+  # Convert the image from BGR color (which OpenCV uses) to RGB color (which aip uses)
+  rgb_small_frame = small_frame[:, :, ::-1]
+  Image.fromarray(rgb_small_frame).show()
+
+  # model could be hog (faster) or cnn (more accurate)
+  face_location = fr.face_locations(rgb_small_frame, model='cnn')
+
+  if len(face_location) != 0:
+      (top, right, bottom, left) = face_location[0]
+      rgb_face_frame = rgb_small_frame[top:bottom, left:right]
+  Image.fromarray(rgb_face_frame).show()
+
+  result = client.multiIdentify(groupId, cv2.imencode('.jpg', rgb_face_frame)[1].tobytes(), options)
+  print(result)
+  face_locations, face_names, group_names = parse_multiIdentify_result(result)
+
+  # Display the resulting image
+  display_face_locations(frame, face_locations, face_names)
+
+  pil_image = Image.fromarray(frame[:, :, ::-1])
+  pil_image.show()
+
+  cv2.imshow('Video', frame)
+
+  video_capture.release()
+  cv2.destroyAllWindows()
+  ```
+  **百度 Aip 输出结果**
+  ```python
+  In [29]: result
+  Out[29]:
+  {'result': [{'uid': 'two_people',
+     'scores': [100],
+     'group_id': 'examples',
+     'user_info': '',video_capture = cv2.VideoCapture("rtsp://admin:hpe.1234@192.168.136.205:554/MPEG-4/ch1/main/av_stream")
+     'position': {'left': 796.55651855469,
+      'top': 91.270530700684,
+      'width': 153,
+      'height': 145,
+      'degree': 12,
+      'prob': 1}},
+    {'uid': 'biden',
+     'scores': [99.32218170166],
+     'group_id': 'examples',
+     'user_info': '',
+     'position': {'left': 796.55651855469,
+      'top': 91.270530700684,
+      'width': 153,
+      'height': 145,
+      'degree': 12,
+      'prob': 1}},
+    {'uid': 'obama',
+     'scores': [94.886238098145],
+     'group_id': 'examples',
+     'user_info': '',
+     'position': {'left': 240.31817626953,
+      'top': 66.275604248047,
+      'width': 152,
+      'height': 150,
+      'degree': 6,
+      'prob': 1}},
+    {'uid': 'wang_guowei',
+     'scores': [28.18116569519],
+     'group_id': 'hpe_faces',
+     'user_info': '',
+     'position': {'left': 240.31817626953,
+      'top': 66.275604248047,
+      'width': 152,
+      'height': 150,
+      'degree': 6,
+      'prob': 1}}],
+   'result_num': 4,
+   'ext_info': {'faceliveness': '0.024044899269938,4.0677969082026E-5'},
+   'log_id': 4030489918041911}
+
+  In [32]: result
+  Out[32]:
+  {'error_code': 216402,
+   'error_msg': 'face not found',
+   'log_id': 4041334861041911}
+
+  {'error_msg': 'Open api qps request limit reached', 'error_code': 18}
+  ```
+***
+
+# OpenCV 之 网络摄像头
+## RTSP
+  - RTSP (Real Time Streaming Protocol)，是一种语法和操作类似 HTTP 协议，专门用于音频和视频的应用层协议，和 HTTP 类似，RTSP 也使用 URL 地址
+    ```python
+    rtsp_addr = "rtsp://admin:a1234567@192.168.5.186:554/MPEG-4/ch1/main/av_stream"
+    ```
+  - 海康网络摄像头的 RTSP URL 格式如下
+    ```python
+    rtsp://[username]:[password]@[ip]:[port]/[codec]/[channel]/[subtype]/av_stream
+    ```
+    - **username** 用户名，常用 admin
+    - **password** 密码，常用 12345
+    - **ip** 摄像头IP，如 192.0.0.64
+    - **port** 端口号，默认为 554
+    - **codec** 视频编码模式，有 h264、MPEG-4、mpeg4 等
+    - **channel** 通道号，起始为1，例如通道1，则为 ch1
+    - **subtype** 码流类型，主码流为 main，辅码流为 sub
+  - 大华网络摄像头的 RTSP URL 格式如下
+    ```python
+    rtsp://[username]:[password]@[ip]:[port]/cam/realmonitor?[channel=1]&[subtype=1]
+    ```
+    - **username、password、ip、port** 同上
+    - **channel** 通道号，起始为1，例如通道2，则为 channel=2
+    - **subtype** 码流类型，主码流为0（即 subtype=0），辅码流为1（即 subtype=1）
+## VideoCapture 类
+  - VideoCapture 类是 OpenCV 中用来操作视频流的类，可以在构造函数中打开视频，其参数支持以下三种类型
+    - name of video file (eg. `video.avi`)
+    - image sequence (eg. `img_%02d.jpg`, which will read samples like `img_00.jpg, img_01.jpg, img_02.jpg, ...`)
+    - URL of video stream (eg. `protocol://host:port/script_name?script_params|auth`).
+## VideoCapture 显示实时视频
+***

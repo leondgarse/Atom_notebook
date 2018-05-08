@@ -1,4 +1,4 @@
-# ___2017 - 01 - 17 shell流处理命令___
+# ___2017 - 01 - 17 shell 流处理命令___
 ***
 
 xargs
@@ -7,6 +7,11 @@ rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/th
 rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
 rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
 http://wanwentao.blog.51cto.com/2406488/582432/
+
+cat files | xargs -i -p sh -c "touch {};rm {}"
+cat files | awk '{print "touch "$1;print "rm "$1;}' | sh
+ls *.jpg *.png | sed 's/.jpg//' | sed 's/.png//' | xargs -i sh -c "mkdir -p '{}' && mv -f '{}.jpg' '{}.png' '{}'"
+mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->

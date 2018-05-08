@@ -1,6 +1,14 @@
 # ___2013-05-12 Ubuntu使用与shell命令___
 ***
 
+Gtk-Message: Failed to load module “canberra-gtk-module”
+
+编写wxPython程序时，总是报以下错误：
+
+Gtk-Message: Failed to load module “canberra-gtk-module”
+
+解决办法：apt-get install .*canberra.*gtk.*
+
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -75,21 +83,39 @@
   - 比较两个排序后的文件内容 comm
   - **dirname** 获取文件夹名，**basename** 获取文件名，**pwd** 获取当前文件夹名
   - mp3info查找音频文件，并删除比特率大于320的
-    ```c
+    ```shell
     mp3info -x -p "%r#%f\n" *.mp3 | grep 320 | cut -d '#' -f 2- | sed 's/ /\\ /g' | xargs rm {} \;
     ```
   - 挂载ISO文件
-    ```c
+    ```shell
     sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/cn_windows_7_ultimate_with_sp1.iso /media/cdrom0/
     ```
   - 挂载squashfs
-    ```c
+    ```shell
     sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/squashfs_backup/2017-01-19_201732.squashfs /media/cdrom0/
     ```
   - 格式化为FAT32，-I选项指定整个盘，NTFS格式使用mkfs.ntfs
-    ```c
+    ```shell
     sudo mkfs.vfat -F 32 -I /dev/sdc
     ```
+  - mkisofs 制作 iso 文件
+    ```shell
+    mkisofs -r -o file.iso your_folder_name/
+    ```
+  - root 不能删除 ldlinux.sys 文件
+    ```shell
+    $ sudo rm /cdrom/boot/ -rf
+    rm: cannot remove '/cdrom/boot/extlinux/ldlinux.sys': Operation not permitted
+    ```
+    The immutable flag is set on that file. Use the
+    ```shell
+    lsattr ldlinux.sys
+    ```
+    command and look for the 'i' flag. If this is the case, use
+    ```shell
+    chattr -i ldlinux.sys
+    ```
+    to remove it
 ## apt-get
   - apt-get --purge remove ...... （完全删除）
   - apt-get -f install        （修复依赖关系）
@@ -965,6 +991,50 @@
     sudo e2fsck -l /tmp/bad-blocks.txt /dev/sdb
     ```
     在运行e2fsck命令前，请保证设备没有被挂载
+## NTFS disk mount error
+    ```shell
+    The disk contains an unclean file system (0, 0).
+    Metadata kept in Windows cache, refused to mount.
+    Falling back to read-only mount because the NTFS partition is in an
+    unsafe state. Please resume and shutdown Windows fully (no hibernation
+    or fast restarting.)
+    ```
+    The solution is so simple :
+    ```shell
+    here is where NTFS-3G project come to help us:
+
+    On computers which can be dual-booted into Windows or Linux, Windows has to be fully shut down before booting into Linux, otherwise the NTFS file systems on internal disks may be left in an inconsistent state and changes made by Linux may be ignored by Windows.
+
+    So, Windows may not be left in hibernation when starting Linux, in order to avoid inconsistencies. Moreover, the fast restart feature available on recent Windows systems has to be disabled. This can be achieved by issuing as an Administrator the Windows command which disables both hibernation and fast restarting.
+
+    Double-booting Linux and Windows 8
+
+    When Windows 8 is restarted using its fast restarting feature, part of the metadata of all mounted partitions are restored to the state they were at the previous closing down. As a consequence, changes made on Linux may be lost. This can happen on any partition of an internal disk when leaving Windows 8 by selecting Shut down or Hibernate. Leaving Windows 8 by selecting Restart is apparently safe.
+
+    To avoid any loss of data, be sure the fast restarting of Windows 8 is disabled. This can be achieved by issuing as an administrator the command :
+
+    or follow this step :
+
+    Settings
+     > control panel
+     > system security
+     > administrative tools
+     > system configuration
+     > tools
+     > command prompt and launch it and type this :
+
+        powercfg /h off
+
+    You can check the current settings on :
+
+    Control Panel
+        > Hardware and Sound
+        > Power Options
+        > System Setting
+        > Choose what the power buttons do
+
+    The box "Turn on fast startup" should either be disabled or missing.
+    ```
 ***
 
 # 软件

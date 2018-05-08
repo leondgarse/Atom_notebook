@@ -4234,6 +4234,15 @@ nonzero / where / choose
     1 0 1
     2 0 0
     ```
+    **np.where 生成 dummy 矩阵**
+    ```python
+    ss = np.array(list('abc'))
+    np.array([np.where(ss == tt, 1, 0) for tt in ss])
+    Out[102]:
+    array([[1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 1]])
+    ```
   - dummy_na指定保留NA值信息
     ```python
     pd.get_dummies(s1, dummy_na=True)
