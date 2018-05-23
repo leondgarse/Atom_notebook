@@ -2283,6 +2283,16 @@ def tf_imread(image_path):
         image_array = tf.image.decode_image(image_raw_data)
         return image_array.eval()
 ```
+```python
+resized = tf.image.resize_images(img_data_2, [300, 300], method=1)
+batched = tf.expand_dims(resized, 0)
+bounding_box = tf.constant([[[0.05, 0.05, 0.9, 0.7], [0.35, 0.47, 0.5, 0.56]]])
+result = tf.image.draw_bounding_boxes(batched, bounding_box)
+result.eval().shape
+# Out[19]: (1, 300, 300, 3)
+
+plt.imshow(result.eval()[0])
+```
 
 
 >>> from skimage import data
