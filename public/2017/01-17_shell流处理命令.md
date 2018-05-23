@@ -192,7 +192,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   # FILENAME      awk浏览的文件名
   # FNR        浏览文件的记录数
   # FS         设置输入域分隔符，等价于命令行 -F选项
-  # NF         浏览记录的域的个数
+  # NF         浏览记录的域的个数，$NF 可以表示最后一个域
   # NR         已读的记录数
   # OFS        输出域分隔符
   # ORS        输出记录分隔符
@@ -435,7 +435,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     | %e  | 指数形式的浮点数 |
     | %x  | %X 无符号以十六进制表示的整数 |
     | %o  | 无符号以八进制表示的整数 |
-    | %g  | 自动选择合适的表示法 |
+    # | %g  | 自动选择合适的表示法 |
   - 举例说明：
     ```
     [chengmo@centos5 ~]$ awk 'BEGIN{n1=124.113;n2=-1.224;n3=1.2345; printf("%.2f,%.2u,%.2g,%X,%o\n",n1,n2,n3,n1,n1);}'
@@ -604,6 +604,11 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - l List out the current line in a ''visually unambiguous'' form.
     ```shell
     sed -n l foo Printing '\t' for TAB
+    ```
+  - y 替换单个字符，不能使用正则表达式，一一对应地替换
+    ```shell
+    echo 'hello' | sed 'y/abcdefghigklmn/ABCDEFGHIJKLMN/'
+    # [Out]: HELLo
     ```
   - sed 只在匹配的第一行后添加一行
     ```shell
@@ -1015,4 +1020,31 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```shell
     ls | xargs -I {} zip {}.zip {}
     ```
+  - 将当前文件夹下的所有文件重命名成 `pic_` + `递增数字` + `后缀类型名` 的格式
+    ```shell
+    # 其中 sed 替换中的 '\' 要用  '\\\\'，否则 sh -c 执行时拿不到
+    # awk 中 $NF 表示最后一个域，NR 表示行数
+    ls | sed 's/ /\\\\ /; s/(/\\\\(/; s/)/\\\\)/' | awk -F '.' 'BEGIN {IND=0;} {name[IND]=$0; type[IND]=$NF; IND++} END {for (i = 0; i < NR; i++) print name[i] " pic_" i "." type[i]}' | xargs -I {} sh -c 'mv {}'
+    ```
 ***
+
+-size n[cwbkMG]
+       File uses n units of space, rounding up.  The following suffixes can be used:
+
+       `b'    for 512-byte blocks (this is the default if no suffix is used)
+
+       `c'    for bytes
+
+       `w'    for two-byte words
+
+       `k'    for Kibibytes (KiB, units of 1024 bytes)
+
+       `M'    for Mebibytes (MiB, units of 1024 * 1024 = 1048576 bytes)
+
+       `G'    for Gibibytes (GiB, units of 1024 * 1024 * 1024 = 1073741824 bytes)
+
+       The size does not count indirect blocks, but it does count blocks in sparse files that are not actually allocated.  Bear in mind that the `%k' and `%b'  format  specifiers  of  -printf  handle
+       sparse files differently.  The `b' suffix always denotes 512-byte blocks and never 1024-byte blocks, which is different to the behaviour of -ls.
+
+       The  +  and  - prefixes signify greater than and less than, as usual; i.e., an exact size of n units does not match.  Bear in mind that the size is rounded up to the next unit. Therefore -size
+       -1M is not equivalent to -size -1048576c.  The former only matches empty files, the latter matches files from 0 to 1,048,575 bytes.

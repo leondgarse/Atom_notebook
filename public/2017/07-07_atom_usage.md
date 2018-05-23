@@ -1,9 +1,11 @@
-g# ___2017 - 07 - 07 Shortcuts for Atom (text editor) 1.0 (win/en)___
+# ___2017 - 07 - 07 Shortcuts for Atom (text editor) 1.0 (win/en)___
 
 # Table of Contents:
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___71 Shortcuts for Atom (text editor) 1.0 (win/en)___](#71-shortcuts-for-atom-text-editor-10-winen)
+  - [___2017 - 07 - 07 Shortcuts for Atom (text editor) 1.0 (win/en)___](#2017-07-07-shortcuts-for-atom-text-editor-10-winen)
+  - [Table of Contents:](#table-of-contents)
+  - [0. Install](#0-install)
   - [1. General](#1-general)
   - [2. File Management](#2-file-management)
   - [3. Editing Lines](#3-editing-lines)
@@ -15,7 +17,18 @@ g# ___2017 - 07 - 07 Shortcuts for Atom (text editor) 1.0 (win/en)___
   - [9. Github Integration](#9-github-integration)
   - [10. Manage Diffs](#10-manage-diffs)
 
-  <!-- /TOC -->gb
+  <!-- /TOC -->
+
+# 0. Install
+  ```shell
+  curl -L https://packagecloud.io/AtomEditor/atom/gpgkey | sudo apt-key add -
+  sudo sh -c 'echo "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" > /etc/apt/sources.list.d/atom.list'
+  sudo apt-get update
+  # Install Atom
+  sudo apt-get install atom
+  # Install Atom Beta
+  sudo apt-get install atom-beta
+  ```
 # 1. General
   |   General    |                              |
   | ------------ | ---------------------------- |

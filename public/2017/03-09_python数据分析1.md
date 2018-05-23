@@ -4236,12 +4236,15 @@ nonzero / where / choose
     ```
     **np.where 生成 dummy 矩阵**
     ```python
-    ss = np.array(list('abc'))
-    np.array([np.where(ss == tt, 1, 0) for tt in ss])
+    ss = np.array(list('abccba'))
+    np.array([np.where(np.unique(ss) == tt, 1, 0) for tt in ss])
     Out[102]:
     array([[1, 0, 0],
            [0, 1, 0],
-           [0, 0, 1]])
+           [0, 0, 1],
+           [0, 0, 1],
+           [0, 1, 0],
+           [1, 0, 0]])
     ```
   - dummy_na指定保留NA值信息
     ```python

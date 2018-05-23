@@ -1,7 +1,5 @@
 # ___2017 - 02 - 06 Python Basic___
 ***
-flush() does not necessarily write the file’s data to disk. Use flush() followed by os.fsync() to ensure this behavior.
-https://docs.python.org/2/library/stdtypes.html?highlight=file%20flush#file.flush
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -592,7 +590,7 @@ https://docs.python.org/2/library/stdtypes.html?highlight=file%20flush#file.flus
     from pd imprt DataFrame
     ```
   - 应该避免使用from..import而使用import语句，因为这样可以使程序更加易读，也可以避免名称的冲突
-## \_\_name\_\_
+## 模块名称 \_\_name\_\_
   - 每个Python模块都有它的__name__
   - 被用户单独运行的模块是'__main__'
     ```python
@@ -843,9 +841,9 @@ https://docs.python.org/2/library/stdtypes.html?highlight=file%20flush#file.flus
     ```
     列表生成器，返回一个生成器，使用()：
     ```python
-    (i+1 for i in range(10) if i&amp;2 == 0)
+    (i+1 for i in range(10) if i % 2 == 0)
     <generator object <genexpr> at 0x7f173064f1a8>        # 返回一个列表生成器，python3中的range()函数的返回值也是一个生成器
-    for i in (i+1 for i in range(10) if i&amp;2 == 0):
+    for i in (i+1 for i in range(10) if i % 2 == 0):
     ...   print(i, end=' ')
     ...
     1 2 5 6 9 10
@@ -930,14 +928,29 @@ https://docs.python.org/2/library/stdtypes.html?highlight=file%20flush#file.flus
   - 作为很多内建函数的返回值
   - 元组与打印语句
     ```python
-    print语句可以使用跟着%符号的项目元组的字符串，让输出满足某种特定的格式
-    %s表示字符串或%d表示整数，元组必须按照相同的顺序来对应
+    print语句可以使用跟着 % 符号的项目元组的字符串，让输出满足某种特定的格式
+    %s 表示字符串或 %d 表示整数，元组必须按照相同的顺序来对应
 
     age = 22
     name = 'Swoooop'
 
-    print('%s is %d years old' %(name, age)) # 不使用逗号,分隔
-    print('Ya! %s is playing python.' %name)
+    print('%s is %d years old' % (name, age)) # 不使用逗号,分隔
+    print('Ya! %s is playing python.' % name)
+    ```
+  - print 打印单个元组内容，应使用 ',' 分隔
+    ```python
+    tt = (1, 2, 3)
+    print('tt = %s' % tt)
+    # [Out]: TypeError: not all arguments converted during string formatting
+
+    print('tt = %s' % (tt))
+    # [Out]: TypeError: not all arguments converted during string formatting
+
+    print('tt = %s' % (tt,))
+    # [Out]: tt = (1, 2, 3)
+
+    print('tt = %s' % str(tt))
+    # [Out]: tt = (1, 2, 3)
     ```
   - 元组可以位于左值 (多元赋值)：
     ```python

@@ -1,8 +1,6 @@
 # ___2013-05-12 Ubuntu使用与shell命令___
 ***
 
-Gtk-Message: Failed to load module “canberra-gtk-module”
-
 编写wxPython程序时，总是报以下错误：
 
 Gtk-Message: Failed to load module “canberra-gtk-module”
