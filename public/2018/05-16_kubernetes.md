@@ -42,6 +42,8 @@
     kubeadm join 192.168.0.200:6443 --token rw4enn.mvk547juq7qi2b5f --discovery-token-ca-cert-hash sha256:ba260d5191213382a806a9a7d92c9e6bb09061847c7914b1ac584d0c69471579
     ```
 ## minikube
+  - [github minikube](https://github.com/kubernetes/minikube/releases/)
+  - [minikube README.md](https://github.com/kubernetes/minikube/blob/v0.27.0/README.md)
   - **安装**
     ```shell
     # snap 安装，版本较低

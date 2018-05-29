@@ -5,6 +5,16 @@
 TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow程序中的所有计算都会被表达为计算图上的节点
 
 除了使用验证数据集，还可以采用交叉验证（cross validation）的方式来验证模型效果。但因为神经网络训练时间本身就比较长，采用cross validation会花费大量时间。所以在海量数据的情况下，一般会更多地采用验证数据集的形式来评测模型的效果
+
+>>> from skimage import data
+>>> from skimage.transform import rotate
+>>> image = data.camera()
+>>> rotate(image, 2).shape
+(512, 512)
+>>> rotate(image, 2, resize=True).shape
+(530, 530)
+>>> rotate(image, 90, resize=True).shape
+(512, 512)
 ```
 
 # TensorFlow 环境搭建
@@ -133,6 +143,20 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
 
     # 系统 shell 中重启容器
     sudo docker restart tensorflow
+
+    sudo docker stop tensorflow
+    sudo docker rm tensorflow
+
+    sudo docker volume create --driver local --name hello --opt type=none --opt device=/opt/NFS --opt o=uid=root,gid=root --opt o=bind
+    sudo docker run --name=tensorflow -it -p 8888:8888 -p 6006:6006 -v hello:/Downloads cargo.caicloud.io/tensorflow/tensorflow:0.12.0
+
+    sudo docker volume ls
+    sudo docker volume rm hello
+
+    sudo docker image ls
+    sudo docker image rm c8a8409297f2
+    sudo docker rm `sudo docker image rm c8a8409297f2 2>&1 | cut -d' ' -f 21`
+    COUNT=0; while [ $COUNT -lt 10 ]; do COUNT=$((COUNT+1)); sudo docker rm `sudo docker image rm da86e6ba6ca1 2>&1 | cut -d' ' -f 21`; done
     ```
 ## pip 安装
   - [Installing TensorFlow from Sources](https://www.tensorflow.org/install/install_sources)
@@ -431,7 +455,49 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
   - 一个小格子代表神经网络中的一个节点，而边代表节点之间的连接
   - 每一条边代表了神经网络中的一个参数，边上的颜色体现了这个参数的取值，颜色越深时表示这个参数取值的绝对值越大，当边的颜色接近白色时，这个参数的取值接近于0
   ![image](images/tf_playground_1.png)
-## 通用函数
+***
+
+# 通用函数
+## tf.matmul tf.tensordot 矩阵乘法
+  - **tf.matmul / @ / tf.tensordot / np.tensordot** 矩阵乘法
+    ```python
+    tensordot(a, b, axes, name=None)
+    ```
+    - **tf.matmul** 不支持不同秩 ranks 的两个矩阵相乘
+    - **tf.tensordot** 需要指定矩阵乘法的轴
+    - **@ 运算符** 矩阵乘法运算，根据运算数类型不同，调用 tf.matmul / np.matmul
+    ```python
+    sess = tf.InteractiveSession()
+    # dtype 不能是 int64
+    ll = np.arange(24, dtype=np.int32).reshape([3, 2, 4])
+    ww = np.arange(20, dtype=np.int32).reshape([4, 5])
+
+    # 使用 tf.matmul 将报错
+    tf.matmul(ll, ww)
+    # ValueError: Shape must be rank 2 but is rank 3 for 'MatMul_7' (op: 'MatMul') with input shapes: [3,2,4], [4,5].
+
+    # 可以使用 tf.tensordot / np.tensordot
+    tf.tensordot(ll, ww, axes=(-1, 0)).eval().shape
+    # Out[57]: (3, 2, 5)
+    ```
+    ```python
+    # @ 运算符，如果是 numpy 定义的操作数，将调用 np.matmul
+    (ll @ ww).shape
+    # Out[65]: (3, 2, 5)
+
+    # @ 运算符，只要有一个是 tensorflow 定义的操作数，将调用 tf.matmul
+    ll = tf.reshape(list(range(24)), [3, 2, 4])
+    ww = tf.reshape(list(range(20)), [4, 5])
+
+    # 调用 tf.matmul，报错
+    ll @ ww
+    # ValueError: Shape must be rank 2 but is rank 3 for 'matmul' (op: 'MatMul') with input shapes: [3,2,4], [4,5]
+
+    ll = tf.reshape(ll, [-1, 4])
+    tf.shape(ll @ ww).eval()
+    # Out[74]: array([6, 5], dtype=int32)
+    ```
+## tf.clip_by_value 将一个张量中的数值限制在一个范围之内
   - **tf.clip_by_value** 函数将一个张量中的数值限制在一个范围之内
     ```python
     sess = tf.InteractiveSession()
@@ -441,6 +507,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     array([[2.5, 2.5, 3. ],
            [4. , 4.5, 4.5]], dtype=float32)
     ```
+## tf.greater tf.equal 返回两个张量的比较结果
   - **tf.greater** 返回两个张量的比较结果
     ```python
     sess = tf.InteractiveSession()
@@ -449,6 +516,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     tf.greater(v1, v2).eval()
     Out[37]: array([False, False,  True,  True])
     ```
+## tf.where 条件筛选
   - **tf.where** 类似 np.where 的功能，在条件满足时取第一个值，否则取第二个值
     ```python
     sess = tf.InteractiveSession()
@@ -457,6 +525,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     tf.where(tf.greater(v1, v2), v1, v2).eval()
     Out[42]: array([4, 3, 3, 4], dtype=int32)
     ```
+## tf.control_dependencies tf.group 组合训练
   - **tf.control_dependencies** / **tf.group**
     - 在训练神经网络模型时，每过一遍数据既需要通过反向传播来更新神经网络中的参数，又要更新每一个参数的滑动平均值
     - 为了一次完成多个操作，TensorFlow 提供了 **tf.control_dependencies** / **tf.group**
@@ -467,6 +536,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
       with tf.control_dependencies([train_step, variables_averages_op]):
           train_op = tf.no_op(name='train')
       ```
+## tf.expand_dims 增加一个维度
   - **tf.expand_dims** 增加一个维度
     ```python
     tf.expand_dims(input, axis=None, name=None, dim=None)
@@ -487,6 +557,106 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     tf.expand_dims(tt, -1)
     Out[61]: <tf.Tensor 'ExpandDims_10:0' shape=(3, 4, 1) dtype=int64>
     ```
+## tf.slice 截取一个切片
+  - **tf.slice** 截取一个切片
+    ```python
+    tf.slice(input_, begin, size, name=None)
+    ```
+    - `foo[3:7, :-2]` 相当于 `tf.slice(foo, [3, 0], [4, foo.get_shape()[1]-2])`
+    - **begin** 指定截取起始的位置
+    - **size** 指定切片大小
+    ```python
+    bb = [1, 0, 0]
+    ss = [1, 1, 3]
+    t = tf.constant([[[1, 1, 1], [2, 2, 2]],
+                     [[3, 3, 3], [4, 4, 4]],
+                     [[5, 5, 5], [6, 6, 6]]])
+    tf.slice(t, bb, ss).eval()
+    # Out[58]: array([[[3, 3, 3]]], dtype=int32)
+    t.eval()[bb[0]:bb[0]+ss[0], bb[1]:bb[1]+ss[1], bb[2]:bb[2]+ss[2]]
+    # Out[59]: array([[[3, 3, 3]]], dtype=int32)
+
+    tf.slice(t, [1, 0, 0], [1, 2, 3]).eval()
+    # Out[61]: array([[[3, 3, 3],
+    #         [4, 4, 4]]], dtype=int32)
+
+    tf.slice(t, [1, 0, 0], [2, 1, 3]).eval()
+    # Out[62]:
+    # array([[[3, 3, 3]],
+    #         [[5, 5, 5]]], dtype=int32)
+    ```
+## tf.transpose 转置
+  - **tf.transpose** 转置
+    ```python
+    tf.transpose(a, perm=None, name='transpose', conjugate=False)
+    ```
+    - **perm** 指定交换轴
+    - **conjugate** 返回虚数矩阵的转置矩阵，等同于 `tf.conj(tf.transpose(input))`
+    ```python
+    sess = tf.InteractiveSession()
+    x = tf.constant([[1, 2, 3], [4, 5, 6]])
+    tf.transpose(x)
+    # Out[24]:
+    # array([[1, 4], [2, 5], [3, 6]], dtype=int32)
+
+    # perm 指定交换轴
+    tf.transpose(x, perm=[0, 1]).eval()
+    # Out[27]:
+    # array([[1, 2, 3], [4, 5, 6]], dtype=int32)
+
+    # conjugate=True 返回虚数矩阵的转置矩阵
+    x = tf.constant([[1 + 1j, 2 + 2j, 3 + 3j], [4 + 4j, 5 + 5j, 6 + 6j]])
+    tf.transpose(x, conjugate=True).eval()
+    # Out[30]:
+    # array([[1.-1.j, 4.-4.j],
+    #       [2.-2.j, 5.-5.j],
+    #       [3.-3.j, 6.-6.j]])
+
+    # 在高维 dim > 2 矩阵中使用 perm
+    x = tf.constant([[[ 1,  2,  3], [ 4,  5,  6]],
+                     [[ 7,  8,  9], [10, 11, 12]]])
+    tf.transpose(x, perm=[0, 2, 1]).eval()
+    # Out[34]:
+    # array([[[ 1,  4], [ 2,  5], [ 3,  6]],
+    #        [[ 7, 10], [ 8, 11], [ 9, 12]]], dtype=int32)
+    ```
+## tf.contrib.seq2seq.sequence_loss 列表损失函数
+  ```shell
+  Tensorflow 0.9 to 1.0.1 is a big jump. A lot changed.
+  Details: https://github.com/tensorflow/tensorflow/blob/master/RELEASE.md
+
+  In tf 1.0.0, the API has been changed such as:
+
+  tf.nn.seq2seq.sequence_loss_by_example
+  to
+  tf.contrib.legacy_seq2seq.sequence_loss_by_example
+
+  tf.nn.rnn_cell.
+  to
+  tf.contrib.rnn.
+
+  tf.nn.rnn_cell.MultiRNNCell
+  to
+  tf.contrib.rnn.MultiRNNCell
+  ```
+  ```python
+  A = tf.constant([[0.1, 0.2, 0.3, 0.4], [0.2, 0.1, 0.4, 0.3], [0.4, 0.3, 0.2, 0.1], [0.3, 0.2, 0.1, 0.4], [0.1, 0.4, 0.3, 0.2]], dtype=tf.float32)
+  B = tf.constant([1, 2, 1, 3, 3], dtype=tf.int32)
+  w_1 = tf.constant(value=[1, 1, 1, 1, 1], dtype=tf.float32)
+  w_2 = tf.constant(value=[1, 2, 3, 4, 5], dtype=tf.float32)
+
+  sess = tf.InteractiveSession()
+  tf.contrib.legacy_seq2seq.sequence_loss_by_example([A], [B], [w_1]).eval()
+  # Out[37]:
+  # array([1.4425356, 1.2425356, 1.3425356, 1.2425356, 1.4425356], dtype=float32)
+
+  tf.contrib.seq2seq.sequence_loss(tf.expand_dims(A, 0), tf.expand_dims(B, 0), tf.expand_dims(w_1, 0)).eval()
+  # Out[38]: 1.3425356
+
+  tf.contrib.seq2seq.sequence_loss(tf.expand_dims(A, 0), tf.expand_dims(B, 0), tf.expand_dims(w_1, 0), average_across_timesteps=False).eval()
+  # Out[154]:
+  # array([1.4425356, 1.2425356, 1.3425356, 1.2425356, 1.4425356], dtype=float32)
+  ```
 ***
 
 # 三层线性神经网络
@@ -636,13 +806,19 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     ```
   - **python 实现 Softmax 回归**
     ```python
+    softmax = lambda x : np.exp(x) / np.sum(np.exp(x), axis=0)
+
+    softmax(np.arange(5))
+    Out[82]: array([0.01165623, 0.03168492, 0.08612854, 0.23412166, 0.63640865])
+    ```
+    ```python
     # Convert a two-dimension array to softmax prob on their own line
     def softmax_prob(prob_array):
-      e_prob_array = np.exp(np.array(prob_array))
-      if np.all(prob_array == -np.inf):
-          return e_prob_array
-      else:
-          return np.divide(e_prob_array, np.sum(e_prob_array, 1).reshape(-1, 1))
+        e_prob_array = np.exp(np.array(prob_array))
+        if np.all(prob_array == -np.inf):
+            return e_prob_array
+        else:
+            return np.divide(e_prob_array, np.sum(e_prob_array, 1).reshape(-1, 1))
 
     # Test run
     tt = np.arange(5)
@@ -1810,7 +1986,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
   输入层 -> (卷积层 * n -> [池化层]) -> 全连接层 -> 输出层
   大部分卷积神经网络中一般最多连续使用三层卷积层。“池化层？”表示没有或者一层池化层。池化层虽然可以起到减少参数防止过拟合问题，但是在部分论文中也发现可以直接通过调整卷积层步长来完成(26)。所以有些卷积神经网络中没有池化层。在多轮卷积层和池化层之后，卷神经网络在输出之前一般会经过1~2个全连接层
 
-VGGNet论文Very Deep Convolutional Networks for Large-Scale Image Recognition 中尝试过的卷积神经网络架构
+  VGGNet论文Very Deep Convolutional Networks for Large-Scale Image Recognition 中尝试过的卷积神经网络架构
 
 
   convX-Y表示过滤器的边长为X，深度为Y。比如conv3-64表示过滤器的长和宽都为3，深度为64。从表6-1中可以看出，VGG Net中的过滤器边长一般为3或者1。在LeNet-5模型中，也使用了边长为5的过滤器。一般卷积层的过滤器边长不会超过5，但有些卷积神经网络结构中，处理输入的卷积层中使用了边长为7甚至是11的过滤器。
@@ -2163,144 +2339,875 @@ VGGNet论文Very Deep Convolutional Networks for Large-Scale Image Recognition �
 
 # 图像数据处理
 ## TFRecord输入数据格式
-## TensorFlow 图像处理
-```python
-import skimage
-import skimage.data
+## 图像读取 与 编解码
+  - **tf.image.decode_jpeg** / **tf.image.encode_jpeg** 图片读取 / 显示 / 保存
+    ```python
+    import skimage
+    import skimage.data
 
-skimage.io.imsave('./coffee.jpg', skimage.data.coffee())
+    skimage.io.imsave('./coffee.jpg', skimage.data.coffee())
 
-''' 读取 '''
-image_raw_data = tf.gfile.FastGFile('./coffee.jpg', 'rb').read()
-sess = tf.InteractiveSession()
-img_data = tf.image.decode_jpeg(image_raw_data)
-img_data.eval().shape
-# Out[1]: (1200, 1600, 3)
+    ''' 读取 '''
+    image_raw_data = tf.gfile.FastGFile('./coffee.jpg', 'rb').read()
+    sess = tf.InteractiveSession()
+    img_data = tf.image.decode_jpeg(image_raw_data)
+    img_data.eval().shape
+    # Out[1]: (400, 600, 3)
 
-''' 显示 '''
-plt.imshow(img_data.eval())
+    ''' 显示 '''
+    plt.imshow(img_data.eval())
 
-''' 保存 '''
-# encode_jpeg 需要的图片数据类型为 uint8
-encoding_image = tf.image.encode_jpeg(img_data)
+    ''' 保存 '''
+    # encode_jpeg 需要的图片数据类型为 uint8
+    encoding_image = tf.image.encode_jpeg(img_data)
 
-with tf.gfile.GFile('out.jpg', 'wb') as f:
-    f.write(encoding_image.eval())
+    with tf.gfile.GFile('out.jpg', 'wb') as f:
+        f.write(encoding_image.eval())
+    ```
+  - **tf.image.convert_image_dtype** 数据类型转化，一般转化方法需要图片数据类型为 float
+    ```python
+    img_data_2 = tf.image.convert_image_dtype(img_data, dtype=tf.float32)
+    ```
+  - **tf.image.decode_image** 图片解码
+    ```python
+    # decode_image 解码
+    image_array = tf.image.decode_image(image_raw_data).eval()
 
-''' 数据类型转化 '''
-img_data_2 = tf.image.convert_image_dtype(img_data, dtype=tf.float32)
-```
-```python
-image_array = tf.image.decode_image(image_raw_data).eval()
-if tf.image.is_jpeg(image_raw_data).eval():
-    image_array = tf.image.decode_jpeg(image_raw_data).eval()
-else:
-    image_array = tf.image.decode_jpeg(image_raw_data).eval()
-```
+    # is_jpeg 判断图片格式，选择 jpg / png
+    if tf.image.is_jpeg(image_raw_data).eval():
+        image_array = tf.image.decode_jpeg(image_raw_data).eval()
+    else:
+        image_array = tf.image.decode_jpeg(image_raw_data).eval()
+    ```
+    ```python
+    def tf_imread(image_path):
+        with tf.Session() as sess:
+            image_raw_data = tf.gfile.FastGFile(image_path, 'rb').read()
+            image_array = tf.image.decode_image(image_raw_data)
+            return image_array.eval()
+    ```
 ## 图像大小调整
-```python
-resized = tf.image.resize_images(img_data_2, [300, 300], method=0)
-resized.get_shape()
-# Out[18]: TensorShape([Dimension(300), Dimension(300), Dimension(None)])
-plt.imshow(resized.eval())
-```
-tf.image.resize_images函数中method参数取值与相对应的图像大小调整算法
-Method取值 图像大小调整算法
-0 双线性插值法 Bilinear interpolation
-1 最近邻居法 Nearest neighbor interpolation
-2 双三次插值法 Bicubic interpolation
-3 面积插值法 Area interpolation
-```python
-cropped = tf.image.resize_image_with_crop_or_pad(img_data_2, 500, 500)
-plt.imshow(cropped.eval())
-padded = tf.image.resize_image_with_crop_or_pad(img_data_2, 2000, 2000)
-plt.imshow(padded.eval())
-central_cropped = tf.image.central_crop(img_data_2, 0.5)
-plt.imshow(central_cropped.eval())
-cropped_2 = tf.image.crop_to_bounding_box(img_data_2, 500, 150, 200, 400)
-plt.imshow(cropped_2.eval())
-cropped_3 = tf.image.crop_and_resize([img_data_2], [[0.2, 0.5, 0.5, 1]], [0], [300, 300])
-plt.imshow(cropped_3.eval()[0])
-```
-crop_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
-top-left corner of the returned image is at `offset_height, offset_width`
-lower-right corner is at `offset_height + target_height, offset_width + target_width`
-pad_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
+  - 神经网络输入节点的个数是固定的，在将图像的像素作为输入提供给神经网络之前，需要先将图像的大小统一
+  - **tf.image.resize_images** 调整图片大小
+    ```python
+    resized = tf.image.resize_images(img_data_2, [300, 300], method=0)
+    resized.get_shape()
+    # Out[18]: TensorShape([Dimension(300), Dimension(300), Dimension(None)])
+    plt.imshow(resized.eval())
+    ```
+    - **method 参数** 取值与相对应的图像大小调整算法
+      - **0** 双线性插值法 Bilinear interpolation
+      - **1** 最近邻居法 Nearest neighbor interpolation
+      - **2** 双三次插值法 Bicubic interpolation
+      - **3** 面积插值法 Area interpolation
+  - **tf.image.resize_image_with_crop_or_pad** 裁剪与填充
+    ```python
+    # 裁剪到目标大小
+    cropped = tf.image.resize_image_with_crop_or_pad(img_data_2, 200, 200)
+    plt.imshow(cropped.eval())
 
-crop_and_resize(image, boxes, box_ind, crop_size, method='bilinear', extrapolation_value=0, name=None)
-image: A `Tensor`. A 4-D tensor of shape `[batch, image_height, image_width, depth]`
-boxes: A 2-D tensor of shape `[num_boxes, 4]`. The `i`-th row of the tensor specifies the coordinates of a box in the `box_ind[i]` image and is specified in normalized coordinates `[y1, x1, y2, x2]`
-box_ind: A `Tensor` of type `int32`. A 1-D tensor of shape `[num_boxes]` with int32 values in `[0, batch)`
-crop_size: A `Tensor` of type `int32`. A 1-D tensor of 2 elements, `size = [crop_height, crop_width]`. All cropped image patches are resized to this size.
-method: An optional `string` from: `"bilinear"`. Defaults to `"bilinear"`. A string specifying the interpolation method. Only 'bilinear' is supported for now.
+    # 填充到目标大小
+    padded = tf.image.resize_image_with_crop_or_pad(img_data_2, 1000, 1000)
+    plt.imshow(padded.eval())
+    ```
+  - **tf.image.central_crop** 通过比例调整图像大小
+    ```python
+    central_cropped = tf.image.central_crop(img_data_2, 0.5)
+    plt.imshow(central_cropped.eval())
+    ```
+  - **tf.image.crop_to_bounding_box / pad_to_bounding_box** 将图片 裁剪 / 填充 到指定的像素位置 bounding_box
+    ```python
+    crop_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
+    pad_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
+    ```
+    - **左上角位置** `offset_height, offset_width`
+    - **右下角位置** `offset_height + target_height, offset_width + target_width`
+    ```python
+    cropped_2 = tf.image.crop_to_bounding_box(img_data_2, 100, 150, 100, 200)
+    plt.imshow(cropped_2.eval())
+
+    padded = tf.image.pad_to_bounding_box(img_data_2, 50, 100, 500, 800)
+    plt.imshow(padded.eval())
+    ```
+  - **tf.image.crop_and_resize** 将一组图片裁剪并调整到指定大小
+    ```python
+    crop_and_resize(image, boxes, box_ind, crop_size, method='bilinear', extrapolation_value=0, name=None)
+    ```
+    - **image** 4-D 张量 `[batch, image_height, image_width, depth]`
+    - **boxes** 2-D 张量 `[num_boxes, 4]`，其中每一个坐标是一个标准化后的坐标 normalized coordinates `[y1, x1, y2, x2]`
+    - **box_ind** 1-D 张量 `[num_boxes]`，int32 类型值，取值在 `[0, batch)`
+    - **crop_size** 2-D 张量 `size = [crop_height, crop_width]`，调整后图片大小
+    - **method** 可选参数，目前只支持 `"bilinear"`
+    ```python
+    cropped_3 = tf.image.crop_and_resize([img_data_2], [[0.2, 0.5, 0.5, 1]], [0], [160, 160])
+    plt.imshow(cropped_3.eval()[0])
+    ```
 ## 图像翻转
-```python
-# 将图像上下翻转
-flipped = tf.image.flip_up_down(img_data_2)
-plt.imshow(flipped.eval())
-# 将图像左右翻转
-flipped = tf.image.flip_left_right(img_data_2)
-plt.imshow(flipped.eval())
-# 将图像沿对角线翻转
-flipped = tf.image.transpose_image(img_data_2)
-plt.imshow(flipped.eval())
-# 以一定概率上下翻转图像
-flipped = tf.image.random_flip_left_right(img_data_2)
-plt.imshow(flipped.eval())
-# 以一定概率左右翻转图像
-flipped = tf.image.random_flip_up_down(img_data_2)
-plt.imshow(flipped.eval())
-```
-# 图像色彩调整
-```python
-adjusted = tf.image.adjust_brightness(img_data_2, -0.5)
-plt.imshow(adjusted.eval())
-adjusted = tf.image.random_brightness(img_data_2, 0.5)
-plt.imshow(adjusted.eval())
+  - 在训练图像识别的神经网络模型时，可以随机地翻转训练图像，这样训练得到的模型可以识别不同角度的实体
+  - **tf.image.flip_up_down** 将图像上下翻转
+  - **tf.image.flip_left_right** 将图像左右翻转
+  - **tf.image.transpose_image** 将图像沿对角线翻转
+  - **tf.image.random_flip_left_right** 以一定概率上下翻转图像
+  - **tf.image.random_flip_up_down** 以一定概率左右翻转图像
+  ```python
+  # 将图像上下翻转
+  flipped = tf.image.flip_up_down(img_data_2)
+  plt.imshow(flipped.eval())
 
-adjusted = tf.image.adjust_contrast(img_data_2, -5)
-plt.imshow(adjusted.eval())
-adjusted = tf.image.random_contrast(img_data_2, 0, 5)
-plt.imshow(adjusted.eval())
+  # 将图像左右翻转
+  flipped = tf.image.flip_left_right(img_data_2)
+  plt.imshow(flipped.eval())
 
-adjusted = tf.image.adjust_hue(img_data_2, 0.1)
-plt.imshow(adjusted.eval())
-adjusted = tf.image.random_hue(img_data_2, 0.5)
-plt.imshow(adjusted.eval())
+  # 将图像沿对角线翻转
+  flipped = tf.image.transpose_image(img_data_2)
+  plt.imshow(flipped.eval())
 
-adjusted = tf.image.adjust_saturation(img_data_2, -5)
-plt.imshow(adjusted.eval())
-adjusted = tf.image.random_saturation(img_data_2, 0, 5)
-plt.imshow(adjusted.eval())
+  # 以一定概率上下翻转图像
+  flipped = tf.image.random_flip_left_right(img_data_2)
+  plt.imshow(flipped.eval())
 
-adjusted = tf.image.per_image_standardization(img_data_2)
-plt.imshow(adjusted.eval())
-```
-```python
-def tf_imread(image_path):
+  # 以一定概率左右翻转图像
+  flipped = tf.image.random_flip_up_down(img_data_2)
+  plt.imshow(flipped.eval())
+  ```
+## 图像色彩调整
+  - 在训练神经网络模型时，可以随机调整训练图像的色彩属性，从而使得训练得到的模型尽可能小地受到无关因素的影响
+  - **tf.image.adjust_brightness / tf.image.random_brightness** 亮度
+    ```python
+    adjusted = tf.image.adjust_brightness(img_data_2, -0.5)
+    plt.imshow(adjusted.eval())
+
+    adjusted = tf.image.random_brightness(img_data_2, 0.5)
+    plt.imshow(adjusted.eval())
+    ```
+  - **tf.image.adjust_contrast / tf.image.random_contrast** 对比度
+    ```python
+    adjusted = tf.image.adjust_contrast(img_data_2, -5)
+    plt.imshow(adjusted.eval())
+
+    adjusted = tf.image.random_contrast(img_data_2, 0, 5)
+    plt.imshow(adjusted.eval())
+    ```
+  - **tf.image.adjust_hue / tf.image.random_hue** 色相
+    ```python
+    adjusted = tf.image.adjust_hue(img_data_2, 0.1)
+    plt.imshow(adjusted.eval())
+    adjusted = tf.image.random_hue(img_data_2, 0.5)
+    plt.imshow(adjusted.eval())
+    ```
+  - **tf.image.adjust_saturation / tf.image.random_saturation** 饱和度
+    ```python
+    adjusted = tf.image.adjust_saturation(img_data_2, -5)
+    plt.imshow(adjusted.eval())
+    adjusted = tf.image.random_saturation(img_data_2, 0, 5)
+    plt.imshow(adjusted.eval())
+    ```
+  - **tf.image.per_image_standardization** 图像标准化，将图像上的亮度均值变为0，方差变为1
+    ```python
+    adjusted = tf.image.per_image_standardization(img_data_2)
+    plt.imshow(adjusted.eval())
+    ```
+## 标注框
+  - **tf.image.draw_bounding_boxes** 在一组图像中加入标注框
+    ```python
+    resized = tf.image.resize_images(img_data_2, [300, 300], method=1)
+
+    batched = tf.expand_dims(resized, 0)
+    bounding_box = tf.constant([[[0.05, 0.05, 0.9, 0.7], [0.35, 0.47, 0.5, 0.56]]])
+    result = tf.image.draw_bounding_boxes(batched, bounding_box)
+    result.eval().shape
+    # Out[19]: (1, 300, 300, 3)
+
+    plt.imshow(result.eval()[0])
+    ```
+  - **tf.image.sample_distorted_bounding_box** 随机截取图像，并保留图片的有效信息
+    - 返回值 **(begin, size, bboxes)**
+    - **begin** 1-D 张量 `[offset_height, offset_width, 0]` 可用于 `tf.slice`
+    - **size** 1-D 张量 `[target_height, target_width, -1]` 可用于 `tf.slice`
+    - **bboxes** 3-D 张量 `[1, 1, 4]`，包含可用于 `tf.image.draw_bounding_boxes` 的 bounding box
+    ```python
+    # 通过 bounding_box 指定图像的有效信息部分
+    bounding_box = tf.constant([0.05, 0.05, 0.9, 0.7], dtype=tf.float32, shape=[1, 1, 4])
+    begin, size, bbox_for_draw = tf.image.sample_distorted_bounding_box(
+            tf.shape(resized),
+            bounding_boxes=bounding_box,
+            min_object_covered=0.1)
+    begin.eval()
+    # Out[26]: array([140, 161,   0], dtype=int32)
+
+    size.eval()
+    # Out[27]: array([140, 179,  -1], dtype=int32)
+
+    bbox_for_draw.eval()
+    # Out[28]: array([[[0.22666667, 0.3       , 0.75      , 0.81333333]]], dtype=float32)
+
+    # begin, size 截取图像
+    distorted_image = tf.slice(resized, begin, size)
+    plt.imshow(distorted_image.eval())
+
+    # bounding box 截取图像
+    batched = tf.expand_dims(tf.image.convert_image_dtype(resized, tf.float32), 0)
+    image_with_box = tf.image.draw_bounding_boxes(batched, bbox_for_draw)
+    plt.imshow(image_with_box.eval()[0])
+    ```
+## 综合使用示例
+  ```python
+  import tensorflow as tf
+  import numpy as np
+  import matplotlib.pyplot as plt
+
+  def distort_color(image, color_ordering=0):
+      if color_ordering == 0:
+          image = tf.image.random_brightness(image, max_delta=32./255.)
+          image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
+          image = tf.image.random_hue(image, max_delta=0.2)
+          image = tf.image.random_contrast(image, lower=0.5, upper=1.5)
+      else:
+          image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
+          image = tf.image.random_brightness(image, max_delta=32./255.)
+          image = tf.image.random_contrast(image, lower=0.5, upper=1.5)
+          image = tf.image.random_hue(image, max_delta=0.2)
+
+      return tf.clip_by_value(image, 0.0, 1.0)
+
+  def preprocess_for_train(image, height, width, bbox):
+      # 查看是否存在标注框
+      if bbox is None:
+          bbox = tf.constant([0.0, 0.0, 1.0, 1.0], dtype=tf.float32, shape=[1, 1, 4])
+      if image.dtype != tf.float32:
+          image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+
+      # 随机的截取图片中一个块
+      bbox_begin, bbox_size, _ = tf.image.sample_distorted_bounding_box(
+          tf.shape(image), bounding_boxes=bbox)
+      bbox_begin, bbox_size, _ = tf.image.sample_distorted_bounding_box(
+          tf.shape(image), bounding_boxes=bbox)
+      distorted_image = tf.slice(image, bbox_begin, bbox_size)
+
+      # 将随机截取的图片调整为神经网络输入层的大小
+      distorted_image = tf.image.resize_images(distorted_image, [height, width], method=np.random.randint(4))
+      distorted_image = tf.image.random_flip_left_right(distorted_image)
+      distorted_image = distort_color(distorted_image, np.random.randint(2))
+      return distorted_image
+
+  image_raw_data = tf.gfile.FastGFile("./coffee.jpg", "rb").read()
+  with tf.Session() as sess:
+      img_data = tf.image.decode_jpeg(image_raw_data)
+      boxes = tf.constant([[[0.05, 0.05, 0.9, 0.7], [0.35, 0.47, 0.5, 0.56]]])
+      for i in range(9):
+          result = preprocess_for_train(img_data, 299, 299, boxes)
+          plt.imshow(result.eval())
+          plt.show()
+  ```
+***
+
+# 多线程输入数据处理框架
+## 队列与多线程
+  在TensorFlow中，队列不仅是一种数据结构，它更提供了多线程机制。队列也是TensorFlow多线程输入数据处理框架的基础
+  在TensorFlow中，队列和变量类似，都是计算图上有状态的节点。其他的计算节点可以修改它们的状态。对于变量，可以通过赋值操作修改变量的取值(8)。对于队列，修改队列状态的操作主要有Enqueue、EnqueueMany和Dequeue
+  ```python
+  q = tf.FIFOQueue(2, tf.int32)
+  init = q.enqueue_many(([0, 10], ))
+  x = q.dequeue()
+  y = x + 1
+  q_inc = q.enqueue([y])
+
+  sess = tf.InteractiveSession()
+  init.run()
+  for _ in range(5):
+      v, _ = sess.run([x, q_inc])
+      print('v = %d' % v)
+
+  v = 0
+  v = 10
+  v = 1
+  v = 11
+  v = 2
+  ```
+  TensorFlow中提供了FIFOQueue和RandomShuffleQueue两种队列，FIFOQueue，它的实现的是一个先进先出队列。RandomShuffleQueue会将队列中的元素打乱
+  在TensorFlow中，队列不仅仅是一种数据结构，还是异步计算张量取值的一个重要机制。比如多个线程可以同时向一个队列中写元素，或者同时读取一个队列中的元素
+  TensorFlow提供了tf.Coordinator和tf.QueueRunner两个类来完成多线程协同的功能。tf.Coordinator主要用于协同多个线程一起停止，并提供了should_stop、request_stop和join三个函数。在启动线程之前，需要先声明一个tf.Coordinator类，并将这个类传入每一个创建的线程中。启动的线程需要一直查询tf.Coordinator类中提供的should_stop函数，当这个函数的返回值为True时，则当前线程也需要退出。每一个启动的线程都可以通过调用request_stop函数来通知其他线程退出。当某一个线程调用request_stop函数之后，should_stop函数的返回值将被设置为True，这样其他的线程就可以同时终止了
+  ```python
+  import numpy as np
+  import threading
+  import time
+
+  def MyLoop(coord, worker_id):
+      while not coord.should_stop():
+          if np.random.rand() < 0.1:
+              print("Stoping from id: %d" % worker_id)
+              coord.request_stop()
+          else:
+              print("Working on id: %d" % worker_id)
+              time.sleep(1)
+
+  coord = tf.train.Coordinator()
+  threads = [ threading.Thread(target=MyLoop, args=(coord, i)) for i in range(5) ]
+
+  # 启动所有的线程
+  for t in threads:
+      t.start()
+
+  # 等待所有线程退出
+  coord.join(threads)
+
+  Working on id: 0
+  Working on id: 1
+  Working on id: 2
+  Stoping from id: 3
+  ```
+  tf.QueueRunner主要用于启动多个线程来操作同一个队列，启动的这些线程可以通过上面介绍的tf.Coordinator类来统一管理
+  ```python
+  queue = tf.FIFOQueue(100,"float")
+  enqueue_op = queue.enqueue([tf.random_normal([1])])
+  qr = tf.train.QueueRunner(queue, [enqueue_op] * 5)
+  tf.train.add_queue_runner(qr)
+  out_tensor = queue.dequeue()
+
+  with tf.Session() as sess:
+      coord = tf.train.Coordinator()
+      threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+      for _ in range(3): print(sess.run(out_tensor)[0])
+      coord.request_stop()
+      coord.join(threads)
+
+  -0.5423946
+  0.3165861
+  1.0915769
+  ```
+## 输入文件队列
+  虽然一个TFRecord文件中可以存储多个训练样例，但是当训练数据量较大时，可以将数据分成多个TFRecord文件来提高处理效率
+  TensorFlow提供了tf.train.match_filenames_once函数来获取符合一个正则表达式的所有文件，得到的文件列表可以通过tf.train.string_input_producer函数进行有效的管理
+***
+
+# 循环神经网络 recurrent neural network RNN
+## 循环神经网络简介
+  - **循环神经网络 recurrent neural network, RNN** 源自于 1982 年由 Saratha Sathasivam 提出的 **霍普菲尔德网络**，在语音识别、语言模型、机器翻译以及时序分析等问题上被广泛地应用
+  - **循环神经网络** 的主要用途是 **处理和预测序列数据**，循环神经网络的来源就是为了 **刻画一个序列当前的输出与之前信息的关系**，循环神经网络会记忆之前的信息，并利用之前的信息影响后面结点的输出
+  - 循环神经网络会对于每一个时刻的 **输入** 结合当前模型的 **状态** 给出一个 **输出**，**循环神经网络的隐藏层** 之间的结点是有连接的，隐藏层的输入不仅包括输入层的输出，还包括上一时刻隐藏层的输出
+    ![image](images/rnn_structure.png)
+    - 对于每一个时刻会有一个 **输入 Xt**，根据循环神经网络 **当前的状态 At** 提供一个 **输出 ht**
+    - 循环神经网络 **当前的状态 At** 是根据 **上一时刻的状态 At-1** 和 **当前的输入 Xt** 共同决定的
+  - 循环神经网络要求每一个时刻都有一个输入，但是不一定每个时刻都需要有输出
+  - **循环体** 循环神经网络可以看做是同一神经网络结构在时间序列上被复制多次的结果，这个被复制多次的结构被称之为 **循环体**，如何设计循环体的网络结构是循环神经网络解决实际问题的关键，循环体网络结构中的参数在不同时刻是共享的
+  - **隐藏层** 循环神经网络中的状态是通过一个向量来表示的，这个向量的维度也称为循环神经网络 **隐藏层** 的大小
+  - **输入** 有两部分，一部分为上一时刻的状态，另一部分为当前时刻的输入样本
+    - 对于 **时间序列数据** ，每一时刻的输入样例可以是当前时刻的数值
+    - 对于 **语言模型**，输入样例可以是当前单词对应的单词向量 word embedding
+  - 理论上循环神经网络可以支持任意长度的序列，然而在实际中，如果序列过长会导致优化时出现 **梯度消散问题 the vanishing gradient problem**，所以一般会规定一个最大长度，当序列长度超过规定长度之后会对序列进行截断
+## 单层全连接神经网络循环体
+  - **单层全连接神经网络作为循环体的循环神经网络结构**
+
+    ![image](images/rnn_simple_cell.png)
+    - 输入向量的维度为 x，状态向量维度为 h，循环体的全连接层神经网络的 **输入大小为 h+x**
+    - 输出为当前时刻的状态，于是 **输出层的节点个数为h**
+    - 循环体中的 **参数个数为（h+x）×h+h个**
+    - 为了将当前时刻的状态转化为最终的输出，循环神经网络还需要另外一个全连接神经网络来完成这个过程
+  - python 实现
+    ```python
+    x = [1, 2]
+    state = [0.0, 0.0]
+
+    # 输入部分的权重
+    w_cell_state = np.array([[0.1, 0.2], [0.3, 0.4]])
+    w_cell_input = np.array([[0.5, 0.5]])
+    b_cell = np.array([0.1, -0.1])
+
+    # 用于输出的全连接层参数
+    w_output = np.array([[1.0], [2.0]])
+    b_output = 0.1
+
+    # 按照时间顺序执行循环神经网络的前向传播过程
+    for i in range(len(x)):
+        # 计算循环体中的全连接层神经网络
+        before_activation = np.dot(state, w_cell_state) + x[i] * w_cell_input + b_cell
+        state = np.tanh(before_activation)
+        # 根据当前时刻状态计算最终输出
+        final_output = np.dot(state, w_output) + b_output
+        print('before_activation = %s, state = %s, final_output = %s' % (before_activation, state, final_output))
+
+    # [Out]
+    # before_activation = [[ 0.24109344 -0.07470799]], state = [[ 0.23652828 -0.07456931]], final_output = [[0.18738966]]
+    # before_activation = [[1.10128204 0.91747793]], state = [[0.80095906 0.72470211]], final_output = [[2.35036327]]
+    ```
+## 长短时记忆网络 long short-term memory LSTM
+  - **LSTM 结构** 是由 Sepp Hochreiter 和 Jürgen Schmidhuber 于1997年提出的，循环神经网络被成功应用的关键就是 LSTM，在很多的任务上，采用 LSTM 结构的循环神经网络比标准的循环神经网络表现更好
+  - 循环神经网络工作的关键点就是使用历史的信息来帮助当前的决策，在有些问题中，模型仅仅需要短期内的信息来执行当前的任务，但同样也会有一些上下文场景更加复杂的情况，仅仅根据短期依赖就无法很好的解决这种问题
+  - **LSTM 结构** 与单一tanh循环体结构不同，LSTM 是一种拥有三个 **门结构** 的特殊网络结构
+
+    ![image](images/lstm_cell_structure.png)
+  - **门结构 gate** 使用一个 **sigmoid神经网络** 和一个 **按位乘法操作**，制丢弃或者增加信息，从而实现遗忘或记忆的功能
+    - sigmoid 神经网络层会输出一个0到1之间的数值，描述当前输入有多少信息量可以通过这个结构
+    - sigmoid 神经网络层 **输出为 1** 时，全部信息都可以通过
+    - sigmoid 神经网络层 **输出为 0** 时，任何信息都无法通过
+    - 一个 LSTM 单元有三个门，**遗忘门 forget gate** / **输入门 input gate** / **输出门 output gate**
+    ![image](images/lstm_cell_structure_detail.png)
+  - **单元状态 cell state** 将信息从上一个单元传递到下一个单元，和其他部分只有很少的线性的相互作用
+
+    ![image](images/lstm_cell_structure_detail_state.png)
+  - **遗忘门 forget gate** 控制上一单元状态被遗忘的程度，是以 **上一单元的输出 ht−1** 和 **本单元的输入 xt** 为输入的sigmoid函数，为 **Ct−1** 中的每一项产生一个在 [0,1] 内的值，决定哪一部分记忆需要被遗忘
+
+    ![image](images/lstm_cell_structure_detail_forget.png)
+  - **输入门 input gate** 控制新信息被加入的多少，**tanh 函数** 产生一个 **新的候选向量 Ct~**，输入门为 Ct~ 中的每一项产生一个在 [0,1] 内的值，控制新信息被加入的多少
+
+    ![image](images/lstm_cell_structure_detail_input.png)
+  - **更新本记忆单元的单元状态 Ct** 根据 **遗忘门的输出 ft** / **输入门的输出 it**，更新本记忆单元的单元状态 Ct
+    ```python
+    Ct = ft ∗ C[t-1] + it ∗ Ct~
+    ```
+  - **输出门 output gate** 控制当前的单元状态有多少被过滤掉，先将单元状态激活，输出门为其中每一项产生一个在[0,1]内的值，控制单元状态被过滤的程度
+
+    ![image](images/lstm_cell_structure_detail_output.png)
+  - **TensorFlow 中的 LSTM 结构**
+    - **tf.contrib.rnn.BasicLSTMCell** / **tf.contrib.rnn.LSTMCell** 定义 LSTM 基本单元
+    - **tf.contrib.rnn.MultiRNNCell** 实现深层循环神经网络的前向传播过程
+    - **tf.nn.static_rnn** / **tf.contrib.rnn.static_rnn** static rnn
+    - **tf.nn.dynamic_rnn** dynamic rnn
+## 循环神经网络的dropout
+  - 循环神经网络一般只在 **不同层循环体结构之间** 使用 dropout，而不在同一层的循环体结构之间使用
+    - 从时刻 t-1 传递到时刻 t 时，循环神经网络不会进行状态的 dropout
+    - 在同一个时刻 t 中，不同层循环体之间会使用 dropout
+  - **tf.nn.rnn_cell.DropoutWrapper** 类实现 dropout 功能
+## 双向循环神经网络 和 深层循环神经网络
+  - **双向循环神经网络 bidirectional RNN** 当前时刻的输出不仅和之前的状态有关系，也和之后的状态相关，双向循环神经网络解决这类问题
+
+    ![image](images/bidirectional_rnn.png)
+  - **双向循环神经网络** 的主体结构就是两个单向循环神经网络的结合，在每一个时刻t，输入会同时提供给这两个方向相反的循环神经网络，而输出则是由这两个单向循环神经网络共同决定
+  - **深层循环神经网络 deepRNN** 将每一个时刻上的循环体重复多次，增强模型的表达能力，**tf.contrib.rnn.MultiRNNCell** 类来实现深层循环神经网络的前向传播过程
+
+    ![image](images/deep_rnn.png)
+## LSTM MNIST
+  ```python
+  ''' 导入包和数据 '''
+  import tensorflow as tf
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from tensorflow.contrib import rnn
+  from tensorflow.examples.tutorials.mnist import input_data
+
+  ''' 模型超参数 '''
+  # 每个隐含层的节点数
+  HIDDEN_SIZE = 64
+  # LSTM layer 的层数
+  NUM_LAYERS = 3
+  # 最后输出分类类别数量，如果是回归预测的话应该是 1
+  CLASS_NUM = 10
+  # 训练数据的 batch_size
+  BATCH_SIZE = 128
+  LEARNING_RATE = 1e-3
+  TRAINING_STEPS = 200
+
+  ''' 定义 LSTM 单元模型 '''
+  def unit_lstm(output_keep_prob):
+      # 定义一层 LSTM_cell，只需要说明 hidden_size, 它会自动匹配输入的 X 的维度
+      lstm_cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE, forget_bias=1.0, state_is_tuple=True)
+      # 添加 dropout layer, 一般只设置 output_keep_prob
+      lstm_cell_dropout = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=output_keep_prob)
+      return lstm_cell_dropout
+
+  ''' 加载数据与初始化参数 '''
+  mnist = input_data.read_data_sets('./MNIST_data', one_hot=True)
+  output_keep_prob = tf.placeholder(tf.float32)
+  # 采用占位符的方式，可以在训练和测试的时候用不同的 batch_size
+  batch_size = tf.placeholder(tf.int32, [])
+  _X = tf.placeholder(tf.float32, [None, 784])
+  y  =tf.placeholder(tf.float32, [None, CLASS_NUM])
+  # 把 784 个点的字符信息还原成 28 * 28 的图片
+  X = tf.reshape(_X, [-1, 28, 28])
+
+  ''' 定义 LSTM 前向传播过程 inference '''
+  # 调用 MultiRNNCell 来实现多层 LSTM
+  mlstm_cell = rnn.MultiRNNCell([unit_lstm(output_keep_prob) for _ in range(NUM_LAYERS)], state_is_tuple=True)
+  # 用全零来初始化 state
+  init_state = mlstm_cell.zero_state(batch_size, dtype=tf.float32)
+  outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=X, initial_state=init_state, time_major=False)
+
+  ''' 设置全连接层，输出预测值 '''
+  h_state = outputs[:, -1, :]  # 或者 h_state = state[-1][1]
+  W = tf.Variable(tf.truncated_normal([HIDDEN_SIZE, CLASS_NUM], stddev=0.1), dtype=tf.float32)
+  bias = tf.Variable(tf.constant(0.1, shape=[CLASS_NUM]), dtype=tf.float32)
+  y_pre = tf.nn.softmax(tf.matmul(h_state, W) + bias)
+
+  ''' 设置 loss function 和 优化器'''
+  # 损失和评估函数
+  cross_entropy = -tf.reduce_mean(y * tf.log(y_pre))
+  train_op = tf.train.AdamOptimizer(LEARNING_RATE).minimize(cross_entropy)
+  correct_prediction = tf.equal(tf.argmax(y_pre, 1), tf.argmax(y, 1))
+  accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
+
+  ''' 模型训练 '''
+  sess = tf.Session()
+  with sess.as_default():
+      sess.run(tf.global_variables_initializer())
+      for i in range(TRAINING_STEPS):
+          xs, ys = mnist.train.next_batch(BATCH_SIZE)
+          if i % 100 == 0:
+              train_accuracy = sess.run(accuracy, feed_dict={_X: xs, y: ys, output_keep_prob: 1.0, batch_size: BATCH_SIZE})
+              # 已经迭代完成的 epoch 数: mnist.train.epochs_completed
+              print("Iter%d, step %d, training accuracy %g" % ( mnist.train.epochs_completed, (i+1), train_accuracy))
+          sess.run(train_op, feed_dict={_X: xs, y: ys, output_keep_prob: 0.5, batch_size: BATCH_SIZE})
+
+  ''' 测试数据集验证 '''
+  with sess.as_default():
+      images = mnist.test.images
+      labels = mnist.test.labels
+      print("test accuracy %g" % sess.run(accuracy, feed_dict={
+          _X: images, y: labels, output_keep_prob: 1.0, batch_size:mnist.test.images.shape[0]}))
+
+  ''' 图形化显示模型分类过程 '''
+  current_y = mnist.train.labels[5]
+  current_x = mnist.train.images[5]
+  print('current_y = %s' % (current_y))
+
+  # 把模型里面相关变量算出来
+  with sess.as_default():
+      current_outputs, h_W, h_bias, current_y_pre = sess.run([outputs, W, bias, y_pre], feed_dict={_X: [current_x], y: [current_y], output_keep_prob: 1.0, batch_size: 1})
+  print('current_outputs.shape = %s, h_W.shape = %s, h_bias.shape = %s, predict = %d' % (current_outputs.shape, h_W.shape, h_bias.shape, current_y_pre.argmax()))
+
+  # 识别的过程
+  softmax = lambda x : np.exp(x) / np.sum(np.exp(x), axis=0)
+  current_outputs = current_outputs[0]
+  bar_index = range(CLASS_NUM)
+  for i in range(current_outputs.shape[0]):
+      plt.subplot(7, 4, i+1)
+      pro = softmax(np.matmul(current_outputs[i, :], h_W) + h_bias)
+      plt.bar(bar_index, pro, width=0.2 , align='center')
+      plt.axis('off')
+  ```
+  运行结果
+  ```python
+  Iter0, step 1, training accuracy 0.0625
+  Iter0, step 101, training accuracy 0.75
+  test accuracy 0.8588
+  current_y = [0. 0. 0. 0. 0. 0. 0. 0. 0. 1.]
+  current_outputs.shape = (1, 28, 64), h_W.shape = (64, 10), h_bias.shape = (10,), predict = 9
+  ```
+  ![image](images/lstm_mnist.png)
+  - 在上面的图中，每一行显示了 4 个图，共有 7 行，表示了一行一行读取过程中，模型对字符的识别
+  - 在只看到前面的几行像素时，模型根本认不出来是什么字符，随着看到的像素越来越多，最后就基本确定了字符
+## PTB Penn Treebank Dataset 文本数据集
+  - Tensorflow 读取 ptb 数据模块 [ ??? ]
+    ```shell
+    git clone https://github.com/tensorflow/models
+    export PYTHONPATH="$PYTHONPATH:$HOME/workspace/models"
+    export PYTHONPATH="$PYTHONPATH:$HOME/workspace/models/tutorials/rnn/ptb"
+    ```
+  - PTB 数据读取
+    ```python
+    from tutorials.rnn.ptb import reader
+    train_data, valid_data, test_data, _ = reader.ptb_raw_data('./datasets/PTB_data/')
+    len(train_data)
+    # Out[70]: 929589
+
+    train_data[:10]
+    # Out[71]: [9970, 9971, 9972, 9974, 9975, 9976, 9980, 9981, 9982, 9983]
+
+    result = reader.ptb_producer(train_data, 4, 5)
     with tf.Session() as sess:
-        image_raw_data = tf.gfile.FastGFile(image_path, 'rb').read()
-        image_array = tf.image.decode_image(image_raw_data)
-        return image_array.eval()
-```
-```python
-resized = tf.image.resize_images(img_data_2, [300, 300], method=1)
-batched = tf.expand_dims(resized, 0)
-bounding_box = tf.constant([[[0.05, 0.05, 0.9, 0.7], [0.35, 0.47, 0.5, 0.56]]])
-result = tf.image.draw_bounding_boxes(batched, bounding_box)
-result.eval().shape
-# Out[19]: (1, 300, 300, 3)
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        for i in range(3):
+            x, y = sess.run(result)
+            print('x%d = %s\ny%d = %s\n' % (i, x, i, y))
+        coord.request_stop()
+        coord.join(threads)
+    ```
+  - 运行结果
+    ```python
+    x0 = [[9970 9971 9972 9974 9975]
+     [ 332 7147  328 1452 8595]
+     [1969    0   98   89 2254]
+     [   3    3    2   14   24]]
+    y0 = [[9971 9972 9974 9975 9976]
+     [7147  328 1452 8595   59]
+     [   0   98   89 2254    0]
+     [   3    2   14   24  198]]
 
-plt.imshow(result.eval()[0])
-```
+    x1 = [[9976 9980 9981 9982 9983]
+     [  59 1569  105 2231    1]
+     [   0  312 1641    4 1063]
+     [ 198  150 2262   10    0]]
+    y1 = [[9980 9981 9982 9983 9984]
+     [1569  105 2231    1  895]
+     [ 312 1641    4 1063    8]
+     [ 150 2262   10    0  507]]
 
+    x2 = [[9984 9986 9987 9988 9989]
+     [ 895    1 5574    4  618]
+     [   8  713    0  264  820]
+     [ 507   74 2619    0    1]]
+    y2 = [[9986 9987 9988 9989 9991]
+     [   1 5574    4  618    2]
+     [ 713    0  264  820    2]
+     [  74 2619    0    1    8]]
+    ```
+## LSTM RNN PTB 自然语言处理 NLP
+  - 自然语言处理 natural language processing，NLP
+  ```python
+  import numpy as np
+  import tensorflow as tf
+  from tutorials.rnn.ptb import reader
 
->>> from skimage import data
->>> from skimage.transform import rotate
->>> image = data.camera()
->>> rotate(image, 2).shape
-(512, 512)
->>> rotate(image, 2, resize=True).shape
-(530, 530)
->>> rotate(image, 90, resize=True).shape
-(512, 512)
+  DATA_PATH = "/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/PTB_data"
+  HIDDEN_SIZE = 200
+  NUM_LAYERS = 2
+  VOCAB_SIZE = 10000
+
+  LEARNING_RATE = 1.0
+  TRAIN_BATCH_SIZE = 20
+  TRAIN_NUM_STEP = 35
+
+  EVAL_BATCH_SIZE = 1
+  EVAL_NUM_STEP = 1
+  NUM_EPOCH = 2
+  KEEP_PROB = 0.5
+  MAX_GRAD_NORM = 5
+
+  class PTBModel(object):
+      def __init__(self, is_training, batch_size, num_steps):
+
+          self.batch_size = batch_size
+          self.num_steps = num_steps
+
+          # 定义输入层
+          self.input_data = tf.placeholder(tf.int32, [batch_size, num_steps])
+          self.targets = tf.placeholder(tf.int32, [batch_size, num_steps])
+
+          # 定义使用LSTM结构及训练时使用dropout
+          lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(HIDDEN_SIZE)
+          if is_training:
+              lstm_cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=KEEP_PROB)
+          cell = tf.nn.rnn_cell.MultiRNNCell([lstm_cell]*NUM_LAYERS)
+
+          # 初始化最初的状态
+          self.initial_state = cell.zero_state(batch_size, tf.float32)
+          embedding = tf.get_variable("embedding", [VOCAB_SIZE, HIDDEN_SIZE])
+
+          # 将原本单词ID转为单词向量
+          inputs = tf.nn.embedding_lookup(embedding, self.input_data)
+
+          if is_training:
+              inputs = tf.nn.dropout(inputs, KEEP_PROB)
+
+          # 定义输出列表
+          outputs = []
+          state = self.initial_state
+          with tf.variable_scope("RNN"):
+              for time_step in range(num_steps):
+                  if time_step > 0: tf.get_variable_scope().reuse_variables()
+                  # shape of cell_output = (batch_size, HIDDEN_SIZE)
+                  cell_output, state = cell(inputs[:, time_step, :], state)
+                  outputs.append(cell_output)
+          # shape of outputs = (num_steps, batch_size, HIDDEN_SIZE)
+          # transpose to shape = (batch_size, num_steps, HIDDEN_SIZE) [ How to avoid ??? ]
+          outputs = tf.transpose(outputs, (1, 0, 2))
+          weight = tf.get_variable("weight", [HIDDEN_SIZE, VOCAB_SIZE])
+          bias = tf.get_variable("bias", [VOCAB_SIZE])
+          logits = tf.tensordot(outputs, weight, axes=(-1, 0)) + bias
+
+          # 定义交叉熵损失函数和平均损失
+          self.loss = tf.contrib.seq2seq.sequence_loss(
+              logits,
+              self.targets,
+              tf.ones([batch_size, num_steps], dtype=tf.float32))
+          # self.cost = self.loss * num_steps
+          self.final_state = state
+
+          # 只在训练模型时定义反向传播操作
+          if not is_training: return
+          trainable_variables = tf.trainable_variables()
+
+          # 控制梯度大小，定义优化方法和训练步骤
+          grads, _ = tf.clip_by_global_norm(tf.gradients(self.loss * num_steps, trainable_variables), MAX_GRAD_NORM)
+          optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE)
+          self.train_op = optimizer.apply_gradients(zip(grads, trainable_variables))
+
+  def run_epoch(session, model, data, train_op, output_log, epoch_size):
+      loss_list = []
+      state = session.run(model.initial_state)
+
+      # 训练一个epoch。
+      for step in range(epoch_size):
+          x, y = session.run(data)
+          loss, state, _ = session.run([model.loss, model.final_state, train_op],
+                                          {model.input_data: x, model.targets: y, model.initial_state: state})
+          loss_list.append(loss)
+
+          if output_log and step % 100 == 0:
+              print("After %d steps, perplexity is %.3f" % (step, np.exp(np.mean(loss_list))))
+      return np.exp(np.mean(loss_list))
+
+  def main():
+      train_data, valid_data, test_data, _ = reader.ptb_raw_data(DATA_PATH)
+
+      # 计算一个epoch需要训练的次数
+      train_data_len = len(train_data)
+      train_batch_len = train_data_len // TRAIN_BATCH_SIZE
+      train_epoch_size = (train_batch_len - 1) // TRAIN_NUM_STEP
+
+      valid_data_len = len(valid_data)
+      valid_batch_len = valid_data_len // EVAL_BATCH_SIZE
+      valid_epoch_size = (valid_batch_len - 1) // EVAL_NUM_STEP
+
+      test_data_len = len(test_data)
+      test_batch_len = test_data_len // EVAL_BATCH_SIZE
+      test_epoch_size = (test_batch_len - 1) // EVAL_NUM_STEP
+
+      initializer = tf.random_uniform_initializer(-0.05, 0.05)
+      with tf.variable_scope("language_model", reuse=None, initializer=initializer):
+          train_model = PTBModel(True, TRAIN_BATCH_SIZE, TRAIN_NUM_STEP)
+
+      with tf.variable_scope("language_model", reuse=True, initializer=initializer):
+          eval_model = PTBModel(False, EVAL_BATCH_SIZE, EVAL_NUM_STEP)
+
+      # 训练模型。
+      with tf.Session() as session:
+          tf.global_variables_initializer().run()
+
+          train_queue = reader.ptb_producer(train_data, train_model.batch_size, train_model.num_steps)
+          eval_queue = reader.ptb_producer(valid_data, eval_model.batch_size, eval_model.num_steps)
+          test_queue = reader.ptb_producer(test_data, eval_model.batch_size, eval_model.num_steps)
+
+          coord = tf.train.Coordinator()
+          threads = tf.train.start_queue_runners(sess=session, coord=coord)
+
+          for i in range(NUM_EPOCH):
+              print("In iteration: %d" % (i + 1))
+              run_epoch(session, train_model, train_queue, train_model.train_op, True, train_epoch_size)
+
+              valid_perplexity = run_epoch(session, eval_model, eval_queue, tf.no_op(), False, valid_epoch_size)
+              print("Epoch: %d Validation Perplexity: %.3f" % (i + 1, valid_perplexity))
+
+          test_perplexity = run_epoch(session, eval_model, test_queue, tf.no_op(), False, test_epoch_size)
+          print("Test Perplexity: %.3f" % test_perplexity)
+
+          coord.request_stop()
+          coord.join(threads)
+
+  if __name__ == "__main__":
+      main()
+  ```
+  运行结果
+  ```python
+  $ python lstm_ptb.py
+  In iteration: 1
+  After 0 steps, perplexity is 9947.316
+  After 100 steps, perplexity is 1349.034
+  After 200 steps, perplexity is 1010.319
+  After 300 steps, perplexity is 861.657
+  After 400 steps, perplexity is 762.057
+  ...
+  After 1300 steps, perplexity is 439.256
+  Epoch: 1 Validation Perplexity: 254.868
+  In iteration: 2
+  After 0 steps, perplexity is 388.371
+  After 100 steps, perplexity is 264.993
+  ...
+  After 1300 steps, perplexity is 245.631
+  Epoch: 2 Validation Perplexity: 200.677
+  Test Perplexity: 194.740
+  ```
+## 时间序列预测 循环神经网络来预测正弦 sin 函数
+  ```python
+  HIDDEN_SIZE = 30
+  NUM_LAYERS = 2
+
+  TIME_STEPS = 10
+  TRAINING_EXAMPLES = 10000
+  TESTING_EXAMPLES = 1000
+  SAMPLE_GAP = 0.01
+
+  BATCH_SIZE = 32
+  TRAINING_STEPS = 10000
+
+  def generate_data(seq):
+      x = []
+      y = []
+      for i in range(len(seq) - TIME_STEPS - 1):
+          x.append([seq[i: i + TIME_STEPS]])
+          y.append([seq[i + TIME_STEPS]])
+      return np.array(x, dtype=np.float32), np.array(y, dtype=np.float32)
+
+  def lstm_model(features, labels, mode):
+      lstm_cell = tf.contrib.rnn.LSTMCell(HIDDEN_SIZE)
+      cell = tf.contrib.rnn.MultiRNNCell([lstm_cell] * NUM_LAYERS)
+      x_ = tf.unstack(features['x'], axis=1)
+      output, _ = tf.nn.dynamic_rnn(cell, features['x'], dtype=tf.float32)
+      output = output[-1]
+      weight = tf.get_variable("weight", [1])
+      bias = tf.get_variable("bias", [1])
+      prediction = output * weight + bias
+      loss = tf.losses.mean_squared_error(labels, prediction)
+      train_op = tf.contrib.layers.optimize_loss(loss, tf.contrib.framework.get_global_step(),
+      optimizer='Adagrad', learning_rate=0.1)
+
+      return tf.estimator.Estimator(mode = mode, predictions = prediction, loss = loss, train_op = train_op)
+
+  train_end = TRAINING_EXAMPLES * SAMPLE_GAP
+  test_end = (TRAINING_EXAMPLES + TESTING_EXAMPLES) * SAMPLE_GAP
+  seq_train = np.sin(np.linspace(0, train_end, num=TRAINING_EXAMPLES))
+  train_x, train_y = generate_data(seq_train)
+  seq_test = np.sin(np.linspace(train_end, test_end, num=TESTING_EXAMPLES))
+  test_x, test_y = generate_data(seq_test)
+
+  estimator = tf.estimator.Estimator(model_fn = lstm_model)
+  input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
+  estimator.train(input_fn=input_fn, steps=TRAINING_STEPS)
+  ```
+  ```python
+  # 自定义的线性回归模型
+  # 参数：数据集, 目标值, mode
+  def model_fn(features, labels, mode):
+      # 线型模型与预测方法
+      W = tf.get_variable("W", [1], dtype=tf.float64)
+      b = tf.get_variable("b", [1], dtype=tf.float64)
+      y = W * features['x'] + b
+      # 损失子图 Loss sub-graph
+      loss = tf.reduce_sum(tf.square(y-labels))
+      # 训练子图 Training sub-graph
+      global_step = tf.train.get_global_step()
+      optimizer = tf.train.GradientDescentOptimizer(0.01)
+      train = tf.group(optimizer.minimize(loss), tf.assign_add(global_step, 1))
+      # EstimatorSpec 方法指定对应的方法
+      return tf.estimator.EstimatorSpec(
+          mode = mode,
+          predictions = y,
+          loss = loss,
+          train_op = train)
+
+  # Estimator 指定 model_fn
+  estimator = tf.estimator.Estimator(model_fn=model_fn)
+  # 定义数据集与训练 / 评估流程
+  x_train = np.array([1., 2., 3., 4.])
+  y_train = np.array([0., -1., -2., -3.])
+  x_eval = np.array([2., 5., 8., 1.])
+  y_eval = np.array([-1.01, -4.1, -7, 0.])
+
+  input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
+  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=True)
+  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_eval}, y_eval, batch_size=4, num_epochs=1000, shuffle=True)
+
+  # 训练与评估模型
+  estimator.train(input_fn=input_fn, steps=1000)
+  estimator.evaluate(input_fn=train_input_fn)
+  # Out[22]: {'global_step': 1000, 'loss': 1.0836827e-11}
+
+  estimator.evaluate(input_fn=eval_input_fn)
+  Out[23]: {'global_step': 1000, 'loss': 0.010100709}
+  ```
+***
+
+# TensorBoard 可视化
+  - **TensorBoard** 可以有效地展示 TensorFlow 在运行过程中的计算图、各种指标随着时间的变化趋势以及训练中使用到的图像等信息
+  - TensorBoard 会自动读取最新的 **TensorFlow 日志文件**，并呈现当前TensorFlow程序运行的最新状态
+  ```python
+  import tensorflow as tf
+  # 定义一个简单的计算图，实现向量加法的操作。
+  input1 = tf.constant([1.0, 2.0, 3.0], name="input1")
+  input2 = tf.Variable(tf.random_uniform([3]), name="input2")
+  output = tf.add_n([input1, input2], name="add")
+  # 生成一个写日志的writer，并将当前的TensorFlow计算图写入日志。TensorFlow提供了多
+  # 种写日志文件的API，在9.3节中将详细介绍。
+  writer = tf.train.SummaryWriter("/path/to/log", tf.get_default_graph())
+  writer.close()
+  ```

@@ -358,6 +358,18 @@
     min
     1
     ```
+    实现异或运算
+    ```python
+    xor = lambda a, b: False if (a and b) or (not a and not b) else True
+    xor(1 ,2)
+    Out[87]: False
+
+    xor(0, 0)
+    Out[88]: False
+
+    xor(1, 0)
+    Out[89]: True
+    ```
   - while示例：
     ```python
     #!/usr/bin/python
@@ -989,53 +1001,57 @@
     ```python
     aInfo = {'Wangdachui': 3000, 'Niuyun':2000, 'Linling':4500, 'Tianqi':8000}
     aInfo
-    {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+    # {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
 
-    >from numpy.random import randn
-    >data = { i : randn() for i in range(1, 7) }        # range(1, 7) 作为index，值为randn()产生的随机数
+    from numpy.random import randn
+    data = { i : randn() for i in range(1, 7) }        # range(1, 7) 作为index，值为randn()产生的随机数
     ```
   - 使用dict()方法：
     ```python
     info = [('Wangdachui',3000), ('Niuyun',2000), ('Linling',4500), ('Tianqi',8000)]
     bInfo = dict(info)
     bInfo
-    {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+    # {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+
     cInfo = dict([('Wangdachui',3000), ('Niuyun',2000), ('Linling',4500), ('Tianqi',8000)])
     cInfo
-    {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+    # {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+
     dInfo = dict(Wangdachui=3000, Niuyun=2000, Linling=4500, Tianqi=8000)
     dInfo
-    {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
+    # {'Wangdachui': 3000, 'Niuyun': 2000, 'Linling': 4500, 'Tianqi': 8000}
     ```
   - fromkeys()方法提供默认值，默认是None：
     ```python
     fromkeys(iterable, value=None, /)
     aDict = {}.fromkeys(('Wangdachui', 'Niuyun', 'Linling', 'Tianqi'),3000)
     aDict
-    {'Wangdachui': 3000, 'Niuyun': 3000, 'Linling': 3000, 'Tianqi': 3000}
+    # {'Wangdachui': 3000, 'Niuyun': 3000, 'Linling': 3000, 'Tianqi': 3000}
     ```
   - 使用zip()：
     ```python
     a = tuple('hello')
     a
-    ('h', 'e', 'l', 'l', 'o')
+    # ('h', 'e', 'l', 'l', 'o')
     b = range(5)
     b
-    range(0, 5)
+    # range(0, 5)
+
     dict(zip(a, b))
-    {'h': 0, 'e': 1, 'l': 3, 'o': 4}
+    # {'h': 0, 'e': 1, 'l': 3, 'o': 4}
+
     dict(zip(tuple('hello'), range(6)))
-    {'h': 0, 'e': 1, 'l': 3, 'o': 4}
+    # {'h': 0, 'e': 1, 'l': 3, 'o': 4}
     ```
   - for循环：
     ```python
     lf = [('AXP', 'American Express Company', '86.40'), ('BA', 'The Boeing Company', '122.64'),]
     d = {}
     for data in lf:
-    ...   d[data[0]] = data[2]
-    ...
+        d[data[0]] = data[2]
+
     d
-    {'AXP': '86.40', 'BA': '122.64'}
+    # {'AXP': '86.40', 'BA': '122.64'}
     ```
 ### 索引 / 删除 / 遍历
   - 示例：

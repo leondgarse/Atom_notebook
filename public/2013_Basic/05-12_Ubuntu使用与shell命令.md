@@ -6,6 +6,7 @@
 Gtk-Message: Failed to load module “canberra-gtk-module”
 
 解决办法：apt-get install .*canberra.*gtk.*
+echo "✨ 🍰 ✨"
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -605,7 +606,7 @@ Gtk-Message: Failed to load module “canberra-gtk-module”
     ```shell
     sudo vi /etc/exports
     # 添加
-    /opt/rootfs/ *(subtree_check,rw,no_root_squash,async)
+    /opt/NFS/ *(subtree_check,rw,no_root_squash,async)
     ```
   - 重启服务
     ```shell
@@ -614,7 +615,7 @@ Gtk-Message: Failed to load module “canberra-gtk-module”
     ```
   - 挂载测试
     ```shell
-    sudo mount 127.0.0.1:/opt/rootfs /media/cdrom0/ -t nfs
+    sudo mount 127.0.0.1:/opt/NFS /media/cdrom0/ -t nfs
     ```
 ## Checking conflict IP
   - $ sudo apt-get install arp-scan
@@ -705,18 +706,25 @@ Gtk-Message: Failed to load module “canberra-gtk-module”
     ```
 ## Ubuntu 系统的一种备份还原方法
   - 备份：
-    ```c
+    ```shell
     备份已安装软件包列表
         sudo dpkg --get-selections > package.selections
+        sed -i '/^fonts/d' package.selections
+        sed -i '/^gir/d' package.selections
+        sed -i '/^gnome/d' package.selections
+        sed -i '/^lib/d' package.selections
+        sed -i '/^linux/d' package.selections
+        sed -i '/^x11/d' package.selections
+        sed -i '/^xserver/d' package.selections
     备份Home下的用户文件夹，如果Home放在额外的分区則不需要
     备份软件源列表，将/etc/apt/文件夹下的sources.list拷贝出来保存即可
     ```
   - 还原：
-    ```c
+    ```shell
     复制备份的Sources.list文件到新系统的/etc/apt/目录，覆盖原文件，并替换（Ctrl+H）文档中的intrepid为jaunty，
     然后更新软件源sudo apt-get update。
     重新下载安装之前系统中的软件（如果你安装的软件数量比较多，可能会花费较长时间）
-      sudo dpkg --set-selections < /home/user/package.selections && apt-get dselect-upgrade
+      sudo dpkg --set-selections < package.selections && apt-get dselect-upgrade
     最后将备份的主文件夹（/home/用户名）粘贴并覆盖现有主文件夹
     ```
   - rsync
@@ -1342,6 +1350,8 @@ Gtk-Message: Failed to load module “canberra-gtk-module”
 
   # Set icon / theme as Numix using gnome-tweak-tool
   ```
+## Shutter
+  - [Quick Fix The “Edit” Option Disabled in Shutter in Ubuntu 18.04](http://ubuntuhandbook.org/index.php/2018/04/fix-edit-option-disabled-shutter-ubuntu-18-04/)
 ***
 
 # 系统备份恢复
