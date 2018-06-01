@@ -71,6 +71,10 @@
     kubernetes-bootcamp-5c69669756-pttwm   1/1       Running   0          1d
     shell-demo                             1/1       Running   1          1h
     ```
+  - Virtualbox 登录
+    - [Boot2Docker ssh-into-vm](https://github.com/boot2docker/boot2docker#ssh-into-vm)
+    - user: docker
+    - pass: tcuser
 ***
 
 # 操作

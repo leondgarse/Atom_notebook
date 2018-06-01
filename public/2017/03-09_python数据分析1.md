@@ -4234,10 +4234,11 @@ nonzero / where / choose
     1 0 1
     2 0 0
     ```
-    **np.where 生成 dummy 矩阵**
+  - **np.where 生成 dummy 矩阵**
     ```python
+    to_dummy = lambda a: np.array([ np.where(np.unique(a)==t, 1, 0) for t in a ])
     ss = np.array(list('abccba'))
-    np.array([np.where(np.unique(ss) == tt, 1, 0) for tt in ss])
+    to_dummy(ss)
     Out[102]:
     array([[1, 0, 0],
            [0, 1, 0],
@@ -4245,6 +4246,18 @@ nonzero / where / choose
            [0, 0, 1],
            [0, 1, 0],
            [1, 0, 0]])
+    ```
+  - **tensorflow 生成 one_hot 矩阵**
+    ```python
+    import tensorflow as tf
+    aa = np.array([1, 2, 3, 3])
+    sess = tf.InteractiveSession()
+    tf.one_hot(aa, 3).eval()
+    Out[26]:
+    array([[0., 1., 0.],
+           [0., 0., 1.],
+           [0., 0., 0.],
+           [0., 0., 0.]], dtype=float32)
     ```
   - dummy_na指定保留NA值信息
     ```python

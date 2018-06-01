@@ -1,21 +1,23 @@
 # ___2018 - 04 - 19 Tensorflow 实战 Google 深度学习框架___
 ***
 
-```python
-TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow程序中的所有计算都会被表达为计算图上的节点
+# Foo
+  ```python
+  TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow程序中的所有计算都会被表达为计算图上的节点
 
-除了使用验证数据集，还可以采用交叉验证（cross validation）的方式来验证模型效果。但因为神经网络训练时间本身就比较长，采用cross validation会花费大量时间。所以在海量数据的情况下，一般会更多地采用验证数据集的形式来评测模型的效果
+  除了使用验证数据集，还可以采用交叉验证（cross validation）的方式来验证模型效果。但因为神经网络训练时间本身就比较长，采用cross validation会花费大量时间。所以在海量数据的情况下，一般会更多地采用验证数据集的形式来评测模型的效果
 
->>> from skimage import data
->>> from skimage.transform import rotate
->>> image = data.camera()
->>> rotate(image, 2).shape
-(512, 512)
->>> rotate(image, 2, resize=True).shape
-(530, 530)
->>> rotate(image, 90, resize=True).shape
-(512, 512)
-```
+  >>> from skimage import data
+  >>> from skimage.transform import rotate
+  >>> image = data.camera()
+  >>> rotate(image, 2).shape
+  (512, 512)
+  >>> rotate(image, 2, resize=True).shape
+  (530, 530)
+  >>> rotate(image, 90, resize=True).shape
+  (512, 512)
+  ```
+***
 
 # TensorFlow 环境搭建
 ## Protocol Buffer
@@ -115,7 +117,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     ```shell
     sudo docker run --name=tensorflow -it -p 8888:8888 -p 6006:6006 cargo.caicloud.io/tensorflow/tensorflow:0.12.0
     # GPU version
-    sudo nvidia-docker run --name=tensorflow-gpu -it -p 8888:8888 -p 6006:6006 cargo.caicloud.io/tensorflow/tensorflow:0.12.0-gpu
+    sudo nvidia-docker run --name=tensorflow-gpu -it -p 8888:8888 -p 6006:6006 cargo.caicloud.io/tensorflow/tensorflow:0.12.0-gpu
     ```
     - **-p 8888:8888** 将容器内运行的 **Jupyter 服务** 映射到本地机器 [Jupyter notebook](http://localhost:8888)
     - **-p 6006:6006** 将容器内运行的 **TensorFlow 可视化工具 TensorBoard** 映射到本地机器 [Tensor Board](http://localhost:6006/)
@@ -530,11 +532,11 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     - 在训练神经网络模型时，每过一遍数据既需要通过反向传播来更新神经网络中的参数，又要更新每一个参数的滑动平均值
     - 为了一次完成多个操作，TensorFlow 提供了 **tf.control_dependencies** / **tf.group**
       ```python
-      train_op = tf.group(train_step, variables_averages_op)
+      train_op = tf.group(train_step, variables_averages_op)
       ```
       ```python
-      with tf.control_dependencies([train_step, variables_averages_op]):
-          train_op = tf.no_op(name='train')
+      with tf.control_dependencies([train_step, variables_averages_op]):
+          train_op = tf.no_op(name='train')
       ```
 ## tf.expand_dims 增加一个维度
   - **tf.expand_dims** 增加一个维度
@@ -852,7 +854,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     ```
     **python 实现**
     ```python
-    mse = tf.reduce_mean(tf.square(y_ - y))
+    mse = tf.reduce_mean(tf.square(y_ - y))
     ```
 ## 梯度下降算法 Gradient decent
   - **梯度下降算法** 主要用于优化单个参数的取值，而 **反向传播算法** 给出了一个高效的方式在所有参数上使用梯度下降算法，从而使神经网络模型在训练数据上的损失函数尽可能小
@@ -1878,7 +1880,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     ```
 ***
 
-# 图像识别与卷积神经网络 Convolutional Neural Network CNN
+# 卷积神经网络 Convolutional Neural Network CNN
 ## 图像识别问题经典数据集
   - **Cifar 数据集** 分为 Cifar-10 和 Cifar-100 ，它们都是图像词典项目 Visual Dictionary 中 800 万张图片的一个子集，Cifar 数据集中的图片为 32×32 的彩色图片，Cifar-10 问题收集了来自 10 个不同种类的 60000 张图片
   - **ImageNet** 是一个基于 **WordNet** 的大型图像数据库，将近 1500 万图片被关联到了 WordNet 的大约 20000 个名词同义词集上，目前每一个与 ImageNet 相关的 WordNet 同义词集都代表了现实世界中的一个实体，可以被认为是分类问题中的一个类别，在ImageNet的图片中，一张图片中可能出现多个同义词集所代表的实体
@@ -1981,18 +1983,85 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     sess.run(pool, feed_dict={input: tt}).shape
     Out[30]: (1, 2, 2, 16)
     ```
-## FOO
-  一些经典的用于图片分类问题的卷积神经网络架构
-  输入层 -> (卷积层 * n -> [池化层]) -> 全连接层 -> 输出层
-  大部分卷积神经网络中一般最多连续使用三层卷积层。“池化层？”表示没有或者一层池化层。池化层虽然可以起到减少参数防止过拟合问题，但是在部分论文中也发现可以直接通过调整卷积层步长来完成(26)。所以有些卷积神经网络中没有池化层。在多轮卷积层和池化层之后，卷神经网络在输出之前一般会经过1~2个全连接层
+## TensorFlow-Slim 工具
+  - **TensorFlow-Slim** 工具可以更加简洁地实现一个卷积神经网络
+    ```python
+    import tensorflow.contrib.slim as slim
+    ```
+  - **slim.conv2d** 添加一个卷积层
+    ```python
+    # Adds an N-D convolution followed by an optional batch_norm layer
+    # convolution(输入节点矩阵, 当前卷积层过滤器的深度, 过滤器的尺寸, ...)
+    # kernel_size: 可以是一个数字，为过滤器的所有维度上指定为相同的数字
+    convolution(inputs, num_outputs, kernel_size, stride=1, padding='SAME', ...)
+    ```
+    ```python
+    input_x = tf.placeholder(tf.float32, [None, 28, 28, 1])
 
-  VGGNet论文Very Deep Convolutional Networks for Large-Scale Image Recognition 中尝试过的卷积神经网络架构
+    # Tradition tensorflow API
+    with tf.variable_scope('scope_name'):
+        weights = tf.get_variable("weight", [3, 3, 1, 32])
+        biases = tf.get_variable("bias", [32])
+        conv = tf.nn.conv2d(input_x, weights, strides=[1, 1, 1, 1], padding='SAME')
+        conv_relu = tf.nn.relu(tf.nn.bias_add(conv, biases))
 
+    # slim.conv2d
+    net = slim.conv2d(input_x, 32, [3, 3])
+    # Or
+    net = slim.conv2d(input_x, 32, 3)
+    ```
+  - **slim.max_pool2d** 添加一个最大池化层
+    ```python
+    # Adds a 2D Max Pooling op
+    # inputs: A 4-D tensor of shape `[batch_size, height, width, channels]`
+    # kernel_size: A list of length 2: [kernel_height, kernel_width]. Can be an int if both values are the same.
+    max_pool2d(inputs, kernel_size, stride=2, padding='VALID', data_format='NHWC', outputs_collections=None, scope=None)
+    ```
+    ```python
+    # Tradition tensorflow API
+    with tf.variable_scope('scope_name'):
+        pool = tf.nn.max_pool(conv_relu, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-  convX-Y表示过滤器的边长为X，深度为Y。比如conv3-64表示过滤器的长和宽都为3，深度为64。从表6-1中可以看出，VGG Net中的过滤器边长一般为3或者1。在LeNet-5模型中，也使用了边长为5的过滤器。一般卷积层的过滤器边长不会超过5，但有些卷积神经网络结构中，处理输入的卷积层中使用了边长为7甚至是11的过滤器。
-  在过滤器的深度上，大部分卷积神经网络都采用逐层递增的方式。比如在表6-1中可以看到，每经过一次池化层之后，卷积层过滤器的深度会乘以2。虽然不同的模型会选择使用不同的具体数字，但是逐层递增是比较普遍的模式。卷积层的步长一般为1，但是在有些模型中也会使用2，或者3作为步长。池化层的配置相对简单，用的最多的是最大池化层。池化层的过滤器边长一般为2或者3，步长也一般为2或者3
+    # slim.avg_pool2d
+    layer_1 = slim.avg_pool2d(net, 3)
+    ```
+  - **slim.arg_scope** 设置指定列表中函数的默认参数取值
+      ```python
+      # Stores the default arguments for the given set of list_ops.
+      # list_ops_or_scope: List or tuple of operations to set argument scope for.
+      # list_ops_or_scope could also be a dict, in this case, kwargs must be empty.
+      # *kwargs: keyword=value that will define the defaults for each op in list_ops
+      arg_scope(list_ops_or_scope, **kwargs)
+      ```
+      ```python
+      with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
+          # define slim operations
+      ```
+## 卷积神经网络经典架构
+  - 用于图片分类问题的卷积神经网络经典架构
+    ```java
+    输入层 -> (卷积层 * k -> [池化层]) * m -> 全连接层 * n -> 输出层
+    ```
+    - 大部分卷积神经网络中一般最多连续使用三层 **卷积层**
+    - 有些卷积神经网络中没有 **池化层**，池化层虽然可以起到减少参数防止过拟合问题，但是在部分论文中也发现可以直接通过调整卷积层步长来完成
+    - 在多轮卷积层和池化层之后，卷神经网络在输出之前一般会经过 1~2 个 **全连接层**
+    - 2012 年 ImageNet ILSVRC 图像分类挑战的第一名 **AlexNet 模型** / 2013 年 ILSVRC 第一名 **ZF Net 模型** / 2014 年第二名 **VGGNet 模型** 的架构都满足该经典架构
+  - VGGNet 论文 Very Deep Convolutional Networks for Large-Scale Image Recognition 中作者尝试过的不同卷积神经网络架构
+
+    ![image](images/vggnet.png)
+
+    - 其中 **conv*** 表示卷积层，**maxpool** 表示池化层，**FC-*** 表示全连接层，**soft-max** 为softmax 结构
+    - **convX-Y** 表示过滤器的边长为 X，深度为 Y，conv3-64 表示过滤器的长和宽都为 3，深度为 64
+    - **过滤器边长** 一般为 3 或者 1，一般卷积层的过滤器边长不会超过 5
+    - **过滤器的深度** 大部分卷积神经网络都采用 **逐层递增** 的方式，每经过一次池化层之后，卷积层过滤器的深度会乘以 2，不同的模型会选择使用不同的具体数字
+    - **卷积层的步长** 一般为 1，有些模型中也会使用 2，或者 3 作为步长
+    - **池化层** 的配置相对简单，用的最多的是 **最大池化层**
+    - **池化层的过滤器边长** 一般为 2 或者 3，**步长** 也一般为 2 或者 3
 ## LeNet-5 模型
-  - **LeNet-5 模型** 总共有7层，是第一个成功应用于数字识别问题的卷积神经网络
+  - **LeNet-5 模型** 是 Yann LeCun 教授于 1998 年在论文 Gradient-based learning applied to document recognition 中提出的，是第一个成功应用于数字识别问题的卷积神经网络，LeNet-5 模型可以达到大约 99.2% 的正确率
+  - **LeNet-5 模型** 无法很好地处理类似 ImageNet 这样比较大的图像数据集，总共有 7 层结构
+
+    ![image](images/LeNet-5.png)
   - **第一层 卷积层**
     - 输入是原始的图像像素，输入层大小为 32×32×1
     - 过滤器尺寸为 5×5，深度为 6，不使用全 0 填充，步长为 1
@@ -2268,77 +2337,305 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     Trained step = 9501, accuracy = 0.9876
     ```
 ## Inception-v3 模型
-  在LeNet-5模型中，不同卷积层通过串联的方式连接在一起，而Inception-v3模型中的Inception结构是将不同的卷积层通过并联的方式结合在一起
+  - 在 LeNet-5 模型中，不同卷积层通过串联的方式连接在一起，而 Inception-v3 模型中的 Inception 结构是将 **不同的卷积层通过并联的方式** 结合在一起，同时使用所有不同尺寸的过滤器，然后再将得到的矩阵 **在深度维度上** 拼接起来
 
-  一个卷积层可以使用边长为1、3或者5的过滤器，那么如何在这些边长中选呢？Inception模块给出了一个方案，那就是同时使用所有不同尺寸的过滤器，然后再将得到的矩阵拼接起来。图6-16给出了Inception模块的一个单元结构示意图
+    ![image](images/inception-v3.png)
+  - **Inception-v3 模型架构图** Inception-v3 模型总共有46层，由 11 个 Inception 模块组成，共有 96 个卷积层
 
-  Inception-v3模型总共有46层，由11个Inception模块组成。图6-17中方框标注出来的结构就是一个Inception模块。在Inception-v3模型中有96个卷积层
+    ![iamge](images/inception-v3_2.png)
+
+  - **python 实现一个 Inception 模块** (红色方框中的)
+    ```python
+    import tensorflow.contrib.slim as slim
+    input_x = tf.placeholder(tf.float32, [None, 28, 28, 1])
+
+    with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
+        # 假设输入图片经过之前的神经网络前向传播的结果保存在变量 net 中
+        net = input_x
+        # Inception 模块量命名空间
+        with tf.variable_scope('Mixed_7c'):
+            # Inception 模块中第一条路径的命名空间
+            with tf.variable_scope('Branch_0'):
+                # 定义一个过滤器边长为 1，深度为 320 的卷积层
+                branch_0 = slim.conv2d(net, 320, 1, scope='Conv2d_0a_1x1')
+
+            # Inception 模块中第二条路径，这条计算路径上的结构本身也是一个 Inception 结构
+            with tf.variable_scope('Branch_1'):
+                branch_1 = slim.conv2d(net, 384, 1, scope='Conv2d_0a_1x1')
+                branch_1 = tf.concat([
+                    # 此处2层卷积层的输入都是 branch_1 而不是 net
+                    slim.conv2d(branch_1, 384, [1, 3], scope='Conv2d_0b_1x3'),
+                    slim.conv2d(branch_1, 384, [3, 1], scope='Conv2d_0c_3x1')], 3)
+
+            # Inception 模块中第三条路径，是一个 Inception 结构
+            with tf.variable_scope('Branch_2'):
+                branch_2 = slim.conv2d(net, 448, 1, scope='Conv2d_0a_1x1')
+                branch_2 = slim.conv2d(branch_2, 384, 3, scope='Conv2d_0b_3x3')
+                branch_2 = tf.concat([
+                    slim.conv2d(branch_2, 384, [1, 3], scope='Conv2d_0c_1x3'),
+                    slim.conv2d(branch_2, 384, [3, 1], scope='Conv2d_0d_3x1')], 3)
+
+            # Inception 模块中第四条路径
+            with tf.variable_scope('Branch_3'):
+                branch_3 = slim.avg_pool2d(net, 3, scope='AvgPool_0a_3x3')
+                branch_3 = slim.conv2d(branch_3, 192, 1, scope='Conv2d_0b_1x1')
+
+            # 当前 Inception 模块的最后输出是由上面四个计算结果拼接得到的
+            net = tf.concat([branch_0, branch_1, branch_2, branch_3], 3)
+    ```
+***
+
+# 卷积神经网络迁移学习 Transfer Learning
+  - 迁移学习，就是将一个问题上训练好的模型通过简单的调整使其适用于一个新的问题
+    - 根据论文DeCAF: A Deep Convolutional Activation Feature for Generic Visual Recognition(32)中的结论，可以保留训练好的Inception-v3模型中所有卷积层的参数，只是替换最后一层全连接层。在最后这一层全连接层之前的网络层称之为瓶颈层（bottleneck）
+
+  将新的图像通过训练好的卷积神经网络直到瓶颈层的过程可以看成是对图像进行特征提取的过程。在训练好的Inception-v3模型中，因为将瓶颈层的输出再通过一个单层的全连接层神经网络可以很好地区分1000种类别的图像，所以有理由认为瓶颈层输出的节点向量可以被作为任何图像的一个更加精简且表达能力更强的特征向量。于是，在新数据集上，可以直接利用这个训练好的神经网络对图像进行特征提取，然后再将提取得到的特征向量作为输入来训练一个新的单层全连接神经网络处理新的分类问题。
+  一般来说，在数据量足够的情况下，迁移学习的效果不如完全重新训练。但是迁移学习所需要的训练时间和训练样本数要远远小于训练完整的模型。在没有GPU(33)的普通台式机或者笔记本电脑上，6.5.2小节中给出的TensorFlow训练过程只需要大约5分钟(34)，而且可以达到大概90%的正确率
+
+  TensorFlow实现迁移学习
+  本小节将给出一个完整的TensorFlow程序来介绍如何通过TensorFlow实现迁移学习。以下代码给出了如何下载这一小节中将要用到的数据集。
+
+      curl http://download.tensorflow.org/example_images/flower_photos.tgz
+      tar xzf flower_photos.tgz
+  解压之后的文件夹包含了5个子文件夹，每一个子文件夹的名称为一种花的名称，代表了不同的类别。平均每一种花有734张图片，每一张图片都是RGB色彩模式的，大小也不相同。和之前的样例不同，在这一小节中给出的程序将直接处理没有整理过的图像数据。同时，通过下面的命名可以下载谷歌提供的训练好的Inception-v3模型。
+
+      wget https://storage.googleapis.com/download.tensorflow.org/models/\
+      inception_dec_2015.zip
+      unzip tensorflow/examples/label_image/data/inception_dec_2015.zip
+  当新的数据集和已经训练好的模型都准备好之后，可以通过以下代码来完成迁移学习的过程
+
+  /home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/flower_photos
+  /home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/inception_dec_2015
+
   ```python
-  # 直接使用TensorFlow原始API实现卷积层。
-  with tf.variable_scope(scope_name):
-      weights = tf.get_variable("weight", …)
-      biases = tf.get_variable("bias", …)  
-      conv = tf.nn.conv2d(…)
-  relu = tf.nn.relu(tf.nn.bias_add(conv, biases))
+  import glob
+  import os.path
+  import random
+  import numpy as np
+  import tensorflow as tf
+  from tensorflow.python.platform import gfile
 
-  # 使用TensorFlow-Slim实现卷积层。通过TensorFlow-Slim可以在一行中实现一个卷积层
-  # 的前向传播算法。slim.conv2d函数的有3个参数是必填的。第一个参数为输入节点矩阵，第
-  # 二参数是当前卷积层过滤器的深度，第三个参数是过滤器的尺寸。可选的参数有过滤器移动的步
-  # 长、是否使用全0填充、激活函数的选择以及变量的命名空间等。
-  net = slim.conv2d(input, 32, [3, 3])
+  # #### 1. 模型和样本路径的设置
+  BOTTLENECK_TENSOR_SIZE = 2048
+  BOTTLENECK_TENSOR_NAME = 'pool_3/_reshape:0'
+  JPEG_DATA_TENSOR_NAME = 'DecodeJpeg/contents:0'
+
+  MODEL_DIR = '/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/inception_dec_2015'
+  MODEL_FILE= 'tensorflow_inception_graph.pb'
+
+  CACHE_DIR = '../../datasets/bottleneck'
+  INPUT_DATA = '/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/flower_photos'
+
+  VALIDATION_PERCENTAGE = 10
+  TEST_PERCENTAGE = 10
+
+  # #### 2. 神经网络参数的设置
+  LEARNING_RATE = 0.01
+  STEPS = 4000
+  BATCH = 100
+
+  # #### 3. 把样本中所有的图片列表并按训练、验证、测试数据分开
+  def create_image_lists(testing_percentage, validation_percentage):
+
+      result = {}
+      sub_dirs = [x[0] for x in os.walk(INPUT_DATA)]
+      is_root_dir = True
+      for sub_dir in sub_dirs:
+          if is_root_dir:
+              is_root_dir = False
+              continue
+
+          extensions = ['jpg', 'jpeg', 'JPG', 'JPEG']
+
+          file_list = []
+          dir_name = os.path.basename(sub_dir)
+          for extension in extensions:
+              file_glob = os.path.join(INPUT_DATA, dir_name, '*.' + extension)
+              file_list.extend(glob.glob(file_glob))
+          if not file_list: continue
+
+          label_name = dir_name.lower()
+
+          # 初始化
+          training_images = []
+          testing_images = []
+          validation_images = []
+          for file_name in file_list:
+              base_name = os.path.basename(file_name)
+
+              # 随机划分数据
+              chance = np.random.randint(100)
+              if chance < validation_percentage:
+                  validation_images.append(base_name)
+              elif chance < (testing_percentage + validation_percentage):
+                  testing_images.append(base_name)
+              else:
+                  training_images.append(base_name)
+
+          result[label_name] = {
+              'dir': dir_name,
+              'training': training_images,
+              'testing': testing_images,
+              'validation': validation_images,
+              }
+      return result
+
+  # #### 4. 定义函数通过类别名称、所属数据集和图片编号获取一张图片的地址
+  def get_image_path(image_lists, image_dir, label_name, index, category):
+      label_lists = image_lists[label_name]
+      category_list = label_lists[category]
+      mod_index = index % len(category_list)
+      base_name = category_list[mod_index]
+      sub_dir = label_lists['dir']
+      full_path = os.path.join(image_dir, sub_dir, base_name)
+      return full_path
+
+  # #### 5. 定义函数获取Inception-v3模型处理之后的特征向量的文件地址
+  def get_bottleneck_path(image_lists, label_name, index, category):
+      return get_image_path(image_lists, CACHE_DIR, label_name, index, category) + '.txt'
+
+  # #### 6. 定义函数使用加载的训练好的Inception-v3模型处理一张图片，得到这个图片的特征向量
+  def run_bottleneck_on_image(sess, image_data, image_data_tensor, bottleneck_tensor):
+
+      bottleneck_values = sess.run(bottleneck_tensor, {image_data_tensor: image_data})
+
+      bottleneck_values = np.squeeze(bottleneck_values)
+      return bottleneck_values
+
+  # #### 7. 定义函数会先试图寻找已经计算且保存下来的特征向量，如果找不到则先计算这个特征向量，然后保存到文件
+  def get_or_create_bottleneck(sess, image_lists, label_name, index, category, jpeg_data_tensor, bottleneck_tensor):
+      label_lists = image_lists[label_name]
+      sub_dir = label_lists['dir']
+      sub_dir_path = os.path.join(CACHE_DIR, sub_dir)
+      if not os.path.exists(sub_dir_path): os.makedirs(sub_dir_path)
+      bottleneck_path = get_bottleneck_path(image_lists, label_name, index, category)
+      if not os.path.exists(bottleneck_path):
+
+          image_path = get_image_path(image_lists, INPUT_DATA, label_name, index, category)
+
+          image_data = gfile.FastGFile(image_path, 'rb').read()
+
+          bottleneck_values = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
+
+          bottleneck_string = ','.join(str(x) for x in bottleneck_values)
+          with open(bottleneck_path, 'w') as bottleneck_file:
+              bottleneck_file.write(bottleneck_string)
+      else:
+
+          with open(bottleneck_path, 'r') as bottleneck_file:
+              bottleneck_string = bottleneck_file.read()
+          bottleneck_values = [float(x) for x in bottleneck_string.split(',')]
+
+      return bottleneck_values
+
+  # #### 8. 这个函数随机获取一个batch的图片作为训练数据
+  def get_random_cached_bottlenecks(sess, n_classes, image_lists, how_many, category, jpeg_data_tensor, bottleneck_tensor):
+      bottlenecks = []
+      ground_truths = []
+      for _ in range(how_many):
+          label_index = random.randrange(n_classes)
+          label_name = list(image_lists.keys())[label_index]
+          image_index = random.randrange(65536)
+          bottleneck = get_or_create_bottleneck(
+              sess, image_lists, label_name, image_index, category, jpeg_data_tensor, bottleneck_tensor)
+          ground_truth = np.zeros(n_classes, dtype=np.float32)
+          ground_truth[label_index] = 1.0
+          bottlenecks.append(bottleneck)
+          ground_truths.append(ground_truth)
+
+      return bottlenecks, ground_truths
+
+  # #### 9. 这个函数获取全部的测试数据，并计算正确率
+  def get_test_bottlenecks(sess, image_lists, n_classes, jpeg_data_tensor, bottleneck_tensor):
+      bottlenecks = []
+      ground_truths = []
+      label_name_list = list(image_lists.keys())
+      for label_index, label_name in enumerate(label_name_list):
+          category = 'testing'
+          for index, unused_base_name in enumerate(image_lists[label_name][category]):
+              bottleneck = get_or_create_bottleneck(sess, image_lists, label_name, index, category,jpeg_data_tensor, bottleneck_tensor)
+              ground_truth = np.zeros(n_classes, dtype=np.float32)
+              ground_truth[label_index] = 1.0
+              bottlenecks.append(bottleneck)
+              ground_truths.append(ground_truth)
+      return bottlenecks, ground_truths
+
+  # #### 10. 定义主函数
+  def main(_):
+      image_lists = create_image_lists(TEST_PERCENTAGE, VALIDATION_PERCENTAGE)
+      n_classes = len(image_lists.keys())
+
+      # 读取已经训练好的Inception-v3模型。
+      with gfile.FastGFile(os.path.join(MODEL_DIR, MODEL_FILE), 'rb') as f:
+          graph_def = tf.GraphDef()
+          graph_def.ParseFromString(f.read())
+      bottleneck_tensor, jpeg_data_tensor = tf.import_graph_def(
+          graph_def, return_elements=[BOTTLENECK_TENSOR_NAME, JPEG_DATA_TENSOR_NAME])
+
+      # 定义新的神经网络输入
+      bottleneck_input = tf.placeholder(tf.float32, [None, BOTTLENECK_TENSOR_SIZE], name='BottleneckInputPlaceholder')
+      ground_truth_input = tf.placeholder(tf.float32, [None, n_classes], name='GroundTruthInput')
+
+      # 定义一层全链接层
+      with tf.name_scope('final_training_ops'):
+          weights = tf.Variable(tf.truncated_normal([BOTTLENECK_TENSOR_SIZE, n_classes], stddev=0.001))
+          biases = tf.Variable(tf.zeros([n_classes]))
+          logits = tf.matmul(bottleneck_input, weights) + biases
+          final_tensor = tf.nn.softmax(logits)
+
+      # 定义交叉熵损失函数。
+      cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, ground_truth_input)
+      cross_entropy_mean = tf.reduce_mean(cross_entropy)
+      train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cross_entropy_mean)
+
+      # 计算正确率。
+      with tf.name_scope('evaluation'):
+          correct_prediction = tf.equal(tf.argmax(final_tensor, 1), tf.argmax(ground_truth_input, 1))
+          evaluation_step = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+      with tf.Session() as sess:
+          init = tf.global_variables_initializer()
+          sess.run(init)
+          # 训练过程。
+          for i in range(STEPS):
+
+              train_bottlenecks, train_ground_truth = get_random_cached_bottlenecks(
+                  sess, n_classes, image_lists, BATCH, 'training', jpeg_data_tensor, bottleneck_tensor)
+              sess.run(train_step, feed_dict={bottleneck_input: train_bottlenecks, ground_truth_input: train_ground_truth})
+
+              if i % 100 == 0 or i + 1 == STEPS:
+                  validation_bottlenecks, validation_ground_truth = get_random_cached_bottlenecks(
+                      sess, n_classes, image_lists, BATCH, 'validation', jpeg_data_tensor, bottleneck_tensor)
+                  validation_accuracy = sess.run(evaluation_step, feed_dict={
+                      bottleneck_input: validation_bottlenecks, ground_truth_input: validation_ground_truth})
+                  print('Step %d: Validation accuracy on random sampled %d examples = %.1f%%' %
+                      (i, BATCH, validation_accuracy * 100))
+
+          # 在最后的测试数据上测试正确率。
+          test_bottlenecks, test_ground_truth = get_test_bottlenecks(
+              sess, image_lists, n_classes, jpeg_data_tensor, bottleneck_tensor)
+          test_accuracy = sess.run(evaluation_step, feed_dict={
+              bottleneck_input: test_bottlenecks, ground_truth_input: test_ground_truth})
+          print('Final test accuracy = %.1f%%' % (test_accuracy * 100))
+
+  if __name__ == '__main__':
+      main(_)
   ```
-  实现了图6-17中红色方框中的Inception模块。
   ```python
-  # slim.arg_scope函数可以用于设置默认的参数取值。slim.arg_scope函数的第一个参数是
-  # 一个函数列表，在这个列表中的函数将使用默认的参数取值。比如通过下面的定义， 调用
-  # slim.conv2d(net, 320, [1, 1])函数时会自动加上stride=1和padding='SAME'的参
-  # 数。如果在函数调用时指定了stride，那么这里设置的默认值就不会再使用。通过这种方式
-  # 可以进一步减少冗余的代码。
-  with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1 , padding='SAME'):
-      …
-      # 此处省略了Inception-v3模型中其他的网络结构而直接实现最后面红色方框中的。
-      # Inception结构。假设输入图片经过之前的神经网络前向传播的结果保存在变量net
-      # 中。
-      net = 上一层的输出节点矩阵
-      # 为一个Inception模块声明一个统一的变量命名空间。
-      with tf.variable_scope('Mixed_7c'):
-          # 给Inception模块中每一条路径声明一个命名空间。
-          with tf.variable_scope('Branch_0'):
-              # 实现一个过滤器边长为1，深度为320的卷积层。
-              branch_0 = slim.conv2d(net, 320, [1, 1], scope='Conv2d_0a_1x1')
-
-          # Inception模块中第二条路径。这条计算路径上的结构本身也是一个Inception结构
-          with tf.variable_scope('Branch_1'):
-              branch_1 = slim.conv2d(net, 384, [1, 1], scope='Conv2d_0a_1x1')
-              # tf.concat函数可以将多个矩阵拼接起来。tf.concat函数的第一个参数指定
-              # 了拼接的维度，这里给出的“3”代表了矩阵是在深度这个维度上进行拼接。图6-16
-              # 中展示了在深度上拼接矩阵的方式。
-              branch_1 = tf.concat(3, [
-                  # 如图6-17所示，此处2层卷积层的输入都是branch_1而不是net。
-                  slim.conv2d(branch_1, 384, [1, 3], scope='Conv2d_0b_1x3'),
-                  slim.conv2d(branch_1, 384, [3, 1], scope='Conv2d_0c_3x1')])
-
-          # Inception模块中第三条路径。此计算路径也是一个Inception结构。
-          with tf.variable_scope('Branch_2'):
-              branch_2 = slim.conv2d(net, 448, [1, 1], scope='Conv2d_0a_1x1')
-              branch_2 = slim.conv2d(branch_2, 384, [3, 3], scope='Conv2d_ 0b_3x3')
-              branch_2 = tf.concat(3, [
-                  slim.conv2d(branch_2, 384, [1, 3], scope='Conv2d_0c_1x3'),
-                  slim.conv2d(branch_2, 384, [3, 1], scope='Conv2d_0d_3x1')])
-
-          # Inception模块中第四条路径。
-          with tf.variable_scope('Branch_3'):
-              branch_3 = slim.avg_pool2d(net, [3, 3], scope='AvgPool_0a_3x3')
-              branch_3 = slim.conv2d(branch_3, 192, [1, 1], scope='Conv2d_ 0b_1x1')
-
-          # 当前Inception模块的最后输出是由上面四个计算结果拼接得到的。
-          net = tf.concat(3, [branch_0, branch_1, branch_2, branch_3])
+  $ python inception_3_move.py
+  Step 0: Validation accuracy on random sampled 100 examples = 27.0%
+  Step 100: Validation accuracy on random sampled 100 examples = 85.0%
+  Step 200: Validation accuracy on random sampled 100 examples = 90.0%
+  Step 300: Validation accuracy on random sampled 100 examples = 94.0%
+  ...
+  Step 3000: Validation accuracy on random sampled 100 examples = 92.0%
+  Step 3999: Validation accuracy on random sampled 100 examples = 97.0%
+  Final test accuracy = 91.1%
   ```
-## 卷积神经网络迁移学习
 ***
 
 # 图像数据处理
-## TFRecord输入数据格式
+  - TFRecord 文件中的数据都是通过 tf.train.Example Protocol Buffer 的格式存储的
 ## 图像读取 与 编解码
   - **tf.image.decode_jpeg** / **tf.image.encode_jpeg** 图片读取 / 显示 / 保存
     ```python
@@ -2526,7 +2823,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     - **size** 1-D 张量 `[target_height, target_width, -1]` 可用于 `tf.slice`
     - **bboxes** 3-D 张量 `[1, 1, 4]`，包含可用于 `tf.image.draw_bounding_boxes` 的 bounding box
     ```python
-    # 通过 bounding_box 指定图像的有效信息部分
+    # 通过 bounding_box 指定图像的有效信息部分
     bounding_box = tf.constant([0.05, 0.05, 0.9, 0.7], dtype=tf.float32, shape=[1, 1, 4])
     begin, size, bbox_for_draw = tf.image.sample_distorted_bounding_box(
             tf.shape(resized),
@@ -2545,7 +2842,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
     distorted_image = tf.slice(resized, begin, size)
     plt.imshow(distorted_image.eval())
 
-    # bounding box 截取图像
+    # bounding box 截取图像
     batched = tf.expand_dims(tf.image.convert_image_dtype(resized, tf.float32), 0)
     image_with_box = tf.image.draw_bounding_boxes(batched, bbox_for_draw)
     plt.imshow(image_with_box.eval()[0])
@@ -2602,6 +2899,148 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
 ***
 
 # 多线程输入数据处理框架
+## TFRecord 输入数据格式
+  - **TFRecord** TensorFlow 提供的一种统一的数据存储格式，通过 **tf.train.Example** Protocol Buffer 的格式存储
+  - **tf.train.Example** 中包含了一个从属性名称到取值的字典
+    - **属性名称** 为一个字符串
+    - **属性的取值** 可以为字符串 BytesList / 实数列表 FloatList / 整数列表 Int64List
+    ```python
+    # An empty TFRecord
+    example = tf.train.Example()
+    ```
+  - **tf.train.FloatList** / **tf.train.Int64List** / **tf.train.BytesList** 分别指定 实数 / 整数 / 字符串类型的数据，用于定义 Example 类的 feature
+    ```python
+    features = tf.train.Features(feature={
+        'val': tf.train.Feature(float_list=tf.train.FloatList(value=np.random.randn(4))),
+        'labels': tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
+        'name': tf.train.Feature(bytes_list=tf.train.BytesList(value=[b'aa']))
+    })
+
+    example = tf.train.Example(features=features)
+    ```
+  - **tf.FixedLenFeature** / **tf.VarLenFeature** 定义 固定长度 / 可变长度 的 feature，用于解析读取到的 Example 类
+    ```python
+    # Configuration for parsing a fixed-length input feature
+    tf.FixedLenFeature([], tf.int64)
+
+    # Configuration for parsing a variable-length input feature
+    tf.VarLenFeature(tf.float32)
+    ```
+  - **tf.python_io.TFRecordWriter 类** 将 TFRecord 写入文件
+    ```python
+    filename = "Records/foo.tfrecords"
+    writer = tf.python_io.TFRecordWriter(filename)
+    writer.write(example.SerializeToString())
+
+    # 关闭 writer 后，将缓存写入到文件
+    writer.close()
+    ```
+  - **tf.TFRecordReader 类** 从文件中读取 TFRecord 记录
+    ```python
+    reader = tf.TFRecordReader()
+    filename_queue = tf.train.string_input_producer(["Records/foo.tfrecords"])
+    _, serialized_example = reader.read(filename_queue)
+    ```
+  - **tf.data.TFRecordDataset 类** 从文件中读取 TFRecord 记录
+    ```python
+    def parse_example_record(example):
+        print(example)
+        features = {
+            'val': tf.VarLenFeature(tf.float32),
+            'labels': tf.VarLenFeature(tf.int64),
+            'name': tf.VarLenFeature(tf.string)
+        }
+        parsed_features = tf.parse_single_example(example, features)
+
+        return parsed_features
+
+    dataset = tf.data.TFRecordDataset(['Records/foo.tfrecords'])
+    dataset = dataset.map(parse_test)
+    dataset = dataset.batch(1)
+
+    iterator = dataset.make_one_shot_iterator()
+    feature_dict =  iterator.get_next()
+
+    sess = tf.InteractiveSession()
+    curr_dict = sess.run(feature_dict)
+    ```
+    运行结果
+    ```python
+    curr_dict
+    Out[48]:
+    {'labels': SparseTensorValue(indices=array([[0, 0]]), values=array([1]), dense_shape=array([1, 1])),
+     'name': SparseTensorValue(indices=array([[0, 0]]), values=array([b'aa'], dtype=object), dense_shape=array([1, 1])),
+     'val': SparseTensorValue(indices=array([[0, 0],
+            [0, 1],
+            [0, 2],
+            [0, 3]]), values=array([ 0.252722  , -0.2585403 ,  1.2365634 ,  0.84592867], dtype=float32), dense_shape=array([1, 4]))}
+
+    curr_dict['name'].values
+    Out[49]: array([b'aa'], dtype=object)
+    ```
+## python 将 mnist 数据转化为 TFRecord 格式
+  ```python
+  ''' 读取 mnist 数据，转化为 TFRecord 格式，并保存到文件 '''
+  import tensorflow as tf
+  from tensorflow.examples.tutorials.mnist import input_data
+  import numpy as np
+
+  def _int64_feature(value):
+      return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+  def _bytes_feature(value):
+      return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+  # 读取 mnist 数据
+  mnist = input_data.read_data_sets("./MNIST_data", dtype=tf.uint8, one_hot=True)
+  images = mnist.train.images
+  labels = mnist.train.labels
+  pixels = images.shape[1]
+  num_examples = mnist.train.num_examples
+
+  # 输出 TFRecord 文件的地址
+  filename = "Records/output.tfrecords"
+  writer = tf.python_io.TFRecordWriter(filename)
+  for index in range(num_examples):
+      image_raw = images[index].tostring()
+
+      example = tf.train.Example(features=tf.train.Features(feature={
+          'pixels': _int64_feature(pixels),
+          'label': _int64_feature(np.argmax(labels[index])),
+          'image_raw': _bytes_feature(image_raw)
+      }))
+      writer.write(example.SerializeToString())
+  writer.close()
+  ```
+  ```python
+  ''' 读取文件，并转化为 TFRecord 格式 '''
+  reader = tf.TFRecordReader()
+  filename_queue = tf.train.string_input_producer(["Records/output.tfrecords"])
+  _, serialized_example = reader.read(filename_queue)
+
+  # 解析读取的样例。
+  features = tf.parse_single_example(
+      serialized_example,
+      features={
+          'image_raw':tf.FixedLenFeature([],tf.string),
+          'pixels':tf.FixedLenFeature([],tf.int64),
+          'label':tf.FixedLenFeature([],tf.int64)
+      })
+
+  images = tf.decode_raw(features['image_raw'],tf.uint8)
+  labels = tf.cast(features['label'],tf.int32)
+  pixels = tf.cast(features['pixels'],tf.int32)
+
+  sess = tf.Session()
+
+  # 启动多线程处理输入数据
+  coord = tf.train.Coordinator()
+  threads = tf.train.start_queue_runners(sess=sess,coord=coord)
+
+  for i in range(10):
+      image, label, pixel = sess.run([images, labels, pixels])
+      print('iamges shape = %s, label = %d, pixel = %d' % (image.shape, label, pixel))
+  ```
 ## 队列与多线程
   在TensorFlow中，队列不仅是一种数据结构，它更提供了多线程机制。队列也是TensorFlow多线程输入数据处理框架的基础
   在TensorFlow中，队列和变量类似，都是计算图上有状态的节点。其他的计算节点可以修改它们的状态。对于变量，可以通过赋值操作修改变量的取值(8)。对于队列，修改队列状态的操作主要有Enqueue、EnqueueMany和Dequeue
@@ -2758,16 +3197,49 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
   - **输出门 output gate** 控制当前的单元状态有多少被过滤掉，先将单元状态激活，输出门为其中每一项产生一个在[0,1]内的值，控制单元状态被过滤的程度
 
     ![image](images/lstm_cell_structure_detail_output.png)
-  - **TensorFlow 中的 LSTM 结构**
-    - **tf.contrib.rnn.BasicLSTMCell** / **tf.contrib.rnn.LSTMCell** 定义 LSTM 基本单元
-    - **tf.contrib.rnn.MultiRNNCell** 实现深层循环神经网络的前向传播过程
-    - **tf.nn.static_rnn** / **tf.contrib.rnn.static_rnn** static rnn
-    - **tf.nn.dynamic_rnn** dynamic rnn
 ## 循环神经网络的dropout
   - 循环神经网络一般只在 **不同层循环体结构之间** 使用 dropout，而不在同一层的循环体结构之间使用
     - 从时刻 t-1 传递到时刻 t 时，循环神经网络不会进行状态的 dropout
     - 在同一个时刻 t 中，不同层循环体之间会使用 dropout
-  - **tf.nn.rnn_cell.DropoutWrapper** 类实现 dropout 功能
+## TensorFlow 中的 LSTM 结构
+  - **tf.contrib.rnn.BasicLSTMCell** / **tf.contrib.rnn.LSTMCell** 定义 LSTM 基本单元
+  - **tf.contrib.rnn.MultiRNNCell** 实现深层循环神经网络的前向传播过程
+  - **tf.nn.static_rnn** / **tf.contrib.rnn.static_rnn** static rnn
+  - **tf.nn.dynamic_rnn** dynamic rnn
+  - **tf.nn.rnn_cell.DropoutWrapper** 实现 dropout 功能
+  - **python 定义一个 LSTM 的前向传播过程**
+    ```python
+    from tensorflow.contrib import rnn
+
+    NUM_LAYERS = 3
+    HIDDEN_SIZE = 8
+
+    ''' 定义 lstm cell 结构 '''
+    def unit_lstm():
+        lstm_cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE)
+        # Optional dropout, in some cases dropout not working well.
+        lstm_cell = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=0.5)
+        return lstm_cell
+
+    def mlstm_inference(batch_size, X):
+        ''' 定义 multi lstm layers 结构 '''
+        # MultiRNNCell for multi layers LSTM
+        mlstm_cell = rnn.MultiRNNCell([unit_lstm() for _ in range(NUM_LAYERS)])
+        # If there is no initial_state, you must give a dtype.
+        # outputs, _ = tf.nn.dynamic_rnn(mlstm_cell, inputs=X, dtype=tf.float32)
+        # or use self defined initial state
+        init_state = mlstm_cell.zero_state(batch_size, dtype=tf.float32)
+        outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=X, initial_state=init_state)
+
+        ''' 设置全连接层，返回预测值 '''
+        # shape of outputs = (BATCH_SIZE, X.shape[1], HIDDEN_SIZE)
+        h_state = outputs[:, -1, :]  # or h_state = state[-1][1]
+        W = tf.Variable(tf.truncated_normal([HIDDEN_SIZE, 1], stddev=0.1), dtype=tf.float32)
+        bias = tf.Variable(tf.constant(0.1, shape=[1]), dtype=tf.float32)
+        prediction = tf.matmul(h_state, W) + bias
+
+        return predection
+    ```
 ## 双向循环神经网络 和 深层循环神经网络
   - **双向循环神经网络 bidirectional RNN** 当前时刻的输出不仅和之前的状态有关系，也和之后的状态相关，双向循环神经网络解决这类问题
 
@@ -2805,8 +3277,7 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
       lstm_cell_dropout = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=output_keep_prob)
       return lstm_cell_dropout
 
-  ''' 加载数据与初始化参数 '''
-  mnist = input_data.read_data_sets('./MNIST_data', one_hot=True)
+  ''' 定义 placeholder 参数 '''
   output_keep_prob = tf.placeholder(tf.float32)
   # 采用占位符的方式，可以在训练和测试的时候用不同的 batch_size
   batch_size = tf.placeholder(tf.int32, [])
@@ -2834,6 +3305,9 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
   train_op = tf.train.AdamOptimizer(LEARNING_RATE).minimize(cross_entropy)
   correct_prediction = tf.equal(tf.argmax(y_pre, 1), tf.argmax(y, 1))
   accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
+
+  ''' 加载数据 '''
+  mnist = input_data.read_data_sets('./MNIST_data', one_hot=True)
 
   ''' 模型训练 '''
   sess = tf.Session()
@@ -3107,93 +3581,228 @@ TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow
   Epoch: 2 Validation Perplexity: 200.677
   Test Perplexity: 194.740
   ```
-## 时间序列预测 循环神经网络来预测正弦 sin 函数
-  ```python
-  HIDDEN_SIZE = 30
-  NUM_LAYERS = 2
+***
 
+# 时间序列预测 循环神经网络来预测正弦 sin 函数
+## 生成测试数据
+  ```python
   TIME_STEPS = 10
   TRAINING_EXAMPLES = 10000
   TESTING_EXAMPLES = 1000
   SAMPLE_GAP = 0.01
 
-  BATCH_SIZE = 32
-  TRAINING_STEPS = 10000
+  def plot_test_result(prediction, real_y, title):
+      plt.plot(prediction)
+      plt.plot(real_y)
+      plt.legend(['prediction', 'real y'])
+      plt.title(title)
 
   def generate_data(seq):
       x = []
       y = []
+      # x 为长度为 10 的序列
+      # y 为 x 后面的一个数据
       for i in range(len(seq) - TIME_STEPS - 1):
-          x.append([seq[i: i + TIME_STEPS]])
-          y.append([seq[i + TIME_STEPS]])
+          x.append(seq[i: i + TIME_STEPS])
+          y.append(seq[i + TIME_STEPS])
       return np.array(x, dtype=np.float32), np.array(y, dtype=np.float32)
-
-  def lstm_model(features, labels, mode):
-      lstm_cell = tf.contrib.rnn.LSTMCell(HIDDEN_SIZE)
-      cell = tf.contrib.rnn.MultiRNNCell([lstm_cell] * NUM_LAYERS)
-      x_ = tf.unstack(features['x'], axis=1)
-      output, _ = tf.nn.dynamic_rnn(cell, features['x'], dtype=tf.float32)
-      output = output[-1]
-      weight = tf.get_variable("weight", [1])
-      bias = tf.get_variable("bias", [1])
-      prediction = output * weight + bias
-      loss = tf.losses.mean_squared_error(labels, prediction)
-      train_op = tf.contrib.layers.optimize_loss(loss, tf.contrib.framework.get_global_step(),
-      optimizer='Adagrad', learning_rate=0.1)
-
-      return tf.estimator.Estimator(mode = mode, predictions = prediction, loss = loss, train_op = train_op)
 
   train_end = TRAINING_EXAMPLES * SAMPLE_GAP
   test_end = (TRAINING_EXAMPLES + TESTING_EXAMPLES) * SAMPLE_GAP
+
+  # 在不同区间根据 sin 函数生成 训练 / 测试数据
   seq_train = np.sin(np.linspace(0, train_end, num=TRAINING_EXAMPLES))
   train_x, train_y = generate_data(seq_train)
+
   seq_test = np.sin(np.linspace(train_end, test_end, num=TESTING_EXAMPLES))
   test_x, test_y = generate_data(seq_test)
 
-  estimator = tf.estimator.Estimator(model_fn = lstm_model)
-  input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
-  estimator.train(input_fn=input_fn, steps=TRAINING_STEPS)
+  train_x.shape, train_y.shape, test_x.shape, test_y.shape
+  # Out[10]: ((9989, 10), (9989,), (989, 10), (989,))
   ```
+## 预定义的全连接线性模型 tf.estimator.LinearRegressor
   ```python
-  # 自定义的线性回归模型
-  # 参数：数据集, 目标值, mode
-  def model_fn(features, labels, mode):
-      # 线型模型与预测方法
-      W = tf.get_variable("W", [1], dtype=tf.float64)
-      b = tf.get_variable("b", [1], dtype=tf.float64)
-      y = W * features['x'] + b
-      # 损失子图 Loss sub-graph
-      loss = tf.reduce_sum(tf.square(y-labels))
-      # 训练子图 Training sub-graph
+  BATCH_SIZE = 32
+  TRAINING_STEPS = 1000
+
+  # 定义线性模型
+  feature_columns = [tf.feature_column.numeric_column("x", shape=[10])]
+  estimator_linear = tf.estimator.LinearRegressor(feature_columns=feature_columns)
+
+  # 训练 / 评估 / 测试 的输入功能
+  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
+  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x': test_x}, test_y, batch_size=BATCH_SIZE, num_epochs=100, shuffle=True)
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
+
+  # 模型训练
+  estimator_linear.train(input_fn=train_input_fn, steps=TRAINING_STEPS)
+  # INFO:tensorflow:Saving checkpoints for 1000 into /tmp/tmpy62bau9c/model.ckpt.
+  # INFO:tensorflow:Loss for final step: 0.006338477.
+
+  # 模型评估
+  estimator_linear.evaluate(eval_input_fn)
+  # {'average_loss': 0.00023348766, 'loss': 0.007470699, 'global_step': 1000}
+
+  # 图形化预测值
+  pp = estimator_linear.predict(input_fn=predict_input_fn)
+  tt = [ii['predictions'][0] for ii in pp]
+  plot_test_result(tt, test_y, 'LinearRegressor')
+  ```
+## 自定义的全连接神经网络模型预测
+  ```python
+  # 定义适用于 estimator 的单层全连接线性神经网络
+  def fc_model(features, labels, mode):
+      W = tf.get_variable('W', [10, 1], dtype=tf.float32)
+      b = tf.get_variable('b', [1], dtype=tf.float32)
+      y = tf.matmul(features['x'], W) + b
+
+      # Compute predictions.
+      if mode == tf.estimator.ModeKeys.PREDICT:
+          predictions = {
+              'predictions': y,
+          }
+          return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
+      loss = tf.losses.mean_squared_error(labels, y[:, 0])
       global_step = tf.train.get_global_step()
       optimizer = tf.train.GradientDescentOptimizer(0.01)
       train = tf.group(optimizer.minimize(loss), tf.assign_add(global_step, 1))
-      # EstimatorSpec 方法指定对应的方法
-      return tf.estimator.EstimatorSpec(
-          mode = mode,
-          predictions = y,
-          loss = loss,
-          train_op = train)
 
-  # Estimator 指定 model_fn
-  estimator = tf.estimator.Estimator(model_fn=model_fn)
-  # 定义数据集与训练 / 评估流程
-  x_train = np.array([1., 2., 3., 4.])
-  y_train = np.array([0., -1., -2., -3.])
-  x_eval = np.array([2., 5., 8., 1.])
-  y_eval = np.array([-1.01, -4.1, -7, 0.])
+      return tf.estimator.EstimatorSpec(mode=mode, predictions=y, loss=loss, train_op=train)
 
-  input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
-  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=True)
-  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_eval}, y_eval, batch_size=4, num_epochs=1000, shuffle=True)
+  # 定义模型
+  # 训练 / 评估 / 测试 步骤与预定以模型相同
+  estimator_fc = tf.estimator.Estimator(model_fn=fc_model)
+  estimator_fc.train(input_fn=train_input_fn, steps=TRAINING_STEPS)
+  # INFO:tensorflow:Loss for final step: 0.0055611567.
 
-  # 训练与评估模型
-  estimator.train(input_fn=input_fn, steps=1000)
-  estimator.evaluate(input_fn=train_input_fn)
-  # Out[22]: {'global_step': 1000, 'loss': 1.0836827e-11}
+  estimator_fc.evaluate(eval_input_fn)
+  # Out[28]: {'loss': 0.0053806403, 'global_step': 1000}
 
-  estimator.evaluate(input_fn=eval_input_fn)
-  Out[23]: {'global_step': 1000, 'loss': 0.010100709}
+  pp = estimator_fc.predict(input_fn=predict_input_fn)
+  tt = [ii['predictions'][0] for ii in pp]
+  plot_test_result(tt, test_y, 'Full connection estimator')
+  ```
+## LSTM model with estimator
+  ```python
+  from tensorflow.contrib import rnn
+
+  HIDDEN_SIZE = 30
+  NUM_LAYERS = 2
+  BATCH_SIZE = 32
+  TRAINING_STEPS = 1000
+
+  def unit_lstm():
+      lstm_cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE)
+      # Dont using dropout here, Dropout will increase loss here. [ ??? ]
+      # lstm_cell = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=0.5)
+      return lstm_cell
+
+  def lstm_model(features, labels, mode):
+      xs = features['x']
+      # xs.shape.ndims is same as len(xs.shape)
+      if xs.shape.ndims == 2: xs = tf.expand_dims(xs, axis=1)
+
+      mlstm_cell = rnn.MultiRNNCell([unit_lstm() for _ in range(NUM_LAYERS)])
+      outputs, _ = tf.nn.dynamic_rnn(mlstm_cell, inputs=xs, dtype=tf.float32)
+
+      # Shape of outputs = (32, 1, 30)
+      output = outputs[:, -1, :]
+      weight = tf.get_variable("weight", [HIDDEN_SIZE, 1])
+      bias = tf.get_variable("bias", [1])
+      prediction = tf.matmul(output, weight) + bias
+
+      if mode == tf.estimator.ModeKeys.PREDICT:
+          predictions = {
+              'predictions': prediction,
+          }
+          return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
+      if labels.shape.ndims == 1: labels = tf.expand_dims(labels, axis=-1)
+      loss = tf.losses.mean_squared_error(labels, prediction)
+      train_op = tf.contrib.layers.optimize_loss(loss, tf.contrib.framework.get_global_step(),
+      optimizer='Adagrad', learning_rate=0.1) # 0.1 works better than 0.01 here.
+
+      return tf.estimator.EstimatorSpec(mode=mode, predictions=prediction, loss=loss, train_op=train_op)
+
+  estimator_lstm = tf.estimator.Estimator(model_fn=lstm_model)
+  estimator_lstm.train(input_fn=train_input_fn, steps=TRAINING_STEPS)
+  # INFO:tensorflow:Loss for final step: 0.0009022613
+
+  estimator_lstm.evaluate(eval_input_fn)
+  # Out[20]: {'loss': 0.0010767069, 'global_step': 1000}
+
+  pp = estimator_lstm.predict(input_fn=predict_input_fn)
+  tt = [ii['predictions'][0] for ii in pp]
+  plot_test_result(tt, test_y, 'LSTM estimator')
+  ```
+## Traditional way implementing LSTM model
+  ```python
+  from tensorflow.contrib import rnn
+
+  HIDDEN_SIZE = 30
+  NUM_LAYERS = 2
+  BATCH_SIZE = 32
+  TRAINING_STEPS = 1000
+
+  ''' 定义 lstm cell 结构 '''
+  def unit_lstm():
+      lstm_cell = rnn.BasicLSTMCell(num_units=HIDDEN_SIZE)
+      # Optional dropout, in some cases dropout not working well.
+      # lstm_cell = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=0.5)
+      return lstm_cell
+
+  def mlstm_inference(batch_size, X):
+      ''' 定义 multi lstm layers 结构 '''
+      # MultiRNNCell for multi layers LSTM
+      mlstm_cell = rnn.MultiRNNCell([unit_lstm() for _ in range(NUM_LAYERS)])
+      # If there is no initial_state, you must give a dtype.
+      # outputs, _ = tf.nn.dynamic_rnn(mlstm_cell, inputs=X, dtype=tf.float32)
+      # or use self defined initial state
+      init_state = mlstm_cell.zero_state(batch_size, dtype=tf.float32)
+      outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=X, initial_state=init_state)
+
+      ''' 设置全连接层，返回预测值 '''
+      # shape of outputs = (BATCH_SIZE, X.shape[1], HIDDEN_SIZE)
+      # h_state = outputs[:, -1, :]  # or h_state = state[-1][1]
+      h_state = outputs[:, -1, :]  # or h_state = state[-1][1]
+      W = tf.Variable(tf.truncated_normal([HIDDEN_SIZE, 1], stddev=0.1), dtype=tf.float32)
+      bias = tf.Variable(tf.constant(0.1, shape=[1]), dtype=tf.float32)
+      y_pre = tf.matmul(h_state, W) + bias
+
+      return y_pre
+
+  _X = tf.placeholder(tf.float32, [None, 10])
+  _y = tf.placeholder(tf.float32, [None])
+  # X must have rank at least 3
+  X = tf.expand_dims(_X, 1)
+  y = tf.expand_dims(_y, 1)
+  batch_size = tf.placeholder(tf.int32, [])
+
+  y_pre = mlstm_inference(batch_size, X)
+
+  loss = tf.losses.mean_squared_error(y, y_pre)
+  optimizer = tf.train.GradientDescentOptimizer(0.1)
+  train_op = optimizer.minimize(loss)
+
+  data_size = train_x.shape[0]  
+  sess = tf.InteractiveSession()
+  init = tf.global_variables_initializer()
+  sess.run(init)
+
+  for i in range(TRAINING_STEPS):
+      batch = np.random.permutation(data_size)[:BATCH_SIZE]
+      xs = train_x[batch]
+      ys = train_y[batch]
+      if i % 100 == 0:
+          print('step = %d, loss = %s' %(i, sess.run(loss, feed_dict={_X: train_x, _y: train_y, batch_size: data_size})))
+      sess.run(train_op, feed_dict={_X: xs, _y: ys, batch_size: BATCH_SIZE})
+      # step = 990, loss = 0.0029966352
+
+  sess.run(loss, feed_dict={_X: test_x, _y: test_y, batch_size: test_x.shape[0]})
+  # Out[9]: 0.0031799008
+  tt = sess.run(y_pre, feed_dict={_X: test_x, batch_size: test_x.shape[0]})
+  plot_test_result(tt, test_y, 'LSTM tradition')
   ```
 ***
 

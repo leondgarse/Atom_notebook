@@ -1041,6 +1041,15 @@ echo "✨ 🍰 ✨"
 
     The box "Turn on fast startup" should either be disabled or missing.
     ```
+## gsettings schema
+  ```shell
+  gsettings list-schemas
+  gsettings list-keys  org.gnome.desktop.input-sources
+  gsettings get org.gnome.desktop.input-sources sources
+
+  ibus list-engine | grep -A 5 Cinese
+  gsettings set org.gnome.desktop.input-sources sources "[('ibus', 'libpinyin')]"
+  ```
 ***
 
 # 软件
