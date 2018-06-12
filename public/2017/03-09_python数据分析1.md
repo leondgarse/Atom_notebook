@@ -174,6 +174,25 @@ nonzero / where / choose
     This can lead to unexpected behavior if func has side-effects,
     as they will take effect twice for the first column/row.
     ```
+  - Q: 环境安装配置 yum
+    ```shell
+    yum install python34.x86_64
+    yum install python34-pip.noarch
+
+    alias python='python3'
+    alias pip='pip3'
+
+    pip install --upgrade pip
+    pip install tensorflow scikit-learn scikit-image ipython
+
+    alias ipython='ipython3'
+    alias ipy='ipython'
+
+    yum install gcc.x86_64
+    yum install python34-devel.x86_64 # Solve error: Python.h: No such file or directory
+    pip install conda
+    yum install anaconda.x86_64
+    ```
 ***
 
 # python扩展库 numpy / pandas / matplotlib / ipython / scipy / Biopython简介
@@ -565,31 +584,6 @@ nonzero / where / choose
   - 保留有意义的对象和数据，如果希望该模块是可引入的，也可以将这些代码放在if __name__=='__main__':块中
   - 扁平结构要比嵌套结构好，编写函数和类时应尽量注意低耦合和模块化，这样可以使它们更易于测试（如果你编写单元测试的话）、调试和交互式使用
   - 无惧大文件，维护更大的（具有高内聚度的）模块会更实用也更具有Python特点，在解决完问题之后，有时将大文件拆分成小文件会更好
-  - 重新加载模块依赖项
-    ```python
-    在Python中，当输入import some_lib时，some_lib中的代码就会被执行，且其中所有的变量、函数和引入项都会被保存在一个新建的some_lib模块命名空间中
-    下次你再输入import some_lib时，就会得到这个模块命名空间的一个引用
-    这对于IPython的交互式代码开发模式就会有一个问题，比如，用%run执行的某段脚本中牵扯到了某个刚刚做了修改的模块
-
-    假设我们有一个test_script.py文件，其中有下列代码：
-            import some_lib
-
-            x = 5
-            y = [1, 2, 3, 4]
-            result = some_lib.get_answer(x, y)
-    如果在执行了%run test_script.py之后又对some_lib.py进行了修改，下次再执行%run test_script.py时将仍然会使用老版的some_lib
-    为了解决这个问题，有两个办法可用，第一个办法是使用Python内置的reload函数，将test_script.py修改成下面这个样子：
-            import some_lib
-            reload(some_lib)
-
-            x = 5
-            y = [1, 2, 3, 4]
-            result = some_lib.get_answer(x, y)
-    保证每次执行test_script.py时都能用上最新版的some_lib了，显然，当依赖变得更强时，就需要在很多地方插入很多的reload
-    IPython还提供了一个特殊的dreload函数（非魔术函数）来解决模块的“深度”（递归）重加载
-    如果执行import some_lib之后再输入dreload(some_lib)，则它会尝试重新加载some_lib及其所有的依赖项
-    如果还是不行，重启IPython
-    ```
   - 让自定义的类对IPython更加友好
     ```python
     IPython会获取__repr__方法返回的字符串（具体办法是output=repr(obj)），并将其显示到控制台上，因此可以为类添加一个简单的__repr__方法以得到一个更有意义的输出形式：
@@ -603,6 +597,38 @@ nonzero / where / choose
     In [63]: x
     Out[63]: Message: I have a secret
     ```
+## 重新加载模块依赖项
+  - 加载模块依赖项的问题
+    - 在 Python 中，当输入 `import somelib` 时，some_lib 中的代码就会被执行，且其中所有的变量、函数和引入项都会被保存在一个新建的 some_lib 模块命名空间中
+    - 下次再输入 `import some_lib` 时，就会得到这个模块命名空间的一个引用
+    - 这对于 IPython 的交互式代码开发模式就会有一个问题，比如用 `%run` 执行的某段脚本中牵扯到了某个刚刚做了修改的模块
+  - 假设有一个 **test_script.py** 文件，其中有下列代码
+    ```python
+    import some_lib
+
+    x = 5
+    y = [1, 2, 3, 4]
+    result = some_lib.get_answer(x, y)
+    ```
+    如果在执行了 `%run test_script.py` 之后又对 some_lib.py 进行了修改，下次再执行 %run test_script.py 时将仍然会使用老版的 some_lib
+  - Python2 使用 reload 函数
+    ```python
+    import some_lib
+    reload(some_lib)
+
+    x = 5
+    y = [1, 2, 3, 4]
+    result = some_lib.get_answer(x, y)
+    ```
+    当依赖变得更强时，就需要在很多地方插入很多的 reload
+  - Python3.4 以上使用 **importlib.reload**
+    ```python
+    from importlib import reload
+    reload(some_lib)
+    ```
+  - IPython 还提供了一个特殊的 **dreload** 函数（非魔术函数）来解决模块的“深度”（递归）重加载
+    - 如果执行 import some_lib 之后再输入 dreload(some_lib)，则它会尝试重新加载 some_lib 及其所有的依赖项
+    - 如果还是不行，重启 IPython
 ## IPython 个性化和配置
   - IPython shell在外观（如颜色、提示符、行间距等）和行为方面的大部分内容都是可以进行配置的
   - 配置选项定义在 ipython_config.py 文件中，默认IPython配置文件位于：

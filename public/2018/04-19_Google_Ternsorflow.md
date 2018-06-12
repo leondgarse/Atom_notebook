@@ -1,22 +1,113 @@
 # ___2018 - 04 - 19 Tensorflow 实战 Google 深度学习框架___
 ***
 
-# Foo
-  ```python
-  TensorFlow是一个通过图的形式来表述计算的编程系统，TensorFlow程序中的所有计算都会被表达为计算图上的节点
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  除了使用验证数据集，还可以采用交叉验证（cross validation）的方式来验证模型效果。但因为神经网络训练时间本身就比较长，采用cross validation会花费大量时间。所以在海量数据的情况下，一般会更多地采用验证数据集的形式来评测模型的效果
+  - [___2018 - 04 - 19 Tensorflow 实战 Google 深度学习框架___](#2018-04-19-tensorflow-实战-google-深度学习框架)
+  - [目录](#目录)
+  - [TensorFlow 环境搭建](#tensorflow-环境搭建)
+  	- [Protocol Buffer](#protocol-buffer)
+  	- [Bazel](#bazel)
+  	- [通过 docker 安装 tensorflow](#通过-docker-安装-tensorflow)
+  	- [pip 安装](#pip-安装)
+  	- [启用 GPU 支持](#启用-gpu-支持)
+  	- [Hello World](#hello-world)
+  - [基本概念](#基本概念)
+  	- [张量 Tensor](#张量-tensor)
+  	- [计算图 Graph](#计算图-graph)
+  	- [会话 Session](#会话-session)
+  	- [占位符 placeholders](#占位符-placeholders)
+  	- [变量 Variables](#变量-variables)
+  	- [Tensorflow playground](#tensorflow-playground)
+  - [通用函数](#通用函数)
+  	- [tf.matmul tf.tensordot 矩阵乘法](#tfmatmul-tftensordot-矩阵乘法)
+  	- [tf.clip_by_value 将一个张量中的数值限制在一个范围之内](#tfclipbyvalue-将一个张量中的数值限制在一个范围之内)
+  	- [tf.greater tf.equal 返回两个张量的比较结果](#tfgreater-tfequal-返回两个张量的比较结果)
+  	- [tf.where 条件筛选](#tfwhere-条件筛选)
+  	- [tf.control_dependencies tf.group 组合训练](#tfcontroldependencies-tfgroup-组合训练)
+  	- [tf.expand_dims 增加一个维度](#tfexpanddims-增加一个维度)
+  	- [tf.slice 截取一个切片](#tfslice-截取一个切片)
+  	- [tf.transpose 转置](#tftranspose-转置)
+  	- [tf.contrib.seq2seq.sequence_loss 列表损失函数](#tfcontribseq2seqsequenceloss-列表损失函数)
+  - [三层线性神经网络](#三层线性神经网络)
+  	- [神经网络分层结构](#神经网络分层结构)
+  	- [前向传播算法 Forward propagation 输出结果](#前向传播算法-forward-propagation-输出结果)
+  	- [损失函数 loss function 评估当前模型的预测结果与目标值的距离](#损失函数-loss-function-评估当前模型的预测结果与目标值的距离)
+  	- [反向传播算法 Back propagation 更新神经网络参数的取值](#反向传播算法-back-propagation-更新神经网络参数的取值)
+  - [深度学习与深层神经网络](#深度学习与深层神经网络)
+  	- [激活函数 activation function 实现非线性化](#激活函数-activation-function-实现非线性化)
+  	- [多层网络解决异或运算 exclusive or](#多层网络解决异或运算-exclusive-or)
+  	- [softmax 回归与 交叉熵 cross-entropy](#softmax-回归与-交叉熵-cross-entropy)
+  	- [梯度下降算法 Gradient decent](#梯度下降算法-gradient-decent)
+  	- [指数衰减学习率 exponential decay learning rate](#指数衰减学习率-exponential-decay-learning-rate)
+  	- [过拟合 与 L1 L2 正则化缩减](#过拟合-与-l1-l2-正则化缩减)
+  	- [滑动平均模型 exponantial moving average](#滑动平均模型-exponantial-moving-average)
+  	- [命名空间 tf.variable_scope 与变量获取 tf.get_variable](#命名空间-tfvariablescope-与变量获取-tfgetvariable)
+  - [应用示例](#应用示例)
+  	- [自定义损失函数预测商品销量计算盈利](#自定义损失函数预测商品销量计算盈利)
+  	- [计算一个 5 层神经网络带 L2 正则化的损失函数的网络模型](#计算一个-5-层神经网络带-l2-正则化的损失函数的网络模型)
+  	- [MNIST Softmax Regression](#mnist-softmax-regression)
+  	- [MNIST 使用 滑动平均模型 与 指数衰减学习率 与 L2 正则化](#mnist-使用-滑动平均模型-与-指数衰减学习率-与-l2-正则化)
+  - [模型持久化](#模型持久化)
+  	- [模型持久化 tf.train.Saver 类](#模型持久化-tftrainsaver-类)
+  	- [tf.train.Saver 类使用变量名字典 加载 变量的滑动平均值](#tftrainsaver-类使用变量名字典-加载-变量的滑动平均值)
+  	- [convert_variables_to_constants 函数 将计算图中的变量及其取值转化为常量](#convertvariablestoconstants-函数-将计算图中的变量及其取值转化为常量)
+  	- [meta 文件 与 元图 MetaGraph](#meta-文件-与-元图-metagraph)
+  	- [tf.train.NewCheckpointReader 加载模型文件](#tftrainnewcheckpointreader-加载模型文件)
+  - [MNIST 最佳实践样例](#mnist-最佳实践样例)
+  	- [优化方向](#优化方向)
+  	- [前向传播过程 mnist_inference.py](#前向传播过程-mnistinferencepy)
+  	- [训练过程 mnist_train.py](#训练过程-mnisttrainpy)
+  	- [测试过程 mnist_eval.py](#测试过程-mnistevalpy)
+  	- [运行结果](#运行结果)
+  - [卷积神经网络 Convolutional Neural Network CNN](#卷积神经网络-convolutional-neural-network-cnn)
+  	- [图像识别问题经典数据集](#图像识别问题经典数据集)
+  	- [卷积神经网络简介](#卷积神经网络简介)
+  	- [卷积层 Convolution](#卷积层-convolution)
+  	- [池化层 Pooling](#池化层-pooling)
+  	- [TensorFlow-Slim 工具](#tensorflow-slim-工具)
+  	- [卷积神经网络经典架构](#卷积神经网络经典架构)
+  	- [LeNet-5 模型](#lenet-5-模型)
+  	- [python 实现 LeNet-5 模型](#python-实现-lenet-5-模型)
+  	- [Inception-v3 模型](#inception-v3-模型)
+  - [卷积神经网络迁移学习](#卷积神经网络迁移学习)
+  	- [迁移学习 Transfer Learning](#迁移学习-transfer-learning)
+  	- [> TensorFlow 实现迁移学习](#-tensorflow-实现迁移学习)
+  - [图像数据处理](#图像数据处理)
+  	- [图像读取 与 编解码](#图像读取-与-编解码)
+  	- [图像大小调整](#图像大小调整)
+  	- [图像翻转](#图像翻转)
+  	- [图像色彩调整](#图像色彩调整)
+  	- [标注框](#标注框)
+  	- [综合使用示例](#综合使用示例)
+  - [多线程输入数据处理框架](#多线程输入数据处理框架)
+  	- [TFRecord 输入数据格式](#tfrecord-输入数据格式)
+  	- [python 将 mnist 数据转化为 TFRecord 格式](#python-将-mnist-数据转化为-tfrecord-格式)
+  	- [队列类 FIFOQueue RandomShuffleQueue](#队列类-fifoqueue-randomshufflequeue)
+  	- [多线程协同类 Coordinator QueueRunner](#多线程协同类-coordinator-queuerunner)
+  	- [输入文件队列 match_filenames_once string_input_producer](#输入文件队列-matchfilenamesonce-stringinputproducer)
+  	- [组合训练数据 batch shuffle_batch shuffle_batch_join](#组合训练数据-batch-shufflebatch-shufflebatchjoin)
+  	- [Python 实现 TFRecord 数据读取与 Batching](#python-实现-tfrecord-数据读取与-batching)
+  - [循环神经网络 recurrent neural network RNN](#循环神经网络-recurrent-neural-network-rnn)
+  	- [循环神经网络简介](#循环神经网络简介)
+  	- [单层全连接神经网络循环体](#单层全连接神经网络循环体)
+  	- [长短时记忆网络 long short-term memory LSTM](#长短时记忆网络-long-short-term-memory-lstm)
+  	- [循环神经网络的dropout](#循环神经网络的dropout)
+  	- [TensorFlow 中的 LSTM 结构](#tensorflow-中的-lstm-结构)
+  	- [双向循环神经网络 和 深层循环神经网络](#双向循环神经网络-和-深层循环神经网络)
+  	- [LSTM MNIST](#lstm-mnist)
+  	- [PTB Penn Treebank Dataset 文本数据集](#ptb-penn-treebank-dataset-文本数据集)
+  	- [> LSTM RNN PTB 自然语言处理 NLP](#-lstm-rnn-ptb-自然语言处理-nlp)
+  - [预测 sin 函数时间序列](#预测-sin-函数时间序列)
+  	- [生成测试数据](#生成测试数据)
+  	- [预定义的全连接线性模型 tf.estimator.LinearRegressor 预测](#预定义的全连接线性模型-tfestimatorlinearregressor-预测)
+  	- [自定义的全连接神经网络模型预测](#自定义的全连接神经网络模型预测)
+  	- [LSTM model with estimator 预测](#lstm-model-with-estimator-预测)
+  	- [Traditional way implementing LSTM model 预测](#traditional-way-implementing-lstm-model-预测)
+  - [> TensorBoard 可视化](#-tensorboard-可视化)
 
-  >>> from skimage import data
-  >>> from skimage.transform import rotate
-  >>> image = data.camera()
-  >>> rotate(image, 2).shape
-  (512, 512)
-  >>> rotate(image, 2, resize=True).shape
-  (530, 530)
-  >>> rotate(image, 90, resize=True).shape
-  (512, 512)
-  ```
+  <!-- /TOC -->
 ***
 
 # TensorFlow 环境搭建
@@ -142,7 +233,14 @@
     vi ~/.jupyter/jupyter_notebook_config.py
     # Add
     c.NotebookApp.password = u'sha1:...'
-
+    ```
+  - 从 docker image 中取出数据集
+    ```shell
+    # docker shell, 安装 ssh
+    yum install
+    ```
+  - 其他 docker 命令
+    ```shell
     # 系统 shell 中重启容器
     sudo docker restart tensorflow
 
@@ -189,8 +287,26 @@
     conda clean --all # clean temporary fills
     ```
 ## 启用 GPU 支持
+  - [NVIDIA/nvidia-docker](https://github.com/NVIDIA/nvidia-docker) 用于安装启用 GPU 的 docker
+    ```shell
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    sudo apt-get update
+    sudo apt-get install -y nvidia-docker2
+    nvidia-docker -v
+    ```
   - 安装开启 GPU 支持的 TensorFlow
+    ```shell
+    pip install tensorflow-gpu
+    ```
   - 安装正确的 CUDA sdk 和 CUDNN 版本
+    ```shell
+    nvidia-smi
+    sudo apt-get install nvidia-cuda-toolkit
+    tar xvf cudnn-9.2-linux-x64-v7.1.tgz
+    sudo mv cuda/ /usr/local/
+    ```
   - 设置 LD_LIBRARY_PATH 和 CUDA_HOME 环境变量
     ```shell
     # 假定 CUDA 安装目录为 /usr/local/cuda
@@ -244,6 +360,7 @@
       c = tf.constant([1, 2], name='c', dtype=tf.float32)
       ```
 ## 计算图 Graph
+  - TensorFlow 是一个通过图的形式来表述计算的编程系统，TensorFlow 程序中的所有计算都会被表达为计算图上的节点
   - TensorFlow 计算模型，TensorFlow 的程序一般由两部分组成
     - 创建计算图 Building the computational graph
     - 运行计算图 Running the computational graph
@@ -286,7 +403,7 @@
 
     # g2 中 v 值为 1
     with tf.Session(graph=g2) as sess:
-        tf.initialize_all_variables().run()
+        tf.global_variables_initializer.run()
         with tf.variable_scope("", reuse=True):
             print(sess.run(tf.get_variable('v')))
     # [Out] [1.]
@@ -337,9 +454,9 @@
     sess.close()
     ```
   - **ConfigProto** 配置需要生成的会话，可以配置类似 **并行的线程数** / **GPU 分配策略** / **运算超时时间** 等参数
-    - **allow_soft_placement** 布尔型参数，默认值为 False，为 True 的时候，在以下任意一个条件成立的时候，GPU上的运算可以放到CPU上进行，当某些运算无法被当前GPU支持时，可以自动调整到CPU上，而不是报错
-      - 运算无法在GPU上执行
-      - 没有GPU资源（比如运算被指定在第二个GPU上运行，但是机器只有一个GPU）
+    - **allow_soft_placement** 布尔型参数，默认值为 False，为 True 的时候，在以下任意一个条件成立的时候，GPU上的运算可以放到CPU上进行，当某些运算无法被当前GPU支持时，可以自动调整到 CPU 上，而不是报错
+      - 运算无法在 GPU 上执行
+      - 没有 GPU 资源（比如运算被指定在第二个 GPU 上运行，但是机器只有一个 GPU）
       - 运算输入包含对CPU计算结果的引用
     - **log_device_placement** 布尔型参数，为 True 时日志中将会记录每个节点被安排在了哪个设备上以方便调试，在生产环境中将这个参数设置为 False 可以减少日志量
     ```python
@@ -452,6 +569,12 @@
     ```
   - **tf.global_variables() 方法获取当前计算图上所有变量** 有助于持久化整个计算图的运行状态
   - **tf.trainable_variables() 方法获取当前计算图上所有需要优化的参数** 声明变量时参数 trainable=True(默认为 True) 时加入 GraphKeys.TRAINABLE_VARIABLES
+  - **global** 与 **local** variables
+    - **tf.global_variables_initializer** 等同于 `tf.variables_initializer(tf.global_variables())`，返回初始化 global 变量的操作
+    - **tf.local_variables_initializer** 等同于 `tf.variables_initializer(tf.local_variables())`，返回初始化 local 变量的操作
+    - **tf.global_variables** 返回 global 变量，`tf.GraphKeys.GLOBAL_VARIABLES` 集合上的所有变量
+    - **tf.local_variables** 返回 local 变量，进程相关的变量，临时或内部值，通常不会 saved / restored 到 checkpoint
+    - **variables_initializer(var_list, name='init')** 返回一个变量列表的初始化操作
 ## Tensorflow playground
   - [Tensorflow playground](http://playground.tensorflow.org)
   - 一个小格子代表神经网络中的一个节点，而边代表节点之间的连接
@@ -623,24 +746,10 @@
     #        [[ 7, 10], [ 8, 11], [ 9, 12]]], dtype=int32)
     ```
 ## tf.contrib.seq2seq.sequence_loss 列表损失函数
-  ```shell
-  Tensorflow 0.9 to 1.0.1 is a big jump. A lot changed.
-  Details: https://github.com/tensorflow/tensorflow/blob/master/RELEASE.md
-
-  In tf 1.0.0, the API has been changed such as:
-
-  tf.nn.seq2seq.sequence_loss_by_example
-  to
-  tf.contrib.legacy_seq2seq.sequence_loss_by_example
-
-  tf.nn.rnn_cell.
-  to
-  tf.contrib.rnn.
-
-  tf.nn.rnn_cell.MultiRNNCell
-  to
-  tf.contrib.rnn.MultiRNNCell
-  ```
+  - Tensorflow 0.9 to 1.0.1 is a big jump [tensorflow/RELEASE.md](https://github.com/tensorflow/tensorflow/blob/master/RELEASE.md)
+    - **tf.nn.seq2seq.sequence_loss_by_example** to **tf.contrib.legacy_seq2seq.sequence_loss_by_example**
+    - **tf.nn.rnn_cell.** to **tf.contrib.rnn.**
+    - **tf.nn.rnn_cell.MultiRNNCell** to **tf.contrib.rnn.MultiRNNCell**
   ```python
   A = tf.constant([[0.1, 0.2, 0.3, 0.4], [0.2, 0.1, 0.4, 0.3], [0.4, 0.3, 0.2, 0.1], [0.3, 0.2, 0.1, 0.4], [0.1, 0.4, 0.3, 0.2]], dtype=tf.float32)
   B = tf.constant([1, 2, 1, 3, 3], dtype=tf.int32)
@@ -1988,7 +2097,7 @@
     ```python
     import tensorflow.contrib.slim as slim
     ```
-  - **slim.conv2d** 添加一个卷积层
+  - **slim.conv2d** 添加一个卷积层，默认的激活函数 **relu**
     ```python
     # Adds an N-D convolution followed by an optional batch_norm layer
     # convolution(输入节点矩阵, 当前卷积层过滤器的深度, 过滤器的尺寸, ...)
@@ -2006,7 +2115,7 @@
         conv_relu = tf.nn.relu(tf.nn.bias_add(conv, biases))
 
     # slim.conv2d
-    net = slim.conv2d(input_x, 32, [3, 3])
+    net = slim.conv2d(input_x, num_outputs=32, kernel_size=[3, 3], stride=1, padding='VALID')
     # Or
     net = slim.conv2d(input_x, 32, 3)
     ```
@@ -2023,7 +2132,36 @@
         pool = tf.nn.max_pool(conv_relu, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     # slim.avg_pool2d
-    layer_1 = slim.avg_pool2d(net, 3)
+    net = slim.avg_pool2d(net, kernel_size=3, stride=2)
+    ```
+  - **slim.fully_connected** 添加一个全连接层，默认的激活函数 **relu**
+    ```python
+    fully_connected(inputs, num_outputs,
+            activation_fn=<function relu at 0x7fce8ed61378>,
+            normalizer_fn=None, normalizer_params=None,
+            weights_initializer=<function variance_scaling_initializer.<locals>._initializer at 0x7fce59d6fea0>,
+            weights_regularizer=None,
+            biases_initializer=<tensorflow.python.ops.init_ops.Zeros object at 0x7fce59d72a90>,
+            biases_regularizer=None,
+            reuse=None,
+            variables_collections=None,
+            outputs_collections=None,
+            trainable=True,
+            scope=None)
+    ```
+    ```python
+    net = slim.fully_connected(net, num_outputs=2, activation_fn=None, biases_initializer=tf.zeros_initializer(), scope='fc')
+    ```
+  - **slim.dropout** 添加一层 dropout
+    ```python
+    dropout(inputs, keep_prob=0.5, noise_shape=None, is_training=True, outputs_collections=None, scope=None, seed=None)
+    ```
+    ```python
+    net = slim.dropout(net, 0.5, scope='dropout')
+    ```
+  - **slim.lrn** 添加一个 lrn 层，在 alexnet 中使用
+    ```python
+    lrn(input, depth_radius=5, bias=1, alpha=1, beta=0.5, name=None)
     ```
   - **slim.arg_scope** 设置指定列表中函数的默认参数取值
       ```python
@@ -2034,7 +2172,12 @@
       arg_scope(list_ops_or_scope, **kwargs)
       ```
       ```python
+      # define list_ops_or_scope as a list
       with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d], stride=1, padding='SAME'):
+          # define slim operations
+
+      # define list_ops_or_scope as a dict [ ??? ]
+      with slim.arg_scope({slim.conv2d: {'stride': 1, 'padding': 'SAME'}, slim.fully_connected: {'activation_fn': None}}):
           # define slim operations
       ```
 ## 卷积神经网络经典架构
@@ -2385,28 +2528,16 @@
     ```
 ***
 
-# 卷积神经网络迁移学习 Transfer Learning
-  - 迁移学习，就是将一个问题上训练好的模型通过简单的调整使其适用于一个新的问题
-    - 根据论文DeCAF: A Deep Convolutional Activation Feature for Generic Visual Recognition(32)中的结论，可以保留训练好的Inception-v3模型中所有卷积层的参数，只是替换最后一层全连接层。在最后这一层全连接层之前的网络层称之为瓶颈层（bottleneck）
-
-  将新的图像通过训练好的卷积神经网络直到瓶颈层的过程可以看成是对图像进行特征提取的过程。在训练好的Inception-v3模型中，因为将瓶颈层的输出再通过一个单层的全连接层神经网络可以很好地区分1000种类别的图像，所以有理由认为瓶颈层输出的节点向量可以被作为任何图像的一个更加精简且表达能力更强的特征向量。于是，在新数据集上，可以直接利用这个训练好的神经网络对图像进行特征提取，然后再将提取得到的特征向量作为输入来训练一个新的单层全连接神经网络处理新的分类问题。
-  一般来说，在数据量足够的情况下，迁移学习的效果不如完全重新训练。但是迁移学习所需要的训练时间和训练样本数要远远小于训练完整的模型。在没有GPU(33)的普通台式机或者笔记本电脑上，6.5.2小节中给出的TensorFlow训练过程只需要大约5分钟(34)，而且可以达到大概90%的正确率
-
-  TensorFlow实现迁移学习
-  本小节将给出一个完整的TensorFlow程序来介绍如何通过TensorFlow实现迁移学习。以下代码给出了如何下载这一小节中将要用到的数据集。
-
-      curl http://download.tensorflow.org/example_images/flower_photos.tgz
-      tar xzf flower_photos.tgz
-  解压之后的文件夹包含了5个子文件夹，每一个子文件夹的名称为一种花的名称，代表了不同的类别。平均每一种花有734张图片，每一张图片都是RGB色彩模式的，大小也不相同。和之前的样例不同，在这一小节中给出的程序将直接处理没有整理过的图像数据。同时，通过下面的命名可以下载谷歌提供的训练好的Inception-v3模型。
-
-      wget https://storage.googleapis.com/download.tensorflow.org/models/\
-      inception_dec_2015.zip
-      unzip tensorflow/examples/label_image/data/inception_dec_2015.zip
-  当新的数据集和已经训练好的模型都准备好之后，可以通过以下代码来完成迁移学习的过程
-
-  /home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/flower_photos
-  /home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/inception_dec_2015
-
+# 卷积神经网络迁移学习
+## 迁移学习 Transfer Learning
+  - **迁移学习** 将一个问题上训练好的模型通过简单的调整使其适用于一个新的问题
+  - 一般来说，在数据量足够的情况下，迁移学习的效果不如完全重新训练，但是迁移学习所需要的训练时间和训练样本数要远远小于训练完整的模型
+  - 根据论文 **DeCAF: A Deep Convolutional Activation Feature for Generic Visual Recognition** 中的结论，可以保留训练好的 **Inception-v3 模型** 中所有卷积层的参数，只是替换最后一层全连接层，在最后这一层全连接层之前的网络层称之为 **瓶颈层 bottleneck**
+  - 在训练好的 Inception-v3 模型中，将 **瓶颈层的输出** 再通过一个 **单层的全连接层神经网络** 可以很好地区分1000种类别的图像，可以认为 **瓶颈层输出的节点向量** 可以被作为任何图像的一个 **更加精简且表达能力更强的特征向量**，在新数据集上，可以直接利用这个训练好的神经网络对图像进行 **特征提取**
+## > TensorFlow 实现迁移学习
+  - [训练好的 inception_dec_2015 模型](https://storage.googleapis.com/download.tensorflow.org/models/inception_dec_2015.zip)
+  - [flower photos 数据集](http://download.tensorflow.org/example_images/flower_photos.tgz)
+    - 解压之后的文件夹包含了5个子文件夹，每一个子文件夹的名称为一种花的名称，平均每一种花有734张图片
   ```python
   import glob
   import os.path
@@ -2561,7 +2692,7 @@
       return bottlenecks, ground_truths
 
   # #### 10. 定义主函数
-  def main(_):
+  def main():
       image_lists = create_image_lists(TEST_PERCENTAGE, VALIDATION_PERCENTAGE)
       n_classes = len(image_lists.keys())
 
@@ -2584,7 +2715,7 @@
           final_tensor = tf.nn.softmax(logits)
 
       # 定义交叉熵损失函数。
-      cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits, ground_truth_input)
+      cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=ground_truth_input)
       cross_entropy_mean = tf.reduce_mean(cross_entropy)
       train_step = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(cross_entropy_mean)
 
@@ -2619,7 +2750,7 @@
           print('Final test accuracy = %.1f%%' % (test_accuracy * 100))
 
   if __name__ == '__main__':
-      main(_)
+      main()
   ```
   ```python
   $ python inception_3_move.py
@@ -3018,7 +3149,7 @@
   filename_queue = tf.train.string_input_producer(["Records/output.tfrecords"])
   _, serialized_example = reader.read(filename_queue)
 
-  # 解析读取的样例。
+  # 解析读取的样例
   features = tf.parse_single_example(
       serialized_example,
       features={
@@ -3041,82 +3172,261 @@
       image, label, pixel = sess.run([images, labels, pixels])
       print('iamges shape = %s, label = %d, pixel = %d' % (image.shape, label, pixel))
   ```
-## 队列与多线程
-  在TensorFlow中，队列不仅是一种数据结构，它更提供了多线程机制。队列也是TensorFlow多线程输入数据处理框架的基础
-  在TensorFlow中，队列和变量类似，都是计算图上有状态的节点。其他的计算节点可以修改它们的状态。对于变量，可以通过赋值操作修改变量的取值(8)。对于队列，修改队列状态的操作主要有Enqueue、EnqueueMany和Dequeue
+## 队列类 FIFOQueue RandomShuffleQueue
+  - TensorFlow 中的 **队列** 不仅是一种数据结构，也是 **多线程输入数据处理框架的基础**，多个线程可以同时向一个队列中写元素，或者同时读取一个队列中的元素
+  - **队列** 和变量类似，都是计算图上有状态的节点，修改队列状态的操作主要有
+    - **enqueue** 入队
+    - **enqueueMany** 入队多个
+    - **dequeue** 出队
+  - 队列类 **tf.FIFOQueue** 是一个先进先出队列，**tf.RandomShuffleQueue** 会将队列中的元素打乱
+    ```python
+    # 先进先出队列，指定队列中最多可以保存两个元素，并指定类型为整数
+    q = tf.FIFOQueue(2, tf.int32)
+    init = q.enqueue_many(([0, 10], ))
+
+    # dequeue 函数将队列中的第一个元素出队列
+    x = q.dequeue()
+    y = x + 1
+    # enqueue 函数将加 1 后的值加入队列
+    q_inc = q.enqueue([y])
+
+    sess = tf.InteractiveSession()
+    init.run()
+    for _ in range(5):
+        v, _ = sess.run([x, q_inc])
+        print('v = %d' % v)
+
+    v = 0
+    v = 10
+    v = 1
+    v = 11
+    v = 2
+    ```
+## 多线程协同类 Coordinator QueueRunner
+  - **threading 包** 用于启动多线程
+  - **tf.Coordinator** 用于协同多个线程一起停止
+    - 提供了 **should_stop** / **request_stop** / **join** 三个函数
+    - 在启动线程之前，需要先声明一个 **tf.Coordinator 类**，并将这个类传入每一个创建的线程中
+    - 启动的线程需要一直查询 tf.Coordinator 类中提供的 **should_stop** 函数，当这个函数的返回值为 **True** 时，则当前线程也需要退出
+    - 每一个启动的线程都可以通过调用 **request_stop** 函数来通知其他线程退出，使所有其他线程同时终止
+    ```python
+    import numpy as np
+    import threading
+    import time
+
+    def MyLoop(coord, worker_id):
+        while not coord.should_stop():
+            if np.random.rand() < 0.1:
+                print("Stoping from id: %d" % worker_id)
+                coord.request_stop()
+            else:
+                print("Working on id: %d" % worker_id)
+                time.sleep(1)
+
+    # 声明一个 tf.train.Coordinator 类来协同多个线程
+    coord = tf.train.Coordinator()
+    # 声明创建 5 个线程
+    threads = [ threading.Thread(target=MyLoop, args=(coord, i)) for i in range(5) ]
+
+    # 启动所有的线程
+    for t in threads:
+        t.start()
+
+    # 等待所有线程退出
+    coord.join(threads)
+
+    # [Out]
+    Working on id: 0
+    Working on id: 1
+    Working on id: 2
+    Stoping from id: 3
+    ```
+  - **tf.QueueRunner** 主要用于启动多个线程来操作同一个队列，启动的这些线程可以通过 **tf.Coordinator 类** 来统一管理
+    - **tf.train.add_queue_runner** 将一个 `QueueRunner` 加入到计算图中的一个集合中，默认集合 **tf.GraphKeys.QUEUE_RUNNERS**
+      ```python
+      add_queue_runner(qr, collection='queue_runners')
+      ```
+    - **tf.train.start_queue_runners** 运行计算图上的所有 `queue runners`，返回所有线程的列表
+      ```python
+      start_queue_runners(sess=None, coord=None, daemon=True, start=True, collection='queue_runners')
+      ```
+    ```python
+    # 先进先出的队列，队列中最多100个元素，类型为实数
+    queue = tf.FIFOQueue(100,"float")
+    # 定义队列的入队操作
+    enqueue_op = queue.enqueue([tf.random_normal([1])])
+    # 创建多个线程运行队列的入队操作，启动 5 个线程，每个线程中运行的是 enqueue_op 操作
+    qr = tf.train.QueueRunner(queue, [enqueue_op] * 5)
+
+    # 加入 TensorFlow 计算图，没有指定集合则加入默认集合 tf.GraphKeys.QUEUE_RUNNERS
+    tf.train.add_queue_runner(qr)
+    # 定义出队操作
+    out_tensor = queue.dequeue()
+
+    with tf.Session() as sess:
+        coord = tf.train.Coordinator()
+        # 调用 tf.train.start_queue_runners 启动所有线程，默认启动 tf.GraphKeys.QUEUE_RUNNERS 集合中所有的 QueueRunner
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+
+        # 获取队列中的取值
+        for _ in range(3): print(sess.run(out_tensor)[0])
+        # tf.train.Coordinator 停止所有线程
+        coord.request_stop()
+        coord.join(threads)
+
+    # [Out]
+    -0.5423946
+    0.3165861
+    1.0915769
+    ```
+## 输入文件队列 match_filenames_once string_input_producer
+  - 当训练数据量较大时，可以将数据分成多个 TFRecord 文件来提高处理效率
+  - **tf.train.match_filenames_once** 获取符合一个正则表达式的所有文件
+    ```python
+    tt = '*.py'
+    ff = tf.train.match_filenames_once(tt)
+
+    with tf.Session() as sess:
+        # [ ??? ] 使用 tf.global_variables_initializer 会报错 Attempting to use uninitialized value matching_filenames_1
+        init = tf.local_variables_initializer()
+        sess.run(init)
+        print(sess.run(ff))
+    ```
+  - **tf.train.string_input_producer** 将一个文件名列表转化为一个输入队列，将队列中的文件均匀地分给不同的线程，当所有文件都被处理完后，将文件列表中的文件全部重新加入队列
+    ```python
+    string_input_producer(string_tensor, num_epochs=None, shuffle=True, seed=None, capacity=32, shared_name=None, name=None, cancel_op=None)
+    ```
+    - **shuffle** 参数，随机打乱文件列表中文件出队的顺序
+    - **num_epochs** 参数，文件列表循环的轮数，超出后会报 **OutOfRange** 的错误，测试数据集上设置为 1
+    ```python
+    dd = tf.train.string_input_producer(ff, shuffle=False)
+    ```
+## 组合训练数据 batch shuffle_batch shuffle_batch_join
+  - 将多个输入样例组织成一个 **batch** 提供给神经网络的输入层可以提高模型训练的效率
+  - **tf.train.batch** 生成一个队列，将单个的样例组织成 batch 的形式输出，提供了并行化处理输入数据的方法
+    - 队列的 **入队操作** 是生成单个样例的方法
+    - **出队** 得到的是一个 batch 的样例
+    ```python
+    batch(tensors, batch_size, num_threads=1, capacity=32, enqueue_many=False, shapes=None, dynamic_pad=False, allow_smaller_final_batch=False, shared_name=None, name=None)
+    ```
+  - **tf.train.shuffle_batch** 生成一个队列，随机打乱样例顺序
+    ```python
+    shuffle_batch(tensors, batch_size, capacity, min_after_dequeue, num_threads=1, seed=None, enqueue_many=False, shapes=None, allow_smaller_final_batch=False, shared_name=None, name=None)
+    ```
+    - **min_after_dequeue** 参数，限制出队时队列中元素的最少个数，保证随机打乱顺序的作用，此时 capacity 也应该相应调整来满足性能需求
+  - **tf.train.shuffle_batch_join** 从输入文件队列中获取不同的文件分配给不同的线程
+    ```python
+    shuffle_batch_join(tensors_list, batch_size, capacity, min_after_dequeue, seed=None, enqueue_many=False, shapes=None, allow_smaller_final_batch=False, shared_name=None, name=None)
+    ```
+  - **tf.train.shuffle_batch** 和 **tf.train.shuffle_batch_join** 都可以完成 **多线程并行的方式** 进行数据预处理
+    - **tf.train.shuffle_batch** 不同线程会读取同一个文件，当一个文件中的样例比较相似时，神经网络的训练效果可能会受到影响
+    - **tf.train.shuffle_batch_join** 不同线程会读取不同文件，当读取数据的线程数比总文件数还大时，多个线程可能会读取同一个文件中相近部分的数据，并导致过多的硬盘寻址
+## Python 实现 TFRecord 数据读取与 Batching
+  ![image](images/data_input_framework.png)
   ```python
-  q = tf.FIFOQueue(2, tf.int32)
-  init = q.enqueue_many(([0, 10], ))
-  x = q.dequeue()
-  y = x + 1
-  q_inc = q.enqueue([y])
+  ''' 生成文件存储样例数据 '''
+  def _int64_feature(value):
+      return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-  sess = tf.InteractiveSession()
-  init.run()
-  for _ in range(5):
-      v, _ = sess.run([x, q_inc])
-      print('v = %d' % v)
+  num_shards = 2
+  instances_per_shard = 2
+  for i in range(num_shards):
+      filename = ('Records/data.tfrecords-%.5d-of-%.5d' % (i, num_shards))
+      writer = tf.python_io.TFRecordWriter(filename)
+      for j in range(instances_per_shard):
+          example = tf.train.Example(features=tf.train.Features(feature={
+              'i': _int64_feature(i),
+              'j': _int64_feature(j)}))
+          writer.write(example.SerializeToString())
+      writer.close()
 
-  v = 0
-  v = 10
-  v = 1
-  v = 11
-  v = 2
-  ```
-  TensorFlow中提供了FIFOQueue和RandomShuffleQueue两种队列，FIFOQueue，它的实现的是一个先进先出队列。RandomShuffleQueue会将队列中的元素打乱
-  在TensorFlow中，队列不仅仅是一种数据结构，还是异步计算张量取值的一个重要机制。比如多个线程可以同时向一个队列中写元素，或者同时读取一个队列中的元素
-  TensorFlow提供了tf.Coordinator和tf.QueueRunner两个类来完成多线程协同的功能。tf.Coordinator主要用于协同多个线程一起停止，并提供了should_stop、request_stop和join三个函数。在启动线程之前，需要先声明一个tf.Coordinator类，并将这个类传入每一个创建的线程中。启动的线程需要一直查询tf.Coordinator类中提供的should_stop函数，当这个函数的返回值为True时，则当前线程也需要退出。每一个启动的线程都可以通过调用request_stop函数来通知其他线程退出。当某一个线程调用request_stop函数之后，should_stop函数的返回值将被设置为True，这样其他的线程就可以同时终止了
-  ```python
-  import numpy as np
-  import threading
-  import time
-
-  def MyLoop(coord, worker_id):
-      while not coord.should_stop():
-          if np.random.rand() < 0.1:
-              print("Stoping from id: %d" % worker_id)
-              coord.request_stop()
-          else:
-              print("Working on id: %d" % worker_id)
-              time.sleep(1)
-
-  coord = tf.train.Coordinator()
-  threads = [ threading.Thread(target=MyLoop, args=(coord, i)) for i in range(5) ]
-
-  # 启动所有的线程
-  for t in threads:
-      t.start()
-
-  # 等待所有线程退出
-  coord.join(threads)
-
-  Working on id: 0
-  Working on id: 1
-  Working on id: 2
-  Stoping from id: 3
-  ```
-  tf.QueueRunner主要用于启动多个线程来操作同一个队列，启动的这些线程可以通过上面介绍的tf.Coordinator类来统一管理
-  ```python
-  queue = tf.FIFOQueue(100,"float")
-  enqueue_op = queue.enqueue([tf.random_normal([1])])
-  qr = tf.train.QueueRunner(queue, [enqueue_op] * 5)
-  tf.train.add_queue_runner(qr)
-  out_tensor = queue.dequeue()
+  ''' 读取文件 '''
+  files = tf.train.match_filenames_once("Records/data.tfrecords-*")
+  filename_queue = tf.train.string_input_producer(files, shuffle=False)
+  reader = tf.TFRecordReader()
+  _, serialized_example = reader.read(filename_queue)
+  features = tf.parse_single_example(
+        serialized_example,
+        features={
+            'i': tf.FixedLenFeature([], tf.int64),
+            'j': tf.FixedLenFeature([], tf.int64),
+        })
 
   with tf.Session() as sess:
+      tf.local_variables_initializer().run()
+      print('File list = %s' % (sess.run(files)))
+
       coord = tf.train.Coordinator()
       threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-      for _ in range(3): print(sess.run(out_tensor)[0])
+      for i in range(6):
+          print('i = %d, feature = %s' % (i, sess.run([features['i'], features['j']])))
+
       coord.request_stop()
       coord.join(threads)
 
-  -0.5423946
-  0.3165861
-  1.0915769
+  ''' 组合训练数据 Batching '''
+  # batch
+  example, label = features['i'], features['j']
+  batch_size = 2
+  capacity = 1000 + 3 * batch_size
+  example_batch, label_batch = tf.train.batch([example, label], batch_size=batch_size, capacity=capacity)
+
+  with tf.Session() as sess:
+      tf.local_variables_initializer().run()
+      coord = tf.train.Coordinator()
+      threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+      # batch
+      for i in range(3):
+          cur_example_batch, cur_label_batch = sess.run([example_batch, label_batch])
+          print('i = %d, cur_example_batch = %s, cur_label_batch = %s'
+                  % (i, cur_example_batch, cur_label_batch))
+      coord.request_stop()
+      coord.join(threads)
+
+  ''' 组合训练数据 Shuffle Batching '''
+  # shuffle_batch
+  example, label = features['i'], features['j']
+  batch_size = 2
+  min_after_dequeue = 1000
+  capacity = min_after_dequeue + 3 * batch_size
+  example_batch_s, label_batch_s = tf.train.shuffle_batch([example, label], batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+
+  with tf.Session() as sess:
+      tf.local_variables_initializer().run()
+      coord = tf.train.Coordinator()
+      threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+      # shuffle_batch
+      for i in range(3):
+          cur_example_batch_s, cur_label_batch_s = sess.run([example_batch_s, label_batch_s])
+          print('i = %d, cur_example_batch_s = %s, cur_label_batch_s = %s'
+                  % (i, cur_example_batch_s, cur_label_batch_s))
+      coord.request_stop()
+      coord.join(threads)
   ```
-## 输入文件队列
-  虽然一个TFRecord文件中可以存储多个训练样例，但是当训练数据量较大时，可以将数据分成多个TFRecord文件来提高处理效率
-  TensorFlow提供了tf.train.match_filenames_once函数来获取符合一个正则表达式的所有文件，得到的文件列表可以通过tf.train.string_input_producer函数进行有效的管理
+  **运行结果**
+  ```python  
+  # tfrecords 文件列表
+  File list = [b'Records/data.tfrecords-00000-of-00002'
+   b'Records/data.tfrecords-00001-of-00002']
+
+  # tfrecords 文件内容
+  i = 0, feature = [0, 0]
+  i = 1, feature = [0, 1]
+  i = 2, feature = [1, 0]
+  i = 3, feature = [1, 1]
+  i = 4, feature = [0, 0]
+  i = 5, feature = [0, 1]
+
+  # Batching
+  i = 0, cur_example_batch = [0 1], cur_label_batch = [0 0]
+  i = 1, cur_example_batch = [0 1], cur_label_batch = [0 1]
+  i = 2, cur_example_batch = [0 0], cur_label_batch = [0 1]
+
+  # shuffle_batch
+  i = 0, cur_example_batch_s = [1 0], cur_label_batch_s = [0 1]
+  i = 1, cur_example_batch_s = [1 0], cur_label_batch_s = [1 0]
+  i = 2, cur_example_batch_s = [0 1], cur_label_batch_s = [1 0]
+  ```
 ***
 
 # 循环神经网络 recurrent neural network RNN
@@ -3415,7 +3725,7 @@
      [ 713    0  264  820    2]
      [  74 2619    0    1    8]]
     ```
-## LSTM RNN PTB 自然语言处理 NLP
+## > LSTM RNN PTB 自然语言处理 NLP
   - 自然语言处理 natural language processing，NLP
   ```python
   import numpy as np
@@ -3583,7 +3893,7 @@
   ```
 ***
 
-# 时间序列预测 循环神经网络来预测正弦 sin 函数
+# 预测 sin 函数时间序列
 ## 生成测试数据
   ```python
   TIME_STEPS = 10
@@ -3620,7 +3930,7 @@
   train_x.shape, train_y.shape, test_x.shape, test_y.shape
   # Out[10]: ((9989, 10), (9989,), (989, 10), (989,))
   ```
-## 预定义的全连接线性模型 tf.estimator.LinearRegressor
+## 预定义的全连接线性模型 tf.estimator.LinearRegressor 预测
   ```python
   BATCH_SIZE = 32
   TRAINING_STEPS = 1000
@@ -3648,6 +3958,7 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'LinearRegressor')
   ```
+  ![image](images/time_seqence_fc_estimator.png)
 ## 自定义的全连接神经网络模型预测
   ```python
   # 定义适用于 estimator 的单层全连接线性神经网络
@@ -3655,6 +3966,8 @@
       W = tf.get_variable('W', [10, 1], dtype=tf.float32)
       b = tf.get_variable('b', [1], dtype=tf.float32)
       y = tf.matmul(features['x'], W) + b
+      # slim define
+      # y = slim.fully_connected(features['x'], num_outputs=1, activation_fn=None)
 
       # Compute predictions.
       if mode == tf.estimator.ModeKeys.PREDICT:
@@ -3683,7 +3996,8 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'Full connection estimator')
   ```
-## LSTM model with estimator
+  ![image](images/time_seqence_LinearRegressor.png)
+## LSTM model with estimator 预测
   ```python
   from tensorflow.contrib import rnn
 
@@ -3720,7 +4034,7 @@
 
       if labels.shape.ndims == 1: labels = tf.expand_dims(labels, axis=-1)
       loss = tf.losses.mean_squared_error(labels, prediction)
-      train_op = tf.contrib.layers.optimize_loss(loss, tf.contrib.framework.get_global_step(),
+      train_op = tf.contrib.layers.optimize_loss(loss, tf.train.get_global_step(),
       optimizer='Adagrad', learning_rate=0.1) # 0.1 works better than 0.01 here.
 
       return tf.estimator.EstimatorSpec(mode=mode, predictions=prediction, loss=loss, train_op=train_op)
@@ -3736,7 +4050,8 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'LSTM estimator')
   ```
-## Traditional way implementing LSTM model
+  ![iamge](images/time_seqence_lstm_estimator.png)
+## Traditional way implementing LSTM model 预测
   ```python
   from tensorflow.contrib import rnn
 
@@ -3804,9 +4119,10 @@
   tt = sess.run(y_pre, feed_dict={_X: test_x, batch_size: test_x.shape[0]})
   plot_test_result(tt, test_y, 'LSTM tradition')
   ```
+  ![image](images/time_seqence_lstm_tradition.png)
 ***
 
-# TensorBoard 可视化
+# > TensorBoard 可视化
   - **TensorBoard** 可以有效地展示 TensorFlow 在运行过程中的计算图、各种指标随着时间的变化趋势以及训练中使用到的图像等信息
   - TensorBoard 会自动读取最新的 **TensorFlow 日志文件**，并呈现当前TensorFlow程序运行的最新状态
   ```python

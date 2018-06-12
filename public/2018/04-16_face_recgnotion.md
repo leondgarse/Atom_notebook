@@ -848,33 +848,350 @@
     - image sequence (eg. `img_%02d.jpg`, which will read samples like `img_00.jpg, img_01.jpg, img_02.jpg, ...`)
     - URL of video stream (eg. `protocol://host:port/script_name?script_params|auth`).
 ## VideoCapture 显示实时视频
+  ```python
+  import numpy as np
+  import cv2
+
+  cap = cv2.VideoCapture(0)
+
+  # Define the codec and create VideoWriter object
+  fourcc = cv2.VideoWriter_fourcc(*'XVID')
+  out = cv2.VideoWriter('output.avi',fourcc, 20.0, (720,404))
+
+  while(cap.isOpened()):
+      ret, frame = cap.read()
+      if ret==True:
+          frame = cv2.flip(frame,0)
+
+          # write the flipped frame
+          out.write(frame)
+
+          cv2.imshow('frame',frame)
+          if cv2.waitKey(1) & 0xFF == ord('q'):
+              break
+      else:
+          break
+
+  # Release everything if job is finished
+  cap.release()
+  out.release()
+  cv2.destroyAllWindows()
+  ```
 ***
-```python
-import numpy as np
-import cv2
 
-cap = cv2.VideoCapture(0)
+# 活体检测 Facial Presentation Attack Detection
+  - Facial Presentation Attack Detection
+  - Anti-spoofing
+  - Face Liveness
+  - [NUAA Photograph Imposter Database](http://parnec.nuaa.edu.cn/xtan/data/nuaaimposterdb.html)
+  - [The Replay-Attack Database](https://www.idiap.ch/dataset/replayattack)
+  - [The Replay-Mobile Database](https://www.idiap.ch/dataset/replay-mobile)
+  - [The MSU Mobile Face Spoofing Database (MFSD)](http://biometrics.cse.msu.edu/Publications/Databases/MSUMobileFaceSpoofing/index.htm#Download_instructions)
+## Load NUAA data
+  ```python
+  import os
+  import tensorflow.contrib.slim as slim
+  from skimage.transform import resize
+  import numpy as np
+  import tensorflow as tf
+  from skimage.io import imread
+  from glob2 import glob
 
-# Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+  def load_NUAA_data(data_path, data_scope='train', image_resize=0, limited_data_len=0):
+    client_data_path = glob(os.path.join(data_path, "Client*[!.txt]"))[0]
+    imposter_data_path = glob(os.path.join(data_path, "Imposter*[!.txt]"))[0]
+    train_x_client_file = glob(os.path.join(data_path, "client_train*.txt"))[0]
+    train_x_imposter_file = glob(os.path.join(data_path, "imposter_train*.txt"))[0]
+    test_x_client_file = glob(os.path.join(data_path, "client_test*.txt"))[0]
+    test_x_imposter_file = glob(os.path.join(data_path, "imposter_test*.txt"))[0]
 
-while(cap.isOpened()):
-    ret, frame = cap.read()
-    if ret==True:
-        frame = cv2.flip(frame,0)
+    print('''
+        client_data_path = %s,
+        imposter_data_path = %s,
+        train_x_client_file = %s,
+        train_x_imposter_file = %s,
+        test_x_client_file = %s,
+        test_x_imposter_file = %s''' % (
+        client_data_path, imposter_data_path,
+        train_x_client_file, train_x_imposter_file,
+        test_x_client_file, test_x_imposter_file))
 
-        # write the flipped frame
-        out.write(frame)
 
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    if data_scope == 'test':
+        x_client_file = test_x_client_file
+        x_imposter_file = test_x_imposter_file
     else:
-        break
+        # Not specified as test, use train as default
+        x_client_file = train_x_client_file
+        x_imposter_file = train_x_imposter_file
 
-# Release everything if job is finished
-cap.release()
-out.release()
-cv2.destroyAllWindows()
-```
+    # Resize images if needed
+    imread_from_line = lambda data_path, image_path: imread(os.path.join(data_path, image_path.strip().split(' ')[0].replace('\\', '/')))
+    if image_resize != 0:
+        imread_function = lambda data_path, image_path: resize(imread_from_line(data_path, image_path), (image_resize, image_resize), mode='reflect')
+    else:
+        imread_function = imread_from_line
+
+    # Pick limits length of data if limited_data_len != 0, else output all
+    truncated_line = lambda lines, out_len: np.array(lines)[np.random.permutation(len(lines))[:out_len]] if out_len != 0 else np.array(lines)
+
+    x_client_lines = open(x_client_file).readlines()
+    x_client_lines = truncated_line(x_client_lines, limited_data_len)
+    x_client = [ imread_function(client_data_path, line) for line in x_client_lines ]
+
+    x_imposter_lines = open(x_imposter_file).readlines()
+    x_imposter_lines = truncated_line(x_imposter_lines, limited_data_len)
+    x_imposter = [ imread_function(imposter_data_path, line) for line in x_imposter_lines ]
+
+    x = np.stack(x_client + x_imposter)
+    x = x.astype(np.float32)
+    print('len(x_client) = %s, len(x_imposter) = %s, x.shape = %s' % (len(x_client), len(x_imposter), x.shape))
+    # Out[50]: (3491, 64, 64)
+
+    y = np.stack([[1, 0]] * len(x_client) + [[0, 1]] * len(x_imposter))
+    y = y.astype(np.float32)
+    print('y.shape = %s' % (y.shape, ))
+    # Out[57]: (3491,)
+    return x, y
+
+  ''' Detectedface dataset '''
+  data_path = '/home/leondgarse/workspace/facial_presentation_attack_detection/Detectedface/'
+  client_data_path = os.path.join(data_path, 'ClientFace')
+  train_x_client_file = os.path.join(data_path, 'client_train_face.txt')
+  imread(os.path.join(client_data_path, '0001/0001_00_00_01_0.jpg')).shape
+  # Out[13]: (203, 203, 3)
+  imread(os.path.join(client_data_path, '0003/0003_01_00_01_168.jpg')).shape
+  # Out[33]: (317, 317, 3)
+  xx = [imread(os.path.join(client_data_path, line.strip().split(' ')[0].replace('\\', '/'))) for line in open(train_x_client_file).readlines()]
+  tt = np.array([ii.shape for ii in xx])
+  tt.shape
+  # Out[83]: (1743, 3)
+
+  np.unique(tt[:, 0])
+  # Out[85]: array([131, 162, 203, 252, 317])
+
+  {nn: np.sum(tt[:, 0] == nn) for nn in np.unique(tt[:, 0])}
+  # Out[87]: {131: 11, 162: 330, 203: 598, 252: 601, 317: 203}
+
+  train_x, train_y = load_NUAA_data(data_path, data_scope='train', image_resize=128)
+  test_x, test_y = load_NUAA_data(data_path, data_scope='test', image_resize=128, limited_data_len=1500)
+
+  ''' NormalizedFace dataset '''
+  data_path = '/home/leondgarse/workspace/facial_presentation_attack_detection/NormalizedFace/'
+  imread(os.path.join(data_path, 'ClientNormalized', '0001/0001_00_00_01_0.bmp')).shape
+  # Out[3]: (64, 64)
+  imread(os.path.join(data_path, 'ImposterNormalized', '0001/0001_00_00_01_0.bmp')).shape
+  # Out[38]: (64, 64)
+
+  train_x, train_y = load_NUAA_data(data_path, data_scope='train')
+  test_x, test_y = load_NUAA_data(data_path, data_scope='test')
+
+  def accuracy_calc(prediction, y):
+      tt = np.array(prediction)
+      seperator_index = int(y[:, 0].sum())
+      # Out[7]: 1743
+      sum_on_client = np.sum(tt[:seperator_index] == 0)
+      # Out[8]: 1266
+      sum_on_imposter = np.sum(tt[seperator_index:] == 1)
+      # Out[9]: 1557
+
+      # accuracy
+      accuracy = (sum_on_client + sum_on_imposter) / tt.shape[0]
+      # Out[25]: 0.8060727585219135
+      print('seperator_index = %d, sum_on_client = %f, sum_on_imposter = %f, accuracy = %f' % (seperator_index, sum_on_client, sum_on_imposter, accuracy))
+  ```
+## Alexnet v1
+  ```python
+  ''' alexnet v1, slim and fully_connected layers for output '''
+  def alexnet_inference_v1(input, num_classes, dropout_keep_prob=0.5):
+      # Layer 1: Traditional: 64, 11, 4, another treatise one: 96, 11, 4
+      # Change padding='SAME', if input.shape == [?, 64, 64, 1]
+      conv1 = slim.conv2d(input, num_outputs=96, kernel_size=11, stride=4, padding='VALID')
+      lrn1 = slim.nn.lrn(conv1, alpha=1e-4, beta=0.75, depth_radius=2, bias=2.0)
+      pool1 = slim.max_pool2d(lrn1, kernel_size=3, stride=2)
+      # Layer 2: Traditional: 192, 5, 1, another treatise one: 256, 5, 1
+      conv2 = slim.conv2d(pool1, num_outputs=256, kernel_size=5, stride=1)
+      lrn2 = slim.nn.lrn(conv2, alpha=1e-4, beta=0.75, depth_radius=2, bias=2.0)
+      pool2 = slim.max_pool2d(lrn2, kernel_size=3, stride=2)
+      # Layer 3: Traditional: 384, 3, 1, another treatise one: 384, 3, 1
+      conv3 = slim.conv2d(pool2, num_outputs=384, kernel_size=3, stride=1)
+      # Layer 4: Traditional: 256, 3, 1, another treatise one: 384, 3, 1
+      conv4 = slim.conv2d(conv3, num_outputs=384, kernel_size=3, stride=1)
+      # Layer 5: Traditional: 256, 3, 1, another treatise one: 256, 3, 1
+      conv5 = slim.conv2d(conv4, num_outputs=256, kernel_size=3, stride=1)
+      pool5 = slim.max_pool2d(conv5, kernel_size=3, stride=2)
+
+      # Use fully_connected layers for output
+      with slim.arg_scope([slim.fully_connected],
+                      biases_initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.005)):
+          flatten = slim.flatten(pool5)
+          fc1 = slim.fully_connected(flatten, num_outputs=4096, scope='fc1')
+          dropout1 = slim.dropout(fc1, dropout_keep_prob, scope='dropout1')
+          fc2 = slim.fully_connected(dropout1, num_outputs=4096, scope='fc2')
+          dropout2 = slim.dropout(fc2, dropout_keep_prob, scope='dropout2')
+          fc3 = slim.fully_connected(dropout2, num_outputs=num_classes, activation_fn=None, scope='fc3')
+          # softmax = slim.softmax(fc3)
+
+      return fc3
+  ```
+## Alexnet v2
+  ```python
+  ''' alexnet v2, use conv2d instead of fully_connected layers'''
+  def alexnet_inference_v2(input, num_classes, dropout_keep_prob=0.5):
+      # Layer 1: Traditional: 64, 11, 4, another treatise one: 96, 11, 4
+      # Change padding='SAME', if input.shape == [?, 64, 64, 1]
+      conv1 = slim.conv2d(input, num_outputs=96, kernel_size=11, stride=4, padding='VALID')
+      lrn1 = slim.nn.lrn(conv1, alpha=1e-4, beta=0.75, depth_radius=2, bias=2.0)
+      pool1 = slim.max_pool2d(lrn1, kernel_size=3, stride=2)
+      # Layer 2: Traditional: 192, 5, 1, another treatise one: 256, 5, 1
+      conv2 = slim.conv2d(pool1, num_outputs=256, kernel_size=5, stride=1)
+      lrn2 = slim.nn.lrn(conv2, alpha=1e-4, beta=0.75, depth_radius=2, bias=2.0)
+      pool2 = slim.max_pool2d(lrn2, kernel_size=3, stride=2)
+      # Layer 3: Traditional: 384, 3, 1, another treatise one: 384, 3, 1
+      conv3 = slim.conv2d(pool2, num_outputs=384, kernel_size=3, stride=1)
+      # Layer 4: Traditional: 256, 3, 1, another treatise one: 384, 3, 1
+      conv4 = slim.conv2d(conv3, num_outputs=384, kernel_size=3, stride=1)
+      # Layer 5: Traditional: 256, 3, 1, another treatise one: 256, 3, 1
+      conv5 = slim.conv2d(conv4, num_outputs=256, kernel_size=3, stride=1)
+      pool5 = slim.max_pool2d(conv5, kernel_size=3, stride=2)
+
+      # Use conv2d instead of fully_connected layers.
+      with slim.arg_scope([slim.conv2d],
+                          weights_initializer=tf.truncated_normal_initializer(0.0, 0.005),
+                          biases_initializer=tf.constant_initializer(0.1)):
+          net_kernel_size = pool5.shape[1]
+          net = slim.conv2d(pool5, 4096, [net_kernel_size, net_kernel_size], padding='VALID',
+                            scope='fc6')
+          net = slim.dropout(net, dropout_keep_prob, scope='dropout6')
+          net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
+          net = slim.dropout(net, dropout_keep_prob, scope='dropout7')
+          net = slim.conv2d(net, num_classes, [1, 1],
+                            activation_fn=None,
+                            normalizer_fn=None,
+                            biases_initializer=tf.zeros_initializer(),
+                            scope='fc8')
+
+          net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
+          return net
+  ```
+## Train test
+  ```python
+  NUM_CLASSES = 2
+  BATCH_SIZE = 512
+  DECAY_STEPS = train_x.shape[0] / BATCH_SIZE
+  DECAY_RATE = 0.99
+  LEARNING_RATE_BASE = 0.01
+
+  alexnet_inference = alexnet_inference_v1
+
+  def alexnet_model(features, labels, mode):
+      xs = features['x']
+      # xs.shape.ndims is same as len(xs.shape)
+      if xs.shape.ndims == 3: xs = tf.expand_dims(xs, axis=-1)
+
+      outputs = alexnet_inference(xs, num_classes=NUM_CLASSES)
+      prediction = tf.argmax(outputs, axis=-1)
+      if mode == tf.estimator.ModeKeys.PREDICT:
+          predictions = {
+              'alexnet_outputs': outputs,
+              'predictions': prediction,
+          }
+          return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
+      # if labels.shape.ndims == 1: labels = tf.expand_dims(labels, axis=-1)
+      # loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(labels, axis=-1), logits=outputs))
+      loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=outputs))
+      # loss = tf.losses.mean_squared_error(tf.argmax(labels, axis=-1), prediction)
+      global_step = tf.train.get_global_step()
+      learning_rate = tf.train.exponential_decay(LEARNING_RATE_BASE, global_step, decay_steps=DECAY_STEPS, decay_rate=DECAY_RATE)
+      # train_op = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(loss, global_step=global_step)
+      train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
+      # learning_rate_decay_fn = lambda learning_rate, global_step: tf.train.exponential_decay(learning_rate, global_step, decay_steps=DECAY_STEPS, decay_rate=DECAY_RATE)
+      # train_op = tf.contrib.layers.optimize_loss(loss, tf.train.get_global_step(),
+      #               optimizer='SGD',
+      #               learning_rate=LEARNING_RATE_BASE)
+      #               # learning_rate_decay_fn=None)
+
+      return tf.estimator.EstimatorSpec(mode=mode, predictions=prediction, loss=loss, train_op=train_op)
+
+  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=100, shuffle=True)
+
+  estimator_alexnet = tf.estimator.Estimator(model_fn=alexnet_model)
+  estimator_alexnet.train(input_fn=train_input_fn, steps=5000)
+
+  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
+  estimator_alexnet.evaluate(eval_input_fn)
+
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": train_x}, num_epochs=1, shuffle=False)
+  pp = estimator_alexnet.predict(input_fn=predict_input_fn)
+  tt = [ii['predictions'] for ii in pp]
+
+  accuracy_calc(tt, train_y)
+  accuracy_calc(tt, test_y)
+
+  ''' Sample test '''
+  sample_data = lambda x, y, start, end: (np.vstack([x[start:end], x[-end-1:-start-1]]), np.vstack([y[start:end], y[-end-1:-start-1]]))
+  xs, ys = sample_data(train_x, train_y, 0, 100)
+  BATCH_SIZE = 20
+  DECAY_STEPS = xs.shape[0] / BATCH_SIZE
+  ts_input_fn = tf.estimator.inputs.numpy_input_fn({'x': xs}, ys, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
+  estimator_alexnet = tf.estimator.Estimator(model_fn=alexnet_model)
+  estimator_alexnet.train(input_fn=ts_input_fn, steps=300)
+
+  xst, yst = sample_data(train_x, train_y, 500, 600)
+  ps_input_fn = tf.estimator.inputs.numpy_input_fn({"x": xs}, num_epochs=1, shuffle=False)
+  ps_input_fn = tf.estimator.inputs.numpy_input_fn({"x": xst}, num_epochs=1, shuffle=False)
+  pp = estimator_alexnet.predict(input_fn=ps_input_fn)
+  tt = [ii['predictions'] for ii in pp]
+  accuracy_calc(tt, yst)
+  accuracy_calc(tt, ys)
+  ```
+  ```python
+  ''' Train '''
+  INFO:tensorflow:Using default config.
+  WARNING:tensorflow:Using temporary folder as model directory: /tmp/tmpox1lsmtz
+  INFO:tensorflow:Using config: {'_model_dir': '/tmp/tmpox1lsmtz', '_tf_random_seed': None, '_save_summary_steps': 100, '_save_checkpoints_steps': None, '_save_checkpoints_secs': 600, '_session_config': None, '_keep_checkpoint_max': 5, '_keep_checkpoint_every_n_hours': 10000, '_log_step_count_steps': 100, '_service': None, '_cluster_spec': <tensorflow.python.training.server_lib.ClusterSpec object at 0x7ff94bdc4208>, '_task_type': 'worker', '_task_id': 0, '_global_id_in_cluster': 0, '_master': '', '_evaluation_master': '', '_is_chief': True, '_num_ps_replicas': 0, '_num_worker_replicas': 1}
+  INFO:tensorflow:Calling model_fn.
+  >>>> outputs.shape = (?, 2)
+  INFO:tensorflow:Done calling model_fn.
+  INFO:tensorflow:Create CheckpointSaverHook.
+  INFO:tensorflow:Graph was finalized.
+  INFO:tensorflow:Running local_init_op.
+  INFO:tensorflow:Done running local_init_op.
+  INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:loss = 0.26773486, step = 1
+  INFO:tensorflow:global_step/sec: 0.175117
+  INFO:tensorflow:loss = 0.288006, step = 101 (571.049 sec)
+  INFO:tensorflow:Saving checkpoints for 107 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:global_step/sec: 0.176473
+  INFO:tensorflow:loss = 0.042064987, step = 201 (566.659 sec)
+  INFO:tensorflow:Saving checkpoints for 213 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:global_step/sec: 0.17806
+  INFO:tensorflow:loss = 0.14192937, step = 301 (561.607 sec)
+  INFO:tensorflow:Saving checkpoints for 320 into /tmp/tmpox1lsmtz/model.ckpt.
+  ...
+  INFO:tensorflow:global_step/sec: 0.176783
+  INFO:tensorflow:loss = 0.15262769, step = 4801 (565.666 sec)
+  INFO:tensorflow:Saving checkpoints for 4815 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:global_step/sec: 0.177146
+  INFO:tensorflow:loss = 0.26890928, step = 4901 (564.507 sec)
+  INFO:tensorflow:Saving checkpoints for 4922 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:Saving checkpoints for 5000 into /tmp/tmpox1lsmtz/model.ckpt.
+  INFO:tensorflow:Loss for final step: 0.05957412.
+  ''' Evaluate '''
+
+  ```
+
+# Foo
+  ```python
+  >>> from skimage import data
+  >>> from skimage.transform import rotate
+  >>> image = data.camera()
+  >>> rotate(image, 2).shape
+  (512, 512)
+  >>> rotate(image, 2, resize=True).shape
+  (530, 530)
+  >>> rotate(image, 90, resize=True).shape
+  (512, 512)
+  ```  
