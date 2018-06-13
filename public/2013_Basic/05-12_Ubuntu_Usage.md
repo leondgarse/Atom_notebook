@@ -1,14 +1,7 @@
-# ___2013-05-12 Ubuntu使用与shell命令___
+# ___2013-05-12 Ubuntu 使用与 shell 命令___
 ***
 
-编写wxPython程序时，总是报以下错误：
-
-Gtk-Message: Failed to load module “canberra-gtk-module”
-
-解决办法：apt-get install .*canberra.*gtk.*
-echo "✨ 🍰 ✨"
-
-##
+## 目录
 ***
 
 # 参数
@@ -52,6 +45,14 @@ echo "✨ 🍰 ✨"
     chattr -i ldlinux.sys
     ```
     to remove it
+  - 编写 wxPython 程序时，总是报以下错误
+    ```shell
+    Gtk-Message: Failed to load module “canberra-gtk-module”
+    ```
+    解决办法
+    ```shell
+    apt-get install .*canberra.*gtk.*
+    ```
 ## apt-get
   - apt-get --purge remove ...... （完全删除）
   - apt-get -f install        （修复依赖关系）
@@ -103,6 +104,7 @@ echo "✨ 🍰 ✨"
     ```
     exit(1)表示发生错误后退出程序， exit(0)表示正常退出。
     ```
+  - echo "✨ 🍰 ✨"
 ## ls
   - 参数
     - **-1** 每一项单独一行显示
@@ -232,20 +234,6 @@ echo "✨ 🍰 ✨"
       ```shell
       umount -vl /mnt/mymount/     
       ```
-## grub 配置文件
-  - grub配置文件/etc/default/grub与/etc/grub.d目录下的对应文件，如修改分辨率、等待时间等可通过修改/etc/default/grub实现
-  - 修改grub背景图片：
-    ```c
-    sudo cp xxx.jpg /boot/grub/back.jpg
-    sudo update-grub重启即可
-    ```
-  - 更改grub背景主题：
-    ```c
-    将下载的主题文件解压到/boot/grub/themes文件夹中（没有的自己创建）
-    然后修改/etc/default/grub
-    加入：GRUB_THEME="/boot/grub/themes/******/theme.txt"（主题名自己设置）
-    然后sudo grub-update
-    ```
 ## 环境变量
   - 修改：sudo vi /etc/environment添加，或者vi ~/.bashrc添加
     ```c
@@ -369,7 +357,7 @@ echo "✨ 🍰 ✨"
 ## samba 配置
   - **samba 安装**
     ```shell
-    $ sudo apt-get install samba smbfs samba-common smbclient
+    $ sudo apt-get install samba samba-common smbclient
     ```
   - **创建 Samba 配置文件**
     ```shell
@@ -873,9 +861,28 @@ echo "✨ 🍰 ✨"
     ```
   - language Support -> Keyboard input method system -> IBus
   - Setting -> Region & Language -> Add -> Chinese -> Chinese (Intelligent Pinyin)
+  - Setting -> Region & Language -> Options -> Allow different sources for each window
   - 系统输入法选择为 IBus 时会自动清除选中的文本，如果是英文输入法就没有这个问题
     - 终端中 ibus-setup
     - 勾掉 在应用窗口中启用内嵌编辑模式(Embed preedit text in application window)
+  - ibus-setup 报错 No module named 'gi'
+    ```shell
+    Traceback (most recent call last):
+      File "/usr/share/ibus/setup/main.py", line 34, in <module>
+        from gi import require_version as gi_require_version
+    ModuleNotFoundError: No module named 'gi'
+    ```
+    sudo vi /usr/bin/ibus-setup
+    ```shell
+    - exec python3 /usr/share/ibus/setup/main.py $@
+    + exec python2 /usr/share/ibus/setup/main.py $@
+    ```
+  - ibus-setup 报错 Non-ASCII character '\xf0'
+    ```shell
+      File "/usr/share/ibus/setup/main.py", line 285
+    SyntaxError: Non-ASCII character '\xf0' in file /usr/share/ibus/setup/main.py on line 285, but no encoding declared
+    ```
+    修改 /usr/share/ibus/setup/main.py, line 285 中的表情符号为任意字母
 ## 触控板右键
   - gnome-tweak-tool
   - Keyboard & Mouse -> Mouse Click Emulation
@@ -886,6 +893,19 @@ echo "✨ 🍰 ✨"
 
     ![image](images/vpn_conf.png)
 ## grub
+  - grub配置文件 /etc/default/grub 与 /etc/grub.d 目录下的对应文件，如修改分辨率、等待时间等可通过修改 /etc/default/grub 实现
+  - 修改grub背景图片：
+    ```c
+    sudo cp xxx.jpg /boot/grub/back.jpg
+    sudo update-grub 重启即可
+    ```
+  - 更改grub背景主题：
+    ```c
+    将下载的主题文件解压到/boot/grub/themes文件夹中（没有的自己创建）
+    然后修改/etc/default/grub
+    加入：GRUB_THEME="/boot/grub/themes/******/theme.txt"（主题名自己设置）
+    然后sudo grub-update
+    ```
   - grub rescue
     ```shell
     # 查找 boot 目录
@@ -1542,12 +1562,15 @@ echo "✨ 🍰 ✨"
     source ~/.bashrc
     sudo update-grub
 
-    sudo mkdir /media/DATA
+    sudo mkdir /media/DATA /media/cdrom0
     sudo vi /etc/fstab
-    sudo mount -a
+    # UUID=666621D86621A9AF /media/DATA ntfs defaults,codepage=936,iocharset=gb2312 0 0
+
+    sudo mount -a    
     ```
   - **Link user files**
     ```shell
+    cd
     rm Music/ Downloads/ Documents/ Pictures/ Videos/ -rf
     ln -s /media/DATA/Users/leondgarse/Downloads/ ~/
     ln -s /media/DATA/Users/leondgarse/Documents/ ~/
@@ -1559,31 +1582,52 @@ echo "✨ 🍰 ✨"
     export LANG=en_US.UTF-8
     xdg-user-dirs-gtk-update
     ```
+  - **Other sources**
+    ```shell
+    # Atom
+    curl -L https://packagecloud.io/AtomEditor/atom/gpgkey | sudo apt-key add -
+    sudo sh -c 'echo "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" > /etc/apt/sources.list.d/atom.list'
+
+    # Chrome
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
+
+    # Teamviewer
+    wget -O - https://download.teamviewer.com/download/linux/signature/TeamViewer2017.asc | sudo apt-key add -
+    sudo sh -c 'echo "deb [arch=amd64] http://linux.teamviewer.com/deb stable main" > /etc/apt/sources.list.d/teamviewer.list'
+    sudo sh -c 'echo "deb [arch=amd64] http://linux.teamviewer.com/deb preview main" >> /etc/apt/sources.list.d/teamviewer.list'
+    # Numix
+    sudo add-apt-repository ppa:numix/ppa
+
+    # Update
+    sudo apt-get update
+    ```
   - **Install packages**
     ```shell
     sudo apt-get update
     sudo apt-get upgrade
 
+    sudo apt-get install curl git atom
+
     sudo apt-get install \
-    audacious cairo-dock calibre cscope curl easystroke evolution expect filezilla git gksu gnome-tweak-tool\
-    iptux ibus-pinyin java-common minicom mp3info mysql-client mysql-common mysql-server nfs-common numix-gtk-theme numix-icon-theme numix-blue-gtk-theme\
-    openjdk-9-jdk pidgin python-gtk2 python-vte python-glade2 r-base r-recommended rename rsync samba seahorse shutter stardict synaptic telnet testdisk tftp tftpd tmux tree \
-    # unrar unzip virtualbox vlc vnc4server wget wireshark zip
-    ```
-  - **Atom**
-    ```shell
-    curl -L https://packagecloud.io/AtomEditor/atom/gpgkey | sudo apt-key add -
-    sudo sh -c 'echo "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" > /etc/apt/sources.list.d/atom.list'
-    sudo apt-get update
-    # Install Atom
-    sudo apt-get install atom
+    audacious cairo-dock calibre cscope curl easystroke expect filezilla git gnome-tweak-tool google-chrome-stable\
+    iptux ibus-pinyin java-common minicom mp3info mysql-client mysql-common mysql-server nfs-common nfs-kernel-server numix-gtk-theme numix-icon-theme numix-blue-gtk-theme numix-icon-theme-circle \
+    pidgin python-gtk2 python-vte python-glade2 r-base r-recommended rename rsync samba seahorse shutter ssh stardict synaptic teamviewer telnet testdisk tftp tftpd tmux tree \
+    unrar unzip vim virtualbox virtualbox-ext-pack virtualbox-guest-additions-iso vlc vnc4server wget wireshark zip
+
+    sudo apt-get install \
+    evolution gksu openjdk-9-jdk
     ```
   - **Anaconda**
     ```shell
     mv ~/Downloads/Anaconda3-5.1.0-Linux-x86_64.sh ./
     chmod a+x Anaconda3-5.1.0-Linux-x86_64.sh
-    ./Anaconda3-5.1.0-Linux-x86_64.sh
+    sudo mkdir /opt/anaconda3
     sudo chown leondgarse:leondgarse anaconda3/ -R
+
+    # 指定安装位置为 /opt/anaconda3
+    ./Anaconda3-5.1.0-Linux-x86_64.sh -u
+
     conda update --all
     conda clean --all
     ```
@@ -1591,19 +1635,27 @@ echo "✨ 🍰 ✨"
     ```shell
     virtualbox-dkms
 
-    cp  Atom_notebook/ Calibre\ Library/ local_bin/ practice_code/ UCloner-10.10.2-beta1/ Wallpapers/ ~/ -rf
-    cp .atom/ .bashrc .gitconfig* .icons/ .mozilla/ .ssh/ .tmux.conf .vimrc .vim ~/ -rf
+    cp  Atom_notebook/ ~/ -rf
+    cp Calibre\ Library/ local_bin/ practice_code/ Wallpapers/ ~/ -rf
+    cp .atom/ .bashrc .easystroke/ .gitconfig* .icons/ .mozilla/ .ssh/ .thunderbird/ .tmux.conf .vimrc .vim ~/ -rf
     cp .local/share/audacious/ ~/.local/share/ -rf
-    cp ~/.ipython/profile_default/ipython_* ~/.ipython/profile_default/
+    cp .ipython/profile_default/ipython_* ~/.ipython/profile_default/
 
     cd .config
     cp cairo-dock/ audacious/ Atom/ ~/.config/ -rf
 
     sudo cp /opt/hadoop-2.7.2/ /opt/ -r
-    cd && cp CSF/ AONT/  ~/ -rf
+    cd && cp workspace/ Ubuntu_share/ ~/ -rf
     ```
   - **Other applications**
     - netease cloud music
-    - teamviewer
     - osdlyrics
+  - **Other settings**
+    - Tweaks -> Apperance / Desktop / Keyboard & Mouse / Startup Applications / Top Bar
+    - Settings -> Network -> VPN
+    - Stardict dict path: /usr/share/stardict/dic
+    - 中文输入法 IBus
+    - samba 配置
+    - /etc/group 中用户添加到 dialout wireshark 组
+    - grub 配置背景图片 /boot/grub/back.png，grub 等待时间 /etc/default/grub
 ***

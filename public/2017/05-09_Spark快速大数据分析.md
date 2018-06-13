@@ -117,6 +117,8 @@
         环境变量：
         export SPARK_HOME=/home/leondgarse/local_bin/spark-2.1.0-bin-hadoop2.7
         export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+
+        pip 安装 pip install pyspark
   - Q： spark打印log级别
   - A： $ cp conf/log4j.properties.template conf/log4j.properties
         $ vi conf/log4j.properties        # log设置
