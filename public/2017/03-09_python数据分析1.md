@@ -176,6 +176,9 @@ nonzero / where / choose
     ```
   - Q: 环境安装配置 yum
     ```shell
+    sudo apt install python3-pip
+    ```
+    ```shell
     yum install python34.x86_64
     yum install python34-pip.noarch
 

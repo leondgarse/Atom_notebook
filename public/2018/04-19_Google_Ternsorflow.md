@@ -575,6 +575,13 @@
     - **tf.global_variables** 返回 global 变量，`tf.GraphKeys.GLOBAL_VARIABLES` 集合上的所有变量
     - **tf.local_variables** 返回 local 变量，进程相关的变量，临时或内部值，通常不会 saved / restored 到 checkpoint
     - **variables_initializer(var_list, name='init')** 返回一个变量列表的初始化操作
+## 迭代 epoch iteration batchsize
+  - **batchsize** 批大小，一般每次训练在训练集中取 batchsize 个样本训练
+  - **iteration** 迭代次数，每次代表使用 batchsize 个样本训练一次
+  - **epoch** 一个 epoch 代表使用训练集中全部样本训练一次，指定 epoch 与 batchsize 大小也可以确定出迭代次数
+    ```python
+    iteration_steps = data_size / bachsize * epoch_num
+    ```
 ## Tensorflow playground
   - [Tensorflow playground](http://playground.tensorflow.org)
   - 一个小格子代表神经网络中的一个节点，而边代表节点之间的连接
