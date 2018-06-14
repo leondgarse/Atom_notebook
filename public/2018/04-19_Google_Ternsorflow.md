@@ -296,22 +296,90 @@
     sudo apt-get install -y nvidia-docker2
     nvidia-docker -v
     ```
-  - 安装开启 GPU 支持的 TensorFlow
+  - **安装开启 GPU 支持的 TensorFlow**
     ```shell
-    pip install tensorflow-gpu
+    pip install --upgrade tensorflow-gpu
     ```
-  - 安装正确的 CUDA sdk 和 CUDNN 版本
+  - **检查 Nvidia GPU 与 驱动**
     ```shell
+    # 查看是否有支持的 GPU 以及驱动版本
     nvidia-smi
-    sudo apt-get install nvidia-cuda-toolkit
-    tar xvf cudnn-9.2-linux-x64-v7.1.tgz
-    sudo mv cuda/ /usr/local/
+    # NVIDIA-SMI 396.26                 Driver Version: 396.26
+
+    # 如需要，可以安装 nvidia 驱动
+    sudo apt-get install nvidia-396 nvidia-settings
     ```
-  - 设置 LD_LIBRARY_PATH 和 CUDA_HOME 环境变量
+  - **安装 CUDA Toolkit**
+    - 通过 [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) 可以单独下载需要的 CUDA 版本
+    - 安装完可能有驱动更新，需要重启
     ```shell
-    # 假定 CUDA 安装目录为 /usr/local/cuda
+    # Ubuntu 默认安装 CUDA 9.1，在 tendorflow 1.8 版本中不适用
+    sudo apt install nvidia-cuda-toolkit
+
+    # Ubuntu 17.10
+    sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1710/x86_64/7fa2af80.pub
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1710/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+
+    # Ubuntu 16.04
+    sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+
+    sudo apt update
+
+    # Tensorflow 1.8.0 要求 cuda 版本 9.0，对应的包位于 ubuntu 16.04 中
+    sudo apt -o Dpkg::Options::="--force-overwrite" install cuda-9-0 cuda-drivers
+    ```
+  - **安装对应版本的 cuDNN** NVIDIA CUDA Deep Neural Network library
+    - [NVIDIA cuDNN](https://developer.nvidia.com/cudnn) 注册并下载对应 CUDA 版本的 cuDNN 包 **cuDNN v7.1.4 Library for Linux**
+    ```shell
+    tar xvf cudnn-9.0-linux-x64-v7.1.tgz
+    cd cuda/
+    sudo cp include/cudnn.h /usr/local/cuda/include
+    sudo cp lib64/libcudnn* /usr/local/cuda/lib64
+    ```
+  - **安装 libcupti**
+    ```shell
+    sudo apt-get install libcupti-dev
+    ```
+  - **设置 LD_LIBRARY_PATH 和 CUDA_HOME 环境变量**
+    ```shell
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64"
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"
+    export PATH="/usr/local/cuda/bin:$PATH"
     export CUDA_HOME=/usr/local/cuda
+    ```
+  - **python 测试**
+    ```python
+    from tensorflow.python.client import device_lib
+    print(device_lib.list_local_devices())
+
+    sess = tf.InteractiveSession()
+    with tf.device('/gpu:0'):
+      a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
+      b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
+    c = tf.matmul(a, b)
+    print(c.eval())
+    ```
+    运行结果
+    ```python
+    [name: "/device:CPU:0"
+     device_type: "CPU"
+     memory_limit: 268435456
+     locality {
+     }
+     incarnation: 9258498914959607259, name: "/device:GPU:0"
+     device_type: "GPU"
+     memory_limit: 1624113152
+     locality {
+       bus_id: 1
+       links {
+       }
+     }
+     incarnation: 5470481726497112191
+     physical_device_desc: "device: 0, name: GeForce MX150, pci bus id: 0000:01:00.0, compute capability: 6.1"]
+
+    [[22. 28.]
+     [49. 64.]]
     ```
 ## Hello World
   ```python

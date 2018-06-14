@@ -118,6 +118,8 @@ if [ $USER_NAME != "root" ]; then
     exit
 fi
 
+DATE_START_S=`date +%s`
+
 if [ $WORK_MODE != "BACKUP" ]; then
     # Clone and Restore mode
     # Format disks
@@ -232,3 +234,8 @@ else
     rm $EXCLUDE_FILE -f
 fi
 
+DATE_END_S=`date +%s`
+TOTAL_MINUTE=$(expr \( $DATE_END_S - $DATE_START_S \) / 60)
+TOTAL_SECOND=$(expr \( $DATE_END_S - $DATE_START_S \) % 60)
+TOTAL_TIME=${TOTAL_MINUTE}"m"${TOTAL_SECOND}"s"
+echo "Total time = $TOTAL_TIME"

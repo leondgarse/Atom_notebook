@@ -2,6 +2,73 @@
 ***
 
 ## 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2013-05-12 Ubuntu 使用与 shell 命令___](#2013-05-12-ubuntu-使用与-shell-命令)
+  	- [目录](#目录)
+  - [参数](#参数)
+  	- [Q / A](#q-a)
+  	- [apt-get](#apt-get)
+  	- [echo](#echo)
+  	- [ls](#ls)
+  	- [ps](#ps)
+  	- [df / du / dd](#df-du-dd)
+  	- [date](#date)
+  	- [head / tail](#head-tail)
+  	- [gcc](#gcc)
+  	- [chroot](#chroot)
+  - [配置](#配置)
+  	- [Q / A](#q-a)
+  	- [环境变量](#环境变量)
+  	- [SSH](#ssh)
+  	- [SSH Q / A](#ssh-q-a)
+  	- [samba 配置](#samba-配置)
+  	- [samba Q / A](#samba-q-a)
+  	- [TFTP](#tftp)
+  	- [NFS](#nfs)
+  	- [Checking conflict IP](#checking-conflict-ip)
+  	- [Service running on server](#service-running-on-server)
+  	- [Ubuntu 中开机打开小键盘](#ubuntu-中开机打开小键盘)
+  	- [Ubuntu 下汇编方法](#ubuntu-下汇编方法)
+  	- [注销用户](#注销用户)
+  	- [恢复/克隆的系统中用户文件(图片/文档等)未出现在【位置】列表中，且图标是默认文件夹图标](#恢复克隆的系统中用户文件图片文档等未出现在位置列表中且图标是默认文件夹图标)
+  	- [Ubuntu 系统的一种备份还原方法](#ubuntu-系统的一种备份还原方法)
+  	- [ubuntu 12.04 开机自动挂载 windows 分区](#ubuntu-1204-开机自动挂载-windows-分区)
+  	- [swap](#swap)
+  	- [Apache](#apache)
+  	- [IBus 中文输入法](#ibus-中文输入法)
+  	- [触控板右键](#触控板右键)
+  	- [Ubuntu configure vpn](#ubuntu-configure-vpn)
+  	- [grub](#grub)
+  	- [坏块检测 badblocks](#坏块检测-badblocks)
+  	- [NTFS disk mount error](#ntfs-disk-mount-error)
+  	- [gsettings schema](#gsettings-schema)
+  - [软件](#软件)
+  	- [自动更新无法下载 adobe flashplayer](#自动更新无法下载-adobe-flashplayer)
+  	- [wireshark 配置](#wireshark-配置)
+  	- [png 图片形式文档转文字](#png-图片形式文档转文字)
+  	- [compiz](#compiz)
+  	- [VLC 显示中文字幕](#vlc-显示中文字幕)
+  	- [Minicom](#minicom)
+  	- [gedit 中文乱码](#gedit-中文乱码)
+  	- [安装 emerald](#安装-emerald)
+  	- [Install new cursor theme](#install-new-cursor-theme)
+  	- [Conky](#conky)
+  	- [Install SKY](#install-sky)
+  	- [7z compress & extract](#7z-compress-extract)
+  	- [evolution](#evolution)
+  	- [Stardict](#stardict)
+  	- [Cairo Dock](#cairo-dock)
+  	- [UCloner](#ucloner)
+  	- [Virtual box](#virtual-box)
+  	- [Chrome](#chrome)
+  	- [Numix](#numix)
+  	- [Shutter](#shutter)
+  - [系统备份恢复](#系统备份恢复)
+  	- [从 squashfs 备份 / 恢复系统](#从-squashfs-备份-恢复系统)
+  - [Configure New System](#configure-new-system)
+
+  <!-- /TOC -->
 ***
 
 # 参数
@@ -1318,245 +1385,26 @@
   ```
 ## Shutter
   - [Quick Fix The “Edit” Option Disabled in Shutter in Ubuntu 18.04](http://ubuntuhandbook.org/index.php/2018/04/fix-edit-option-disabled-shutter-ubuntu-18-04/)
+  - [libgoocanvas-common](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas-common_1.0.0-1_all.deb)
+  - [libgoocanvas3](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas3_1.0.0-1_amd64.deb)
+  - [libgoo-canvas-perl](https://launchpad.net/ubuntu/+archive/primary/+files/libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb)
+  - Install by dpkg
+    ```shell
+    sudo dpkg -i libgoocanvas-common_1.0.0-1_all.deb
+    sudo apt install --fix-broken
+
+    sudo dpkg -i libgoocanvas3_1.0.0-1_amd64.deb
+    sudo apt install --fix-broken
+
+    sudo dpkg -i libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb
+    sudo apt install --fix-broken
+    ```
 ***
 
 # 系统备份恢复
 ## 从 squashfs 备份 / 恢复系统
-  ```shell
-  #!/bin/bash
-
-  DIST_ROOT_MOUNT_POINT='/tmp/mount_point_for_dist_root'
-  DIST_HOME_MOUNT_POINT=$DIST_ROOT_MOUNT_POINT'/home'
-  EXCLUDE_FILE='./rsync_excludes_file_list'
-  SYS_PATH_EXCLUDED='proc sys tmp mnt media media/cdrom0'
-
-  if [ $# -ge 5 ]; then
-      # Restore mode
-      echo "Restore from a squashfs file."
-      WORK_MODE="RESTORE"
-      SOURCE_SQUASH_PATH=$1
-      DIST_ROOT_PATH=$2
-      DIST_HOME_PATH=$3
-      DIST_SWAP_PATH=$4
-      HOST_NAME=$5
-      SOURCE_SYSTEM_PATH='/tmp/mount_point_for_source_squash'
-
-      echo "SOURCE_SQUASH_PATH = $SOURCE_SQUASH_PATH"
-      echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
-      echo "DIST_HOME_PATH = $DIST_HOME_PATH"
-      echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
-      echo "HOST_NAME = $HOST_NAME"
-  elif [ $# -eq 4 ]; then
-      # Clone mode
-      echo "Clone current system."
-      WORK_MODE="CLONE"
-      DIST_ROOT_PATH=$1
-      DIST_HOME_PATH=$2
-      DIST_SWAP_PATH=$3
-      HOST_NAME=$4
-      SOURCE_SYSTEM_PATH='/'
-
-      echo "DIST_ROOT_PATH = $DIST_ROOT_PATH"
-      echo "DIST_HOME_PATH = $DIST_HOME_PATH"
-      echo "DIST_SWAP_PATH = $DIST_SWAP_PATH"
-      echo "HOST_NAME = $HOST_NAME"
-  elif [ $# -eq 1 ]; then
-      # Backup mode
-      echo "Backup current system to a squashfs file."
-      WORK_MODE="BACKUP"
-      SQUASHFS_BACKUP_TO=$1
-      TEMP_SYSTEM_DIR='/tmp/temp_system_dir'
-
-      echo "SQUASHFS_BACKUP_TO = $SQUASHFS_BACKUP_TO"
-  else
-  	echo "Restore Usage: $0 <source squash path> <dist root path> <dist home path> <dist swap path> <host name>"
-      echo "Clone   Usage: $0 <dist root path> <dist home path> <dist swap path> <host name>"
-      echo "Backup  Usage: $0 <squashfs file backup to>"
-  	exit
-  fi
-
-  # Function to generate exclude file list
-  function generate_exclude_list {
-      printf "
-  /home
-  /opt
-  /proc
-  /sys
-  /tmp
-  /mnt
-  /media
-  /boot/grub
-  /etc/fstab
-  /etc/mtab
-  /etc/blkid.tab
-  /etc/udev/rules.d/70-persistent-net.rules
-  /host
-  /lost+found
-  /home/lost+found
-  /root/.gvfs
-  `ls -1 /home/*/.gvfs 2>/dev/null`
-  `ls -1 /lib/modules/\`uname -r\`/volatile/ 2>/dev/null`
-  `ls -1 /var/cache/apt/archives/partial/ 2>/dev/null`
-  `find /run/user/* -maxdepth 1 -name gvfs 2>/dev/null`
-  " > $EXCLUDE_FILE
-
-      # This may contain special characters for printf
-      ls -1 /var/cache/apt/archives/*.deb 2>/dev/null >> $EXCLUDE_FILE
-  }
-
-  function clean_resource_and_exit {
-      echo $1
-      umount $DIST_HOME_MOUNT_POINT 2>/dev/null
-      umount $DIST_ROOT_MOUNT_POINT 2>/dev/null
-      rm $DIST_HOME_MOUNT_POINT $DIST_ROOT_MOUNT_POINT -rf
-
-      if [ $WORK_MODE = "RESTORE" ]; then
-          umount $SOURCE_SYSTEM_PATH 2>/dev/null
-          # rm $SOURCE_SYSTEM_PATH -rf
-      fi
-
-      rm $EXCLUDE_FILE -rf
-
-      exit
-  }
-
-  function chroot_command {
-      mount --bind /proc $1/proc
-      mount --bind /dev $1/dev
-      mount --bind /sys $1/sys
-      chroot $*
-      umount $1/proc
-      umount $1/dev
-      umount $1/sys
-  }
-
-  # generate_exclude_list
-  # exit
-
-  # Check if it's run by root
-  USER_NAME=`whoami`
-  echo "USER_NAME = $USER_NAME"
-  if [ $USER_NAME != "root" ]; then
-      echo "Should be run as root!"
-      exit
-  fi
-
-  if [ $WORK_MODE != "BACKUP" ]; then
-      # Clone and Restore mode
-      # Format disks
-      umount $DIST_HOME_PATH
-      umount $DIST_ROOT_PATH
-
-      echo y | mkfs.ext4 $DIST_ROOT_PATH && \
-      echo y | mkfs.ext4 $DIST_HOME_PATH && \
-      mkswap $DIST_SWAP_PATH
-
-      if [ $? -ne 0 ]; then
-          echo "mkfs error"
-          exit
-      fi
-
-      # Mount dist disks
-      mkdir -p $DIST_ROOT_MOUNT_POINT && \
-      mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
-      mkdir -p $DIST_HOME_MOUNT_POINT && \
-      mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT
-
-      if [ $? -ne 0 ]; then clean_resource_and_exit "mount dist disks error"; fi
-
-      if [ $WORK_MODE = "RESTORE" ]; then
-          # It's Restore mode, mount source fs
-          mkdir -p $SOURCE_SYSTEM_PATH && \
-          mount "$SOURCE_SQUASH_PATH" $SOURCE_SYSTEM_PATH -o loop
-
-          if [ $? -ne 0 ]; then clean_resource_and_exit "mount source squashfs error"; fi
-      fi
-
-      # rsync, need an exclude file list
-      # generate_exclude_list
-      # exit
-      # rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
-      rsync -av \
-          --exclude "/lost+found" \
-          --exclude "/*/lost+found" \
-          --exclude "/lib/modules/*/volatile/*" \
-          $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
-      if [ $? -ne 0 ]; then clean_resource_and_exit "rsync error"; fi
-
-      # Create excluded system path
-      cd $DIST_ROOT_MOUNT_POINT && \
-      mkdir -p $SYS_PATH_EXCLUDED && \
-      chmod 1777 tmp
-
-      if [ $? -ne 0 ]; then clean_resource_and_exit "mkdir error"; fi
-
-      # Create fstab and mtab
-      DIST_ROOT_UUID=`blkid $DIST_ROOT_PATH -s UUID -o value`
-      DIST_HOME_UUID=`blkid $DIST_HOME_PATH -s UUID -o value`
-      DIST_SWAP_UUID=`blkid $DIST_SWAP_PATH -s UUID -o value`
-
-      mkdir -p etc
-      printf "
-      # /etc/fstab: static file system information.
-      #
-      # Use 'blkid -o value -s UUID' to print the universally unique identifier
-      # for a device; this may be used with UUID= as a more robust way to name
-      # devices that works even if disks are added and removed. See fstab(5).
-      #
-      # <file system> <mount point>   <type>  <options>       <dump>  <pass>
-      proc            /proc           proc    nodev,noexec,nosuid 0       0
-      #/dev/sda3
-      UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
-      #/dev/sda5
-      UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
-      #/dev/sda6
-      UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
-      " > etc/fstab && \
-      touch etc/mtab
-
-      if [ $? -ne 0 ]; then clean_resource_and_exit "Create fstab error"; fi
-
-      # Update hostname
-      OLD_HOSTNAME=`cat etc/hostname`
-      echo $HOST_NAME > etc/hostname && \
-      sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
-
-      if [ $? -ne 0 ]; then clean_resource_and_exit "Update hostname error"; fi
-
-      # Install grub, grub-install may fail here
-      # [???]
-      # chroot [???]
-      # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
-      # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
-      grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-      chroot_command $DIST_ROOT_MOUNT_POINT update-grub
-
-      if [ $? -ne 0 ]; then clean_resource_and_exit "Install grub error"; fi
-
-      cd -
-      clean_resource_and_exit "Done!"
-  else
-      # Backup mode
-      generate_exclude_list
-      mksquashfs / "$SQUASHFS_BACKUP_TO" -no-duplicates -ef $EXCLUDE_FILE -e "$SQUASHFS_BACKUP_TO"
-      if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
-
-      mkdir -p $TEMP_SYSTEM_DIR && \
-      cd $TEMP_SYSTEM_DIR && \
-      mkdir -p $SYS_PATH_EXCLUDED && \
-      chmod 1777 tmp
-      if [ $? -ne 0 ]; then echo "make system dirs error"; exit; fi
-
-      mksquashfs $TEMP_SYSTEM_DIR "$SQUASHFS_BACKUP_TO" -no-duplicates
-      if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
-
-      cd -
-      rm $TEMP_SYSTEM_DIR -rf
-  fi
-  ```
-***
-
-# Configure New System
+  - [acloner](acloner.sh)
+## Configure New System
   - **Common commands**
     ```shell
     source ~/.bashrc
