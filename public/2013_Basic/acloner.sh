@@ -44,10 +44,10 @@ elif [ $# -eq 1 ]; then
 
     echo "SQUASHFS_BACKUP_TO = $SQUASHFS_BACKUP_TO"
 else
-	echo "Restore Usage: `echo $0 | xargs basename` <source squash path> <dist root path> <dist home path> <dist swap path> <host name>"
+    echo "Restore Usage: `echo $0 | xargs basename` <source squash path> <dist root path> <dist home path> <dist swap path> <host name>"
     echo "Clone   Usage: `echo $0 | xargs basename` <dist root path> <dist home path> <dist swap path> <host name>"
     echo "Backup  Usage: `echo $0 | xargs basename` <squashfs file backup to>"
-	exit
+    exit
 fi
 
 # Function to generate exclude file list
@@ -127,8 +127,8 @@ if [ $WORK_MODE != "BACKUP" ]; then
     umount $DIST_ROOT_PATH
 
     echo y | mkfs.ext4 $DIST_ROOT_PATH && \
-    echo y | mkfs.ext4 $DIST_HOME_PATH && \
-    mkswap $DIST_SWAP_PATH
+        echo y | mkfs.ext4 $DIST_HOME_PATH && \
+        mkswap $DIST_SWAP_PATH
 
     if [ $? -ne 0 ]; then
         echo "mkfs error"
@@ -137,16 +137,16 @@ if [ $WORK_MODE != "BACKUP" ]; then
 
     # Mount dist disks
     mkdir -p $DIST_ROOT_MOUNT_POINT && \
-    mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
-    mkdir -p $DIST_HOME_MOUNT_POINT && \
-    mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT
+        mount $DIST_ROOT_PATH $DIST_ROOT_MOUNT_POINT && \
+        mkdir -p $DIST_HOME_MOUNT_POINT && \
+        mount $DIST_HOME_PATH $DIST_HOME_MOUNT_POINT
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "mount dist disks error"; fi
 
     if [ $WORK_MODE = "RESTORE" ]; then
         # It's Restore mode, mount source fs
         mkdir -p $SOURCE_SYSTEM_PATH && \
-        mount "$SOURCE_SQUASH_PATH" $SOURCE_SYSTEM_PATH -o loop
+            mount "$SOURCE_SQUASH_PATH" $SOURCE_SYSTEM_PATH -o loop
 
         if [ $? -ne 0 ]; then clean_resource_and_exit "mount source squashfs error"; fi
     fi
@@ -164,8 +164,8 @@ if [ $WORK_MODE != "BACKUP" ]; then
 
     # Create excluded system path
     cd $DIST_ROOT_MOUNT_POINT && \
-    mkdir -p $SYS_PATH_EXCLUDED && \
-    chmod 1777 tmp
+        mkdir -p $SYS_PATH_EXCLUDED && \
+        chmod 1777 tmp
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "mkdir error"; fi
 
@@ -191,24 +191,24 @@ if [ $WORK_MODE != "BACKUP" ]; then
     #/dev/sda6
     UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
     " > etc/fstab && \
-    touch etc/mtab
+        touch etc/mtab
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "Create fstab error"; fi
 
     # Update hostname
     OLD_HOSTNAME=`cat etc/hostname`
     echo $HOST_NAME > etc/hostname && \
-    sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
+        sed -i 's/^127.0.1.1\s*'$OLD_HOSTNAME'/127.0.1.1\t'$HOST_NAME'/' etc/hosts
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "Update hostname error"; fi
 
     # Install grub, grub-install may fail here
     # [???]
     # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
-    # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
+        # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
     # chroot_command $DIST_ROOT_MOUNT_POINT grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-    grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-    chroot_command $DIST_ROOT_MOUNT_POINT update-grub
+        grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
+        chroot_command $DIST_ROOT_MOUNT_POINT update-grub
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "Install grub error"; fi
 
@@ -221,9 +221,9 @@ else
     if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
 
     mkdir -p $TEMP_SYSTEM_DIR && \
-    cd $TEMP_SYSTEM_DIR && \
-    mkdir -p $SYS_PATH_EXCLUDED && \
-    chmod 1777 tmp
+        cd $TEMP_SYSTEM_DIR && \
+        mkdir -p $SYS_PATH_EXCLUDED && \
+        chmod 1777 tmp
     if [ $? -ne 0 ]; then echo "make system dirs error"; exit; fi
 
     mksquashfs $TEMP_SYSTEM_DIR "$SQUASHFS_BACKUP_TO" -no-duplicates

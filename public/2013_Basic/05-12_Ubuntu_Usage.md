@@ -32,7 +32,6 @@
   	- [Ubuntu 下汇编方法](#ubuntu-下汇编方法)
   	- [注销用户](#注销用户)
   	- [恢复/克隆的系统中用户文件(图片/文档等)未出现在【位置】列表中，且图标是默认文件夹图标](#恢复克隆的系统中用户文件图片文档等未出现在位置列表中且图标是默认文件夹图标)
-  	- [Ubuntu 系统的一种备份还原方法](#ubuntu-系统的一种备份还原方法)
   	- [ubuntu 12.04 开机自动挂载 windows 分区](#ubuntu-1204-开机自动挂载-windows-分区)
   	- [swap](#swap)
   	- [Apache](#apache)
@@ -59,14 +58,15 @@
   	- [evolution](#evolution)
   	- [Stardict](#stardict)
   	- [Cairo Dock](#cairo-dock)
-  	- [UCloner](#ucloner)
   	- [Virtual box](#virtual-box)
   	- [Chrome](#chrome)
   	- [Numix](#numix)
   	- [Shutter](#shutter)
   - [系统备份恢复](#系统备份恢复)
-  	- [从 squashfs 备份 / 恢复系统](#从-squashfs-备份-恢复系统)
-  - [Configure New System](#configure-new-system)
+  	- [acloner 从 squashfs 备份恢复系统](#acloner-从-squashfs-备份恢复系统)
+  	- [Ubuntu 系统的一种备份还原方法](#ubuntu-系统的一种备份还原方法)
+  	- [UCloner](#ucloner)
+  	- [Configure New System](#configure-new-system)
 
   <!-- /TOC -->
 ***
@@ -696,54 +696,6 @@
     vi ~/.config/user-dirs.dirs 填入相应路径
     创建目标路径软连接到用户目录
     ```
-## Ubuntu 系统的一种备份还原方法
-  - 备份：
-    ```shell
-    备份已安装软件包列表
-        sudo dpkg --get-selections > package.selections
-        sed -i '/^fonts/d' package.selections
-        sed -i '/^gir/d' package.selections
-        sed -i '/^gnome/d' package.selections
-        sed -i '/^lib/d' package.selections
-        sed -i '/^linux/d' package.selections
-        sed -i '/^x11/d' package.selections
-        sed -i '/^xserver/d' package.selections
-    备份Home下的用户文件夹，如果Home放在额外的分区則不需要
-    备份软件源列表，将/etc/apt/文件夹下的sources.list拷贝出来保存即可
-    ```
-  - 还原：
-    ```shell
-    复制备份的Sources.list文件到新系统的/etc/apt/目录，覆盖原文件，并替换（Ctrl+H）文档中的intrepid为jaunty，
-    然后更新软件源sudo apt-get update。
-    重新下载安装之前系统中的软件（如果你安装的软件数量比较多，可能会花费较长时间）
-      sudo dpkg --set-selections < package.selections && apt-get dselect-upgrade
-    最后将备份的主文件夹（/home/用户名）粘贴并覆盖现有主文件夹
-    ```
-  - rsync
-    ```shell
-    # ucloner_cmd.py, functions.py
-    sudo rsync -av / --exclude-from=/home/sevendays19/local_bin/rsync_execlude_file /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/
-
-    # make_system_dirs
-    cd /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/
-    sudo mkdir /proc /sys /tmp /mnt /media /media/cdrom0
-
-    # generate_fstab
-    sudo cp /etc/fstab etc/
-    vi etc/fstab
-    sudo touch etc/mtab
-
-    # change_host_name
-    sudo vi etc/hostname
-    sudo vi etc/hosts
-
-    # fix_resume
-    cd ~/UCloner-10.10.2-beta1/program/sh/
-    sudo ./fix_resume.sh /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/ /dev/sdb3
-
-    # install_grub2
-    sudo ./install_grub.sh /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/ /dev/sdb
-    ```
 ## ubuntu 12.04 开机自动挂载 windows 分区
   - 查看UUID # blkid
     ```c
@@ -1264,6 +1216,112 @@
 ## Cairo Dock
   - 图标大小
     - Configure -> Advanced Mode -> Icons -> Icons size
+## Virtual box
+  - Driver error starting  vm
+    - Disable **Security boot** in UEFI
+    - Reinstall dkms
+      ```shell
+      sudo apt-get remove virtualbox-dkms
+      sudo apt-get install virtualbox-dkms
+      ```
+## Chrome
+  - google-chrome --enable-webgl --ignore-gpu-blacklist
+  - **Install**
+    ```shell
+    # Setup key with:
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    # Setup repository with:
+    sudo echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+    # Install
+    sudo apt-get update
+    sudo apt-get install google-chrome-stable
+    ```
+  - **Q: Enter password to unlock your login keyring**
+    ```shell
+    The login keyring did not get unlocked when you logged into your computer.
+    ```
+    A: Keyring for Chrome is not unlocked when set auto-login as no password. Set default keyring for chrome
+    ```shell
+    Passwords and Keys -> File -> New -> Password Keyring
+    New Keyring Name: [Unprotected] -> Set password as empty
+    Right click on the new keyring -> Set as default    
+    ```
+## Numix
+  ```shell
+  sudo add-apt-repository ppa:numix/ppa
+  sudo apt-get install numix-...
+
+  # Set icon / theme as Numix using gnome-tweak-tool
+  ```
+## Shutter
+  - [Quick Fix The “Edit” Option Disabled in Shutter in Ubuntu 18.04](http://ubuntuhandbook.org/index.php/2018/04/fix-edit-option-disabled-shutter-ubuntu-18-04/)
+  - [libgoocanvas-common](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas-common_1.0.0-1_all.deb)
+  - [libgoocanvas3](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas3_1.0.0-1_amd64.deb)
+  - [libgoo-canvas-perl](https://launchpad.net/ubuntu/+archive/primary/+files/libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb)
+  - Install by dpkg
+    ```shell
+    sudo dpkg -i libgoocanvas-common_1.0.0-1_all.deb
+    sudo apt install --fix-broken
+
+    sudo dpkg -i libgoocanvas3_1.0.0-1_amd64.deb
+    sudo apt install --fix-broken
+
+    sudo dpkg -i libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb
+    sudo apt install --fix-broken
+    ```
+***
+
+# 系统备份恢复
+## acloner 从 squashfs 备份恢复系统
+  - [acloner](acloner.sh)
+## Ubuntu 系统的一种备份还原方法
+  - 备份：
+    ```shell
+    备份已安装软件包列表
+        sudo dpkg --get-selections > package.selections
+        sed -i '/^fonts/d' package.selections
+        sed -i '/^gir/d' package.selections
+        sed -i '/^gnome/d' package.selections
+        sed -i '/^lib/d' package.selections
+        sed -i '/^linux/d' package.selections
+        sed -i '/^x11/d' package.selections
+        sed -i '/^xserver/d' package.selections
+    备份Home下的用户文件夹，如果Home放在额外的分区則不需要
+    备份软件源列表，将/etc/apt/文件夹下的sources.list拷贝出来保存即可
+    ```
+  - 还原：
+    ```shell
+    复制备份的Sources.list文件到新系统的/etc/apt/目录，覆盖原文件，并替换（Ctrl+H）文档中的intrepid为jaunty，
+    然后更新软件源sudo apt-get update。
+    重新下载安装之前系统中的软件（如果你安装的软件数量比较多，可能会花费较长时间）
+      sudo dpkg --set-selections < package.selections && apt-get dselect-upgrade
+    最后将备份的主文件夹（/home/用户名）粘贴并覆盖现有主文件夹
+    ```
+  - rsync
+    ```shell
+    # ucloner_cmd.py, functions.py
+    sudo rsync -av / --exclude-from=/home/sevendays19/local_bin/rsync_execlude_file /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/
+
+    # make_system_dirs
+    cd /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/
+    sudo mkdir /proc /sys /tmp /mnt /media /media/cdrom0
+
+    # generate_fstab
+    sudo cp /etc/fstab etc/
+    vi etc/fstab
+    sudo touch etc/mtab
+
+    # change_host_name
+    sudo vi etc/hostname
+    sudo vi etc/hosts
+
+    # fix_resume
+    cd ~/UCloner-10.10.2-beta1/program/sh/
+    sudo ./fix_resume.sh /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/ /dev/sdb3
+
+    # install_grub2
+    sudo ./install_grub.sh /media/sevendays19/75fc86d3-cca4-40bf-86bd-3acebba610c2/ /dev/sdb
+    ```
 ## UCloner
   - sudo apt-get install gksu python-gtk2 zenity python-vte python-glade2
   - **Clone**
@@ -1346,64 +1404,6 @@
 
     sudo mount /media/leondgarse/New\ Volume/foo.squashfs /media/cdrom0/
     ```
-## Virtual box
-  - Driver error starting  vm
-    - Disable **Security boot** in UEFI
-    - Reinstall dkms
-      ```shell
-      sudo apt-get remove virtualbox-dkms
-      sudo apt-get install virtualbox-dkms
-      ```
-## Chrome
-  - google-chrome --enable-webgl --ignore-gpu-blacklist
-  - **Install**
-    ```shell
-    # Setup key with:
-    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-    # Setup repository with:
-    sudo echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-    # Install
-    sudo apt-get update
-    sudo apt-get install google-chrome-stable
-    ```
-  - **Q: Enter password to unlock your login keyring**
-    ```shell
-    The login keyring did not get unlocked when you logged into your computer.
-    ```
-    A: Keyring for Chrome is not unlocked when set auto-login as no password. Set default keyring for chrome
-    ```shell
-    Passwords and Keys -> File -> New -> Password Keyring
-    New Keyring Name: [Unprotected] -> Set password as empty
-    Right click on the new keyring -> Set as default    
-    ```
-## Numix
-  ```shell
-  sudo add-apt-repository ppa:numix/ppa
-  sudo apt-get install numix-...
-
-  # Set icon / theme as Numix using gnome-tweak-tool
-  ```
-## Shutter
-  - [Quick Fix The “Edit” Option Disabled in Shutter in Ubuntu 18.04](http://ubuntuhandbook.org/index.php/2018/04/fix-edit-option-disabled-shutter-ubuntu-18-04/)
-  - [libgoocanvas-common](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas-common_1.0.0-1_all.deb)
-  - [libgoocanvas3](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas3_1.0.0-1_amd64.deb)
-  - [libgoo-canvas-perl](https://launchpad.net/ubuntu/+archive/primary/+files/libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb)
-  - Install by dpkg
-    ```shell
-    sudo dpkg -i libgoocanvas-common_1.0.0-1_all.deb
-    sudo apt install --fix-broken
-
-    sudo dpkg -i libgoocanvas3_1.0.0-1_amd64.deb
-    sudo apt install --fix-broken
-
-    sudo dpkg -i libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb
-    sudo apt install --fix-broken
-    ```
-***
-
-# 系统备份恢复
-## 从 squashfs 备份 / 恢复系统
-  - [acloner](acloner.sh)
 ## Configure New System
   - **Common commands**
     ```shell
