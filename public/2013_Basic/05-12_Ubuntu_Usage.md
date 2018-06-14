@@ -1498,6 +1498,7 @@
   - **Other applications**
     - netease cloud music
     - osdlyrics
+    - tixati
   - **Other settings**
     - Tweaks -> Apperance / Desktop / Keyboard & Mouse / Startup Applications / Top Bar
     - Settings -> Network -> VPN
@@ -1506,4 +1507,5 @@
     - samba 配置
     - /etc/group 中用户添加到 dialout wireshark 组
     - grub 配置背景图片 /boot/grub/back.png，grub 等待时间 /etc/default/grub
+    - shutter edit
 ***

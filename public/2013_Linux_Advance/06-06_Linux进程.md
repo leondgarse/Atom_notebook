@@ -1,6 +1,28 @@
 # ___2013 - 06 - 06 Linux进程___
 ***
 
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2013 - 06 - 06 Linux进程___](#2013-06-06-linux进程)
+  - [目录](#目录)
+  - [基于Linux的开发](#基于linux的开发)
+  - [调用 pid_t fork(void)](#调用-pidt-forkvoid)
+  - [int exec() 函数族](#int-exec-函数族)
+  - [wait 函数](#wait-函数)
+  - [void exit(int status) 函数](#void-exitint-status-函数)
+  - [alarm 函数](#alarm-函数)
+  - [sleep 函数](#sleep-函数)
+  - [system 函数](#system-函数)
+  - [进程组 setpgid / getpgrp](#进程组-setpgid-getpgrp)
+  - [会话](#会话)
+  - [Linux创建守护进程示例](#linux创建守护进程示例)
+  - [使用 syslog 来记录守护进程的 LOG](#使用-syslog-来记录守护进程的-log)
+  - [文件锁](#文件锁)
+
+  <!-- /TOC -->
+***
+
 # 基于Linux的开发
   - 操作系统特点：并行，多任务
   - cpu 调度系统：FIFO，短进程优先，时间片轮换
@@ -78,112 +100,128 @@
 ***
 
 # 进程组 setpgid / getpgrp
+  - 设置进程组ID，可加入一个现有的组或者创建一个新组
     ```c
     #include <unistd.h>
     int setpgid(pid_t pid, pid_t pgid);         
-            //设置进程组ID，可加入一个现有的组或者创建一个新组，
-                    如果其两个参数相等，则该进程成为进程组组长；
-                    如果pid是0，则使用调用者的pid；如果pgid是0，则由pid指定的进程ID将用作进程组ID
-            一个进程只能为它自己或它的子进程设置进程组ID，一般会在fork之后调用此函数，
-                    使父进程设置其子进程的进程组ID，并且使子进程设置其自己的进程组ID，以保证其生效
-    pid_t getpgrp(void);                //得到进程组ID
-            //每个进程组都有一个组长进程，组长进程的标识是，其进程组ID等于其进程ID
+    ```    
+    - 如果其两个参数相等，则该进程成为进程组组长
+    - 如果pid是0，则使用调用者的pid；如果pgid是0，则由pid指定的进程ID将用作进程组ID
+    - 一个进程只能为它自己或它的子进程设置进程组ID
+    - 一般会在fork之后调用此函数，使父进程设置其子进程的进程组ID，并且使子进程设置其自己的进程组ID，以保证其生效
+  - 得到进程组ID
+    ```c
+    pid_t getpgrp(void);
     ```
+    - 每个进程组都有一个组长进程，组长进程的标识是，其进程组ID等于其进程ID
 ***
 
-# 10). 会话
-    ```python
-    会话(session)是一个或多个进程组的集合。
+# 会话
+  - 会话(session)是一个或多个进程组的集合
+  - 创建一个新会话，并设置新的进程组ID
+    ```c
     #include <unistd.h>
     pid_t setsid(void);
-            //创建一个新会话，并设置新的进程组ID
-              如果调用函数不是一个进程组的组长，则此函数创建一个新会话：
-                    该进程变成新会话首进程、该进程成为新进程组的组长进程、该进程没有控制终端
-              如果该进程是一个进程组的组长，则此函数出错返回，
-                    所以通常先调用fork，然后使其父进程终止，而子进程继续。因为子进程继承了
-                    父进程的进程组ID，而其进程ID是新分配的，保证子进程不会是一个进程组的组长
+    ```
+    - 如果调用函数不是一个进程组的组长，则此函数创建一个新会话
+      - 该进程变成新会话首进程
+      - 该进程成为新进程组的组长进程
+      - 该进程没有控制终端
+    - 如果该进程是一个进程组的组长，则此函数出错返回
+      - 通常先调用fork，然后使其父进程终止，而子进程继续
+      - 因为子进程继承了父进程的进程组ID，而其进程ID是新分配的，保证子进程不会是一个进程组的组长
+  - 返回调用进程的会话首进程的进程组ID
+    ```c
     pid_t getsid(pid_t pid);
-            返回调用进程的会话首进程的进程组ID
     ```
 ***
 
-# 11). Linux创建守护进程示例
-    ```python
-    #include <stdio.h>
+# Linux创建守护进程示例
+  ```java
+  #include <stdio.h>
 
-    void init_daemon(void)
-    {
-    /****创建守护进程****/
-            pid_t pid;
-            //第一步：fork创建子进程
-            if((pid = fork()) < 0)
-                    err_quit("fork error %s time", "first");
-            else if(pid > 0)
-                    exit(0);
-            //第二步：创建新会话
-            if(setsid() < 0)
-                    err_quit("setsid error %s time", "first");
-            //第三步：子进程继续运行，父进程结束时将会产生SIGHUP信号
-            //                        忽略此SIGHUP信号，并用fork创建子进程
-            signal(SIGHUP, SIG_IGN);
+  void init_daemon(void)
+  {
+  /**** 创建守护进程 ****/
+      pid_t pid;
+      //第一步：fork创建子进程
+      if((pid = fork()) < 0)
+          err_quit("fork error %s time", "first");
+      else if(pid > 0)
+          exit(0);
+      //第二步：创建新会话
+      if(setsid() < 0)
+          err_quit("setsid error %s time", "first");
+      //第三步：子进程继续运行，父进程结束时将会产生SIGHUP信号忽略此SIGHUP信号，并用fork创建子进程
+      signal(SIGHUP, SIG_IGN);
 
-            if(pid = fork < 0)
-                    err_quit("fork error %s time", "second");
-            else if(pid > 0)
-                    exit(0);
-            //第四步：创建新的进程组
-            if(setpgrp() < 0)
-                    err_quit("setpgrp error %s time", "first");
-            //第五步：关闭所有文件描述符
-            int i, max_fd = sysconf(_SC_OPEN_MAX);
-            for(i = 0; i < max_fd; i++)
-                    close(i);
-            //第六步：消除umask影响
-            umask(0);
-            //第七步：改变当前目录为根目录
-            chdir("/");
-            //第八步：重新定向标准IO描述符
-            open("dev/null", O_RDWR);
-            dup(0, 1);
-            dup(0, 2);
-            /****创建守护进程完成****/
-    }
-    ```
+      if(pid = fork < 0)
+          err_quit("fork error %s time", "second");
+      else if(pid > 0)
+          exit(0);
+      //第四步：创建新的进程组
+      if(setpgrp() < 0)
+          err_quit("setpgrp error %s time", "first");
+      //第五步：关闭所有文件描述符
+      int i, max_fd = sysconf(_SC_OPEN_MAX);
+      for(i = 0; i < max_fd; i++)
+              close(i);
+      //第六步：消除umask影响
+      umask(0);
+      //第七步：改变当前目录为根目录
+      chdir("/");
+      //第八步：重新定向标准IO描述符
+      open("dev/null", O_RDWR);
+      dup(0, 1);
+      dup(0, 2);
+      /****创建守护进程完成****/
+  }
+  ```
 ***
 
-# 12). 使用syslog来记录守护进程的LOG
-    ```python
-    用户空间的守护进程klogd，运行后消息将追加到/var/log/<messages>
-    大多数用户进程（守护进程）调用syslog(3)函数以产生日志消息，并是消息发送至UNIX域 数据包套接字/dev/log
+# 使用 syslog 来记录守护进程的 LOG
+  - 用户空间的守护进程klogd，运行后消息将追加到/var/log/<messages>
+  - 大多数用户进程（守护进程）调用syslog(3)函数以产生日志消息，并是消息发送至UNIX域 数据包套接字/dev/log
+    ```c
     #include <syslog.h>
+    ```
+  - 打开，可选，如果不调用openlog，则在第一次调用syslog时，自动调用openlog
+    ```c
     void openlog(const char *ident, int option, int facility);
-            //可选，如果不调用openlog，则在第一次调用syslog时，自动调用openlog
-                    ident一般是程序的名称，可将它加入到每则日志文件中
-                    option指定许多选项的位屏蔽LOG_CONS/LOG_NDELAY/
-                            LOG_NOWAIT/LOG_ODELAY/LOG_PERROR/LOG_PID（见man手册）
-                    facility(设施)参数的目的是可以让配置文件说明，来自不同设施的消息将以不同的
-                            方式进行处理，若为0，则可将设施作为priority参数的一个部分进行说明
+    ```
+    - **ident** 一般是程序的名称，可将它加入到每则日志文件中
+    - **option** 指定许多选项的位屏蔽（见man手册）
+      ```c
+      LOG_CONS / LOG_NDELAY / LOG_NOWAIT / LOG_ODELAY / LOG_PERROR / LOG_PID
+      ```
+    - **facility** (设施)参数的目的是可以让配置文件说明，来自不同设施的消息将以不同的方式进行处理，若为0，则可将设施作为priority参数的一个部分进行说明
+  - 产生一个日志消息
+    ```c
     void syslog(int priority, const char *format, ...);
-            //产生一个日志消息，其priority参数是facility与level的组合
-                    format参数以及其他参数传至vsprintf以便进行格式化，
-                    在format中，每个%m都先被代换成对应与errno值的出错消息字符串
+    ```
+    - **priority** 参数是 facility 与 level 的组合
+    - **format** 参数以及其他参数传至 vsprintf 以便进行格式化，在 format 中，每个 **%m** 都先被代换成对应与 **errno 值** 的出错消息字符串
+  - 关闭，可选，只是关闭层被用于与syslog守护进程通信的描述符
+    ```c
     void closelog(void);
-            //可选，只是关闭层被用于与syslog守护进程通信的描述符
     ```
 ***
 
-# 13). 文件锁
-    ```python
+# 文件锁
+  - 文件锁
+    ```c
     #include <sys/file.h>
-     int flock(int fd, int operation);
-            //operation选项：LOCK_SH共享锁/读锁，LOCK_EX互斥锁/写锁，
-            //        LOCK_UN解锁，LOCK_NB不能获得指定锁时不阻塞。
+    int flock(int fd, int operation);
     ```
-
-    ```python
+    - operation选项
+      - LOCK_SH共享锁/读锁
+      - LOCK_EX互斥锁/写锁，
+      - LOCK_UN解锁，LOCK_NB不能获得指定锁时不阻塞
+  - 对文件的部分上锁
+    ```c
     #include <unistd.h>
     #include <fcntl.h>
     int fcntl(int fd, int cmd, ... /* arg */ );
     int fcntl(int fd, int cmd, struct flock *lock);
-            //对文件的部分上锁。
     ```
+***
