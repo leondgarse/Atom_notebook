@@ -954,6 +954,22 @@
     # Out[57]: (3491,)
     return x, y
 
+  def accuracy_calc(prediction, y):
+      tt = np.array(prediction)
+      seperator_index = int(y[:, 0].sum())
+      # Out[7]: 1743
+      sum_on_client = np.sum(tt[:seperator_index] == 0)
+      # Out[8]: 1266
+      sum_on_imposter = np.sum(tt[seperator_index:] == 1)
+      # Out[9]: 1557
+
+      # accuracy
+      accuracy = (sum_on_client + sum_on_imposter) / tt.shape[0]
+      # Out[25]: 0.8060727585219135
+      print('seperator_index = %d, sum_on_client = %f, sum_on_imposter = %f, accuracy = %f' % (seperator_index, sum_on_client, sum_on_imposter, accuracy))
+  ```
+  **data test**
+  ```python  
   ''' Detectedface dataset '''
   data_path = '/home/leondgarse/workspace/facial_presentation_attack_detection/Detectedface/'
   client_data_path = os.path.join(data_path, 'ClientFace')
@@ -985,20 +1001,6 @@
 
   train_x, train_y = load_NUAA_data(data_path, data_scope='train')
   test_x, test_y = load_NUAA_data(data_path, data_scope='test')
-
-  def accuracy_calc(prediction, y):
-      tt = np.array(prediction)
-      seperator_index = int(y[:, 0].sum())
-      # Out[7]: 1743
-      sum_on_client = np.sum(tt[:seperator_index] == 0)
-      # Out[8]: 1266
-      sum_on_imposter = np.sum(tt[seperator_index:] == 1)
-      # Out[9]: 1557
-
-      # accuracy
-      accuracy = (sum_on_client + sum_on_imposter) / tt.shape[0]
-      # Out[25]: 0.8060727585219135
-      print('seperator_index = %d, sum_on_client = %f, sum_on_imposter = %f, accuracy = %f' % (seperator_index, sum_on_client, sum_on_imposter, accuracy))
   ```
 ## Alexnet v1
   ```python
@@ -1032,7 +1034,7 @@
           fc3 = slim.fully_connected(dropout2, num_outputs=num_classes, activation_fn=None, scope='fc3')
           # softmax = slim.softmax(fc3)
 
-      return fc3
+      return fc3, flatten
   ```
 ## Alexnet v2
   ```python
@@ -1072,18 +1074,10 @@
                             scope='fc8')
 
           net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
-          return net
+          return net, slim.flatten(pool5)
   ```
-## Train test
+## alexnet nodel
   ```python
-  NUM_CLASSES = 2
-  BATCH_SIZE = 512
-  DECAY_STEPS = train_x.shape[0] / BATCH_SIZE
-  DECAY_RATE = 0.99
-  LEARNING_RATE_BASE = 0.01
-
-  alexnet_inference = alexnet_inference_v1
-
   def alexnet_model(features, labels, mode):
       xs = features['x']
       # xs.shape.ndims is same as len(xs.shape)
@@ -1113,23 +1107,47 @@
       #               # learning_rate_decay_fn=None)
 
       return tf.estimator.EstimatorSpec(mode=mode, predictions=prediction, loss=loss, train_op=train_op)
+  ```
+## Estimator Train test
+  ```python
+  ''' Detectedface dataset '''
+  data_path = '/home/leondgarse/workspace/facial_presentation_attack_detection/Detectedface/'
+  train_x, train_y = load_NUAA_data(data_path, data_scope='train', image_resize=128)
+  test_x, test_y = load_NUAA_data(data_path, data_scope='test', image_resize=128, limited_data_len=1500)
+
+  ''' NormalizedFace dataset '''
+  # data_path = '/home/leondgarse/workspace/facial_presentation_attack_detection/NormalizedFace/'
+  # train_x, train_y = load_NUAA_data(data_path, data_scope='train')
+  # test_x, test_y = load_NUAA_data(data_path, data_scope='test')
+
+  NUM_CLASSES = 2
+  BATCH_SIZE = 256
+  DECAY_STEPS = train_x.shape[0] / BATCH_SIZE
+  DECAY_RATE = 0.99
+  LEARNING_RATE_BASE = 0.001
+
+  alexnet_inference = alexnet_inference_v1
 
   train_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=100, shuffle=True)
 
   estimator_alexnet = tf.estimator.Estimator(model_fn=alexnet_model)
-  estimator_alexnet.train(input_fn=train_input_fn, steps=5000)
+  estimator_alexnet.train(input_fn=train_input_fn)
 
   eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
   estimator_alexnet.evaluate(eval_input_fn)
 
-  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
   predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": train_x}, num_epochs=1, shuffle=False)
   pp = estimator_alexnet.predict(input_fn=predict_input_fn)
   tt = [ii['predictions'] for ii in pp]
-
   accuracy_calc(tt, train_y)
-  accuracy_calc(tt, test_y)
 
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
+  pp = estimator_alexnet.predict(input_fn=predict_input_fn)
+  tt = [ii['predictions'] for ii in pp]
+  accuracy_calc(tt, test_y)
+  ```
+## Sample test
+  ```python
   ''' Sample test '''
   sample_data = lambda x, y, start, end: (np.vstack([x[start:end], x[-end-1:-start-1]]), np.vstack([y[start:end], y[-end-1:-start-1]]))
   xs, ys = sample_data(train_x, train_y, 0, 100)
@@ -1147,6 +1165,27 @@
   accuracy_calc(tt, yst)
   accuracy_calc(tt, ys)
   ```
+## Additional SVM classifier
+  ```python
+  ''' Additional SVM classifier '''
+  from sklearn.svm import SVC
+  svm_c = [2 ** i for i in range(-8, 8, 1)]
+  svm_gamma = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+  svm_kernel = ['rbf', 'linear', 'poly', 'sigmoid']
+  param_grid = {'C': svm_c, 'gamma': svm_gamma, 'kernel': svm_kernel}
+  from sklearn.model_selection import GridSearchCV
+  clf = GridSearchCV(SVC(class_weight='balanced'), param_grid)
+  clf.fit(emb, np.argmax(train_y, axis=-1))
+
+  test_x, test_y = load_NUAA_data(data_path, data_scope='test', image_resize=128, limited_data_len=1500)
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
+  tt = list(estimator_alexnet.predict(input_fn=predict_input_fn))
+  emb_unknown = np.array([np.reshape(ii['emb_features'], (-1)) for ii in tt])
+  emb_unknown.shape
+  pp = clf.predict(emb_unknown)
+  accuracy_calc(pp, test_y)
+  ```
+## Result
   ```python
   ''' Train '''
   INFO:tensorflow:Using default config.

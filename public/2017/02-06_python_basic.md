@@ -1934,7 +1934,7 @@
     ```python
     import os
     ```
-  - **os.system** 返回执行状态，输出结果到标准输出
+  - **os.system** 返回执行状态，输出结果到标准输出，用于执行不需要返回结果的操作
     ```python
     os.system('echo 1')
     # 1
