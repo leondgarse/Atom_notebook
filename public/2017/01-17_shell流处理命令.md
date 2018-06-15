@@ -956,23 +956,23 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     expect -c "spawn smbpasswd -a test; set timeout 2; expect \"New SMB password:\" {send \"123456\r\n\"; sleep 1}; expect \"Retype new SMB password:\" {send \"123456\r\n\"; sleep 1}; send_user \"\n\""
     ```
 ## 参数:
-    ```
-    -c, 从命令行执行expect脚本
-            expect -c 'expect "\n" {send "pressed enter\n"}'
-    -re, 表示指定的的字符串是一个正则表达式
-            expect -c 'expect -re "\\\[(.*)" {puts "$expect_out(1,string)"}' # capturing [xxx, and print xxx.
-            在一个正则表达时中，可以在()中包含若干个部分并通过expect_out数组访问它们
-    -i, 可以通过来自于标准输入的读命令来交互地执行expect脚本
-            expect -i arg1 arg2 arg3
-    -d,当执行expect脚本的时候，输出调试信息
-            expect -d sample.sh
-    -D, 启动expect调试器
-            选项左边的选项会在调试器启动以前被处理。然后，在调试器启动以后，剩下的命令才会被执行
-            接受一个布尔值的参数。这个参数表示提示器必须马上启动，还是只是初始化调试器，以后再使用它
-            expect -c 'set timeout 10' -D 1 -c 'set a 1'
-    -b, 逐行地执行expect脚本
-            expect -b sample.sh
-    ```
+  ```
+  -c, 从命令行执行expect脚本
+          expect -c 'expect "\n" {send "pressed enter\n"}'
+  -re, 表示指定的的字符串是一个正则表达式
+          expect -c 'expect -re "\\\[(.*)" {puts "$expect_out(1,string)"}' # capturing [xxx, and print xxx.
+          在一个正则表达时中，可以在()中包含若干个部分并通过expect_out数组访问它们
+  -i, 可以通过来自于标准输入的读命令来交互地执行expect脚本
+          expect -i arg1 arg2 arg3
+  -d,当执行expect脚本的时候，输出调试信息
+          expect -d sample.sh
+  -D, 启动expect调试器
+          选项左边的选项会在调试器启动以前被处理。然后，在调试器启动以后，剩下的命令才会被执行
+          接受一个布尔值的参数。这个参数表示提示器必须马上启动，还是只是初始化调试器，以后再使用它
+          expect -c 'set timeout 10' -D 1 -c 'set a 1'
+  -b, 逐行地执行expect脚本
+          expect -b sample.sh
+  ```
 ## Tcl函数:
   - set response [string trimright "$raw" " "]
     ```
