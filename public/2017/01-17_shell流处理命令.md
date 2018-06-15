@@ -57,7 +57,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 ***
 
 # Three ways finding a string in a file
-  ```
+  ```shell
   $ grep -n root /etc/passwd
   $ sed -n "/root/=;/root/p" /etc/passwd
   $ cat -n /etc/passwd | sed -n '/root/p'
@@ -530,12 +530,13 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```shell
     find ./* -type f -exec sed -i 's:/home/leondgarse:~:g' {} \;        # 使用xargs会报错
     ```
-  - 在既使用正则表达式又使用 shell 变量时米可以将 sed 命令字符串分割开
+  - 在既使用正则表达式又使用 shell 变量时应可以将 sed 命令字符串分割开
     ```shell
     HOST_NAME=`cat /etc/hostname`
     NEW_HOST_NAME=$HOST_NAME"_NEW"
     sed 's/^127.0.1.1\s*'$HOST_NAME'/127.0.1.1\t'$NEW_HOST_NAME'/' /etc/hosts    
     ```
+## 参数
   - -e 表示使用sed脚本，后面紧跟sed脚本，可使用 ; 链接多个命令，或者使用多个 -e
     ```shell
     sed -n -e '=' -e 'p' foo
@@ -610,16 +611,45 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     echo 'hello' | sed 'y/abcdefghigklmn/ABCDEFGHIJKLMN/'
     # [Out]: HELLo
     ```
-  - sed 只在匹配的第一行后添加一行
+## sed 只在匹配的第一行后添加一行
+  ```shell
+  printf "foo\ntest\ntest\ntest\nfoo\n" | sed '0,/test/s/.*test.*/&\n\tnothing/'
+  [Out]
+  foo
+  test
+  	nothing
+  test
+  test
+  foo
+  ```
+## 每一行前面添加字符串
+  - sed
     ```shell
-    printf "foo\ntest\ntest\ntest\nfoo\n" | sed '0,/test/s/.*test.*/&\n\tnothing/'
-    [Out]
-    foo
-    test
-    	nothing
-    test
-    test
-    foo
+    echo 'test' | sed 's/\(.*\)/foo \1/g'
+    # foo test
+    ```
+  - awk
+    ```shell
+    echo 'test' | awk '{print "foo "$0}'
+    # foo test
+    ```
+  - python 中使用 os.system 时，需要将 ``\1`` 转义
+    ```python
+    import os
+
+    os.system("echo 'test' | sed 's/^\(.*\)$/foo \1/g'")
+    # 输出乱码 foo   [ ??? ]
+
+    os.system("echo 'test' | sed 's/^\(.*\)$/foo \\1/g'")
+    # foo test
+    ```
+    在 shell 中直接调用 python 还需要再转义
+    ```shell
+    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\1/g'\")"
+    # foo 
+
+    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\\1/g'\")"
+    # foo test
     ```
 ***
 
