@@ -351,7 +351,8 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 
 # awk内置函数
 ## 算术函数
-  - 以下算术函数执行与 C 语言中名称相同的子例程相同的操作：
+  - 以下算术函数执行与 C 语言中名称相同的子例程相同的操作
+
     | 函数名 | 说明 |
     |-------|-----|
     | cos( x ) | 返回 x 的余弦；x 是弧度 |
@@ -635,7 +636,10 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 ## 每一行前面添加字符串
   - sed
     ```shell
-    echo 'test' | sed 's/\(.*\)/foo \1/g'
+    echo 'test' | sed 's/\(.*\)/foo \1/'
+    # foo test
+
+    echo 'test' | sed 's/.*/foo &/'
     # foo test
     ```
   - awk
@@ -647,18 +651,18 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```python
     import os
 
-    os.system("echo 'test' | sed 's/^\(.*\)$/foo \1/g'")
+    os.system("echo 'test' | sed 's/^\(.*\)$/foo \1/'")
     # 输出乱码 foo   [ ??? ]
 
-    os.system("echo 'test' | sed 's/^\(.*\)$/foo \\1/g'")
+    os.system("echo 'test' | sed 's/^\(.*\)$/foo \\1/'")
     # foo test
     ```
     在 shell 中直接调用 python 还需要再转义
     ```shell
-    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\1/g'\")"
+    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\1/'\")"
     # foo 
 
-    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\\1/g'\")"
+    python -c "import os; os.system(\"echo 'test' | sed 's/^\(.*\)$/foo \\\1/'\")"
     # foo test
     ```
 ***
