@@ -16,9 +16,9 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2017 - 01 - 17 shell流处理命令___](#2017-01-17-shell流处理命令)
+  - [___2017 - 01 - 17 shell 流处理命令___](#2017-01-17-shell-流处理命令)
   - [目录](#目录)
-  - [Three ways finding a string in a file:](#three-ways-finding-a-string-in-a-file)
+  - [Three ways finding a string in a file](#three-ways-finding-a-string-in-a-file)
   - [find](#find)
   - [grep](#grep)
   - [awk](#awk)
@@ -38,7 +38,11 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   	- [格式化字符串输出（sprintf使用）](#格式化字符串输出sprintf使用)
   	- [一般函数](#一般函数)
   	- [时间函数](#时间函数)
-  - [sed - stream editor for filtering and transforming text](#sed-stream-editor-for-filtering-and-transforming-text)
+  - [sed](#sed)
+  	- [Q / A](#q-a)
+  	- [参数](#参数)
+  	- [sed 只在匹配的第一行后添加一行](#sed-只在匹配的第一行后添加一行)
+  	- [每一行前面添加字符串](#每一行前面添加字符串)
   - [cut](#cut)
   - [wc](#wc)
   - [diff](#diff)
@@ -52,6 +56,8 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   	- [Tcl函数:](#tcl函数)
   	- [if判断 / for循环](#if判断-for循环)
   	- [Example expect file(exp_timeout.sh):](#example-expect-fileexptimeoutsh)
+  - [xargs](#xargs)
+  	- [FOO](#foo)
 
   <!-- /TOC -->
 ***
@@ -492,6 +498,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     308201392 
     ```
   - strftime日期和时间格式说明符
+
     | 格式 | 描述 |
     | -------|-----|
     | %a  | 星期几的缩写(Sun) |
@@ -520,7 +527,9 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     | %%  | 百分号(%) |
 ***
 
-# sed - stream editor for filtering and transforming text
+# sed
+## Q / A
+  - **sed** stream editor for filtering and transforming text
   - 将文本处理命令应用到每一行
   - 若使用shell变量，应使用""，而不是''，并做转义：
     ```shell
@@ -530,7 +539,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```shell
     find ./* -type f -exec sed -i 's:/home/leondgarse:~:g' {} \;        # 使用xargs会报错
     ```
-  - 在既使用正则表达式又使用 shell 变量时应可以将 sed 命令字符串分割开
+  - 在既使用正则表达式又使用 shell 变量时应将 sed 命令字符串分割开
     ```shell
     HOST_NAME=`cat /etc/hostname`
     NEW_HOST_NAME=$HOST_NAME"_NEW"
