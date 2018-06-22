@@ -1269,6 +1269,11 @@
     sudo dpkg -i libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb
     sudo apt install --fix-broken
     ```
+  - shutter applet indicator
+    ```shell
+    sudo apt install libappindicator-dev
+    sudo cpan -i Gtk2::AppIndicator
+    ```
 ***
 
 # 系统备份恢复

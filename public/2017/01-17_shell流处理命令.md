@@ -867,10 +867,11 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   $ sort -nrk 3 -t: sort.txt
   ```
 ## -k选项的语法格式
-  - -k选项的语法格式： <br />        FStart.CStart Modifie,        FEnd.CEnd Modifier
+  - -k选项的语法格式
     ```
+    FStart.CStart Modifie,       FEnd.CEnd Modifier
     -------Start--------,        -------End--------
-    FStart.CStart 选项 ,         FEnd.CEnd 选项
+    FStart.CStart 选项 ,          FEnd.CEnd 选项
 
     这个语法格式可以被其中的逗号,分为两大部分，Start部分和End部分。
     Start部分也由三部分组成，其中的Modifier部分就是我们之前说过的类似n和r的选项部分

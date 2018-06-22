@@ -839,8 +839,8 @@
 ### 列表解析 / 列表生成器
   - 动态创建列表，从一个已有的列表导出一个新的列表
   - 列表生成器只能遍历一次
-  - [ expression for expr in sequence1
-    ```python
+  	```python
+		[ expression for expr in sequence1
     for expr2 in sequence2 ...
     for exprN in sequenceN
     if condition ]
@@ -852,16 +852,22 @@
     ```
   - 列表解析，返回一个列表，使用[]：
     ```python
-    [i+1 for i in range(10) if i&amp;2 == 0]
+    [i+1 for i in range(10) if i%2 == 0]
     [1, 2, 5, 6, 9, 10]
     ```
-    列表生成器，返回一个生成器，使用()：
+	- 返回字典
+		```python
+    data = [1, 2, 3, 4]
+    {'%s' % ii: ii for ii in data}
+		```
+  - 列表生成器，返回一个生成器，使用()：
     ```python
     (i+1 for i in range(10) if i % 2 == 0)
     <generator object <genexpr> at 0x7f173064f1a8>        # 返回一个列表生成器，python3中的range()函数的返回值也是一个生成器
     for i in (i+1 for i in range(10) if i % 2 == 0):
-    ...   print(i, end=' ')
-    ...
+    		print(i, end=' ')
+
+		# [Out]
     1 2 5 6 9 10
     ```
 ### map / filter

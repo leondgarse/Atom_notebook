@@ -296,6 +296,15 @@
     sudo apt-get install -y nvidia-docker2
     nvidia-docker -v
     ```
+  - [Install CUDA Accelerate for Anaconda Python](https://www.scivision.co/install-cuda-accelerate-for-anaconda-python/)
+    ```shell
+    conda install accelerate
+    # The following NEW packages will be INSTALLED:
+    # accelerate:             2.3.1-np111py36_0           anaconda   
+    # accelerate_cudalib:     2.0-0                       anaconda
+    # cudatoolkit:            8.0-3                       anaconda   
+    # cudnn:                  6.0.21-cuda8.0_0            anaconda   
+    ```
   - **安装开启 GPU 支持的 TensorFlow**
     ```shell
     pip install --upgrade tensorflow-gpu

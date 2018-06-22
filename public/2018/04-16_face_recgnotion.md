@@ -880,6 +880,7 @@
 ***
 
 # 活体检测 Facial Presentation Attack Detection
+## Datasets and resources
   - Facial Presentation Attack Detection
   - Anti-spoofing
   - Face Liveness
@@ -898,61 +899,61 @@
   from glob2 import glob
 
   def load_NUAA_data(data_path, data_scope='train', image_resize=0, limited_data_len=0):
-    client_data_path = glob(os.path.join(data_path, "Client*[!.txt]"))[0]
-    imposter_data_path = glob(os.path.join(data_path, "Imposter*[!.txt]"))[0]
-    train_x_client_file = glob(os.path.join(data_path, "client_train*.txt"))[0]
-    train_x_imposter_file = glob(os.path.join(data_path, "imposter_train*.txt"))[0]
-    test_x_client_file = glob(os.path.join(data_path, "client_test*.txt"))[0]
-    test_x_imposter_file = glob(os.path.join(data_path, "imposter_test*.txt"))[0]
+      client_data_path = glob(os.path.join(data_path, "Client*[!.txt]"))[0]
+      imposter_data_path = glob(os.path.join(data_path, "Imposter*[!.txt]"))[0]
+      train_x_client_file = glob(os.path.join(data_path, "client_train*.txt"))[0]
+      train_x_imposter_file = glob(os.path.join(data_path, "imposter_train*.txt"))[0]
+      test_x_client_file = glob(os.path.join(data_path, "client_test*.txt"))[0]
+      test_x_imposter_file = glob(os.path.join(data_path, "imposter_test*.txt"))[0]
 
-    print('''
-        client_data_path = %s,
-        imposter_data_path = %s,
-        train_x_client_file = %s,
-        train_x_imposter_file = %s,
-        test_x_client_file = %s,
-        test_x_imposter_file = %s''' % (
-        client_data_path, imposter_data_path,
-        train_x_client_file, train_x_imposter_file,
-        test_x_client_file, test_x_imposter_file))
+      print('''
+          client_data_path = %s,
+          imposter_data_path = %s,
+          train_x_client_file = %s,
+          train_x_imposter_file = %s,
+          test_x_client_file = %s,
+          test_x_imposter_file = %s''' % (
+          client_data_path, imposter_data_path,
+          train_x_client_file, train_x_imposter_file,
+          test_x_client_file, test_x_imposter_file))
 
 
-    if data_scope == 'test':
-        x_client_file = test_x_client_file
-        x_imposter_file = test_x_imposter_file
-    else:
-        # Not specified as test, use train as default
-        x_client_file = train_x_client_file
-        x_imposter_file = train_x_imposter_file
+      if data_scope == 'test':
+          x_client_file = test_x_client_file
+          x_imposter_file = test_x_imposter_file
+      else:
+          # Not specified as test, use train as default
+          x_client_file = train_x_client_file
+          x_imposter_file = train_x_imposter_file
 
-    # Resize images if needed
-    imread_from_line = lambda data_path, image_path: imread(os.path.join(data_path, image_path.strip().split(' ')[0].replace('\\', '/')))
-    if image_resize != 0:
-        imread_function = lambda data_path, image_path: resize(imread_from_line(data_path, image_path), (image_resize, image_resize), mode='reflect')
-    else:
-        imread_function = imread_from_line
+      # Resize images if needed
+      imread_from_line = lambda data_path, image_path: imread(os.path.join(data_path, image_path.strip().split(' ')[0].replace('\\', '/')))
+      if image_resize != 0:
+          imread_function = lambda data_path, image_path: resize(imread_from_line(data_path, image_path), (image_resize, image_resize), mode='reflect')
+      else:
+          imread_function = imread_from_line
 
-    # Pick limits length of data if limited_data_len != 0, else output all
-    truncated_line = lambda lines, out_len: np.array(lines)[np.random.permutation(len(lines))[:out_len]] if out_len != 0 else np.array(lines)
+      # Pick limits length of data if limited_data_len != 0, else output all
+      truncated_line = lambda lines, out_len: np.array(lines)[np.random.permutation(len(lines))[:out_len]] if out_len != 0 else np.array(lines)
 
-    x_client_lines = open(x_client_file).readlines()
-    x_client_lines = truncated_line(x_client_lines, limited_data_len)
-    x_client = [ imread_function(client_data_path, line) for line in x_client_lines ]
+      x_client_lines = open(x_client_file).readlines()
+      x_client_lines = truncated_line(x_client_lines, limited_data_len)
+      x_client = [ imread_function(client_data_path, line) for line in x_client_lines ]
 
-    x_imposter_lines = open(x_imposter_file).readlines()
-    x_imposter_lines = truncated_line(x_imposter_lines, limited_data_len)
-    x_imposter = [ imread_function(imposter_data_path, line) for line in x_imposter_lines ]
+      x_imposter_lines = open(x_imposter_file).readlines()
+      x_imposter_lines = truncated_line(x_imposter_lines, limited_data_len)
+      x_imposter = [ imread_function(imposter_data_path, line) for line in x_imposter_lines ]
 
-    x = np.stack(x_client + x_imposter)
-    x = x.astype(np.float32)
-    print('len(x_client) = %s, len(x_imposter) = %s, x.shape = %s' % (len(x_client), len(x_imposter), x.shape))
-    # Out[50]: (3491, 64, 64)
+      x = np.stack(x_client + x_imposter)
+      x = x.astype(np.float32)
+      print('len(x_client) = %s, len(x_imposter) = %s, x.shape = %s' % (len(x_client), len(x_imposter), x.shape))
+      # Out[50]: (3491, 64, 64)
 
-    y = np.stack([[1, 0]] * len(x_client) + [[0, 1]] * len(x_imposter))
-    y = y.astype(np.float32)
-    print('y.shape = %s' % (y.shape, ))
-    # Out[57]: (3491,)
-    return x, y
+      y = np.stack([[1, 0]] * len(x_client) + [[0, 1]] * len(x_imposter))
+      y = y.astype(np.float32)
+      print('y.shape = %s' % (y.shape, ))
+      # Out[57]: (3491,)
+      return x, y
 
   def accuracy_calc(prediction, y):
       tt = np.array(prediction)
@@ -1034,7 +1035,7 @@
           fc3 = slim.fully_connected(dropout2, num_outputs=num_classes, activation_fn=None, scope='fc3')
           # softmax = slim.softmax(fc3)
 
-      return fc3, flatten
+      return fc3, slim.flatten(pool2)
   ```
 ## Alexnet v2
   ```python
@@ -1093,13 +1094,13 @@
           return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
       # if labels.shape.ndims == 1: labels = tf.expand_dims(labels, axis=-1)
-      # loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(labels, axis=-1), logits=outputs))
-      loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=outputs))
+      loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.argmax(labels, axis=-1), logits=outputs))
+      # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=outputs))
       # loss = tf.losses.mean_squared_error(tf.argmax(labels, axis=-1), prediction)
       global_step = tf.train.get_global_step()
       learning_rate = tf.train.exponential_decay(LEARNING_RATE_BASE, global_step, decay_steps=DECAY_STEPS, decay_rate=DECAY_RATE)
-      # train_op = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(loss, global_step=global_step)
-      train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
+      train_op = tf.train.MomentumOptimizer(learning_rate, momentum=0.9).minimize(loss, global_step=global_step)
+      # train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
       # learning_rate_decay_fn = lambda learning_rate, global_step: tf.train.exponential_decay(learning_rate, global_step, decay_steps=DECAY_STEPS, decay_rate=DECAY_RATE)
       # train_op = tf.contrib.layers.optimize_loss(loss, tf.train.get_global_step(),
       #               optimizer='SGD',
@@ -1107,6 +1108,46 @@
       #               # learning_rate_decay_fn=None)
 
       return tf.estimator.EstimatorSpec(mode=mode, predictions=prediction, loss=loss, train_op=train_op)
+  ```
+## Additional SVM classifier
+  ```python
+  ''' Additional SVM classifier '''
+  def train_svm_classifier(emb, train_y, training=False):
+      from sklearn.svm import SVC
+      if training == True:
+          from sklearn.model_selection import GridSearchCV
+
+          # svm_c = [0.00390625, 0.015625, 0.0625, 0.25, 1, 4, 16, 64]
+          svm_c = [2 ** i for i in range(-8, 8, 2)]
+          svm_gamma = [0.001, 0.005, 0.01, 0.05, 0.1, 0.15]
+          param_grid = {'C': svm_c, 'gamma': svm_gamma}
+          class_weight={0: 0.4, 1: 0.6}
+          clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
+      else:
+          # clf = SVC(kernel='rbf', class_weight={0: 0.6, 1: 0.4}, C=1.0, gamma=0.1)
+          clf = SVC(kernel='rbf', class_weight={0: 0.4, 1: 0.6}, C=1.5, gamma=0.1)
+
+      clf.fit(emb, np.argmax(train_y, axis=-1))
+      return clf
+  ```
+  **other test**
+  ```python
+  from sklearn.svm import SVC
+  from sklearn.model_selection import GridSearchCV
+
+  svm_c = [0.5, 1.0, 1.5, 2.0, 2.5]
+  svm_gamma = [0.05, 0.1, 0.15]
+  param_grid = {'C': svm_c, 'gamma': svm_gamma}
+  class_weight={0: 0.4, 1: 0.6}
+  clf = GridSearchCV(SVC(kernel='rbf', class_weight=class_weight), param_grid)
+  clf.fit(emb, np.argmax(train_y, axis=-1))
+
+  clf.best_params_
+  # Out[22]: {'C': 1.5, 'gamma': 0.1}
+
+  pp = clf.predict(emb_unknown)
+  accuracy_calc(pp, test_y)
+  # seperator_index = 1500, sum_on_client = 1500.000000, sum_on_imposter = 983.000000, accuracy = 0.827667
   ```
 ## Estimator Train test
   ```python
@@ -1120,8 +1161,9 @@
   # train_x, train_y = load_NUAA_data(data_path, data_scope='train')
   # test_x, test_y = load_NUAA_data(data_path, data_scope='test')
 
+  ''' Training '''
   NUM_CLASSES = 2
-  BATCH_SIZE = 256
+  BATCH_SIZE = 128
   DECAY_STEPS = train_x.shape[0] / BATCH_SIZE
   DECAY_RATE = 0.99
   LEARNING_RATE_BASE = 0.001
@@ -1129,10 +1171,12 @@
   alexnet_inference = alexnet_inference_v1
 
   train_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=100, shuffle=True)
+  # test_x, test_y = load_NUAA_data(data_path, data_scope='test', image_resize=128, limited_data_len=1500)
 
   estimator_alexnet = tf.estimator.Estimator(model_fn=alexnet_model)
   estimator_alexnet.train(input_fn=train_input_fn)
 
+  ''' Validation after training '''
   eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x': train_x}, train_y, batch_size=BATCH_SIZE, num_epochs=None, shuffle=True)
   estimator_alexnet.evaluate(eval_input_fn)
 
@@ -1145,6 +1189,28 @@
   pp = estimator_alexnet.predict(input_fn=predict_input_fn)
   tt = [ii['predictions'] for ii in pp]
   accuracy_calc(tt, test_y)
+
+  ''' Train SVM classifier '''
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": train_x}, num_epochs=1, shuffle=False)
+  tt = estimator_alexnet.predict(input_fn=predict_input_fn)
+  emb = np.array([np.reshape(ii['emb_features'], (-1)) for ii in tt])
+  # emb.shape Out[44]: (3491, 9216)
+  clf = train_svm_classifier(emb, train_y, training=False)
+
+  print('Validation on train dataset')
+  pp = clf.predict(emb)
+  accuracy_calc(pp, train_y)
+  # seperator_index = 1743, sum_on_client = 1743.000000, sum_on_imposter = 1748.000000, accuracy = 1.000000
+
+  ''' Validition on test dataset '''
+  print('Validation on test dataset')
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
+  tt = estimator_alexnet.predict(input_fn=predict_input_fn)
+  emb_unknown = np.array([np.reshape(ii['emb_features'], (-1)) for ii in tt])
+  # emb_unknown.shape Out[45]: (3000, 9216)
+  pp = clf.predict(emb_unknown)
+  accuracy_calc(pp, test_y)
+  # seperator_index = 1500, sum_on_client = 1500.000000, sum_on_imposter = 961.000000, accuracy = 0.820333
   ```
 ## Sample test
   ```python
@@ -1165,63 +1231,78 @@
   accuracy_calc(tt, yst)
   accuracy_calc(tt, ys)
   ```
-## Additional SVM classifier
-  ```python
-  ''' Additional SVM classifier '''
-  from sklearn.svm import SVC
-  svm_c = [2 ** i for i in range(-8, 8, 1)]
-  svm_gamma = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
-  svm_kernel = ['rbf', 'linear', 'poly', 'sigmoid']
-  param_grid = {'C': svm_c, 'gamma': svm_gamma, 'kernel': svm_kernel}
-  from sklearn.model_selection import GridSearchCV
-  clf = GridSearchCV(SVC(class_weight='balanced'), param_grid)
-  clf.fit(emb, np.argmax(train_y, axis=-1))
-
-  test_x, test_y = load_NUAA_data(data_path, data_scope='test', image_resize=128, limited_data_len=1500)
-  predict_input_fn = tf.estimator.inputs.numpy_input_fn({"x": test_x}, num_epochs=1, shuffle=False)
-  tt = list(estimator_alexnet.predict(input_fn=predict_input_fn))
-  emb_unknown = np.array([np.reshape(ii['emb_features'], (-1)) for ii in tt])
-  emb_unknown.shape
-  pp = clf.predict(emb_unknown)
-  accuracy_calc(pp, test_y)
-  ```
 ## Result
   ```python
-  ''' Train '''
-  INFO:tensorflow:Using default config.
-  WARNING:tensorflow:Using temporary folder as model directory: /tmp/tmpox1lsmtz
-  INFO:tensorflow:Using config: {'_model_dir': '/tmp/tmpox1lsmtz', '_tf_random_seed': None, '_save_summary_steps': 100, '_save_checkpoints_steps': None, '_save_checkpoints_secs': 600, '_session_config': None, '_keep_checkpoint_max': 5, '_keep_checkpoint_every_n_hours': 10000, '_log_step_count_steps': 100, '_service': None, '_cluster_spec': <tensorflow.python.training.server_lib.ClusterSpec object at 0x7ff94bdc4208>, '_task_type': 'worker', '_task_id': 0, '_global_id_in_cluster': 0, '_master': '', '_evaluation_master': '', '_is_chief': True, '_num_ps_replicas': 0, '_num_worker_replicas': 1}
-  INFO:tensorflow:Calling model_fn.
-  >>>> outputs.shape = (?, 2)
-  INFO:tensorflow:Done calling model_fn.
-  INFO:tensorflow:Create CheckpointSaverHook.
-  INFO:tensorflow:Graph was finalized.
-  INFO:tensorflow:Running local_init_op.
-  INFO:tensorflow:Done running local_init_op.
-  INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:loss = 0.26773486, step = 1
-  INFO:tensorflow:global_step/sec: 0.175117
-  INFO:tensorflow:loss = 0.288006, step = 101 (571.049 sec)
-  INFO:tensorflow:Saving checkpoints for 107 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:global_step/sec: 0.176473
-  INFO:tensorflow:loss = 0.042064987, step = 201 (566.659 sec)
-  INFO:tensorflow:Saving checkpoints for 213 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:global_step/sec: 0.17806
-  INFO:tensorflow:loss = 0.14192937, step = 301 (561.607 sec)
-  INFO:tensorflow:Saving checkpoints for 320 into /tmp/tmpox1lsmtz/model.ckpt.
+  ''' Train Estimator '''
+  INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmp4cvf9cb9/model.ckpt.
+  INFO:tensorflow:loss = 0.69284254, step = 0
+  INFO:tensorflow:global_step/sec: 2.43997
+  INFO:tensorflow:loss = 0.6963359, step = 100 (40.984 sec)
+  INFO:tensorflow:global_step/sec: 2.4717
+  INFO:tensorflow:loss = 0.6717359, step = 200 (40.458 sec)
+  xINFO:tensorflow:global_step/sec: 2.47389
+  INFO:tensorflow:loss = 0.63367015, step = 300 (40.422 sec)
+  INFO:tensorflow:global_step/sec: 2.38778
+  INFO:tensorflow:loss = 0.68914866, step = 400 (41.880 sec)
+  INFO:tensorflow:global_step/sec: 2.43391
+  INFO:tensorflow:loss = 0.43303284, step = 500 (41.086 sec)
+  INFO:tensorflow:global_step/sec: 2.4332
+  INFO:tensorflow:loss = 0.2881211, step = 600 (41.098 sec)
   ...
-  INFO:tensorflow:global_step/sec: 0.176783
-  INFO:tensorflow:loss = 0.15262769, step = 4801 (565.666 sec)
-  INFO:tensorflow:Saving checkpoints for 4815 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:global_step/sec: 0.177146
-  INFO:tensorflow:loss = 0.26890928, step = 4901 (564.507 sec)
-  INFO:tensorflow:Saving checkpoints for 4922 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:Saving checkpoints for 5000 into /tmp/tmpox1lsmtz/model.ckpt.
-  INFO:tensorflow:Loss for final step: 0.05957412.
-  ''' Evaluate '''
+  INFO:tensorflow:loss = 0.04430499, step = 1200 (40.416 sec)
+  ...
+  INFO:tensorflow:loss = 0.005930577, step = 1800 (40.567 sec)
+  ...
+  INFO:tensorflow:loss = 0.0010318637, step = 2400 (41.173 sec)
+  ...
+  INFO:tensorflow:loss = 0.004058876, step = 2700 (40.759 sec)
+  INFO:tensorflow:Saving checkpoints for 2728 into /tmp/tmp4cvf9cb9/model.ckpt.
+  INFO:tensorflow:Loss for final step: 0.06510556.
 
+  ''' Evaluate with SVM classifier '''
+  Validation on train dataset
+  seperator_index = 1743, sum_on_client = 1743.000000, sum_on_imposter = 1748.000000, accuracy = 1.000000
+
+  Validation on test dataset
+  seperator_index = 1500, sum_on_client = 1500.000000, sum_on_imposter = 983.000000, accuracy = 0.827667
   ```
+***
+# 视频转换
+```python
+import skimage
 
+def frame_to_char(frame, len_size=100, char_set = ['0', '1', ' ']):
+    out_shape = (len_size, int(len_size / frame.shape[0] * frame.shape[1]))
+    frame_resized = skimage.transform.resize(frame, out_shape)
+    pp = skimage.color.rgb2gray(frame_resized)
+    ss = ''
+    for ll in pp:
+        for rr in ll:
+            if rr > 0.66: ss += char_set[0] + ' '
+            elif rr > 0.33: ss += char_set[1] + ' '
+            else: ss += char_set[2] + ' '
+        ss += '\n'
+    return ss
+
+process_this_frame = 0
+FRAME_PER_DISPLAY = 2
+
+video_source = 0
+video_capture = cv2.VideoCapture(video_source)
+while True:
+    ret, frame = video_capture.read()
+    if not ret: break
+    if process_this_frame == 0:
+        frame_char = frame_to_char(frame, len_size=200)
+        plt.clf()
+        plt.text(0, 0, frame_char)
+
+    process_this_frame = (process_this_frame + 1) % FRAME_PER_DISPLAY
+# Release handle to the webcam
+video_capture.release()
+cv2.destroyAllWindows()
+```
+***
 # Foo
   ```python
   >>> from skimage import data
@@ -1234,3 +1315,40 @@
   >>> rotate(image, 90, resize=True).shape
   (512, 512)
   ```  
+  ```python
+import imageio
+import skimage
+import time
+
+vid = imageio.get_reader('/home/leondgarse/Videos/VID_20171029_062238.mp4')
+for num, im in enumerate(vid):  
+    # image 的类型是mageio.core.util.Image可用下面这一注释行转换为arrary  
+    print(im.mean())
+    image = skimage.img_as_float(im).astype(np.float64)
+    plt.clf()
+    plt.text(0, 0, 'abc')
+    plt.imshow(im)
+    time.sleep(1)
+    fig = pylab.figure()
+    fig.suptitle('image #{}'.format(num), fontsize=20)
+    pylab.imshow(im)
+  ```
+```python
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+
+# Paste your code here
+fig, ax = plt.subplots()
+ims = []
+N = 500
+x = np.random.rand(N, 50, 2)
+fakenp = np.random.rand(N, 50, 2)
+for i in range(N):
+    im1, = plt.plot(x[i, :, 0], x[i, :, 1], 'b.')
+    im2, = plt.plot(fakenp[i, :, 0], fakenp[i, :, 1], 'rx')
+    ims.append([im1, im2])
+ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
+                                repeat_delay=1000)
+ani.save('sample.mp4', writer='ffmpeg')
+```

@@ -19,10 +19,12 @@
   <!-- /TOC -->
 ***
 
-- \#!/bin/sh
-- \# shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
+- shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
+  ```shell
+  #!/bin/sh
+  ```
 - 当前使用的bash：
-  ```c
+  ```shell
   $ ps | grep $$
   $ echo $SHELL
   $ which bash
@@ -35,7 +37,7 @@
 
 # 变量
   - 双引号，避免shell对字符串做拆分处理，可引用除了字符 $、反引号（\`）、\ 外的任意字符或字符串
-    ```c
+    ```shell
     echo *        # 输出当前路径下所有文件名
     echo "*"        # 输出*
 
@@ -43,36 +45,36 @@
     echo "`ls -l`"      # 保留输出时的所有格式信息
     ```
   - 单引号与双引号类似，不同的是shell会忽略任何引用值，即屏蔽单引号内的特殊字符的原本含义。
-    ```c
+    ```shell
     CAL="cal"
     echo $CAL        # 输出 cal
     echo '$CAL'        # 输出$CAL
     ```
   - 反引号（`）用于设置系统命令输出到变量，shell认为反引号中的内容是一个系统命令
-    ```c
+    ```shell
     echo '$CAL'        # 输出cal命令的输出，但会在同一行中输出
     echo "`$CAL`"        # 可以输出换行符
     ```
   - $ shell 脚本中的一个保留字，表示变量的开始，初始化变量时等号两边不能有空格
-    ```c
+    ```shell
     $string="hello world"
     ```
   - unset 命令清除一个变量的值
-    ```c
+    ```shell
     unset $string
     ```
   - {} 使用大括号引用变量，用于跟后面字符区分
-    ```c
+    ```shell
     echo "${var}foo"
     ```
   - "" 引号里面的变量输出时会保留所有空格
-    ```c
+    ```shell
     greeting='Hello    world!'
     echo $greeting" now with spaces: $greeting"
     # >output: Hello world! now with spaces: Hello    world!
     ```
   - \`\`或$() \`在~下面，将变量值替换为命令输出内容
-    ```
+    ```shell
     FILELIST=`ls`
     echo "$FILELIST"
     # >outout: prog.sh
@@ -82,33 +84,33 @@
     # >outout: /tmp/my-dir/file_2017-01-04.txt
     ```
   - alias中每次使用命令更新为不同值
-    ```bash
+    ```shell
     alias UPDATEWORKSPACE='export __WORKSPACE="`hg root 2>/dev/null`"'
     ```
     将每次执行""中的命令，更新为不同的值
-    ```bash
+    ```shell
     alias UPDATEWORKSPACE=“export __WORKSPACE=`hg root 2>/dev/null`”
     ```
     只会在创建alias时执行一次，命令执行的结果作为固定的字符串
   - () 创建字符数组
-    ```
+    ```shell
     my_array=(apple banana "Fruit Basket" orange)
     new_array[2]=apricot
 
     echo ${my_array[3]}        # 需要使用{} --> orange
     ```
   - ($(EXP)) 初始化为命令输出的数组
-    ```
+    ```shell
     FILELIST=($(ls))
     echo "${FILELIST[3]}"        # 输出第3个元素值
     echo "${FILELIST}"        # 输出第0个元素值
     ```
   - ${VAR[@]} ${VAR[\*]} 输出全部元素，将数组值转换为一个字符串
-    ```
+    ```shell
     echo "${FILELIST[@]}"
     ```
   - ${#VAR[@]} ${#VAR[\*]} 元素数目
-    ```
+    ```shell
     echo ${#my_array[@]}        # 输出元素数目 --> 4
 
     # adding another array element
@@ -121,14 +123,14 @@
 ***
 
 # 命令行参数
-  - $0 脚本名称
-  - $n 传递给脚本或函数的第 n 个参数
-  - $# 传递给脚本 / 函数的变量数目
-  - $@ / $* 传递给脚本 / 函数的所有参数
-  - shift      # 所有的位置参数都向左移动一个位置，但$0不变
-  - $10 不能获取第十个参数，获取第十个参数需要 ${10}，当 n>=10 时，需要使用 ${n} 来获取参数
-  - 在使用双引号""时，$@ / $* 行为不同：
-    ```
+  - **$0** 脚本名称
+  - **$n** 传递给脚本或函数的第 n 个参数
+  - **$#** 传递给脚本 / 函数的变量数目
+  - **$@ / $*** 传递给脚本 / 函数的所有参数
+  - **shift** 所有的位置参数都向左移动一个位置，但$0不变
+  - **$10** 不能获取第十个参数，获取第十个参数需要 ${10}，当 n>=10 时，需要使用 ${n} 来获取参数
+  - 在使用双引号 "" 时，**$@** / **$*** 行为不同：
+    ```shell
     #!/bin/bash
     function func {
       echo "--> \$*"
@@ -144,12 +146,12 @@
     func We are argument
 
     # output:
-            --> $*
-            We are argument
-            --> $@
-            We
-            are
-            argument
+    --> $*
+    We are argument
+    --> $@
+    We
+    are
+    argument
     ```
 ***
 
@@ -158,7 +160,7 @@
   - echo $? 显示结果
   - $((expression)) 双括号代替 expr 命令计算表达式的值
   - 计算时间间隔
-    ```bash
+    ```shell
     DA=`date +%s`
     echo $DA  # 1510222879
     DB=`date +%s`
@@ -173,19 +175,19 @@
 
 # 字符串 长度 / index / 抽取 / 替换
   - $(#) 字符串长度
-    ```
+    ```shell
     STRING="this is a string"
     echo ${#STRING}
     # >output: 16
     ```
   - expr index 字符位置
-    ```
+    ```shell
     STRING="this is a string"
     SUBSTRING="hat"
     expr index "$STRING" "$SUBSTRING"   # 1 is the position of the first 't' in $STRING
     ```
   - :: 抽取字符串
-    ```
+    ```shell
     STRING="this is a string"
     POS=1
     LEN=3
@@ -205,7 +207,7 @@
     CHOP2FIELD=${DATARECORD:$COMMA1}    # first=Johnny Boy,state=CA
     ```
   - [@]// 字符串替换
-    ```
+    ```shell
     # 替换第一个字符串
     STRING="to be or not to be"
     echo ${STRING[@]/be/eat}    # to eat or not to be
@@ -234,23 +236,22 @@
 ***
 
 # if 判断条件语法
-  - 格式：
-    ```
+  - **格式**
+    ```shell
     if [ expression ]; then
-            # expression
-    else [ expression ]; then
-            # expression
-    elif
-            # expression
+        # expression
+    elif [ expression ]; then
+        # expression
+    else
+        # expression
     fi
     ```
-  - expression 条件语法：
-    ```
-    [] 相当于test命令别名，条件语句中不能有 || && 连接多个表达式
-    [[]] 是[]的扩展形式，支持更复杂的表达式
-    test 使用 -a 表示且， -o 表示或，! 表示非
-    "" 可以加也可以不加
-
+  - **expression 条件语法**
+    - **[ ]** 相当于test命令别名，条件语句中不能有 || && 连接多个表达式
+    - **[[ ]]** 是 [ ] 的扩展形式，支持更复杂的表达式
+    - **test** 使用 -a 表示且， -o 表示或，! 表示非
+    - **""** 可以加也可以不加
+    ```shell
     if [ "1" -ne "2" ]; then echo 6; fi
     if [ ! "1" -eq "2" ]; then echo 6; fi
     if [[ "1" -eq 1 ]]; then echo 6; fi
@@ -265,62 +266,59 @@
 
     if !grep "" ... ; then ... ; fi
     ```
-  - 数字比较：
-    ```
+  - **数字比较**
+    - **-eq** 两个数值相等
+    - **-ne** 两个数值不相等
+    - **-gt** 第一个数大于第二个数
+    - **-lt** 第一个数小于第二个数
+    - **-le** 第一个数小于等于第二个数
+    - **-ge** 第一个数大于等于第二个数
+    ```shell
     test "1" -eq "2"  # 测试两个数据相等
-    # -eq 两个数值相等
-    # -ne 两个数值不相等
-    # -gt 第一个数大于第二个数
-    # -lt 第一个数小于第二个数
-    # -le 第一个数小于等于第二个数
-    # -ge 第一个数大于等于第二个数        
     ```
-  - 字符串比较：
-    ```
-    # shell 脚本中的字符串存储的是字符串的内容,因此,比较的是两个字符串的内容
+  - **字符串比较** shell 脚本中的字符串存储的是字符串的内容，因此比较的是两个字符串的内容
+    - 等号两侧需要有空格
+    - 字符串两侧使用 "" 避免 shell 重新解释字符串内容
+    ```shell
     test $str1 = $str2   # 测试字符串 str1 和 str2 相等，也可以使用==
     test -z $str3    # 测试字符串 str3 是空串
     test -n $str2    # 测试字符串 str2 是非空串
     test $str1 != $str2  # 测试字符串 str1 和 str2 不相等
-
-    等号两侧需要有空格
-    字符串两侧使用""避免shell是重新解释字符串内容
     ```
-  - 文件测试：
-    ```
+  - **文件测试**
+    - **-d** 文件是目录
+    - **-e** 文件存在
+    - **-f** 文件是普通文件
+    - **-h / -L** 文件是符号链接
+    - **-r** 文件可读
+    - **-s** 文件长度大于 0
+    - **-u** 文件设置了 suid 位
+    - **-w** 文件可写
+    - **-x** 文件是否可执行
+    ```shell
     test -r test.txt  # 测试文件状态
-    # -d 文件是目录
-    # -e 文件存在
-    # -f 文件是普通文件
-    # -h / -L 文件是符号链接
-    # -r 文件可读
-    # -s 文件长度大于 0
-    # -u 文件设置了 suid 位
-    # -w 文件可写
-    # -x 文件是否可执行
-
     [ -w $1 -a $0 ]  #检查两个文件是否同时可写
     ```
-  - 正则表达式比较 =~
+  - **正则表达式比较 =~**
     ```shell
     # 判断字符串是数字
     FF=abc123
     if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
-    string
+    # string
 
     FF=123
     if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
-    number
+    # number
 
     FF=1ba23
     if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
-    number
+    # number
     ```
 ***
 
 # case 选择语句
   - 语法：
-    ```
+    ```shell
     case "$variable" in
       "$condition1" )
         command...
@@ -331,14 +329,14 @@
     esac
     ```
   - 示例：
-    ```
+    ```shell
     mycase=1
     case $mycase in
       1) echo "You selected bash";;
       2) echo "You selected perl";;
       3) echo "You selected phyton";;
       4) echo "You selected c++";;
-      5) exit
+      5) exit;;
     esac
     ```
     ```shell
@@ -448,7 +446,7 @@
 
 # function 函数
   - 语法
-    ```bash
+    ```shell
     # basic construct
     [function] function_name [()] {
         action;

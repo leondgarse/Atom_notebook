@@ -1,6 +1,8 @@
-TensorFlow programming
+TensorFlow 1.8 programming
 [Tensorflow Get Started](https://www.tensorflow.org/get_started)
 
+
+# Get Started with Eager Execution
 There many TensorFlow APIs available, but we recommend starting with these high-level TensorFlow concepts:
 ## High-level Tensorflow APIs
   - Enable an **eager** execution development environment
@@ -201,3 +203,13 @@ The general outline of premade_estimator.py--and many other TensorFlow programs-
     Train the model.
     Evaluate the model's effectiveness.
     Let the trained model make predictions.
+
+As you start writing TensorFlow programs, we strongly recommend focusing on the following two high-level APIs:
+
+    Estimators
+    Datasets
+    
+The Iris program requires the data from the following two .csv files:
+
+    http://download.tensorflow.org/data/iris_training.csv, which contains the training set.
+    http://download.tensorflow.org/data/iris_test.csv, which contains the the test set.

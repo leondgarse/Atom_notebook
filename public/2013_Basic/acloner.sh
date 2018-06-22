@@ -176,20 +176,20 @@ if [ $WORK_MODE != "BACKUP" ]; then
 
     mkdir -p etc
     printf "
-    # /etc/fstab: static file system information.
-    #
-    # Use 'blkid -o value -s UUID' to print the universally unique identifier
-    # for a device; this may be used with UUID= as a more robust way to name
-    # devices that works even if disks are added and removed. See fstab(5).
-    #
-    # <file system> <mount point>   <type>  <options>       <dump>  <pass>
-    proc            /proc           proc    nodev,noexec,nosuid 0       0
-    #/dev/sda3
-    UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
-    #/dev/sda5
-    UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
-    #/dev/sda6
-    UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
+# /etc/fstab: static file system information.
+#
+# Use 'blkid -o value -s UUID' to print the universally unique identifier
+# for a device; this may be used with UUID= as a more robust way to name
+# devices that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    nodev,noexec,nosuid 0       0
+#$DIST_ROOT_PATH
+UUID=$DIST_ROOT_UUID      /      ext4      errors=remount-ro      0      1
+#$DIST_HOME_PATH
+UUID=$DIST_HOME_UUID      /home      ext4      defaults      0      2
+#$DIST_SWAP_PATH
+UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
     " > etc/fstab && \
         touch etc/mtab
 
@@ -205,10 +205,10 @@ if [ $WORK_MODE != "BACKUP" ]; then
     # Install grub, grub-install may fail here
     # [???]
     # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
-        # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
+    # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
     # chroot_command $DIST_ROOT_MOUNT_POINT grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-        grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-        chroot_command $DIST_ROOT_MOUNT_POINT update-grub
+    grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
+    chroot_command $DIST_ROOT_MOUNT_POINT update-grub
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "Install grub error"; fi
 
