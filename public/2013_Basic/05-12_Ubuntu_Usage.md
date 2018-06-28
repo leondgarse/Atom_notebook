@@ -670,12 +670,14 @@
 ## 恢复/克隆的系统中用户文件(图片/文档等)未出现在【位置】列表中，且图标是默认文件夹图标
   - 创建软连接
     ```shell
+    mkdir Music Documents Downloads Pictures Videos
+
     ln -fs /media/D/Users/edgerw/* ~/
 
-    ln -s /media/leondgarse/GrandFiles_Seag/Downloads/ ~/
-    ln -s /media/leondgarse/GrandFiles_Seag/Documents/ ~/
-    ln -s /media/leondgarse/GrandFiles_Seag/Music/ ~/
-    ln -s /media/leondgarse/GrandFiles_Seag/Pictures/ ~/
+    ln -s /media/leondgarse/Grandfile_Seag/Downloads/ ~/
+    ln -s /media/leondgarse/Grandfile_Seag/Documents/ ~/
+    ln -s /media/leondgarse/Grandfile_Seag/Music/ ~/
+    ln -s /media/leondgarse/Grandfile_Seag/Pictures/ ~/
     ln -s /media/leondgarse/Videos_Seag/ ~/Videos
     ```
   - xdg-user-dirs-gtk-update
@@ -685,7 +687,7 @@
     若不成功，则可尝试修改语言为英文，再改回中文：
     export LANG=en_US
     xdg-user-dirs-gtk-update
-    export LANG=zh_CN1
+    export LANG=zh_CN.UTF-8
     xdg-user-dirs-gtk-update
 
     如果在执行xdg-user-dirs-gtk-update命令时选择了不再提示，可执行一下命令恢复：
@@ -950,7 +952,7 @@
     ```
     安装 grub-pc
     ```shell
-    sudo apt-get isntall grub-pc
+    sudo apt-get install grub-pc
     ```
 ## 坏块检测 badblocks
   - badblocks

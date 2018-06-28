@@ -49,7 +49,16 @@
     # snap 安装，版本较低
     sudo snap install minikube
     # 安装指定版本
-    curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.1/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+    curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+    ```
+  - **安装 kubectl**
+    ```shell
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+    # 必须切换成 root 用户执行
+    sudo su -c 'echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
+
+    sudo apt-get update
+    sudo apt-get install -y kubelet kubeadm kubectl
     ```
   - **添加其他 image**，需要代理连接
     ```shell
@@ -75,6 +84,30 @@
     - [Boot2Docker ssh-into-vm](https://github.com/boot2docker/boot2docker#ssh-into-vm)
     - user: docker
     - pass: tcuser
+## helm
+  - [Linux](https://kubernetes-helm.storage.googleapis.com/helm-v2.9.1-linux-amd64.tar.gz)
+  - [Quick Start Guide](https://docs.helm.sh/using_helm/#quickstart-guide)
+  - Extract and copy `helm` to a PATH directory
+    ```shell
+    tar xvf helm-v2.9.1-linux-amd64.tar.gz
+    cd linux-amd64
+    cp helm ~/local_bin
+    ```
+  - **Init**
+    ```shell
+    # Find out which cluster Tiller would install to
+    kubectl config current-context
+
+    # Initialize the local CLI and also install Tiller into Kubernetes cluster in one step
+    helm init
+
+    # To install a chart using one of the official stable charts
+    helm repo update
+    helm install stable/mysql
+
+    # See what has been released using Helm
+    helm ls
+    ```
 ***
 
 # 操作
@@ -175,46 +208,4 @@
     name = 'default'
     exec_namespaced_pod_stream(name, pod_name, exec_command)
     ```
-## CSF Specific
-  - **Common part**
-    ```python
-    from kubernetes import client, config
-    from kubernetes.client.rest import ApiException
-    import os
-
-    def load_config():
-      if 'KUBERNETES_PORT' in os.environ:
-          config.load_incluster_config()
-      else:
-          config.load_kube_config()
-
-    def get_namespace(name=None):
-        return name if name else 'default'
-    ```
-  - **Get master pod name, where labels.release == labels.app**
-    ```python
-    def get_deployment_pod_name(name=None):
-        load_config()
-        namespace = get_namespace(name)
-
-        v1 = client.CoreV1Api()
-        print("\nListing pods with release name and app name:")
-        try:
-            ret = v1.list_namespaced_pod(namespace)
-        except ApiException as e:
-            print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
-            return None
-
-        for item in ret.items:
-            if item.metadata.labels != None:
-                release_name = item.metadata.labels.get('release', None)
-                app_name = item.metadata.labels.get('app', None)
-                print("%s\t%s\t%s\t%s" %
-                      (item.status.pod_ip, item.metadata.name, release_name, app_name))
-                if release_name == app_name and release_name != None:
-                    return item.metadata.name
-    ```
-***
-
-# Logs
 ***

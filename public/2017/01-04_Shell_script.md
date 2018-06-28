@@ -205,6 +205,12 @@
     COMMA1=`expr index "$DATARECORD" ','` # 14 position of first comma
     CHOP1FIELD=${DATARECORD:0:$COMMA1}    # last=Clifford,
     CHOP2FIELD=${DATARECORD:$COMMA1}    # first=Johnny Boy,state=CA
+
+    # index contains the searching char
+    FOO='aa bb cc'
+    echo ${FOO:0:$(expr index "$FOO" 'b')}  # aa b
+    echo ${FOO:0:$(expr index "$FOO" ' ')}  # aa with a space
+    echo ${FOO:0:$(expr $(expr index "$FOO" ' ') - 1)}  # aa
     ```
   - [@]// 字符串替换
     ```shell
@@ -441,6 +447,28 @@
     ```shell
     for ee in $(cat /etc/passwd); do echo $ee; done # 按照 换行符 / 空格划分 [ ??? ]
     while read line; do echo $line; done < /etc/passwd  # 按照换行符划分
+    ```
+    ```shell
+TARGET_NAME = 'cbur-master'
+HELM_LIST=( $(helm list) )
+for ((i=0; $i<${#HELM_LIST[*]}; i=$i+1))
+do
+    echo ${HELM_LIST[$i]}
+    name=${HELM_LIST[$i]}
+    app_name = ....
+done
+
+TARGET_NAME='worn-cat'
+TARGET_NAME='cbur-master'
+HELM_LIST=$(helm list "^$TARGET_NAME\$")
+# Judge by string length
+if [ ${#HELM_LIST} -eq 0 ]; then
+    echo '$TARGET_NAME is installed'
+    helm delete $TARGET_NAME
+    helm ls
+fi
+
+# Install
     ```
 ***
 

@@ -51,10 +51,8 @@ else
 fi
 
 # Function to generate exclude file list
-function generate_exclude_list {
+function generate_exclude_list_base {
     printf "
-/home
-/opt
 /snap
 /cdrom
 /proc
@@ -81,11 +79,24 @@ function generate_exclude_list {
     ls -1 /var/cache/apt/archives/*.deb 2>/dev/null >> $EXCLUDE_FILE
 }
 
+function generate_exclude_list_addition {
+    generate_exclude_list_base
+    printf "
+/home
+/opt
+" >> $EXCLUDE_FILE
+}
+
 function clean_resource_and_exit {
     echo $1
     umount $DIST_HOME_MOUNT_POINT 2>/dev/null
+    sleep 1
     umount $DIST_ROOT_MOUNT_POINT 2>/dev/null
-    rm $DIST_HOME_MOUNT_POINT $DIST_ROOT_MOUNT_POINT -rf
+    sleep 1
+    if [ $? -eq 0 ]; then
+        rm $DIST_HOME_MOUNT_POINT
+        rm $DIST_ROOT_MOUNT_POINT
+    fi
 
     if [ $WORK_MODE = "RESTORE" ]; then
         umount $SOURCE_SYSTEM_PATH 2>/dev/null
@@ -126,14 +137,12 @@ if [ $WORK_MODE != "BACKUP" ]; then
     umount $DIST_HOME_PATH
     umount $DIST_ROOT_PATH
 
-    echo y | mkfs.ext4 $DIST_ROOT_PATH && \
-        echo y | mkfs.ext4 $DIST_HOME_PATH && \
-        mkswap $DIST_SWAP_PATH
 
-    if [ $? -ne 0 ]; then
-        echo "mkfs error"
-        exit
-    fi
+    mkfs.ext4 $DIST_ROOT_PATH
+    mkfs.ext4 $DIST_HOME_PATH
+    mkswap $DIST_SWAP_PATH
+
+    # if [ $? -ne 0 ]; then echo "mkfs error"; exit; fi
 
     # Mount dist disks
     mkdir -p $DIST_ROOT_MOUNT_POINT && \
@@ -152,14 +161,14 @@ if [ $WORK_MODE != "BACKUP" ]; then
     fi
 
     # rsync, need an exclude file list
-    # generate_exclude_list
+    generate_exclude_list_base
     # exit
-    # rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
-    rsync -av \
-        --exclude "/lost+found" \
-        --exclude "/*/lost+found" \
-        --exclude "/lib/modules/*/volatile/*" \
-        $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
+    rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
+    # rsync -av \
+    #     --exclude "/lost+found" \
+    #     --exclude "/*/lost+found" \
+    #     --exclude "/lib/modules/*/volatile/*" \
+    #     $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
     if [ $? -ne 0 ]; then clean_resource_and_exit "rsync error"; fi
 
     # Create excluded system path
@@ -207,7 +216,7 @@ UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
     # grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot $DIST_ROOT_PATH && \
     # update-grub -o $DIST_ROOT_MOUNT_POINT/boot/grub/grub.cfg
     # chroot_command $DIST_ROOT_MOUNT_POINT grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
-    grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot ${DIST_ROOT_PATH:0:-1} && \
+    grub-install --boot-directory=$DIST_ROOT_MOUNT_POINT/boot --target=i386-pc ${DIST_ROOT_PATH:0:-1} && \
     chroot_command $DIST_ROOT_MOUNT_POINT update-grub
 
     if [ $? -ne 0 ]; then clean_resource_and_exit "Install grub error"; fi
@@ -216,7 +225,7 @@ UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
     clean_resource_and_exit "Done!"
 else
     # Backup mode
-    generate_exclude_list
+    generate_exclude_list_addition
     mksquashfs / "$SQUASHFS_BACKUP_TO" -no-duplicates -ef $EXCLUDE_FILE -e "$SQUASHFS_BACKUP_TO"
     if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
 
