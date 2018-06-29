@@ -44,5 +44,5 @@ fig, ax = plt.subplots()
 # Do the plot code
 fig.savefig('myimage.svg', format='svg', dpi=1200)
 
-I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape. 
+I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape.
 ```

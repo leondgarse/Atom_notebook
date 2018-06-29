@@ -29,6 +29,12 @@
   # Install Atom Beta
   sudo apt-get install atom-beta
   ```
+  proxy
+  ```shell
+  cat ~/.atom/.apmrc
+  # http-proxy=http://127.0.0.1:1080
+  # https-proxy=http://127.0.0.1:1080
+  ```
 # 1. General
   |   General    |                              |
   | ------------ | ---------------------------- |

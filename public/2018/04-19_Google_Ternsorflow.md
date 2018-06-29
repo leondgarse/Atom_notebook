@@ -663,7 +663,7 @@
   - [Tensorflow playground](http://playground.tensorflow.org)
   - 一个小格子代表神经网络中的一个节点，而边代表节点之间的连接
   - 每一条边代表了神经网络中的一个参数，边上的颜色体现了这个参数的取值，颜色越深时表示这个参数取值的绝对值越大，当边的颜色接近白色时，这个参数的取值接近于0
-  ![image](images/tf_playground_1.png)
+  ![](images/tf_playground_1.png)
 ***
 
 # 通用函数
@@ -867,7 +867,7 @@
     - 定义 **损失函数** 以及选择 **反向传播优化的算法**
     - 生成 **会话 session** 并且在训练数据上反复运行反向传播优化算法
 
-  ![image](images/forward_network.png)
+  ![](images/forward_network.png)
 ## 前向传播算法 Forward propagation 输出结果
   ```python
   ''' Forward propagation
@@ -957,17 +957,17 @@
   - **激活函数** 将每一个神经网络中节点的输出通过一个非线性函数，将整个神经网络模型转化为非线性的
   - **感知机** 先将输入进行加权和，然后再通过激活函数最后得到输出，这个结构就是一个没有隐藏层的神经网络，可以简单地理解为单层的神经网络
 
-    ![image](images/activation_function_on_node.png)
+    ![](images/activation_function_on_node.png)
   - **在线性模型中无法处理非线性数据**
 
-    ![image](images/linear_on_nolinear.png)
+    ![](images/linear_on_nolinear.png)
 
     通过加入 **激活函数 Tanh** 将线性模型转化为非线性模型
 
-    ![image](images/linear_with_tanh.png)
+    ![](images/linear_with_tanh.png)
   - **常用的激活函数** 目前 TensorFlow 提供了 7 种不同的非线性激活函数，**tf.nn.relu** / **tf.sigmoid** / **tf.tanh** 是其中比较常用的几个
 
-    ![image](images/activation_function.png)
+    ![](images/activation_function.png)
   - **前向传播算法中使用激活函数**
     ```python
     a = tf.nn.relu(tf.matmul(X, w1) + b)
@@ -976,17 +976,17 @@
 ## 多层网络解决异或运算 exclusive or
   - **单层感知机模型** 无法解决异或数据集的分类问题，如果两个输入的符号相同则输出为0，否则输出为1
 
-    ![image](images/exclusive_or_1.png)
+    ![](images/exclusive_or_1.png)
 
     当加入隐藏层之后，异或问题就可以得到很好地解决
 
-    ![image](images/exclusive_or_2.png)
+    ![](images/exclusive_or_2.png)
   - 隐藏层的四个节点中可以被认为代表了从输入特征中抽取的更高维的特征，比如第一个节点可以大致代表两个输入的逻辑与操作的结果，深层神经网络实际上有 **组合特征提取的功能**，对于解决不易提取特征向量的问题（比如 **图片识别** / **语音识别**）有很大帮助
 ## softmax 回归与 交叉熵 cross-entropy
   - 通过神经网络解决 **多分类问题** 最常用的方法是设置 n 个输出节点，其中n为类别的个，即 **n 维的哑变量矩阵 dummy variables**
   - **Softmax 回归** 将神经网络的输出变成一个概率分布，通过交叉熵 **Cross-entropy** 来计算预测的概率分布和目标的概率分布之间的距离
 
-    ![iamge](images/tensorflow_softmax.png)
+    ![](images/tensorflow_softmax.png)
 
   - **Softmax Regression**，在分类问题中给出所属类别的概率，首先收集属于某一类别的证据 evidence，随后将其转化为概率
     ```shell
@@ -1061,7 +1061,7 @@
     ```
   - **梯度下降算法** 在偏导为 0 时可能只能得到 **局部最优解**，并不能保证达到 **全局最优解**，只有当损失函数为凸函数时，梯度下降算法才能保证达到全局最优解
 
-    ![image](images/gradient_decent_limit.png)
+    ![](images/gradient_decent_limit.png)
   - **随机梯度下降的算法stochastic gradient descent**
     - **梯度下降算法** 在每次更新回归系数时都需要遍历整个数据集，在数据集变大时，该方法的计算复杂度就会很高
     - **随机梯度下降的算法** 在每一轮迭代中，随机优化某一条训练数据上的损失函数
@@ -1110,7 +1110,7 @@
     axes[1].plot(LEARNING_RATE_list, drawstyle='steps-post')
     axes[1].set_title('learning rate')
     ```
-    ![image](images/exponential_decay_learning_rate.png)
+    ![](images/exponential_decay_learning_rate.png)
 ## 过拟合 与 L1 L2 正则化缩减
   - **过拟合** 只优化交叉熵的模型可以更好地拟合训练数据（交叉熵损失更小），但是却不能很好地挖掘数据中潜在的规律来判断未知的测试数据，所以在测试数据上的正确率低
   - 为了避免过拟合问题，一个常用的方法是 **正则化 regularization**
@@ -1323,7 +1323,7 @@
       axes[ind].plot(w1_collection[:, ind, 0])
       axes[ind].set_title('w1[%d]' % ind)
   ```
-  ![image](images/user_defined_loss_weight.png)
+  ![](images/user_defined_loss_weight.png)
 ## 计算一个 5 层神经网络带 L2 正则化的损失函数的网络模型
   ```python
   import tensorflow as tf
@@ -1420,7 +1420,7 @@
 
   fig.show()
   ```
-  ![image](images/mse_regulation_loss.png)
+  ![](images/mse_regulation_loss.png)
   - **Q: 在 ipython 中再次运行时报错 Placeholder[dtype=DT_FLOAT, shape=[?,1]**
     ```python
     在第二次运行时
@@ -2086,25 +2086,25 @@
     - **全连接层** 在经过多轮卷积层和池化层的处理之后，卷积神经网络的最后一般会是由 1 到 2 个全连接层来给出最后的分类结果
     - **Softmax 层** 主要用于分类问题，得到当前样例属于不同种类的概率分布情况
 
-    ![image](images/cnn_structure.png)
+    ![](images/cnn_structure.png)
 ## 卷积层 Convolution
   - **单位节点矩阵** 指的是一个长和宽都为1，但深度不限的节点矩阵
   - **过滤器 filter** 将当前层神经网络上的一个 **子节点矩阵** 转化为下一层神经网络上的一个 **单位节点矩阵**，常用的过滤器尺寸有 3×3 或 5×5
 
-    ![image](images/filter_0.png)
+    ![](images/filter_0.png)
   - 过滤器的 **尺寸** 指的是一个过滤器输入节点矩阵的大小，而 **深度** 指的是输出单位节点矩阵的深度
   - 卷积层的参数个数和图片的大小无关，它只和过滤器的尺寸 / 深度以及当前层节点矩阵的深度有关，这使得卷积神经网络可以很好地扩展到更大的图像数据上
   - **卷积层前向传播过程** 将一个 2×2×3 的节点矩阵变化为一个 1×1×5 的单位节点矩阵，总共需要 2×2×3×5+5=65 个参数，其中 +5 为偏置项参数的个数
 
-    ![image](images/filter_1.png)
+    ![](images/filter_1.png)
 
     可以在当前层矩阵的边界上加入 **全0填充 zero-padding**，使得卷积层前向传播结果矩阵的大小和当前层矩阵保持一致，避免尺寸的变化
 
-    ![image](images/filter_2.png)
+    ![](images/filter_2.png)
 
     还可以通过设置过滤器移动的步长来调整结果矩阵的大小，当移动步长为2且使用全0填充时，卷积层前向传播的过程
 
-    ![image](images/filter_3.png)
+    ![](images/filter_3.png)
   - 在卷积神经网络中，**每一个卷积层中使用的过滤器中的参数都是一样的**，从直观上理解，共享过滤器的参数可以使得图像上的内容不受位置的影响
   - **tf.nn.conv2d 函数** 实现卷积层前向传播算法，根据 4 维 `input` 与 `filter` tensors，计算 2 维卷积
     ```python
@@ -2275,7 +2275,7 @@
     - 2012 年 ImageNet ILSVRC 图像分类挑战的第一名 **AlexNet 模型** / 2013 年 ILSVRC 第一名 **ZF Net 模型** / 2014 年第二名 **VGGNet 模型** 的架构都满足该经典架构
   - VGGNet 论文 Very Deep Convolutional Networks for Large-Scale Image Recognition 中作者尝试过的不同卷积神经网络架构
 
-    ![image](images/vggnet.png)
+    ![](images/vggnet.png)
 
     - 其中 **conv*** 表示卷积层，**maxpool** 表示池化层，**FC-*** 表示全连接层，**soft-max** 为softmax 结构
     - **convX-Y** 表示过滤器的边长为 X，深度为 Y，conv3-64 表示过滤器的长和宽都为 3，深度为 64
@@ -2288,7 +2288,7 @@
   - **LeNet-5 模型** 是 Yann LeCun 教授于 1998 年在论文 Gradient-based learning applied to document recognition 中提出的，是第一个成功应用于数字识别问题的卷积神经网络，LeNet-5 模型可以达到大约 99.2% 的正确率
   - **LeNet-5 模型** 无法很好地处理类似 ImageNet 这样比较大的图像数据集，总共有 7 层结构
 
-    ![image](images/LeNet-5.png)
+    ![](images/LeNet-5.png)
   - **第一层 卷积层**
     - 输入是原始的图像像素，输入层大小为 32×32×1
     - 过滤器尺寸为 5×5，深度为 6，不使用全 0 填充，步长为 1
@@ -2566,10 +2566,10 @@
 ## Inception-v3 模型
   - 在 LeNet-5 模型中，不同卷积层通过串联的方式连接在一起，而 Inception-v3 模型中的 Inception 结构是将 **不同的卷积层通过并联的方式** 结合在一起，同时使用所有不同尺寸的过滤器，然后再将得到的矩阵 **在深度维度上** 拼接起来
 
-    ![image](images/inception-v3.png)
+    ![](images/inception-v3.png)
   - **Inception-v3 模型架构图** Inception-v3 模型总共有46层，由 11 个 Inception 模块组成，共有 96 个卷积层
 
-    ![iamge](images/inception-v3_2.png)
+    ![](images/inception-v3_2.png)
 
   - **python 实现一个 Inception 模块** (红色方框中的)
     ```python
@@ -3406,7 +3406,7 @@
     - **tf.train.shuffle_batch** 不同线程会读取同一个文件，当一个文件中的样例比较相似时，神经网络的训练效果可能会受到影响
     - **tf.train.shuffle_batch_join** 不同线程会读取不同文件，当读取数据的线程数比总文件数还大时，多个线程可能会读取同一个文件中相近部分的数据，并导致过多的硬盘寻址
 ## Python 实现 TFRecord 数据读取与 Batching
-  ![image](images/data_input_framework.png)
+  ![](images/data_input_framework.png)
   ```python
   ''' 生成文件存储样例数据 '''
   def _int64_feature(value):
@@ -3518,7 +3518,7 @@
   - **循环神经网络 recurrent neural network, RNN** 源自于 1982 年由 Saratha Sathasivam 提出的 **霍普菲尔德网络**，在语音识别、语言模型、机器翻译以及时序分析等问题上被广泛地应用
   - **循环神经网络** 的主要用途是 **处理和预测序列数据**，循环神经网络的来源就是为了 **刻画一个序列当前的输出与之前信息的关系**，循环神经网络会记忆之前的信息，并利用之前的信息影响后面结点的输出
   - 循环神经网络会对于每一个时刻的 **输入** 结合当前模型的 **状态** 给出一个 **输出**，**循环神经网络的隐藏层** 之间的结点是有连接的，隐藏层的输入不仅包括输入层的输出，还包括上一时刻隐藏层的输出
-    ![image](images/rnn_structure.png)
+    ![](images/rnn_structure.png)
     - 对于每一个时刻会有一个 **输入 Xt**，根据循环神经网络 **当前的状态 At** 提供一个 **输出 ht**
     - 循环神经网络 **当前的状态 At** 是根据 **上一时刻的状态 At-1** 和 **当前的输入 Xt** 共同决定的
   - 循环神经网络要求每一个时刻都有一个输入，但是不一定每个时刻都需要有输出
@@ -3531,7 +3531,7 @@
 ## 单层全连接神经网络循环体
   - **单层全连接神经网络作为循环体的循环神经网络结构**
 
-    ![image](images/rnn_simple_cell.png)
+    ![](images/rnn_simple_cell.png)
     - 输入向量的维度为 x，状态向量维度为 h，循环体的全连接层神经网络的 **输入大小为 h+x**
     - 输出为当前时刻的状态，于是 **输出层的节点个数为h**
     - 循环体中的 **参数个数为（h+x）×h+h个**
@@ -3568,29 +3568,29 @@
   - 循环神经网络工作的关键点就是使用历史的信息来帮助当前的决策，在有些问题中，模型仅仅需要短期内的信息来执行当前的任务，但同样也会有一些上下文场景更加复杂的情况，仅仅根据短期依赖就无法很好的解决这种问题
   - **LSTM 结构** 与单一tanh循环体结构不同，LSTM 是一种拥有三个 **门结构** 的特殊网络结构
 
-    ![image](images/lstm_cell_structure.png)
+    ![](images/lstm_cell_structure.png)
   - **门结构 gate** 使用一个 **sigmoid神经网络** 和一个 **按位乘法操作**，制丢弃或者增加信息，从而实现遗忘或记忆的功能
     - sigmoid 神经网络层会输出一个0到1之间的数值，描述当前输入有多少信息量可以通过这个结构
     - sigmoid 神经网络层 **输出为 1** 时，全部信息都可以通过
     - sigmoid 神经网络层 **输出为 0** 时，任何信息都无法通过
     - 一个 LSTM 单元有三个门，**遗忘门 forget gate** / **输入门 input gate** / **输出门 output gate**
-    ![image](images/lstm_cell_structure_detail.png)
+    ![](images/lstm_cell_structure_detail.png)
   - **单元状态 cell state** 将信息从上一个单元传递到下一个单元，和其他部分只有很少的线性的相互作用
 
-    ![image](images/lstm_cell_structure_detail_state.png)
+    ![](images/lstm_cell_structure_detail_state.png)
   - **遗忘门 forget gate** 控制上一单元状态被遗忘的程度，是以 **上一单元的输出 ht−1** 和 **本单元的输入 xt** 为输入的sigmoid函数，为 **Ct−1** 中的每一项产生一个在 [0,1] 内的值，决定哪一部分记忆需要被遗忘
 
-    ![image](images/lstm_cell_structure_detail_forget.png)
+    ![](images/lstm_cell_structure_detail_forget.png)
   - **输入门 input gate** 控制新信息被加入的多少，**tanh 函数** 产生一个 **新的候选向量 Ct~**，输入门为 Ct~ 中的每一项产生一个在 [0,1] 内的值，控制新信息被加入的多少
 
-    ![image](images/lstm_cell_structure_detail_input.png)
+    ![](images/lstm_cell_structure_detail_input.png)
   - **更新本记忆单元的单元状态 Ct** 根据 **遗忘门的输出 ft** / **输入门的输出 it**，更新本记忆单元的单元状态 Ct
     ```python
     Ct = ft ∗ C[t-1] + it ∗ Ct~
     ```
   - **输出门 output gate** 控制当前的单元状态有多少被过滤掉，先将单元状态激活，输出门为其中每一项产生一个在[0,1]内的值，控制单元状态被过滤的程度
 
-    ![image](images/lstm_cell_structure_detail_output.png)
+    ![](images/lstm_cell_structure_detail_output.png)
 ## 循环神经网络的dropout
   - 循环神经网络一般只在 **不同层循环体结构之间** 使用 dropout，而不在同一层的循环体结构之间使用
     - 从时刻 t-1 传递到时刻 t 时，循环神经网络不会进行状态的 dropout
@@ -3637,11 +3637,11 @@
 ## 双向循环神经网络 和 深层循环神经网络
   - **双向循环神经网络 bidirectional RNN** 当前时刻的输出不仅和之前的状态有关系，也和之后的状态相关，双向循环神经网络解决这类问题
 
-    ![image](images/bidirectional_rnn.png)
+    ![](images/bidirectional_rnn.png)
   - **双向循环神经网络** 的主体结构就是两个单向循环神经网络的结合，在每一个时刻t，输入会同时提供给这两个方向相反的循环神经网络，而输出则是由这两个单向循环神经网络共同决定
   - **深层循环神经网络 deepRNN** 将每一个时刻上的循环体重复多次，增强模型的表达能力，**tf.contrib.rnn.MultiRNNCell** 类来实现深层循环神经网络的前向传播过程
 
-    ![image](images/deep_rnn.png)
+    ![](images/deep_rnn.png)
 ## LSTM MNIST
   ```python
   ''' 导入包和数据 '''
@@ -3750,7 +3750,7 @@
   current_y = [0. 0. 0. 0. 0. 0. 0. 0. 0. 1.]
   current_outputs.shape = (1, 28, 64), h_W.shape = (64, 10), h_bias.shape = (10,), predict = 9
   ```
-  ![image](images/lstm_mnist.png)
+  ![](images/lstm_mnist.png)
   - 在上面的图中，每一行显示了 4 个图，共有 7 行，表示了一行一行读取过程中，模型对字符的识别
   - 在只看到前面的几行像素时，模型根本认不出来是什么字符，随着看到的像素越来越多，最后就基本确定了字符
 ## PTB Penn Treebank Dataset 文本数据集
@@ -4042,7 +4042,7 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'LinearRegressor')
   ```
-  ![image](images/time_seqence_fc_estimator.png)
+  ![](images/time_seqence_fc_estimator.png)
 ## 自定义的全连接神经网络模型预测
   ```python
   # 定义适用于 estimator 的单层全连接线性神经网络
@@ -4080,7 +4080,7 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'Full connection estimator')
   ```
-  ![image](images/time_seqence_LinearRegressor.png)
+  ![](images/time_seqence_LinearRegressor.png)
 ## LSTM model with estimator 预测
   ```python
   from tensorflow.contrib import rnn
@@ -4134,7 +4134,7 @@
   tt = [ii['predictions'][0] for ii in pp]
   plot_test_result(tt, test_y, 'LSTM estimator')
   ```
-  ![iamge](images/time_seqence_lstm_estimator.png)
+  ![](images/time_seqence_lstm_estimator.png)
 ## Traditional way implementing LSTM model 预测
   ```python
   from tensorflow.contrib import rnn
@@ -4203,7 +4203,7 @@
   tt = sess.run(y_pre, feed_dict={_X: test_x, batch_size: test_x.shape[0]})
   plot_test_result(tt, test_y, 'LSTM tradition')
   ```
-  ![image](images/time_seqence_lstm_tradition.png)
+  ![](images/time_seqence_lstm_tradition.png)
 ***
 
 # > TensorBoard 可视化

@@ -198,7 +198,8 @@
      classCount = dms.sort_values().head(k).groupby(level=0).count()
 
      # 返回排序后值最大的索引
-     return classCount.argmax()
+     return classCount.idxmax()
+
   ```
   运行结果
   ``` python
@@ -206,6 +207,7 @@
   labels = ['A','A','B','B']
 
   classify0([0,0], group, labels, 3)
+
   Out[5]: 'B'
   ```
 ## k近邻算法改进约会网站的配对效果

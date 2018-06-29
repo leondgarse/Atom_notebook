@@ -72,47 +72,56 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 ***
 
 # find
-  - 流式编辑器sed命令修改当前文件夹下所有Makefile：
+  - 查找当前文件夹下所有文件
+    ```shell
+    # f regular file
+    find ./* -maxdepth 0 -type f
+    # d directory
+    find ./* -maxdepth 0 -type d
+    # l symbolic link
+    find ./* -maxdepth 0 -type l
     ```
+  - 流式编辑器sed命令修改当前文件夹下所有Makefile：
+    ```shell
     find ./ -name 'Makefile' -exec sed -i "s/CC = gcc/CC = arm-linux-gcc/g" {} \;
     ```
   - insmod所有的.ko文件：
-    ```
+    ```shell
     find ./ -name '*.ko' -exec insmod {} \;
     ```
   - 以下命令开机加载所有的模块(/etc/init.d/rcS)：
-    ```
+    ```shell
     find /ehome/modules/ -name *.ko -exec insmod {} \;
     ```
   - find & rm
-    ```
+    ```shell
     find / -type f -name *fetion* -exec rm {} \;
     find / -type f -name "*fetion*" | xargs rm -rf {}\;
     ```
   - find & grep
-    ```
+    ```shell
     find ./ -type f -iname "makefile" -exec grep -Hn "VOICE_GMI" {} \;
     find ./* -type f -iname *.c -o -iname *.cc -o -iname *.cpp | xargs grep -Hisn "" {} \;
     find ./* -type f -iname *.h -o -iname *.hh -o -iname *.hpp | xargs grep -Hisn "" {} \;
     ```
   - 当前文件夹中所有目录压缩为单独文件
-    ```
+    ```shell
     find ./* -maxdepth 0 -type d -exec zip -r {}.zip {} \;
     ```
   - Q: find 在目标路径下存在匹配的文件时
-    ```bash
+    ```shell
     find: paths must precede expression
     ```
     A: shell的通配符扩展 wildcard expansion 会将 * 这些通配符扩展成完整名称，因此在执行
-    ```bash
+    ```shell
     find . -name *test.c
     ```
     会用实际文件的名称扩展成
-    ```bash
+    ```shell
     find . -name bobtest.c cattest.c snowtest.c
     ```
     此时应使用引号
-    ```bash
+    ```shell
     find . -name '*test.c'
     ```
 ***
@@ -558,21 +567,35 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - -r 使用扩展的正则表达式
   - s/// 替换命令，可以使用不同的分隔符s:::：
     ```shell
-    sed -ie 's/foo/bar/' foo 替换每一行的第一个foo为bar
-    sed -ie 's:foo:bar:g' foo 替换全部foo为bar
+    # 替换每一行的第一个foo为bar
+    sed -ie 's/foo/bar/' foo
+    # 替换全部foo为bar
+    sed -ie 's:foo:bar:g' foo
 
-    sed -ie '1,10s/<.*>//g' foo 1-10行删除<>包含的语句，会查找最长的匹配，类似：
-            <b>This</b> is what <b>I</b> meant 将变成 meant
-    sed -ie 's/<[^>]*>//g' foo 查找以<开头，不包含>，并以>结尾的字符串删除，类似：
-            <b>This</b> is what <b>I</b> meant 将变成 This is what I meant
+    # 1-10行删除<>包含的语句，会查找最长的匹配，类似
+    # <b>This</b> is what <b>I</b> meant 将变成 meant
+    sed -ie '1,10s/<.*>//g' foo
+    # 查找以<开头，不包含>，并以>结尾的字符串删除，类似：
+    # <b>This</b> is what <b>I</b> meant 将变成 This is what I meant
+    sed -ie 's/<[^>]*>//g' foo
 
-    sed -ie '/^$/,/^END/s:foo:bar:g' foo 从空行到以END开有的一行，替换foo为bar，指定的查找区间不止一个时，替换所有符合条件的区间
+    # 从空行到以END开有的一行，替换foo为bar，指定的查找区间不止一个时，替换所有符合条件的区间
+    sed -ie '/^$/,/^END/s:foo:bar:g' foo
+    ```
+    **'&' 表示插入整个匹配的规则表达式**
+    ```shell
+    # foo 在每一行的前面加上foo:
+    sed -ie 's/.*/foo: &/'
+    # foo 在所有bar前添加foo，并重复bar三次
+    sed -ie 's/bar/foo&&&/'
+    ```
+    **使用 () 捕获组**
+    ```shell
+    # 使用捕获组将每组2个的单词，重新组合成A: B:的形式
+    sed -i.bak -e 's/\([^ ]*\) \([^ ]*\) /A: \1 B: \2\n/g' foo
 
-    '&' 表示插入整个匹配的规则表达式
-    sed -ie 's/.*/foo: &/' foo 在每一行的前面加上foo:
-    sed -ie 's/bar/foo&&&/' foo 在所有bar前添加foo，并重复bar三次
-
-    sed -i.bak -e 's/\([^ ]*\) \([^ ]*\) /A: \1 B: \2\n/g' foo 使用捕获组将每组2个的单词，重新组合成A: B:的形式
+    # 将 ![](images/foo.png) 替换为 ![foo](images/foo.png) 的格式
+    printf 'foo\n![image](images/foo.jpg)\n![](images/goo.png)\n' | sed 's#!\[\](\(.*\)\/\(.*\)\.\(.*\))#!\[\2\](\1\/\2\.\3)#'
     ```
   - d 删除：
     ```shell

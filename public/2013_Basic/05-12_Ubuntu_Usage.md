@@ -912,7 +912,7 @@
   - Identity -> Advanced
   - Choose Use Point-to-Point encryption (MPPE)
 
-    ![image](images/vpn_conf.png)
+    ![](images/vpn_conf.png)
 ## grub
   - grub配置文件 /etc/default/grub 与 /etc/grub.d 目录下的对应文件，如修改分辨率、等待时间等可通过修改 /etc/default/grub 实现
   - 修改grub背景图片：
