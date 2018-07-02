@@ -1,854 +1,1060 @@
 TensorFlow 1.8 programming
-[Tensorflow Get Started](https://www.tensorflow.org/get_started)
 
+![](images/opt1.gif)
 
-# Get Started with Eager Execution
-## High-level Tensorflow APIs
-  There many TensorFlow APIs available, but we recommend starting with these high-level TensorFlow concepts:
-  - Enable an **eager** execution development environment
-  - Import data with the **Datasets** API
-  - Build models and layers with TensorFlow's **Keras** API
-
-  Eager execution makes TensorFlow evaluate operations immediately, returning concrete values instead of creating a computational graph that is executed later
-  ```python
-  import os
-  import matplotlib.pyplot as plt
-
-  import tensorflow as tf
-  import tensorflow.contrib.eager as tfe
-
-  tf.enable_eager_execution()
-
-  print("TensorFlow version: {}".format(tf.VERSION))
-  print("Eager execution: {}".format(tf.executing_eagerly()))
-  ```
-  Download the training dataset file using the tf.keras.utils.get_file function. This returns the file path of the downloaded file.
-  ```python
-  train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
-
-  train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url),
-                                             origin=train_dataset_url)
-
-  print("Local copy of the dataset file: {}".format(train_dataset_fp))
-  ```
-  Parse the dataset
-  Since our dataset is a CSV-formatted text file, we'll parse the feature and label values into a format our Python model can use. Each line—or row—in the file is passed to the parse_csv function which grabs the first four feature fields and combines them into a single tensor. Then, the last field is parsed as the label. The function returns both the features and label tensors:
-  ```python
-  def parse_csv(line):
-    example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
-    parsed_line = tf.decode_csv(line, example_defaults)
-    # First 4 fields are features, combine into single tensor
-    features = tf.reshape(parsed_line[:-1], shape=(4,))
-    # Last field is the label
-    label = tf.reshape(parsed_line[-1], shape=())
-    return features, label
-  ```
-  Create the training tf.data.Dataset
-
-  TensorFlow's Dataset API handles many common cases for feeding data into a model. This is a high-level API for reading data and transforming it into a form used for training. See the Datasets Quick Start guide for more information.
-
-  This program uses tf.data.TextLineDataset to load a CSV-formatted text file and is parsed with our parse_csv function. A tf.data.Dataset represents an input pipeline as a collection of elements and a series of transformations that act on those elements. Transformation methods are chained together or called sequentially—just make sure to keep a reference to the returned Dataset object.
-
-  Training works best if the examples are in random order. Use tf.data.Dataset.shuffle to randomize entries, setting buffer_size to a value larger than the number of examples (120 in this case). To train the model faster, the dataset's batch size is set to 32 examples to train at once.
-  ```python
-  train_dataset = tf.data.TextLineDataset(train_dataset_fp)
-  train_dataset = train_dataset.skip(1)             # skip the first header row
-  train_dataset = train_dataset.map(parse_csv)      # parse each row
-  train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
-  train_dataset = train_dataset.batch(32)
-
-  # View a single example entry from a batch
-  features, label = iter(train_dataset).next()
-  print("example features:", features[0])
-  print("example label:", label[0])
-  ```
-  The TensorFlow tf.keras API is the preferred way to create models and layers. This makes it easy to build models and experiment while Keras handles the complexity of connecting everything together. See the Keras documentation for details.
-
-  The tf.keras.Sequential model is a linear stack of layers. Its constructor takes a list of layer instances, in this case, two Dense layers with 10 nodes each, and an output layer with 3 nodes representing our label predictions. The first layer's input_shape parameter corresponds to the amount of features from the dataset, and is required.
-  ```python
-  model = tf.keras.Sequential([
-    tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
-    tf.keras.layers.Dense(10, activation="relu"),
-    tf.keras.layers.Dense(3)
-  ])
-  ```
-  Both training and evaluation stages need to calculate the model's loss. This measures how off a model's predictions are from the desired label, in other words, how bad the model is performing. We want to minimize, or optimize, this value.
-
-  Our model will calculate its loss using the tf.losses.sparse_softmax_cross_entropy function which takes the model's prediction and the desired label. The returned loss value is progressively larger as the prediction gets worse.
-
-  The grad function uses the loss function and the tf.GradientTape to record operations that compute the gradients used to optimize our model. For more examples of this, see the eager execution guide.
-  ```python
-  def loss(model, x, y):
-    y_ = model(x)
-    return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
-
-
-  def grad(model, inputs, targets):
-    with tf.GradientTape() as tape:
-      loss_value = loss(model, inputs, targets)
-    return tape.gradient(loss_value, model.variables)
-  ```
-  TensorFlow has many optimization algorithms available for training. This model uses the tf.train.GradientDescentOptimizer that implements the stochastic gradient descent (SGD) algorithm. The learning_rate sets the step size to take for each iteration down the hill. This is a hyperparameter that you'll commonly adjust to achieve better results.
-  ```python
-  optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
-  ```
-  ![](/home/leondgarse/Pictures/opt1.gif)
-  Training loop
-  ```python
-  ## Note: Rerunning this cell uses the same model variables
-
-  # keep results for plotting
-  train_loss_results = []
-  train_accuracy_results = []
-
-  num_epochs = 201
-
-  for epoch in range(num_epochs):
-    epoch_loss_avg = tfe.metrics.Mean()
-    epoch_accuracy = tfe.metrics.Accuracy()
-
-    # Training loop - using batches of 32
-    for x, y in train_dataset:
-      # Optimize the model
-      grads = grad(model, x, y)
-      optimizer.apply_gradients(zip(grads, model.variables),
-                                global_step=tf.train.get_or_create_global_step())
-
-      # Track progress
-      epoch_loss_avg(loss(model, x, y))  # add current batch loss
-      # compare predicted label to actual label
-      epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
-
-    # end epoch
-    train_loss_results.append(epoch_loss_avg.result())
-    train_accuracy_results.append(epoch_accuracy.result())
-
-    if epoch % 50 == 0:
-      print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(epoch,
-                                                                  epoch_loss_avg.result(),
-                                                                  epoch_accuracy.result()))
-  ```
-  Visualize the loss function over time
-  ```python
-  fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
-  fig.suptitle('Training Metrics')
-
-  axes[0].set_ylabel("Loss", fontsize=14)
-  axes[0].plot(train_loss_results)
-
-  axes[1].set_ylabel("Accuracy", fontsize=14)
-  axes[1].set_xlabel("Epoch", fontsize=14)
-  axes[1].plot(train_accuracy_results)
-
-  plt.show()
-  ```
-  Setup the test dataset
-
-  Evaluating the model is similar to training the model. The biggest difference is the examples come from a separate test set rather than the training set. To fairly assess a model's effectiveness, the examples used to evaluate a model must be different from the examples used to train the model.
-
-  The setup for the test Dataset is similar to the setup for training Dataset. Download the CSV text file and parse that values, then give it a little shuffle:
-  ```python
-  test_url = "http://download.tensorflow.org/data/iris_test.csv"
-
-  test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url),
-                                    origin=test_url)
-
-  test_dataset = tf.data.TextLineDataset(test_fp)
-  test_dataset = test_dataset.skip(1)             # skip header row
-  test_dataset = test_dataset.map(parse_csv)      # parse each row with the funcition created earlier
-  test_dataset = test_dataset.shuffle(1000)       # randomize
-  test_dataset = test_dataset.batch(32)           # use the same batch size as the training set
-  ```
-  Evaluate the model on the test dataset
-
-  Unlike the training stage, the model only evaluates a single epoch of the test data. In the following code cell, we iterate over each example in the test set and compare the model's prediction against the actual label. This is used to measure the model's accuracy across the entire test set.
-  ```python
-  test_accuracy = tfe.metrics.Accuracy()
-
-  for (x, y) in test_dataset:
-    prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
-    test_accuracy(prediction, y)
-
-  print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
-  ```
-  Use the trained model to make predictions
-  ```python
-  class_ids = ["Iris setosa", "Iris versicolor", "Iris virginica"]
-
-  predict_dataset = tf.convert_to_tensor([
-      [5.1, 3.3, 1.7, 0.5,],
-      [5.9, 3.0, 4.2, 1.5,],
-      [6.9, 3.1, 5.4, 2.1]
-  ])
-
-  predictions = model(predict_dataset)
-
-  for i, logits in enumerate(predictions):
-    class_idx = tf.argmax(logits).numpy()
-    name = class_ids[class_idx]
-    print("Example {} prediction: {}".format(i, name))
-  ```
-## TensorFlow programs structure
+# Get started
+## TensorFlow 程序结构
   - Import and parse the data sets
+  - Create feature columns to describe the data
   - Select the type of model
   - Train the model
   - Evaluate the model's effectiveness
   - Use the trained model to make predictions
-## Estimator
-  The general outline of premade_estimator.py--and many other TensorFlow programs--is as follows:
+## High-level Tensorflow APIs
+  - [Tensorflow Get Started](https://www.tensorflow.org/get_started)
+  - **TensorFlow Core / High-level API**
+    - **TensorFlow Core** 最底层API，提供对程序运行的完全控制，其他上层接口基于 TensorFlow Core
+    - 上层接口的调用更易用且一致，如 **tf.estimator** 用于管理数据集 / 模型 / 训练以及评估
+  - **high-level TensorFlow concepts**
+    - **eager** 执行环境，直接返回操作结果 [Eager Execution](https://www.tensorflow.org/programmers_guide/eager)
+    - **Datasets API** 导入数据 input pipelines [datasets Importing Data](https://www.tensorflow.org/programmers_guide/datasets)
+    - **Keras API** 构建模型与层级结构 [Estimators](https://www.tensorflow.org/programmers_guide/estimators)
+    - **Estimators** 模型训练 / 评估 / 预测 / 导入导出 的高层封装 [Getting started with the Keras Sequential model](https://keras.io/getting-started/sequential-model-guide/)
+  - **Eager execution** 直接返回操作结果，而不用构建计算图 computational graph
+    - 更直观地交互式接口，方便模型调试
+    - 使用 Python control flow 代替 graph control flow，简化动态模型的使用
+    - Eager 环境下不能使用 Estimator
+  - **Dataset tf.data API** 构建导入数据的 input pipelines，更方便地处理大量数据 / 多种数据格式 / 复杂的数据转化
+    - **tf.data.Dataset** 表示一个输入元素的序列，包含数据集合与一系列转化操作
+      - **Dataset.from_tensor_slices** 创建一个包含一个或多个 tf.Tensor 类的 dataset
+      - **Dataset.batch** 将一个或多个 dataset 转化为一个 dataset
+    - **tf.data.Iterator** 从 dataset 提取数据，**Iterator.get_next** 用于获得 dataset 的下一个元素
+  - **Estimators tf.estimator.Estimator** 简化机器学习的架构，提供模型训练 / 评估 / 预测 / 导入导出 的高层封装
+    - 可以使用封装好的模型 pre-made Estimators 或者自定义模型 custom Estimators
+    - Eager 环境下不能使用 Estimator
+    - tf.contrib.learn.Estimator is deprecated
+    - Estimators 提供更安全的模型训练过程，包括构建计算图 / 变量初始化 / 启动队列 / 异常处理 / 创建 checkpoint / TensorBoard 报告
+## Eager execution environment and Keras layers API
+  - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
+    ```python
+    import os
+    import matplotlib.pyplot as plt
+    import tensorflow as tf
+    import tensorflow.contrib.eager as tfe
 
-      Import and parse the data sets.
-      Create feature columns to describe the data.
-      Select the type of model
-      Train the model.
-      Evaluate the model's effectiveness.
-      Let the trained model make predictions.
+    tf.enable_eager_execution()
 
-  As you start writing TensorFlow programs, we strongly recommend focusing on the following two high-level APIs:
+    print("TensorFlow version: {}".format(tf.VERSION))
+    # TensorFlow version: 1.8.0
+    print("Eager execution: {}".format(tf.executing_eagerly()))
+    # Eager execution: True
+    ```
+  - **tf.keras.utils.get_file** 下载数据集，返回下载到本地的文件路径
+    ```python
+    # Iris dataset
+    train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
+    train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
 
-      Estimators
-      Datasets
+    print("Local copy of the dataset file: {}".format(train_dataset_fp))
+    # Local copy of the dataset file: /home/leondgarse/.keras/datasets/iris_training.csv
+    ```
+  - **tf.decode_csv** 解析 csv 文件，获取特征与标签 feature and label
+    ```python
+    def parse_csv(line):
+        example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
+        parsed_line = tf.decode_csv(line, example_defaults)
+        # First 4 fields are features, combine into single tensor
+        features = tf.reshape(parsed_line[:-1], shape=(4,))
+        # Last field is the label
+        label = tf.reshape(parsed_line[-1], shape=())
+        return features, label
+    ```
+  - **tf.data.TextLineDataset** 加载 CSV 格式文件，创建 tf.data.Dataset
+    ```python
+    train_dataset = tf.data.TextLineDataset(train_dataset_fp)
+    train_dataset = train_dataset.skip(1)             # skip the first header row
+    train_dataset = train_dataset.map(parse_csv)      # parse each row
+    train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
+    train_dataset = train_dataset.batch(32)
 
-  The Iris program requires the data from the following two .csv files:
+    # View a single example entry from a batch
+    features, label = iter(train_dataset).next()
+    print("example features:", features[0])
+    # example features: tf.Tensor([4.8 3.  1.4 0.3], shape=(4,), dtype=float32)
+    print("example label:", label[0])
+    # example label: tf.Tensor(0, shape=(), dtype=int32)
+    ```
+  - **tf.keras API** 创建模型以及层级结构，输入 4 个节点，包含两个隐藏层，输出 3 个节点
+    - **tf.keras.layers.Dense** 添加一个全连接层
+    - **tf.keras.Sequential** 线性叠加各个层
+    ```python
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
+        tf.keras.layers.Dense(10, activation="relu"),
+        tf.keras.layers.Dense(3)
+        ])
+    ```
+  - **损失函数 loss function** 与 **优化程序 optimizer**
+    - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
+    - **tf.GradientTape** 记录模型优化过程中的梯度运算
+    - **tf.train.GradientDescentOptimizer** 实现 stochastic gradient descent (SGD) 算法
+    ```python
+    def loss(model, x, y):
+        y_ = model(x)
+        return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
 
-      http://download.tensorflow.org/data/iris_training.csv, which contains the training set.
-      http://download.tensorflow.org/data/iris_test.csv, which contains the the test set.
-  ```python
-  TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
-  TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
+    def grad(model, inputs, targets):
+        with tf.GradientTape() as tape:
+            loss_value = loss(model, inputs, targets)
+        return tape.gradient(loss_value, model.variables)
 
-  CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
-                      'PetalLength', 'PetalWidth', 'Species']
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+    ```
+  - **模型训练 Training loop**
+    ```python
+    ## Note: Rerunning this cell uses the same model variables
 
-  def load_data(label_name='Species'):
-      """Parses the csv file in TRAIN_URL and TEST_URL."""
+    # keep results for plotting
+    train_loss_results = []
+    train_accuracy_results = []
 
-      # Create a local copy of the training set.
-      train_path = tf.keras.utils.get_file(fname=TRAIN_URL.split('/')[-1],
-                                           origin=TRAIN_URL)
-      # train_path now holds the pathname: ~/.keras/datasets/iris_training.csv
+    num_epochs = 201
 
-      # Parse the local CSV file.
-      train = pd.read_csv(filepath_or_buffer=train_path,
-                          names=CSV_COLUMN_NAMES,  # list of column names
-                          header=0  # ignore the first row of the CSV file.
-                         )
-      # train now holds a pandas DataFrame, which is data structure
-      # analogous to a table.
+    for epoch in range(num_epochs):
+        epoch_loss_avg = tfe.metrics.Mean()
+        epoch_accuracy = tfe.metrics.Accuracy()
 
-      # 1. Assign the DataFrame's labels (the right-most column) to train_label.
-      # 2. Delete (pop) the labels from the DataFrame.
-      # 3. Assign the remainder of the DataFrame to train_features
-      train_features, train_label = train, train.pop(label_name)
+        # Training loop - using batches of 32
+        for x, y in train_dataset:
+            # Optimize the model
+            grads = grad(model, x, y)
+            optimizer.apply_gradients(zip(grads, model.variables),
+                                      global_step=tf.train.get_or_create_global_step())
 
-      # Apply the preceding logic to the test set.
-      test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
-      test = pd.read_csv(test_path, names=CSV_COLUMN_NAMES, header=0)
-      test_features, test_label = test, test.pop(label_name)
+            # Track progress
+            epoch_loss_avg(loss(model, x, y))  # add current batch loss
+            # compare predicted label to actual label
+            epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
 
-      # Return four DataFrames.
-      return (train_features, train_label), (test_features, test_label)
+        # end epoch
+        train_loss_results.append(epoch_loss_avg.result())
+        train_accuracy_results.append(epoch_accuracy.result())
 
-  (train_x, train_y), (test_x, test_y) = load_data()
-  ```
-  From a code perspective, you build a list of feature_column objects by calling functions from the tf.feature_column module. Each object describes an input to the model. To tell the model to interpret data as a floating-point value, call tf.feature_column.numeric_column.
-  ```python
-  # Feature columns describe how to use the input.
-  my_feature_columns = []
-  for key in train_x.keys():
-      my_feature_columns.append(tf.feature_column.numeric_column(key=key))
-  ```
-  To implement a neural network, the premade_estimators.py program uses a pre-made Estimator named tf.estimator.DNNClassifier. This Estimator builds a neural network that classifies examples. The following call instantiates DNNClassifier:
-  ```python
-  # Build 2 hidden layer DNN with 10, 10 units respectively.
-  classifier = tf.estimator.DNNClassifier(
-      feature_columns=my_feature_columns,
-      # Two hidden layers of 10 nodes each.
-      hidden_units=[10, 10],
-      # The model must choose between 3 classes.
-      n_classes=3)
-  ```
-  The ideal number of hidden layers and neurons depends on the problem and the data set. Like many aspects of machine learning, picking the ideal shape of the neural network requires some mixture of knowledge and experimentation. As a rule of thumb, increasing the number of hidden layers and neurons typically creates a more powerful model, which requires more data to train effectively.
+        if epoch % 50 == 0:
+            print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(
+                epoch,
+                epoch_loss_avg.result(),
+                epoch_accuracy.result()))
 
-  The n_classes parameter specifies the number of possible values that the neural network can predict. Since the Iris problem classifies 3 Iris species, we set n_classes to 3.
+    # [Out]
+    # Epoch 000: Loss: 1.833, Accuracy: 30.000%
+    # Epoch 050: Loss: 0.394, Accuracy: 90.833%
+    # Epoch 100: Loss: 0.239, Accuracy: 97.500%
+    # Epoch 150: Loss: 0.161, Accuracy: 96.667%
+    # Epoch 200: Loss: 0.121, Accuracy: 98.333%
+    ```
+  - **图形化显示模型损失变化 Visualize the loss function over time**
+    ```python
+    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
+    fig.suptitle('Training Metrics')
 
-  The constructor for tf.Estimator.DNNClassifier takes an optional argument named optimizer, which our sample code chose not to specify. The optimizer controls how the model will train. As you develop more expertise in machine learning, optimizers and learning rate will become very important.
+    axes[0].set_ylabel("Loss", fontsize=14)
+    axes[0].plot(train_loss_results)
 
-  Train the model
-  ```python
-  def train_input_fn(features, labels, batch_size):
-      """An input function for training"""
-      # Convert the inputs to a Dataset.
-      dataset = tf.data.Dataset.from_tensor_slices((dict(features), labels))
+    axes[1].set_ylabel("Accuracy", fontsize=14)
+    axes[1].set_xlabel("Epoch", fontsize=14)
+    axes[1].plot(train_accuracy_results)
 
-      # Shuffle, repeat, and batch the examples.
-      dataset = dataset.shuffle(1000).repeat().batch(batch_size)
+    plt.show()
+    ```
+    ![](images/output_30_0.png)
+  - **模型评估 Evaluate the model on the test dataset**
+    - **tf.keras.utils.get_file** / **tf.data.TextLineDataset** 加载测试数据集
+    - **tfe.metrics.Accuracy** 计算正确率
+    ```python
+    test_url = "http://download.tensorflow.org/data/iris_test.csv"
+    test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
 
-      # Return the dataset.
-      return dataset
+    test_dataset = tf.data.TextLineDataset(test_fp)
+    test_dataset = test_dataset.skip(1)             # skip header row
+    test_dataset = test_dataset.map(parse_csv)      # parse each row with the funcition created earlier
+    test_dataset = test_dataset.shuffle(1000)       # randomize
+    test_dataset = test_dataset.batch(32)           # use the same batch size as the training set
 
-  classifier.train(
-      input_fn=lambda:train_input_fn(train_x, train_y, 100),
-      steps=1000)
-  ```
-  The train_input_fn function relies on the Dataset API. This is a high-level TensorFlow API for reading data and transforming it into a form that the train method requires.
-  ```python
-  dataset = tf.data.Dataset.from_tensor_slices((dict(train_x), train_y))
-  ```
+    test_accuracy = tfe.metrics.Accuracy()
 
-  The tf.dataset class provides many useful functions for preparing examples for training.
-  ```python
-  dataset = dataset.shuffle(buffer_size=1000).repeat(count=None).batch(100)
-  dataset.make_one_shot_iterator().get_next()
-  ```
-  Training works best if the training examples are in random order. To randomize the examples, call tf.data.Dataset.shuffle. Setting the buffer_size to a value larger than the number of examples (120) ensures that the data will be well shuffled.
+    for (x, y) in test_dataset:
+        prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
+        test_accuracy(prediction, y)
 
-  During training, the train method typically processes the examples multiple times. Calling the tf.data.Dataset.repeat method without any arguments ensures that the train method has an infinite supply of (now shuffled) training set examples.
+    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
+    # Test set accuracy: 96.667%
+    ```
+  - **模型预测 Use the trained model to make predictions**
+    ```python
+    class_ids = ["Iris setosa", "Iris versicolor", "Iris virginica"]
 
+    predict_dataset = tf.convert_to_tensor([
+        [5.1, 3.3, 1.7, 0.5,],
+        [5.9, 3.0, 4.2, 1.5,],
+        [6.9, 3.1, 5.4, 2.1]
+    ])
 
-  Evaluate the model
-  ```python
-  def eval_input_fn(features, labels, batch_size):
-      """An input function for evaluation or prediction"""
-      features=dict(features)
-      if labels is None:
-          # No labels, use only features.
-          inputs = features
-      else:
-          inputs = (features, labels)
+    predictions = model(predict_dataset)
 
-      # Convert the inputs to a Dataset.
-      dataset = tf.data.Dataset.from_tensor_slices(inputs)
+    for i, logits in enumerate(predictions):
+        class_idx = tf.argmax(logits).numpy()
+        name = class_ids[class_idx]
+        print("Example {} prediction: {}".format(i, name))
+    ```
+    Out
+    ```python
+    Example 0 prediction: Iris setosa
+    Example 1 prediction: Iris versicolor
+    Example 2 prediction: Iris virginica
+    ```
+## Estimator pre-made DNN model
+  - **tf.keras.utils.get_file** / **pd.read_csv** 加载数据集
+    ```python
+    TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
+    TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
 
-      # Batch the examples
-      assert batch_size is not None, "batch_size must not be None"
-      dataset = dataset.batch(batch_size)
+    CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
+                        'PetalLength', 'PetalWidth', 'Species']
 
-      # Return the dataset.
-      return dataset
+    def load_data(label_name='Species'):
+        """Parses the csv file in TRAIN_URL and TEST_URL."""
+        # Create a local copy of the training set.
+        train_path = tf.keras.utils.get_file(fname=TRAIN_URL.split('/')[-1], origin=TRAIN_URL)
+        # Parse the local CSV file.
+        train = pd.read_csv(filepath_or_buffer=train_path,
+                            names=CSV_COLUMN_NAMES,  # list of column names
+                            header=0  # ignore the first row of the CSV file.
+                           )
 
-  # Evaluate the model.
-  eval_result = classifier.evaluate(
-      input_fn=lambda:eval_input_fn(test_x, test_y, 100))
+        # 1. Assign the DataFrame's labels (the right-most column) to train_label.
+        # 2. Delete (pop) the labels from the DataFrame.
+        # 3. Assign the remainder of the DataFrame to train_features
+        train_features, train_label = train, train.pop(label_name)
 
-  print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
-  # Test set accuracy: 0.967
-  ```
-  The biggest difference is that classifier.evaluate must get its examples from the test set rather than the training set. In other words, to fairly assess a model's effectiveness, the examples used to evaluate a model must be different from the examples used to train the model.
+        # Apply the preceding logic to the test set.
+        test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
+        test = pd.read_csv(test_path, names=CSV_COLUMN_NAMES, header=0)
+        test_features, test_label = test, test.pop(label_name)
 
-  In brief, eval_input_fn does the following when called by classifier.evaluate:
+        # Return four DataFrames.
+        return (train_features, train_label), (test_features, test_label)
 
-      Converts the features and labels from the test set to a tf.dataset object.
-      Creates a batch of test set examples. (There's no need to shuffle or repeat the test set examples.)
-      Returns that batch of test set examples to classifier.evaluate.
+    (train_x, train_y), (test_x, test_y) = load_data()
 
-  Predicting
-  ```python
-  predict_x = {
-          'SepalLength': [5.1, 5.9, 6.9],
-          'SepalWidth': [3.3, 3.0, 3.1],
-          'PetalLength': [1.7, 4.2, 5.4],
-          'PetalWidth': [0.5, 1.5, 2.1],
-      }
+    train_x.columns
+    # Out[17]: Index(['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth'], dtype='object')
+    train_y.name
+    # Out[19]: 'Species'
+    ```
+  - **tf.feature_column.numeric_column** 创建数字类型特征列表，模型的输入功能
+    ```python
+    # Feature columns describe how to use the input.
+    my_feature_columns = []
+    for key in train_x.keys():
+        my_feature_columns.append(tf.feature_column.numeric_column(key=key))
+    ```
+  - **tf.estimator.DNNClassifier** 预定义的 DNN 神经网络模型
+    - 增加隐藏层与神经元数量通常可以提高模型效果，同时需要更多的训练数据
+    - tf.Estimator.DNNClassifier 可以指定可选参数 optimizer，控制模型训练过程
+    ```python
+    # Build 2 hidden layer DNN with 10, 10 units respectively.
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        # Two hidden layers of 10 nodes each.
+        hidden_units=[10, 10],
+        # The model must choose between 3 classes.
+        n_classes=3)
+    ```
+  - **Estimator.train** 模型训练
+    ```python
+    def train_input_fn(features, labels, batch_size):
+        """An input function for training"""
+        # Convert the inputs to a Dataset.
+        dataset = tf.data.Dataset.from_tensor_slices((dict(features), labels))
 
-  predictions = classifier.predict(
-      input_fn=lambda:eval_input_fn(predict_x,
-                                    labels=None,
-                                    batch_size=100))
-  ```
-  When doing predictions, we're not passing labels to eval_input_fn
-  ```python
-  SPECIES = ['Setosa', 'Versicolor', 'Virginica']
-  expected = ['Setosa', 'Versicolor', 'Virginica']
-  template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
+        # Shuffle, repeat, and batch the examples.
+        dataset = dataset.shuffle(1000).repeat().batch(batch_size)
 
-  for pred_dict, expec in zip(predictions, expected):
-      class_id = pred_dict['class_ids'][0]
-      probability = pred_dict['probabilities'][class_id]
+        # Return the dataset.
+        return dataset
 
-      print(template.format(SPECIES[class_id],
-                            100 * probability, expec))
-  ```
-  Out
-  ```python
-  Prediction is "Setosa" (99.8%), expected "Setosa"
-  Prediction is "Versicolor" (99.8%), expected "Versicolor"
-  Prediction is "Virginica" (96.0%), expected "Virginica"
-  ```
-## Checkpoints
-  TensorFlow provides two model formats:
+    classifier.train(
+        input_fn=lambda:train_input_fn(train_x, train_y, 100),
+        steps=1000)
+    # [Out]
+    # INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpqfn_6jut/model.ckpt.
+    # INFO:tensorflow:loss = 225.84201, step = 0
+    # INFO:tensorflow:loss = 13.055806, step = 100 (0.272 sec)
+    # INFO:tensorflow:global_step/sec: 363.078
+    # ...
+    # INFO:tensorflow:loss = 5.2205944, step = 900 (0.260 sec)
+    # INFO:tensorflow:Saving checkpoints for 1000 into /tmp/tmpqfn_6jut/model.ckpt.
+    # INFO:tensorflow:Loss for final step: 7.6925917.
+    ```
+  - **Estimator.evaluate** 模型评估
+    ```python
+    def eval_input_fn(features, labels, batch_size):
+        """An input function for evaluation or prediction"""
+        features=dict(features)
+        if labels is None:
+            # No labels, use only features.
+            inputs = features
+        else:
+            inputs = (features, labels)
 
-      checkpoints, which is a format dependent on the code that created the model.
-      SavedModel, which is a format independent of the code that created the model.
+        # Convert the inputs to a Dataset.
+        dataset = tf.data.Dataset.from_tensor_slices(inputs)
 
-  To specify the top-level directory in which the Estimator stores its information, assign a value to the optional model_dir argument of any Estimator's constructor.
-  ```python
-  classifier = tf.estimator.DNNClassifier(
-      feature_columns=my_feature_columns,
-      hidden_units=[10, 10],
-      n_classes=3,
-      model_dir='models/iris')
+        # Batch the examples
+        assert batch_size is not None, "batch_size must not be None"
+        dataset = dataset.batch(batch_size)
 
-  classifier.train(
-      input_fn=lambda:train_input_fn(train_x, train_y, 100),
-      steps=200)
-  ```
-  As suggested by the following diagrams, the first call to train adds checkpoints and other files to the model_dir directory:
-  ![](images/first_train_calls.png)
-  ```python
-  print(classifier.model_dir)
-  # models/iris
+        # Return the dataset.
+        return dataset
 
-  ls models/iris/ -1
-  # checkpoint
-  # events.out.tfevents.1530185992.HP-Pavilion-Laptop-15
-  # graph.pbtxt
-  # model.ckpt-1000.data-00000-of-00001
-  # model.ckpt-1000.index
-  # model.ckpt-1000.meta
-  # model.ckpt-1.data-00000-of-00001
-  # model.ckpt-1.index
-  # model.ckpt-1.meta
-  ```
-  Estimator created checkpoints at steps 1 (the start of training) and 200 (the end of training).
+    # Evaluate the model.
+    eval_result = classifier.evaluate(
+        input_fn=lambda:eval_input_fn(test_x, test_y, 100))
+    # [Out]
+    # INFO:tensorflow:Restoring parameters from /tmp/tmpqfn_6jut/model.ckpt-1000
+    # INFO:tensorflow:Saving dict for global step 1000: accuracy = 0.96666664, average_loss = 0.059205256, global_step = 1000, loss = 1.7761577
 
-  Checkpointing Frequency
+    print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    # Test set accuracy: 0.967
+    ```
+  - **Estimator.predict** 模型预测
+    ```python
+    predict_x = {
+            'SepalLength': [5.1, 5.9, 6.9],
+            'SepalWidth': [3.3, 3.0, 3.1],
+            'PetalLength': [1.7, 4.2, 5.4],
+            'PetalWidth': [0.5, 1.5, 2.1],
+        }
 
-  By default, the Estimator saves checkpoints in the model_dir according to the following schedule:
+    # When doing predictions, we're not passing labels to eval_input_fn
+    predictions = classifier.predict(
+        input_fn=lambda:eval_input_fn(predict_x,
+                                      labels=None,
+                                      batch_size=100))
 
-      Writes a checkpoint every 10 minutes (600 seconds).
-      Writes a checkpoint when the train method starts (first iteration) and completes (final iteration).
-      Retains only the 5 most recent checkpoints in the directory.
+    SPECIES = ['Setosa', 'Versicolor', 'Virginica']
+    expected = ['Setosa', 'Versicolor', 'Virginica']
+    template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 
-  You may alter the default schedule by taking the following steps:
+    for pred_dict, expec in zip(predictions, expected):
+        class_id = pred_dict['class_ids'][0]
+        probability = pred_dict['probabilities'][class_id]
 
-      Create a RunConfig object that defines the desired schedule.
-      When instantiating the Estimator, pass that RunConfig object to the Estimator's config argument.
-  ```python
-  my_checkpointing_config = tf.estimator.RunConfig(
-      save_checkpoints_secs = 20*60,  # Save checkpoints every 20 minutes.
-      keep_checkpoint_max = 10,       # Retain the 10 most recent checkpoints.
-  )
+        print(template.format(SPECIES[class_id], 100 * probability, expec))
+    ```
+    Out
+    ```python
+    Prediction is "Setosa" (99.8%), expected "Setosa"
+    Prediction is "Versicolor" (99.8%), expected "Versicolor"
+    Prediction is "Virginica" (96.0%), expected "Virginica"
+    ```
+***
 
-  classifier = tf.estimator.DNNClassifier(
-      feature_columns=my_feature_columns,
-      hidden_units=[10, 10],
-      n_classes=3,
-      model_dir='models/iris',
-      config=my_checkpointing_config)
-  ```
+# Estimator Checkpoints
+## Estimator 保存模型
+  - TensorFlow 支持两种模型格式
+    - **checkpoints** 依赖于创建模型的代码
+    - **SavedModel** 不依赖创建模型的代码
+  - **model_dir 参数** 指定 Estimator 存储模型数据的地址
+    ```python
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        hidden_units=[10, 10],
+        n_classes=3,
+        model_dir='models/iris')
 
-  Restoring your model
-  The first time you call an Estimator's train method, TensorFlow saves a checkpoint to the model_dir. Each subsequent call to the Estimator's train, evaluate, or predict method causes the following:
+    classifier.train(
+        input_fn=lambda:train_input_fn(train_x, train_y, 100),
+        steps=200)
+    ```
+  - 初次调用 **train** 时，保存 checkpoints 与其他文件
+    ![](images/first_train_calls.png)
+    ```python
+    print(classifier.model_dir)
+    # models/iris
 
-      The Estimator builds the model's graph by running the model_fn(). (For details on the model_fn(), see Creating Custom Estimators.)
-      The Estimator initializes the weights of the new model from the data stored in the most recent checkpoint.
+    ls models/iris/ -1
+    # checkpoint
+    # graph.pbtxt
+    # model.ckpt-1.data-00000-of-00001
+    # model.ckpt-1.index
+    # model.ckpt-1.meta
+    # model.ckpt-200.data-00000-of-00001
+    # model.ckpt-200.index
+    # model.ckpt-200.meta
+    ```
+    Estimator 创建了 **训练开始 step 1** 与 **训练结束 step 200** 的 checkpoints 文件
+## 模型保存频率 Checkpointing Frequency
+  - **模型存储的默认规则**
+    - train 方法 **开始** 和 **结束** 时各保存一次
+    - 每 **10** 分钟保存一次 checkpoint
+    - model_dir 中保留最近的 **5** 个 checkpoints 文件
+  - **自定义存储规则**
+    - 创建 RunConfig 类定义需要的规则
+    - Estimator 的 **config 参数** 指定成自定义的规则
+    ```python
+    my_checkpointing_config = tf.estimator.RunConfig(
+        save_checkpoints_secs = 20*60,  # Save checkpoints every 20 minutes.
+        keep_checkpoint_max = 10,       # Retain the 10 most recent checkpoints.
+    )
 
-  In other words, as the following illustration suggests, once checkpoints exist, TensorFlow rebuilds the model each time you call train(), evaluate(), or predict().
-
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        hidden_units=[10, 10],
+        n_classes=3,
+        model_dir='models/iris',
+        config=my_checkpointing_config)
+    ```
+## 模型恢复 Restore
+  - 初次调用模型的 train 方法创建 checkpoints 后，再调用模型的 train / evaluate / predict 方法将
+    - Estimator 首先调用模型的 model_fn() 创建 graph
+    - 使用最新的 checkpoint 中存储的数据初始化模型参数
+    - 即如果 checkpoints 存在，调用 train / evaluate / predict 时，将首先重建模型
   ![](images/subsequent_calls.png)
+## Avoiding a bad restoration
+  - 从 checkpoint 重建模型状态，只适用于模型结构不变的情况，模型参数改变时将报错
+    ```python
+    '''  trained a DNNClassifier Estimator containing two hidden layers, each having 10 nodes '''
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        hidden_units=[10, 10],
+        n_classes=3,
+        model_dir='models/iris')
 
-  Avoiding a bad restoration
+    classifier.train(
+        input_fn=lambda:train_input_fn(train_x, train_y, batch_size=100),
+            steps=200)
 
-  Restoring a model's state from a checkpoint only works if the model and checkpoint are compatible. For example, suppose you trained a DNNClassifier Estimator containing two hidden layers, each having 10 nodes:
-  ```python
-  classifier = tf.estimator.DNNClassifier(
-      feature_columns=feature_columns,
-      hidden_units=[10, 10],
-      n_classes=3,
-      model_dir='models/iris')
+    ''' change the number of neurons in each hidden layer from 10 to 20 and then attempted to retrain the model '''
+    classifier2 = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        hidden_units=[20, 20],  # Change the number of neurons in the model.
+        n_classes=3,
+        model_dir='models/iris')
 
-  classifier.train(
-      input_fn=lambda:train_input_fn(train_x, train_y, batch_size=100),
-          steps=200)
-  ```
-  After training (and, therefore, after creating checkpoints in models/iris), imagine that you changed the number of neurons in each hidden layer from 10 to 20 and then attempted to retrain the model:
-  ```python
-  classifier2 = tf.estimator.DNNClassifier(
-      feature_columns=my_feature_columns,
-      hidden_units=[20, 20],  # Change the number of neurons in the model.
-      n_classes=3,
-      model_dir='models/iris')
-
-  classifier.train(
-      input_fn=lambda:train_input_fn(train_x, train_y, batch_size=100),
-          steps=200)
-  ```
-  Since the state in the checkpoint is incompatible with the model described in classifier2, retraining fails with the following error:
-  ```python
-  ...
-  InvalidArgumentError (see above for traceback): tensor_name =
-  dnn/hiddenlayer_1/bias/t_0/Adagrad; shape in shape_and_slice spec [10]
-  does not match the shape stored in checkpoint: [20]
-  ```
-  To run experiments in which you train and compare slightly different versions of a model, save a copy of the code that created each model_dir, possibly by creating a separate git branch for each version. This separation will keep your checkpoints recoverable.
+    classifier2.train(
+        input_fn=lambda:train_input_fn(train_x, train_y, batch_size=100),
+            steps=200)
+    ```
+    **error**
+    ```python
+    ...
+    InvalidArgumentError (see above for traceback): tensor_name = dnn/hiddenlayer_0/bias;
+    shape in shape_and_slice spec [20]
+    does not match the shape stored in checkpoint: [10]
+    ```
 ***
 
 # Feature Columns
-To create feature columns, call functions from the tf.feature_column module
-Most functions return either a Categorical-Column or a Dense-Column object, except bucketized_column, which inherits from both classes:
-## Numeric column
-  Although tf.numeric_column provides optional arguments, calling tf.numeric_column without any arguments, as follows, is a fine way to specify a numerical value with the default data type (tf.float32) as input to your model:
-  ```python
-  # Defaults to a tf.float32 scalar.
-  numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength")
-  ```
-  To specify a non-default numerical data type, use the dtype argument. For example:
-  ```python
-  # Represent a tf.float64 scalar.
-  numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength",
-                                                            dtype=tf.float64)
-  ```
-  By default, a numeric column creates a single value (scalar). Use the shape argument to specify another shape. For example:
-  ```python
-  # Represent a 10-element vector in which each cell contains a tf.float32.
-  vector_feature_column = tf.feature_column.numeric_column(key="Bowling",
-                                                           shape=10)
+## tf.feature_column 模块
+  - **tf.feature_column** 创建特征列 feature columns，用于模型的输入功能
+    ```python
+    price = numeric_column('price')
+    columns = [price, ...]
+    features = tf.parse_example(..., features=make_parse_example_spec(columns))
+    dense_tensor = input_layer(features, columns)
 
-  # Represent a 10x5 matrix in which each cell contains a tf.float32.
-  matrix_feature_column = tf.feature_column.numeric_column(key="MyMatrix",
-                                                           shape=[10,5])
-  ```
-## Bucketized column
-  Often, you don't want to feed a number directly into the model, but instead split its value into different categories based on numerical ranges. To do so, create a bucketized column. For example, consider raw data that represents the year a house was built. Instead of representing that year as a scalar numeric column, we could split the year into the following four buckets:
-  Dividing year data into four buckets.
-  ![](images/bucketized_column.jpg)
-  The model will represent the buckets as follows:
+    # or
+    bucketized_price = bucketized_column(price, boundaries=[...])
+    columns = [bucketized_price, ...]
+    features = tf.parse_example(..., features=make_parse_example_spec(columns))
+    linear_prediction = linear_model(features, columns)
+    ```
+  - 多数方法返回 **Categorical-Column 分类列** 或 **Dense-Column 密集列**，除了 **bucketized_column** 继承自这两个类
+  - 输入给 `tf.feature_column.input_layer` 时，需要将 categorical column 转化为 dense column，可以使用 **embedding_column** / **indicator_column** 转化
+## Numeric column 数值列
+  - **tf.feature_column.numeric_column** 创建 Numeric column，默认输入参数类型是 tf.float32，维度为 1
+    ```python
+    numeric_column(key, shape=(1,), default_value=None, dtype=tf.float32, normalizer_fn=None)
+    ```
+    ```python
+    # Defaults to a tf.float32 scalar.
+    numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength")
+    ```
+  - **dtype 参数** 指定其他数据类型
+    ```python
+    # Represent a tf.float64 scalar.
+    numeric_feature_column = tf.feature_column.numeric_column(key="SepalLength", dtype=tf.float64)
+    ```
+  - **shape 参数** 指定其他数据维度
+    ```python
+    # Represent a 10-element vector in which each cell contains a tf.float32.
+    vector_feature_column = tf.feature_column.numeric_column(key="Bowling", shape=10)
 
-  | Date Range         | Represented as... |
-  | ------------------ | ----------------- |
-  | < 1960             | [1, 0, 0, 0]      |
-  | >= 1960 but < 1980 | [0, 1, 0, 0]      |
-  | >= 1980 but < 2000 | [0, 0, 1, 0]      |
-  | > 2000             | [0, 0, 0, 1]      |
+    # Represent a 10x5 matrix in which each cell contains a tf.float32.
+    matrix_feature_column = tf.feature_column.numeric_column(key="MyMatrix", shape=[10,5])
+    ```
+  - **normalizer_fn 参数** 指定数据转换，如数据 normalization
+    ```python
+    price = {'price': np.array([4, dtype=np.float32]).reshape(-1, 1)}
+    column = [tf.feature_column.numeric_column('price', normalizer_fn=lambda x: (x - 3.0) / 4.2)]
+    tensor = tf.feature_column.input_layer(price, column)
+    sess = tf.InteractiveSession()
+    tensor.eval()
+    # Out[36]: array([[-0.71428573], [-0.4761905 ], [-0.23809525], [ 0.        ]], dtype=float32)
+    ```
+## Bucketized column 分桶列
+  - **Bucketized** 将数值范围划分成不同的类别，每一个作为一个 bucket
+    ```python
+    bucketized_column(source_column, boundaries)
+    ```
+  - 按照年代划分成 4 个 bucket
 
-  ```python
-  # First, convert the raw input to a numeric column.
-  numeric_feature_column = tf.feature_column.numeric_column("Year")
+    ![](images/bucketized_column.jpg)
 
-  # Then, bucketize the numeric column on the years 1960, 1980, and 2000.
-  bucketized_feature_column = tf.feature_column.bucketized_column(
-      source_column = numeric_feature_column,
-      boundaries = [1960, 1980, 2000])
-  ```
-## Categorical identity column
-  Categorical identity columns can be seen as a special case of bucketized columns. In traditional bucketized columns, each bucket represents a range of values (for example, from 1960 to 1979). In a categorical identity column, each bucket represents a single, unique integer. For example, let's say you want to represent the integer range [0, 4). That is, you want to represent the integers 0, 1, 2, or 3. In this case, the categorical identity mapping looks like this:
-  ![](images/categorical_column_with_identity.jpg)
-  ```python
-  # Create categorical output for an integer feature named "my_feature_b",
-  # The values of my_feature_b must be >= 0 and < num_buckets
-  identity_feature_column = tf.feature_column.categorical_column_with_identity(
-      key='my_feature_b',
-      num_buckets=4) # Values [0, 4)
+    **bucket 数据**
 
-  # In order for the preceding call to work, the input_fn() must return
-  # a dictionary containing 'my_feature_b' as a key. Furthermore, the values
-  # assigned to 'my_feature_b' must belong to the set [0, 4).
-  def input_fn():
+    | Date Range         | Represented as |
+    | ------------------ | -------------- |
+    | < 1960             | [1, 0, 0, 0]   |
+    | >= 1960 but < 1980 | [0, 1, 0, 0]   |
+    | >= 1980 but < 2000 | [0, 0, 1, 0]   |
+    | > 2000             | [0, 0, 0, 1]   |
+    **python 示例**
+    ```python
+    years = {'years': [1999,2013,1987,2005]}
+    years_fc = tf.feature_column.numeric_column('years')
+    column = tf.feature_column.bucketized_column(
+          source_column = years_fc,
+          boundaries = [1990, 2000, 2010])
+    column.name
+    # Out[8]: 'years_bucketized'
+
+    tensor = tf.feature_column.input_layer(years, [column])
+    sess = tf.InteractiveSession()
+    tensor.eval()
+    # Out[9]:
+    # array([[0., 1., 0., 0.],
+    #        [0., 0., 0., 1.],
+    #        [1., 0., 0., 0.],
+    #        [0., 0., 1., 0.]], dtype=float32)
+    ```
+## Categorical identity column 分类识别列
+  - Categorical identity columns 可以作为 bucketized columns 的特殊形式，每一个桶只代表一个单独的数据
+    ```python
+    # The values of 'key' feature must be >= 0 and < num_buckets
+    categorical_column_with_identity(key, num_buckets, default_value=None)
+    ```
+  - 对于整数列表 [0, 4)，即需要表示 0, 1, 2, 3，Categorical identity columns 的表示形式
+
+    ![](images/categorical_column_with_identity.jpg)
+
+    **python 示例**
+    ```python
+    pets = {'pets': [2, 3, 0, 1]}  # cat 0，dog 1，rabbit 2，pig 3
+
+    column = tf.feature_column.categorical_column_with_identity(
+        key='pets',
+        num_buckets=4) # Values [0, 4)
+
+    indicator = tf.feature_column.indicator_column(column)
+    tensor = tf.feature_column.input_layer(pets, [indicator])
+    sess = tf.InteractiveSession()
+    tensor.eval()
+    # Out[13]:
+    # array([[0., 0., 1., 0.],
+    #        [0., 0., 0., 1.],
+    #        [1., 0., 0., 0.],
+    #        [0., 1., 0., 0.]], dtype=float32)
+    ```
+## Categorical vocabulary column 分类词汇列
+  - Categorical vocabulary columns 将字符串转化为 one-hot 向量，类似于 enum 形式的 categorical identity columns
+
+    ![](images/categorical_column_with_vocabulary.jpg)
+  - **tf.feature_column.categorical_column_with_vocabulary_list** 将一个单词列表转为为 column
+    ```python
+    # output will have shape [n, len(vocabulary_list)+num_oov_buckets]
+    categorical_column_with_vocabulary_list(key, vocabulary_list, dtype=None, default_value=-1, num_oov_buckets=0)
+    ```
+    - **default_value 参数** 不在单词列表中单词的返回值，默认 -1，不能同时指定正数的 num_oov_buckets
+    - **num_oov_buckets 参数** 不在单词列表中值的个数，返回 `[len(vocabulary_list), len(vocabulary_list)+num_oov_buckets)` 中的一个值
+    ```python
+    vocabulary_a = {'vocabulary_a': ["kitchenware", "electronics", "sports", "keyboards"]}
+
+    column = tf.feature_column.categorical_column_with_vocabulary_list(
+        key='vocabulary_a',
+        vocabulary_list=["kitchenware", "electronics", "sports"],
+        dtype=tf.string,
+        default_value=-1,
+        num_oov_buckets=3)
+
+    indicator = tf.feature_column.indicator_column(column)
+    tensor = tf.feature_column.input_layer(vocabulary_a, [indicator])
+    sess = tf.InteractiveSession()
+    # FailedPreconditionError: Table not initialized.
+    tf.tables_initializer().run()
+    tensor.shape.as_list()
+    # Out[15]: [4, 6]
+    tensor.eval()
+    # Out[16]:
+    # array([[1., 0., 0., 0., 0., 0.],
+    #        [0., 1., 0., 0., 0., 0.],
+    #        [0., 0., 1., 0., 0., 0.],
+    #        [0., 0., 0., 0., 1., 0.]], dtype=float32)  # keyboards
+    ```
+  - **tf.feature_column.categorical_column_with_vocabulary_file** 将一个文件中的单词转化为 column
+    ```python
+    categorical_column_with_vocabulary_file(key, vocabulary_file, vocabulary_size=None, num_oov_buckets=0, default_value=None, dtype=tf.string)
+    ```
+    - **vocabulary_size 参数** 获取文件中单词列表的数量，不大于单词列表中的单词数量
+    ```python
+    vocabulary_a = {'vocabulary_a': ["kitchenware", "electronics", "sports", "keyboards"]}
+
+    fc_path = 'product_class.txt'
+    ff = open(fc_path, 'w')
+    for ii in vocabulary_a['vocabulary_a']:
+        ff.write(ii + '\n')
+    ff.close()
+
+    # out-of-vocabulary buckets will be all zero
+    column=tf.feature_column.categorical_column_with_vocabulary_file(
+            key="vocabulary_a",
+            vocabulary_file=fc_path,
+            vocabulary_size=3,
+            num_oov_buckets=0)
+
+    indicator = tf.feature_column.indicator_column(column)
+    tensor = tf.feature_column.input_layer(pets, [indicator])
+    sess = tf.InteractiveSession()
+    # FailedPreconditionError: Table not initialized.
+    tf.tables_initializer().run()
+    tensor.shape.as_list()
+    # Out[44]: [4, 3]
+    tensor.eval()
+    # Out[45]:
+    # array([[1., 0., 0.],
+    #        [0., 1., 0.],
+    #        [0., 0., 1.],
+    #        [0., 0., 0.]], dtype=float32)  # all zero
+    ```
+## Hashed column 哈希列
+  - Hashed Column 在类别很多时，将输入转化为哈希值作为类别，限定输入的类别数量，减少内存消耗
+    ```python
+    categorical_column_with_hash_bucket(key, hash_bucket_size, dtype=tf.string)
+    ```
+    **计算哈希值**
+    ```python
+    # pseudocode
+    feature_id = hash(raw_feature) % hash_buckets_size
+    ```
+    **python 示例**
+    ```python
+    colors = {'colors': ['green','red','blue','yellow','pink','blue','red','indigo']}  
+
+    column = tf.feature_column.categorical_column_with_hash_bucket(
+            key='colors',
+            hash_bucket_size=5, # The number of categories
+        )
+
+    indicator = tf.feature_column.indicator_column(column)
+    tensor = tf.feature_column.input_layer(colors, [indicator])
+    sess = tf.InteractiveSession()
+    tensor.eval()
+    # Out[3]:
+    # array([[0., 0., 0., 0., 1.],
+    #        [1., 0., 0., 0., 0.],
+    #        [1., 0., 0., 0., 0.],
+    #        [0., 1., 0., 0., 0.],
+    #        [0., 1., 0., 0., 0.],
+    #        [1., 0., 0., 0., 0.],
+    #        [1., 0., 0., 0., 0.],
+    #        [0., 1., 0., 0., 0.]], dtype=float32)
+    ```
+  - Hashed Column 可能将不相关的输入划分到同一类别，不过很多时候 tensorflow 还是能够利用其他的特征列把它们区分开
+
+    ![](images/hashed_column.jpg)
+## Crossed column 交叉列
+  - feature crosses 把多个特征合并成为一个特征，通常称为 **feature crosses**，比如把 经度 longitude / 维度 latitude 两个特征合并为 地理位置特征 location
+    ```python
+    crossed_column(keys, hash_bucket_size, hash_key=None)
+    ```
+    **python 示例**
+    ```python
+    featrues = {
+            'longtitude': [19,61,30,9,45],
+            'latitude': [45,40,72,81,24]
+        }
+
+    longtitude = tf.feature_column.numeric_column('longtitude')
+    latitude = tf.feature_column.numeric_column('latitude')
+
+    latitude_bucket_fc = tf.feature_column.bucketized_column(latitude, [33,66])
+    longitude_bucket_fc  = tf.feature_column.bucketized_column(longtitude,[33,66])
+
+    crossed_lat_lon_fc = tf.feature_column.crossed_column([latitude_bucket_fc, longitude_bucket_fc], 12)
+
+    indicator = tf.feature_column.indicator_column(crossed_lat_lon_fc)
+    tensor = tf.feature_column.input_layer(featrues, [indicator])
+    sess = tf.InteractiveSession()
+    tensor.eval()
+    # Out[6]:
+    # array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.],
+    #        [0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
+    #        [0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+    #        [0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
+    #        [0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0.]], dtype=float32)
+
+    tf.feature_column.input_layer(featrues, latitude_bucket_fc).eval()
+    # Out[14]:
+    # array([[0., 1., 0.],
+    #        [0., 1., 0.],
+    #        [0., 0., 1.],
+    #        [0., 0., 1.],
+    #        [1., 0., 0.]], dtype=float32)
+
+    tf.feature_column.input_layer(featrues, longitude_bucket_fc).eval()
+    # Out[15]:
+    # array([[1., 0., 0.],
+    #        [0., 1., 0.],
+    #        [1., 0., 0.],
+    #        [1., 0., 0.],
+    #        [0., 1., 0.]], dtype=float32)
+    ```
+  - 在创建 feature crosses 时，通常还会保留原始 uncrossed 特征
+## Indicator columns 指示列
+  - Indicator columns 不直接操作数据，使用 categorical columns 作为输入，转化为 input_layer 方法接受的 one-hot 特征列
+    ```python
+    indicator_column(categorical_column)
+    ```
+    - Used to wrap any `categorical_column_*` (e.g., to feed to DNN)
+    - Use `embedding_column` if the inputs are sparse
+    ```python
+    name_c = tf.feature_column.categorical_column_with_vocabulary_list('name', ['bob', 'george', 'wanda'])
+    name = tf.feature_column.indicator_column(name_c)
+    columns = [name]
+    dense_tensor_1 = tf.feature_column.input_layer({'name': ['bob']}, columns)
+    dense_tensor_2 = tf.feature_column.input_layer({'name': ['bob', 'bob']}, columns)
+    dense_tensor_3 = tf.feature_column.input_layer({'name': ['bob', 'wanda']}, columns)
+    dense_tensor_4 = tf.feature_column.input_layer({'name': ['bob', 'aaa']}, columns)
+
+    sess = tf.InteractiveSession()
+    tf.tables_initializer().run()
+    print(dense_tensor_1.eval())
+    # Out[5]: array([[1., 0., 0.]], dtype=float32)
+
+    print(dense_tensor_2.eval())
+    # Out[6]: array([[1., 0., 0.], [1., 0., 0.]], dtype=float32)
+
+    print(dense_tensor_3.eval())
+    # Out[7]: array([[1., 0., 0.], [0., 0., 1.]], dtype=float32)
+
+    print(dense_tensor_4.eval())
+    # Out[8]: array([[1., 0., 0.], [0., 0., 0.]], dtype=float32)
+    ```
+## embedding columns 嵌入列
+  - 在类别数量变多，或者处理稀疏矩阵时，indicator columns 会变得很大
+  - embedding column 不再限定每个元素必须是 0 或 1，而可以是任何数字，从而使用更少的元素数表现数据
+    ```python
+    # Inputs must be a `_CategoricalColumn` created by any of the `categorical_column_*` function
+    embedding_column(categorical_column, dimension,
+                    combiner='mean', initializer=None,
+                    ckpt_to_load_from=None, tensor_name_in_ckpt=None,
+                    max_norm=None, trainable=True)
+    ```
+  - **embedding columns** 与 **indicator columns** 的映射过程，embedding column 可以使用更低维度的向量表示数据，假设输入包含 81 个单词向量，对于 4 个单词的输入
+    ```python
+    "dog"
+    "spoon"
+    "scissors"
+    "guitar"
+    ```
+    **embedding columns** 与 **indicator columns** 的映射过程
+
+    ![](images/embedding_vs_indicator.jpg)
+    - 处理数据时，首先通过 `categorical_column_with...` 方法将 string 映射成为数字，`["dog", "spoon", "scissors", "guitar"] --> [0, 32, 79, 80]`
+    - indicator column 将每个数字转化为 81 个元素的向量，只在对应的数字处为1
+    - embedding column 将数字映射为 3 个元素的向量
+  - embeddings vectors 的数值是在 **训练时分配** 的，以更有利于解决问题
+  - **embedding 维度** 通常 embedding 向量的维度数量是根据类别数量分配的，如 81 个类别对应 `81 ** 0.25 = 3`
+    ```python
+    embedding_dimensions =  number_of_categories**0.25
+    ```
+  - **python 示例**
+    ```python
+    features = {'items': ["dog", "spoon", "scissors", "guitar", "screen"]}
+
+    pets_f_c = tf.feature_column.categorical_column_with_vocabulary_list(
+        'items',
+        ["dog", "spoon", "scissors", "guitar"],
+        dtype=tf.string,
+        default_value=-1)
+
+    column = tf.feature_column.embedding_column(
+        categorical_column=pets_f_c,
+        dimension=3)
+    tensor = tf.feature_column.input_layer(features, [column])
+
+    sess = tf.InteractiveSession()
+    tf.global_variables_initializer().run()
+    tf.tables_initializer().run()
+    tensor.eval()
+    # Out[17]:
+    # array([[-0.1428304 , -0.6151378 ,  0.87506115],
+    #        [ 0.4937725 ,  1.0007112 , -0.1445001 ],
+    #        [ 0.0717921 ,  0.6795558 ,  0.32704228],
+    #        [ 0.16342635, -0.60739034,  0.01697639],
+    #        [ 0.        ,  0.        ,  0.        ]], dtype=float32)
+    ```
+  - **using `embedding_column` with `DNNClassifier`**
+    ```python
+    video_id = categorical_column_with_identity(
+        key='video_id', num_buckets=1000000, default_value=0)
+    columns = [embedding_column(video_id, 9),...]
+
+    estimator = tf.estimator.DNNClassifier(feature_columns=columns, ...)
+
+    label_column = ...
+    def input_fn():
+      features = tf.parse_example(
+          ..., features=make_parse_example_spec(columns + [label_column]))
+      labels = features.pop(label_column.name)
+      return features, labels
+
+    estimator.train(input_fn=input_fn, steps=100)
+    ```
+  - **using `embedding_column` with model_fn**
+    ```python
+    def model_fn(features, ...):
+      video_id = categorical_column_with_identity(
+          key='video_id', num_buckets=1000000, default_value=0)
+      columns = [embedding_column(video_id, 9),...]
+      dense_tensor = input_layer(features, columns)
+      # Form DNN layers, calculate loss, and return EstimatorSpec.
       ...
-      return ({ 'my_feature_a':[7, 9, 5, 2], 'my_feature_b':[3, 1, 2, 2] },
-              [Label_values])
-  ```
-## Categorical vocabulary column
-  We cannot input strings directly to a model. Instead, we must first map strings to numeric or categorical values. Categorical vocabulary columns provide a good way to represent strings as a one-hot vector. For example:
-  ![](images/categorical_column_with_vocabulary.jpg)
-  As you can see, categorical vocabulary columns are kind of an enum version of categorical identity columns. TensorFlow provides two different functions to create categorical vocabulary columns:
+    ```
+## Weighted categorical column 权重分类列
+  - Weighted categorical column 可以为每个分类设置权重
+    ```python
+    weighted_categorical_column(categorical_column, weight_feature_key, dtype=tf.float32)
+    ```
+  - **python 示例**
+    ```python
+    features = {'color': [['R'], ['A'], ['G'], ['B'],['R']],
+                'weight': [[1.0], [5.0], [4.0], [8.0],[3.0]]}
 
-      tf.feature_column.categorical_column_with_vocabulary_list
-      tf.feature_column.categorical_column_with_vocabulary_file
-  categorical_column_with_vocabulary_list maps each string to an integer based on an explicit vocabulary list. For example:
-  ```python
-  # Given input "feature_name_from_input_fn" which is a string,
-  # create a categorical feature by mapping the input to one of
-  # the elements in the vocabulary list.
-  vocabulary_feature_column =
-      tf.feature_column.categorical_column_with_vocabulary_list(
-          key=feature_name_from_input_fn,
-          vocabulary_list=["kitchenware", "electronics", "sports"])
-  ```
-  The preceding function is pretty straightforward, but it has a significant drawback. Namely, there's way too much typing when the vocabulary list is long. For these cases, call tf.feature_column.categorical_column_with_vocabulary_file instead, which lets you place the vocabulary words in a separate file. For example:
+    color_f_c = tf.feature_column.categorical_column_with_vocabulary_list(
+        'color', ['R', 'G', 'B','A'], dtype=tf.string, default_value=-1
+    )
 
-  ```python
-  # Given input "feature_name_from_input_fn" which is a string,
-  # create a categorical feature to our model by mapping the input to one of
-  # the elements in the vocabulary file
-  vocabulary_feature_column =
-      tf.feature_column.categorical_column_with_vocabulary_file(
-          key=feature_name_from_input_fn,
-          vocabulary_file="product_class.txt",
-          vocabulary_size=3)
-  ```
-  product_class.txt should contain one line for each vocabulary element. In our case:
-  ```python
-  kitchenware
-  electronics
-  sports
-  ```
-## Hashed Column
-  So far, we've worked with a naively small number of categories. For example, our product_class example has only 3 categories. Often though, the number of categories can be so big that it's not possible to have individual categories for each vocabulary word or integer because that would consume too much memory. For these cases, we can instead turn the question around and ask, "How many categories am I willing to have for my input?" In fact, the tf.feature_column.categorical_column_with_hash_bucket function enables you to specify the number of categories. For this type of feature column the model calculates a hash value of the input, then puts it into one of the hash_bucket_size categories using the modulo operator, as in the following pseudocode:
-  ```python
-  # pseudocode
-  feature_id = hash(raw_feature) % hash_buckets_size
-  ```
-  The code to create the feature_column might look something like this:
-  ```python
-  hashed_feature_column =
-      tf.feature_column.categorical_column_with_hash_bucket(
-          key = "some_feature",
-          hash_buckets_size = 100) # The number of categories
-  ```
-  At this point, you might rightfully think: "This is crazy!" After all, we are forcing the different input values to a smaller set of categories. This means that two probably unrelated inputs will be mapped to the same category, and consequently mean the same thing to the neural network. The following figure illustrates this dilemma, showing that kitchenware and sports both get assigned to category (hash bucket) 12:
-  Representing data with hash buckets.
-  ![](images/hashed_column.jpg)
-  As with many counterintuitive phenomena in machine learning, it turns out that hashing often works well in practice. That's because hash categories provide the model with some separation. The model can use additional features to further separate kitchenware from sports.
-  ## Crossed column
-## Crossed column
-  Combining features into a single feature, better known as feature crosses, enables the model to learn separate weights for each combination of features.
-  For the solution, we used a combination of the bucketized_column we looked at earlier, with the tf.feature_column.crossed_column function.
-  ```python
-  def make_dataset(latitude, longitude, labels):
-      assert latitude.shape == longitude.shape == labels.shape
+    column = tf.feature_column.weighted_categorical_column(color_f_c, 'weight')
 
-      features = {'latitude': latitude.flatten(),
-                  'longitude': longitude.flatten()}
-      labels=labels.flatten()
-
-      return tf.data.Dataset.from_tensor_slices((features, labels))
-
-
-  # Bucketize the latitude and longitude usig the `edges`
-  latitude_bucket_fc = tf.feature_column.bucketized_column(
-      tf.feature_column.numeric_column('latitude'),
-      list(atlanta.latitude.edges))
-
-  longitude_bucket_fc = tf.feature_column.bucketized_column(
-      tf.feature_column.numeric_column('longitude'),
-      list(atlanta.longitude.edges))
-
-  # Cross the bucketized columns, using 5000 hash bins.
-  crossed_lat_lon_fc = tf.feature_column.crossed_column(
-      [latitude_bucket_fc, longitude_bucket_fc], 5000)
-
-  fc = [
-      latitude_bucket_fc,
-      longitude_bucket_fc,
-      crossed_lat_lon_fc]
-
-  # Build and train the Estimator.
-  est = tf.estimator.LinearRegressor(fc, ...)
-  ```
-  You may create a feature cross from either of the following:
-
-      Feature names; that is, names from the dict returned from input_fn.
-      Any categorical column, except categorical_column_with_hash_bucket (since crossed_column hashes the input).
-
-  When the feature columns latitude_bucket_fc and longitude_bucket_fc are crossed, TensorFlow will create (latitude_fc, longitude_fc) pairs for each example. This would produce a full grid of possibilities as follows:
-  ```python
-   (0,0),  (0,1)...  (0,99)
-   (1,0),  (1,1)...  (1,99)
-     ...     ...       ...
-  (99,0), (99,1)...(99, 99)
-  ```
-  Except that a full grid would only be tractable for inputs with limited vocabularies. Instead of building this, potentially huge, table of inputs, the crossed_column only builds the number requested by the hash_bucket_size argument. The feature column assigns an example to a index by running a hash function on the tuple of inputs, followed by a modulo operation with hash_bucket_size.
-
-  As discussed earlier, performing the hash and modulo function limits the number of categories, but can cause category collisions; that is, multiple (latitude, longitude) feature crosses will end up in the same hash bucket. In practice though, performing feature crosses still adds significant value to the learning capability of your models.
-
-  Somewhat counterintuitively, when creating feature crosses, you typically still should include the original (uncrossed) features in your model (as in the preceding code snippet). The independent latitude and longitude features help the model distinguish between examples where a hash collision has occurred in the crossed feature.
-## Indicator columns
-  Indicator columns and embedding columns never work on features directly, but instead take categorical columns as input.
-
-  When using an indicator column, we're telling TensorFlow to do exactly what we've seen in our categorical product_class example. That is, an indicator column treats each category as an element in a one-hot vector
-
-  Here's how you create an indicator column by calling tf.feature_column.indicator_column:
-  ```python
-  categorical_column = ... # Create any type of categorical column.
-
-  # Represent the categorical column as an indicator column.
-  indicator_column = tf.feature_column.indicator_column(categorical_column)
-  ```
-## embedding columns
-  Now, suppose instead of having just three possible classes, we have a million. Or maybe a billion. For a number of reasons, as the number of categories grow large, it becomes infeasible to train a neural network using indicator columns.
-
-  We can use an embedding column to overcome this limitation. Instead of representing the data as a one-hot vector of many dimensions, an embedding column represents that data as a lower-dimensional, ordinary vector in which each cell can contain any number, not just 0 or 1. By permitting a richer palette of numbers for every cell, an embedding column contains far fewer cells than an indicator column.
-
-  Let's look at an example comparing indicator and embedding columns. Suppose our input examples consist of different words from a limited palette of only 81 words. Further suppose that the data set provides the following input words in 4 separate examples:
-
-      "dog"
-      "spoon"
-      "scissors"
-      "guitar"
-
-  In that case, the following figure illustrates the processing path for embedding columns or indicator columns.
-  ![](images/embedding_vs_indicator.jpg)
-  An embedding column stores categorical data in a lower-dimensional vector than an indicator column. (We just placed random numbers into the embedding vectors; training determines the actual numbers.)
-
-  When an example is processed, one of the categorical_column_with... functions maps the example string to a numerical categorical value. For example, a function maps "spoon" to [32]. (The 32 comes from our imagination—the actual values depend on the mapping function.) You may then represent these numerical categorical values in either of the following two ways:
-
-      As an indicator column. A function converts each numeric categorical value into an 81-element vector (because our palette consists of 81 words), placing a 1 in the index of the categorical value (0, 32, 79, 80) and a 0 in all the other positions.
-
-      As an embedding column. A function uses the numerical categorical values (0, 32, 79, 80) as indices to a lookup table. Each slot in that lookup table contains a 3-element vector.
-
-  How do the values in the embeddings vectors magically get assigned? Actually, the assignments happen during training. That is, the model learns the best way to map your input numeric categorical values to the embeddings vector value in order to solve your problem. Embedding columns increase your model's capabilities, since an embeddings vector learns new relationships between categories from the training data.
-
-  Why is the embedding vector size 3 in our example? Well, the following "formula" provides a general rule of thumb about the number of embedding dimensions:
-  ```python
-  embedding_dimensions =  number_of_categories**0.25
-  ```
-  That is, the embedding vector dimension should be the 4th root of the number of categories. Since our vocabulary size in this example is 81, the recommended number of dimensions is 3:
-  ```python
-  3 =  81**0.25
-  ```
-  Note that this is just a general guideline; you can set the number of embedding dimensions as you please.
-
-  Call tf.feature_column.embedding_column to create an embedding_column as suggested by the following snippet:
-  ```python
-  categorical_column = ... # Create any categorical column
-
-  # Represent the categorical column as an embedding column.
-  # This means creating a one-hot vector with one element for each category.
-  embedding_column = tf.feature_column.embedding_column(
-      categorical_column=categorical_column,
-      dimension=dimension_of_embedding_vector)
-  ```
-  Embeddings is a significant topic within machine learning. This information was just to get you started using them as feature columns.
+    indicator = tf.feature_column.indicator_column(column)
+    tensor = tf.feature_column.input_layer(features, [indicator])
+    sess = tf.InteractiveSession()
+    tf.tables_initializer().run()
+    tensor.eval()
+    # Out[24]:
+    # array([[1., 0., 0., 0.],
+    #        [0., 0., 0., 5.],
+    #        [0., 4., 0., 0.],
+    #        [0., 0., 8., 0.],
+    #        [3., 0., 0., 0.]], dtype=float32)
+    ```
 ## Passing feature columns to Estimators
-  As the following list indicates, not all Estimators permit all types of feature_columns argument(s):
+  - Tensorflow 提供了多个 Estimators，但不是每种 Estimators 都能够接收所有类型的特征列 feature column
+    - **线性分类器 linearClassifier** 和 **线性回归器 linearRegressor**，接收 **所有类型特征列**
+    - **深度神经网络分类器 DNNClassifier** 和 **深度神经网络回归器 DNNRegressor**，仅接收 **密集特征列 dense column**，其他类型特征列必须用 **指示列 indicatorColumn** 或 **嵌入列 embedingColumn** 进行包裹
+    - **线性神经网络合成分类器 linearDNNCombinedClassifier** 和 **线性神经网络合成回归器 linearDNNCombinedRegressor**
+      - **linear_feature_columns** 参数接收 **所有类型特征列**
+      - **dnn_feature_columns** 只接收 **密度特征列 dense column**
+## Linear model 线性模型
+  - 对所有特征进行线性加权操作
+    ```python
+    linear_model(features, feature_columns, units=1, sparse_combiner='sum', weight_collections=None, trainable=True, cols_to_vars=None)
+    ```
+  - **python 示例**
+    ```python
+    def get_linear_model_bias():
+        with tf.variable_scope('linear_model', reuse=True):
+            return tf.get_variable('bias_weights')
 
-      LinearClassifier and LinearRegressor: Accept all types of feature column.
-      DNNClassifier and DNNRegressor: Only accept dense columns. Other column types must be wrapped in either an indicator_column or embedding_column.
-      DNNLinearCombinedClassifier and DNNLinearCombinedRegressor:
-          The linear_feature_columns argument accepts any feature column type.
-          The dnn_feature_columns argument only accepts dense columns.
+    def get_linear_model_column_var(column):
+        return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                 'linear_model/' + column.name)[0]
+
+    featrues = {
+            'price': [[1.0], [5.0], [10.0]],
+            'color': [['R'], ['G'], ['B']]
+        }
+
+    price_column = tf.feature_column.numeric_column('price')
+    color_column = tf.feature_column.categorical_column_with_vocabulary_list('color', ['R', 'G', 'B'])
+    prediction = tf.feature_column.linear_model(featrues, [price_column, color_column])
+
+    bias = get_linear_model_bias()
+    price_var = get_linear_model_column_var(price_column)
+    color_var = get_linear_model_column_var(color_column)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.tables_initializer())
+
+        sess.run(bias.assign([7.0]))
+        sess.run(price_var.assign([[10.0]]))
+        sess.run(color_var.assign([[2.0], [2.0], [2.0]]))
+
+        predication_result = sess.run([prediction])
+
+        print(prediction)
+        print(predication_result)
+    # [Out]
+    # Tensor("linear_model/weighted_sum:0", shape=(3, 1), dtype=float32)
+    # [array([[ 19.], [ 59.], [109.]], dtype=float32)]
+    ```
+## tf.make_parse_example_spec 输入转化为字典
+  - **make_parse_example_spec** 将输入 feature_columns 转化为字典 dictionary
+    ```python
+    make_parse_example_spec(feature_columns)
+    ```
+    The returned dictionary can be used as arg 'features' in `tf.parse_example`
+    ```python
+    # Define features and transformations
+    feature_a = categorical_column_with_vocabulary_file(...)
+    feature_b = numeric_column(...)
+    feature_c_bucketized = bucketized_column(numeric_column("feature_c"), ...)
+    feature_a_x_feature_c = crossed_column(
+        columns=["feature_a", feature_c_bucketized], ...)
+
+    feature_columns = set(
+        [feature_b, feature_c_bucketized, feature_a_x_feature_c])
+    features = tf.parse_example(
+        serialized=serialized_examples,
+        features=make_parse_example_spec(feature_columns))
+    ```
+    For the above example, make_parse_example_spec would return the dict:
+    ```python
+    {
+        "feature_a": parsing_ops.VarLenFeature(tf.string),
+        "feature_b": parsing_ops.FixedLenFeature([1], dtype=tf.float32),
+        "feature_c": parsing_ops.FixedLenFeature([1], dtype=tf.float32)
+    }
+    ```
 ***
 
 # Datasets
-The tf.data module contains a collection of classes that allows you to easily load data, manipulate it, and pipe it into your model
 ## Basic input
-  Slices
+  - **tf.data.Dataset.from_tensor_slices** 创建给定数据的切片 Slices，根据数据集的第一维度切片，代表了输入数据的一个样例
+    ```python
+    train, test = tf.keras.datasets.mnist.load_data()
+    mnist_x, mnist_y = train
+    mnist_x.shape
+    # Out[14]: (60000, 28, 28)
 
-  The function starts by using the tf.data.Dataset.from_tensor_slices function to create a tf.data.Dataset representing slices of the array. The array is sliced across the first dimension. For example, an array containing the mnist training data has a shape of (60000, 28, 28). Passing this to from_tensor_slices returns a Dataset object containing 60000 slices, each one a 28x28 image.
-
-  The code that returns this Dataset is as follows:
-  ```python
-  train, test = tf.keras.datasets.mnist.load_data()
-  mnist_x, mnist_y = train
-
-  mnist_ds = tf.data.Dataset.from_tensor_slices(mnist_x)
-  print(mnist_ds)
-  ```
-  This will print the following line, showing the shapes and types of the items in the dataset. Note that a Dataset does not know how many items it contains.
-  ```python
-  <TensorSliceDataset shapes: (28,28), types: tf.uint8>
-  ```
-  The Dataset above represents a simple collection of arrays, but datasets are much more powerful than this. A Dataset can transparently handle any nested combination of dictionaries or tuples (or namedtuple ).
-
-
-  Manipulation
-
-  Currently the Dataset would iterate over the data once, in a fixed order, and only produce a single element at a time. It needs further processing before it can be used for training. Fortunately, the tf.data.Dataset class provides methods to better prepare the data for training. The next line of the input function takes advantage of several of these methods:
-  ```python
-  # Shuffle, repeat, and batch the examples.
-  dataset = dataset.shuffle(1000).repeat().batch(batch_size)
-  ```
-  The shuffle method uses a fixed-size buffer to shuffle the items as they pass through. In this case the buffer_size is greater than the number of examples in the Dataset, ensuring that the data is completely shuffled (The Iris data set only contains 150 examples).
-
-  The repeat method restarts the Dataset when it reaches the end. To limit the number of epochs, set the count argument.
-
-  The batch method collects a number of examples and stacks them, to create batches. This adds a dimension to their shape. The new dimension is added as the first dimension. The following code uses the batch method on the MNIST Dataset, from earlier. This results in a Dataset containing 3D arrays representing stacks of (28,28) images:
-  ```python
-  print(mnist_ds.batch(100))
-
-  <BatchDataset
-    shapes: (?, 28, 28),
-    types: tf.uint8>
-  ```
-  Note that the dataset has an unknown batch size because the last batch will have fewer elements.
-
-
-  Return
-
-  At this point the Dataset contains (features_dict, labels) pairs. This is the format expected by the train and evaluate methods, so the input_fn returns the dataset.
-
-  The labels can/should be omitted when using the predict method.
+    mnist_ds = tf.data.Dataset.from_tensor_slices((mnist_x, mnist_y))
+    print(mnist_ds)
+    # [Out] <TensorSliceDataset shapes: ((28, 28), ()), types: (tf.uint8, tf.uint8)>
+    ```
+  - **shuffle** / **repeat** / **batch** 操作 Manipulation
+    - **shuffle(buffer_size, seed=None, reshuffle_each_iteration=None)** buffer_size 通常大于 Dataset 中样列数量，保证充分打乱顺序
+    - **repeat(count=None)** count 指定数据及重复次数，None / -1 表示不限制
+    - **batch(batch_size)** 创建一个输入样例的 batch
+    ```python
+    # Shuffle, repeat, and batch the examples.
+    dataset = mnist_ds.shuffle(1000).repeat().batch(200)
+    dataset.output_shapes
+    # Out[22]:
+    # (TensorShape([Dimension(None), Dimension(28), Dimension(28)]),
+    #  TensorShape([Dimension(None)]))
+    ```
+    输出的第一维度是未知的，因为最后一个 batch 可能包含更少的元素
+  - **dataset.make_one_shot_iterator** 遍历 dataset
+    ```python
+    sess = tf.InteractiveSession()
+    train_xs, train_ys = sess.run(dataset.make_one_shot_iterator().get_next())
+    train_xs.shape
+    # Out[55]: (200, 28, 28)
+    train_ys.shape
+    # Out[56]: (200,)
+    train_ys[:5]
+    # Out[57]: array([8, 6, 5, 8, 3], dtype=uint8)
+    ```
 ## Reading a CSV File
-  The most common real-world use case for the Dataset class is to stream data from files on disk. The tf.data module includes a variety of file readers. Let's see how parsing the Iris dataset from the csv file looks using a Dataset.
+  - **tf.data.TextLineDataset 类** 读取文本文件，**skip** 方法指定跳过文件的几行
+    ```python
+    TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
+    train_path = tf.keras.utils.get_file(fname=TRAIN_URL.split('/')[-1], origin=TRAIN_URL)
 
-  Build the Dataset
+    ds = tf.data.TextLineDataset(train_path).skip(1)
+    ```
+  - **tf.decode_csv** 解析单行 csv 格式字符串
+    ```python
+    decode_csv(records, record_defaults, field_delim=',', use_quote_delim=True, name=None, na_value='')
+    ```
+    ```python
+    elem = tf.decode_csv('1, 2, 3, 4, 5', [[0.0], [0.0], [0.0], [0.0], [0]])
+    with tf.Session() as sess:
+        print(sess.run(elem))
+    # [1.0, 2.0, 3.0, 4.0, 5]
+    ```
+  - **dataset.map** 在 dataset 的每一个元素上应用一个转化函数
 
-  We start by building a TextLineDataset object to read the file one line at a time. Then, we call the skip method to skip over the first line of the file, which contains a header, not an example:
-  ```python
-  ds = tf.data.TextLineDataset(train_path).skip(1)
-  ```
+    ![](images/map.png)
+    ```python
+    # Metadata describing the text columns
+    COLUMNS = ['SepalLength', 'SepalWidth',
+               'PetalLength', 'PetalWidth',
+               'label']
+    FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0]]
+    def _parse_line(line):
+        # Decode the line into its fields
+        fields = tf.decode_csv(line, FIELD_DEFAULTS)
 
-  Build a csv line parser
+        # Pack the result into a dictionary
+        features = dict(zip(COLUMNS,fields))
 
-  We will start by building a function to parse a single line using the tf.decode_csv function, and some simple python code:
-  We must parse each of the lines in the dataset in order to generate the necessary (features, label) pairs. The following `_parse_line` function calls tf.decode_csv to parse a single line into its features and the label. Since Estimators require that features be represented as a dictionary, we rely on Python's built-in dict and zip functions to build that dictionary. The feature names are the keys of that dictionary. We then call the dictionary's pop method to remove the label field from the features dictionary:
-  ```python
-  # Metadata describing the text columns
-  COLUMNS = ['SepalLength', 'SepalWidth',
-             'PetalLength', 'PetalWidth',
-             'label']
-  FIELD_DEFAULTS = [[0.0], [0.0], [0.0], [0.0], [0]]
-  def _parse_line(line):
-      # Decode the line into its fields
-      fields = tf.decode_csv(line, FIELD_DEFAULTS)
+        # Separate the label from the features
+        label = features.pop('label')
 
-      # Pack the result into a dictionary
-      features = dict(zip(COLUMNS,fields))
+        return features, label
 
-      # Separate the label from the features
-      label = features.pop('label')
+    ds = ds.map(_parse_line)
+    print(ds)
+    # <MapDataset
+    # shapes: (
+    #     {SepalLength: (), PetalWidth: (), ...},
+    #     ()),
+    # types: (
+    #     {SepalLength: tf.float32, PetalWidth: tf.float32, ...},
+    #     tf.int32)>
+    ```
+  - **feed an estimator** estimator 的 input_fn 要求函数的参数为空
+    ```python
+    def csv_input_fn(csv_path, batch_size):
+        # Create a dataset containing the text lines.
+        dataset = tf.data.TextLineDataset(csv_path).skip(1)
 
-      return features, label
-  ```
-  Parse the lines
+        # Parse each line.
+        dataset = dataset.map(_parse_line)
 
-  Datasets have many methods for manipulating the data while it is being piped to a model. The most heavily-used method is map, which applies a transformation to each element of the Dataset.
+        # Shuffle, repeat, and batch the examples.
+        return dataset.shuffle(1000).repeat().batch(batch_size)
 
-  The map method takes a map_func argument that describes how each item in the Dataset should be transformed.
-  ![](map.png)
-  The map method applies the `map_func` to transform each item in the Dataset.
+    # All the inputs are numeric
+    feature_columns = [tf.feature_column.numeric_column(name) for name in COLUMNS[:-1]]
 
-  So to parse the lines as they are streamed out of the csv file, we pass our `_parse_line` function to the map method:
-  ```python
-  ds = ds.map(_parse_line)
-  print(ds)
-
-  <MapDataset
-  shapes: (
-      {SepalLength: (), PetalWidth: (), ...},
-      ()),
-  types: (
-      {SepalLength: tf.float32, PetalWidth: tf.float32, ...},
-      tf.int32)>
-  ```
-  Now instead of simple scalar strings, the dataset contains (features, label) pairs.
-
-  the remainder of the iris_data.csv_input_fn function is identical to iris_data.train_input_fn which was covered in the in the Basic input section.
-
-
-  Try it out
-
-  This function can be used as a replacement for iris_data.train_input_fn. It can be used to feed an estimator as follows:
-  ```python
-  train_path, test_path = iris_data.maybe_download()
-
-  # All the inputs are numeric
-  feature_columns = [
-      tf.feature_column.numeric_column(name)
-      for name in iris_data.CSV_COLUMN_NAMES[:-1]]
-
-  # Build the estimator
-  est = tf.estimator.LinearClassifier(feature_columns,
-                                      n_classes=3)
-  # Train the estimator
-  batch_size = 100
-  est.train(
-      steps=1000,
-      input_fn=lambda : iris_data.csv_input_fn(train_path, batch_size))
-  ```
-  Estimators expect an input_fn to take no arguments. To work around this restriction, we use lambda to capture the arguments and provide the expected interface.
+    # Build the estimator
+    est = tf.estimator.LinearClassifier(feature_columns, n_classes=3)
+    # Train the estimator
+    batch_size = 100
+    est.train( steps=1000, input_fn=lambda : csv_input_fn(train_path, batch_size))
+    # INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpphrfnjdp/model.ckpt.
+    # INFO:tensorflow:loss = 109.86123, step = 0
+    # INFO:tensorflow:global_step/sec: 127.682
+    # ...
+    # INFO:tensorflow:Saving checkpoints for 1000 into /tmp/tmpphrfnjdp/model.ckpt.
+    # INFO:tensorflow:Loss for final step: 8.794706.
+    ```
 ***
 
 # Creating Custom Estimators

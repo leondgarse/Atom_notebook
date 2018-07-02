@@ -70,14 +70,8 @@
   ```
 ***
 
-# TensorFlow 基础
-## 安装
-
-## 基本概念 Tensors / Graph / Session
-  - **TensorFlow Core / High-level API** 最底层API，提供对程序运行的完全控制，其他上层接口基于 TensorFlow Core，上层接口的调用更易用且一致，如 **tf.estimator** 用于管理数据集 / 模型 / 训练以及评估
-## tf.train API
 ## tf.estimator API
-  - **tf.estimator** TensorFlow 提供的上层接口，简化机器学习的架构，如训练 / 评估 / 管理数据集
+
   ```python
   # tf.estimator 实现线性模型
   # 声明特征列表，只包含一列数值型特征
@@ -749,10 +743,4 @@
     ```python
     Predictions: [35.306267, 18.697575, 24.233162, 35.991249, 16.141064, 20.229273]
     ```
-***
-
-# TensorFlow Mechanics 101
-***
-
-# TensorBoard
 ***
