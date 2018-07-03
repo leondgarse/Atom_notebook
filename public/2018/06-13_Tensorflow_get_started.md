@@ -1,20 +1,64 @@
-TensorFlow 1.8 programming
+# ___2018 - 06 - 13 Tensorflow Get Started___
+***
+- [Tensorflow Get Started](https://www.tensorflow.org/get_started)
 
-![](images/opt1.gif)
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2018 - 06 - 13 Tensorflow Get Started___](#2018-06-13-tensorflow-get-started)
+  - [目录](#目录)
+  - [Get started](#get-started)
+  	- [High-level Tensorflow APIs](#high-level-tensorflow-apis)
+  	- [Eager execution environment and Keras layers API](#eager-execution-environment-and-keras-layers-api)
+  	- [Estimator pre-made DNN model](#estimator-pre-made-dnn-model)
+  	- [Checkin code for tensorflow](#checkin-code-for-tensorflow)
+  - [Estimator Checkpoints](#estimator-checkpoints)
+  	- [Estimator 保存模型](#estimator-保存模型)
+  	- [模型保存频率 Checkpointing Frequency](#模型保存频率-checkpointing-frequency)
+  	- [模型恢复 Restore](#模型恢复-restore)
+  	- [Avoiding a bad restoration](#avoiding-a-bad-restoration)
+  - [Feature Columns](#feature-columns)
+  	- [tf.feature_column 模块](#tffeaturecolumn-模块)
+  	- [Numeric column 数值列](#numeric-column-数值列)
+  	- [Bucketized column 分桶列](#bucketized-column-分桶列)
+  	- [Categorical identity column 分类识别列](#categorical-identity-column-分类识别列)
+  	- [Categorical vocabulary column 分类词汇列](#categorical-vocabulary-column-分类词汇列)
+  	- [Hashed column 哈希列](#hashed-column-哈希列)
+  	- [Crossed column 交叉列](#crossed-column-交叉列)
+  	- [Indicator columns 指示列](#indicator-columns-指示列)
+  	- [embedding columns 嵌入列](#embedding-columns-嵌入列)
+  	- [Weighted categorical column 权重分类列](#weighted-categorical-column-权重分类列)
+  	- [Passing feature columns to Estimators](#passing-feature-columns-to-estimators)
+  	- [Linear model 线性模型](#linear-model-线性模型)
+  	- [tf.make_parse_example_spec 输入转化为字典](#tfmakeparseexamplespec-输入转化为字典)
+  - [Datasets](#datasets)
+  	- [Basic input](#basic-input)
+  	- [Reading a CSV File](#reading-a-csv-file)
+  - [Creating Custom Estimators](#creating-custom-estimators)
+  	- [Custom estimators 与 model function](#custom-estimators-与-model-function)
+  	- [定义模型的前向传播](#定义模型的前向传播)
+  	- [Implement training, evaluation, and prediction](#implement-training-evaluation-and-prediction)
+  	- [使用自定义模型实例化 Estimator](#使用自定义模型实例化-estimator)
+  	- [python 完整实现](#python-完整实现)
+  	- [TensorBoard](#tensorboard)
+
+  <!-- /TOC -->
+***
 
 # Get started
-## TensorFlow 程序结构
-  - Import and parse the data sets
-  - Create feature columns to describe the data
-  - Select the type of model
-  - Train the model
-  - Evaluate the model's effectiveness
-  - Use the trained model to make predictions
 ## High-level Tensorflow APIs
-  - [Tensorflow Get Started](https://www.tensorflow.org/get_started)
+  - TensorFlow 程序结构
+    - Import and parse the data sets
+    - Create feature columns to describe the data
+    - Select the type of model
+    - Train the model
+    - Evaluate the model's effectiveness
+    - Use the trained model to make predictions
   - **TensorFlow Core / High-level API**
     - **TensorFlow Core** 最底层API，提供对程序运行的完全控制，其他上层接口基于 TensorFlow Core
     - 上层接口的调用更易用且一致，如 **tf.estimator** 用于管理数据集 / 模型 / 训练以及评估
+
+    ![](images/tensorflow_programming_environment.png)
   - **high-level TensorFlow concepts**
     - **eager** 执行环境，直接返回操作结果 [Eager Execution](https://www.tensorflow.org/programmers_guide/eager)
     - **Datasets API** 导入数据 input pipelines [datasets Importing Data](https://www.tensorflow.org/programmers_guide/datasets)
@@ -84,10 +128,11 @@ TensorFlow 1.8 programming
     print("example label:", label[0])
     # example label: tf.Tensor(0, shape=(), dtype=int32)
     ```
-  - **tf.keras API** 创建模型以及层级结构，输入 4 个节点，包含两个隐藏层，输出 3 个节点
+  - **tf.keras API** 创建模型以及层级结构
     - **tf.keras.layers.Dense** 添加一个全连接层
     - **tf.keras.Sequential** 线性叠加各个层
     ```python
+    # 输入 4 个节点，包含两个隐藏层，输出 3 个节点
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
         tf.keras.layers.Dense(10, activation="relu"),
@@ -359,6 +404,35 @@ TensorFlow 1.8 programming
     Prediction is "Versicolor" (99.8%), expected "Versicolor"
     Prediction is "Virginica" (96.0%), expected "Virginica"
     ```
+## Checkin code for tensorflow
+  - [Forking Projects](https://guides.github.com/activities/forking/)
+  - Fork repository on github
+  - git clone
+    ```shell
+    git clone git@github.com:leondgarse/tensorflow.git
+    cd tensorflow
+    ```
+  - Add upstream
+    ```shell
+    git remote add upstream https://github.com/tensorflow/tensorflow.git
+    git remote -v
+    # origin	git@github.com:leondgarse/tensorflow.git (fetch)
+    # origin	git@github.com:leondgarse/tensorflow.git (push)
+    # upstream	https://github.com/tensorflow/tensorflow.git (fetch)
+    # upstream	https://github.com/tensorflow/tensorflow.git (push)
+    ```
+  - Sync with upstream
+    ```shell
+    git fetch upstream
+    git merge upstream/master
+    git push
+    ```
+  - commit code to forked repository
+    ```shell
+    git commit -m 'commit' file
+    git push
+    ```
+  - Making a Pull Request on github
 ***
 
 # Estimator Checkpoints
@@ -521,6 +595,7 @@ TensorFlow 1.8 programming
     | >= 1960 but < 1980 | [0, 1, 0, 0]   |
     | >= 1980 but < 2000 | [0, 0, 1, 0]   |
     | > 2000             | [0, 0, 0, 1]   |
+
     **python 示例**
     ```python
     years = {'years': [1999,2013,1987,2005]}
@@ -1058,240 +1133,131 @@ TensorFlow 1.8 programming
 ***
 
 # Creating Custom Estimators
-## Pre-made vs. custom
+## Custom estimators 与 model function
+  - 预定义的模型 pre-made Estimators 是 `tf.estimator.Estimator` 的子类，自定义的模型 custom Estimators 是 `tf.estimator.Estimator` 类的实例化
 
-  As the following figure shows, pre-made Estimators are subclasses of the tf.estimator.Estimator base class, while custom Estimators are an instance of tf.estimator.Estimator:
-  ![](images/estimator_types.png)
+    ![](images/estimator_types.png)
+  - **model_fn** 具体实现自定义模型的算法，包括隐藏层，符合 Estimator 标准的输入输出
 
-  A model function (or model_fn) implements the ML algorithm. The only difference between working with pre-made Estimators and custom Estimators is:
+    ![](images/full_network.png)
+  - **model_fn 参数结构**
+    ```python
+    def my_model_fn(
+       features, # This is batch_features from input_fn
+       labels,   # This is batch_labels from input_fn
+       mode,     # An instance of tf.estimator.ModeKeys
+       params):  # Additional configuration
+    ```
+    - **features** / **labels** input function 的返回值
+    - **mode** tf.estimator.ModeKeys 的实例，指定 training / predicting / evaluation
+    - **params** 模型需要的其他参数
+  - 实现一个标准的 model function
+    - 定义模型结构
+    - 实现模型的功能 **Train** / **Evaluate** / **Predict**
+## 定义模型的前向传播
+  - 模型的基本功能
+    - 一个输入层 input layer
+    - 一个或多个隐藏层 hidden layers
+    - 一个输出层 output layer
+  - **定义输入层**
+    ```python
+    # Use `input_layer` to apply the feature columns.
+    net = tf.feature_column.input_layer(features, params['feature_columns'])
+    ```
+    - **tf.feature_column.input_layer** 将 feature_columns 转化为输入数据
 
-      With pre-made Estimators, someone already wrote the model function for you.
-      With custom Estimators, you must write the model function.
+    ![](images/input_layer.png)
+  - **定义隐藏层**
+    ```python
+    # Build the hidden layers, sized according to the 'hidden_units' param.
+    for units in params['hidden_units']:
+        net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
+    ```
+    - **tf.layers.dense** 添加一个全连接层，**units 参数** 指定该层中节点数量，**activation 参数** 指定激活函数
 
-  Your model function could implement a wide range of algorithms, defining all sorts of hidden layers and metrics. Like input functions, all model functions must accept a standard group of input parameters and return a standard group of output values. Just as input functions can leverage the Dataset API, model functions can leverage the Layers API and the Metrics API.
+    ![](images/add_hidden_layer.png)
+  - **定义输出层**
+    ```python
+    # Compute logits (1 per class).
+    logits = tf.layers.dense(net, params['n_classes'], activation=None)
+    ```
+    - 输出层使用一个全连接层，不使用激活函数，输出为类别数 `n_classes`
 
-  Let's see how to solve the Iris problem with a custom Estimator. A quick reminder--here's the organization of the Iris model that we're trying to mimic:
-  ![](images/full_network.png)
-## Write a model function
-
-  The model function we'll use has the following call signature:
-  ```python
-  def my_model_fn(
-     features, # This is batch_features from input_fn
-     labels,   # This is batch_labels from input_fn
-     mode,     # An instance of tf.estimator.ModeKeys
-     params):  # Additional configuration
-  ```
-  The first two arguments are the batches of features and labels returned from the input function; that is, features and labels are the handles to the data your model will use. The mode argument indicates whether the caller is requesting training, predicting, or evaluation.
-
-  The caller may pass params to an Estimator's constructor. Any params passed to the constructor are in turn passed on to the model_fn
-
-  To implement a typical model function, you must do the following:
-
-      Define the model.
-      Specify additional calculations for each of the three different modes:
-          Predict
-          Evaluate
-          Train
-## Define the model
-
-  The basic deep neural network model must define the following three sections:
-
-      An input layer
-      One or more hidden layers
-      An output layer
-
-  Define the input layer
-
-  The first line of the model_fn calls tf.feature_column.input_layer to convert the feature dictionary and feature_columns into input for your model, as follows:
-
-      # Use `input_layer` to apply the feature columns.
-      net = tf.feature_column.input_layer(features, params['feature_columns'])
-
-  The preceding line applies the transformations defined by your feature columns, creating the model's input layer.
-  ![](images/input_layer.png)
-
-  Hidden Layers
-
-  If you are creating a deep neural network, you must define one or more hidden layers. The Layers API provides a rich set of functions to define all types of hidden layers, including convolutional, pooling, and dropout layers. For Iris, we're simply going to call tf.layers.dense to create hidden layers, with dimensions defined by params['hidden_layers']. In a dense layer each node is connected to every node in the preceding layer. Here's the relevant code:
-  ```python
-  # Build the hidden layers, sized according to the 'hidden_units' param.
-  for units in params['hidden_units']:
-      net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
-  ```
-      The units parameter defines the number of output neurons in a given layer.
-      The activation parameter defines the activation function — Relu in this case.
-      Note that tf.layers.dense provides many additional capabilities, including the ability to set a multitude of regularization parameters
-
-  ![](images/add_hidden_layer.png)
-
-  Output Layer
-
-  We'll define the output layer by calling tf.layers.dense yet again, this time without an activation function:
-  ```python
-  # Compute logits (1 per class).
-  logits = tf.layers.dense(net, params['n_classes'], activation=None)
-  ```
-  Here, net signifies the final hidden layer. Therefore, the full set of layers is now connected as follows:
-
-  ![](images/add_logits.png)
-
-  When defining an output layer, the units parameter specifies the number of outputs. So, by setting units to params['n_classes'], the model produces one output value per class. Each element of the output vector will contain the score, or "logit", calculated for the associated class of Iris: Setosa, Versicolor, or Virginica, respectively.
-
-  Later on, these logits will be transformed into probabilities by the tf.nn.softmax function.
+    ![](images/add_logits.png)
 ## Implement training, evaluation, and prediction
-  As the following table shows, when someone calls train, evaluate, or predict, the Estimator framework invokes your model function with the mode parameter set as follows:
+  - 调用 train / evaluate / predict 时的 Estimator mode 参数
 
-  | Estimator method | Estimator Mode   |
-  | ---------------- | ---------------- |
-  | train()          | ModeKeys.TRAIN   |
-  | evaluate()       | ModeKeys.EVAL    |
-  | predict()        | ModeKeys.PREDICT |
+    | Estimator method | Estimator Mode   |
+    | ---------------- | ---------------- |
+    | train()          | ModeKeys.TRAIN   |
+    | evaluate()       | ModeKeys.EVAL    |
+    | predict()        | ModeKeys.PREDICT |
 
-  For example, suppose you instantiate a custom Estimator to generate an object named classifier. Then, you make the following call:
-  ```python
-  classifier = tf.estimator.Estimator(...)
-  classifier.train(input_fn=lambda: my_input_fn(FILE_TRAIN, True, 500))
-  ```
-  The Estimator framework then calls your model function with mode set to ModeKeys.TRAIN.
+  - 自定义的模型需要实现三种模式下的功能，并返回一个 `tf.estimator.EstimatorSpec` 的实例
+  - **预测 predict** 当调用模型的 predict 方法时，`mode = ModeKeys.PREDICT`，此时应返回 **预测结果**
+    ```python
+    # Compute predictions.
+    predicted_classes = tf.argmax(logits, 1)
+    if mode == tf.estimator.ModeKeys.PREDICT:
+        predictions = {
+            'class_ids': predicted_classes[:, tf.newaxis],
+            'probabilities': tf.nn.softmax(logits),
+            'logits': logits,
+        }
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+    ```
+    - **EstimatorSpec 的 predictions 参数** 返回自定义的预测结果，predict 方法将该字典 yield 返回出去
 
-  Your model function must provide code to handle all three of the mode values. For each mode value, your code must return an instance of tf.estimator.EstimatorSpec, which contains the information the caller requires. Let's examine each mode.
+    ![](images/add_predictions.png)
 
-  Predict
+  - **损失函数 loss** training / evaluation 需要计算模型的损失
+    ```python
+    # Compute loss.
+    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    ```
+    - **tf.losses.sparse_softmax_cross_entropy** 计算模型损失
+  - **评估 Evaluate** 当调用模型的 evaluate 方法时，`mode = ModeKeys.EVAL`，此时应返回模型的 **损失**，通常还会返回一个或多个 **指标矩阵 metric**
+    ```python
+    # Compute evaluation metrics.
+    accuracy = tf.metrics.accuracy(labels=labels,
+                                   predictions=predicted_classes,
+                                   name='acc_op')
 
-  When the Estimator's predict method is called, the model_fn receives mode = ModeKeys.PREDICT. In this case, the model function must return a tf.estimator.EstimatorSpec containing the prediction.
+    metrics = {'accuracy': accuracy}
+    tf.summary.scalar('accuracy', accuracy[1])
 
-  The model must have been trained prior to making a prediction. The trained model is stored on disk in the model_dir directory established when you instantiated the Estimator.
+    if mode == tf.estimator.ModeKeys.EVAL:
+        return tf.estimator.EstimatorSpec(
+            mode, loss=loss, eval_metric_ops=metrics)
+    ```
+    - **tf.metrics.accuracy** 计算模型的正确率
+    - **tf.summary.scalar** 使正确率 accuracy 可以用于 TensorBoard
+    - **EstimatorSpec 的 eval_metric_ops 参数** 指定返回的 metric 字典，可选
+  - **训练 Train** 当调用模型的 train 方法时，`mode = ModeKeys.TRAIN`，此时返回模型的 **损失 loss** 与 **训练方法 training operation**
+    ```python
+    optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
 
-  The code to generate the prediction for this model looks as follows:
-  ```python
-  # Compute predictions.
-  predicted_classes = tf.argmax(logits, 1)
-  if mode == tf.estimator.ModeKeys.PREDICT:
-      predictions = {
-          'class_ids': predicted_classes[:, tf.newaxis],
-          'probabilities': tf.nn.softmax(logits),
-          'logits': logits,
-      }
-      return tf.estimator.EstimatorSpec(mode, predictions=predictions)
-  ```
-  The prediction dictionary contains everything that your model returns when run in prediction mode.
-
-  The predictions holds the following three key/value pairs:
-
-      class_ids holds the class id (0, 1, or 2) representing the model's prediction of the most likely species for this example.
-      probabilities holds the three probabilities (in this example, 0.02, 0.95, and 0.03)
-      logit holds the raw logit values (in this example, -1.3, 2.6, and -0.9)
-
-  We return that dictionary to the caller via the predictions parameter of the tf.estimator.EstimatorSpec. The Estimator's predict method will yield these dictionaries.
-
-  ![](images/add_predictions.png)
-
-  Calculate the loss
-
-  For both training and evaluation we need to calculate the model's loss. This is the objective that will be optimized.
-
-  We can calculate the loss by calling tf.losses.sparse_softmax_cross_entropy. The value returned by this function will be lowest, approximately 0, probability of the correct class (at index label) is near 1.0. The loss value returned is progressively larger as the probability of the correct class decreases.
-
-  This function returns the average over the whole batch.
-  ```python
-  # Compute loss.
-  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-  ```
-
-  Evaluate
-
-  When the Estimator's evaluate method is called, the model_fn receives mode = ModeKeys.EVAL. In this case, the model function must return a tf.estimator.EstimatorSpec containing the model's loss and optionally one or more metrics.
-
-  Although returning metrics is optional, most custom Estimators do return at least one metric. TensorFlow provides a Metrics module tf.metrics to calculate common metrics. For brevity's sake, we'll only return accuracy. The tf.metrics.accuracy function compares our predictions against the true values, that is, against the labels provided by the input function. The tf.metrics.accuracy function requires the labels and predictions to have the same shape. Here's the call to tf.metrics.accuracy:
-  ```python
-  # Compute evaluation metrics.
-  accuracy = tf.metrics.accuracy(labels=labels,
-                                 predictions=predicted_classes,
-                                 name='acc_op')
-  ```
-  The EstimatorSpec returned for evaluation typically contains the following information:
-
-      loss, which is the model's loss
-      eval_metric_ops, which is an optional dictionary of metrics.
-
-  So, we'll create a dictionary containing our sole metric. If we had calculated other metrics, we would have added them as additional key/value pairs to that same dictionary. Then, we'll pass that dictionary in the eval_metric_ops argument of tf.estimator.EstimatorSpec. Here's the code:
-  ```python
-  metrics = {'accuracy': accuracy}
-  tf.summary.scalar('accuracy', accuracy[1])
-
-  if mode == tf.estimator.ModeKeys.EVAL:
-      return tf.estimator.EstimatorSpec(
-          mode, loss=loss, eval_metric_ops=metrics)
-  ```
-  The tf.summary.scalar will make accuracy available to TensorBoard in both TRAIN and EVAL modes. (More on this later).
-
-
-  Train
-
-  When the Estimator's train method is called, the model_fn is called with mode = ModeKeys.TRAIN. In this case, the model function must return an EstimatorSpec that contains the loss and a training operation.
-
-  Building the training operation will require an optimizer. We will use tf.train.AdagradOptimizer because we're mimicking the DNNClassifier, which also uses Adagrad by default. The tf.train package provides many other optimizers—feel free to experiment with them.
-
-  Here is the code that builds the optimizer:
-  ```python
-  optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
-  ```
-  Next, we build the training operation using the optimizer's minimize method on the loss we calculated earlier.
-
-  The minimize method also takes a global_step parameter. TensorFlow uses this parameter to count the number of training steps that have been processed (to know when to end a training run). Furthermore, the global_step is essential for TensorBoard graphs to work correctly. Simply call tf.train.get_global_step and pass the result to the global_step argument of minimize.
-
-  Here's the code to train the model:
-  ```python
-  train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-  ```
-  The EstimatorSpec returned for training must have the following fields set:
-
-      loss, which contains the value of the loss function.
-      train_op, which executes a training step.
-
-  Here's our code to call EstimatorSpec:
-  ```python
-  return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
-  ```
-  The model function is now complete.
-## The custom Estimator
-
-  Instantiate the custom Estimator through the Estimator base class as follows:
-  ```python
-  # Build 2 hidden layer DNN with 10, 10 units respectively.
-  classifier = tf.estimator.Estimator(
-      model_fn=my_model,
-      params={
-          'feature_columns': my_feature_columns,
-          # Two hidden layers of 10 nodes each.
-          'hidden_units': [10, 10],
-          # The model must choose between 3 classes.
-          'n_classes': 3,
-      })
-  ```
-  Here the params dictionary serves the same purpose as the key-word arguments of DNNClassifier; that is, the params dictionary lets you configure your Estimator without modifying the code in the model_fn.
-
-  The rest of the code to train, evaluate, and generate predictions using our Estimator is the same as in the Premade Estimators chapter. For example, the following line will train the model:
-  ```python
-  # Train the Model.
-  classifier.train(
-      input_fn=lambda:iris_data.train_input_fn(train_x, train_y, args.batch_size),
-      steps=args.train_steps)
-  ```
-## TensorBoard
-
-  You can view training results for your custom Estimator in TensorBoard. To see this reporting, start TensorBoard from your command line as follows:
-  ```python
-  # Replace PATH with the actual path passed as model_dir
-  tensorboard --logdir=PATH
-  ```
-  Then, open TensorBoard by browsing to: http://localhost:6006
-
-  All the pre-made Estimators automatically log a lot of information to TensorBoard. With custom Estimators, however, TensorBoard only provides one default log (a graph of the loss) plus the information you explicitly tell TensorBoard to log. For the custom Estimator you just created, TensorBoard generates the following:
-
-  IMAGES
-## python 实现
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    ```
+    - **tf.train.AdagradOptimizer** Adagrad 优化器
+    - **minimize 的 global_step 参数** 对于 TensorBoard 是必须的
+    - **EstimatorSpec 的 train_op 参数** 具体执行训练步骤
+## 使用自定义模型实例化 Estimator
+  - **model_fn 参数** 指定自定义模型
+    ```python
+    # Build 2 hidden layer DNN with 10, 10 units respectively.
+    classifier = tf.estimator.Estimator(
+        model_fn=my_model,
+        params={
+            'feature_columns': my_feature_columns,
+            # Two hidden layers of 10 nodes each.
+            'hidden_units': [10, 10],
+            # The model must choose between 3 classes.
+            'n_classes': 3,
+        })
+    ```
+## python 完整实现
   ```python
   def my_model(features, labels, mode, params):
       """DNN with three hidden layers, and dropout of 0.1 probability."""
@@ -1331,19 +1297,82 @@ TensorFlow 1.8 programming
       # Create training op.
       assert mode == tf.estimator.ModeKeys.TRAIN
 
-      optimizer = tf.train.AdagradOptimizer(learning_rate=0.1)
+      optimizer = tf.train.AdagradOptimizer(learning_rate=params['learning_rate'])
       train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
       return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
-  # Build 2 hidden layer DNN with 10, 10 units respectively.
+  # Define feature_columns
+  my_feature_columns = [tf.feature_column.numeric_column("x", shape=[28, 28])]
+
+  # Build 2 hidden layer DNN respectively.
   classifier = tf.estimator.Estimator(
       model_fn=my_model,
       params={
           'feature_columns': my_feature_columns,
           # Two hidden layers of 10 nodes each.
-          'hidden_units': [10, 10],
+          'hidden_units': [512, 256],
           # The model must choose between 3 classes.
-          'n_classes': 3,
+          'n_classes': 10,
+          'learning_rate': 0.001
       })
+
+  # Load data
+  (train_x, train_y), (test_x, test_y) = tf.keras.datasets.mnist.load_data()
+  train_y = train_y.astype(np.int32)
+  test_y = test_y.astype(np.int32)
+
+  # Train
+  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':train_x}, train_y, batch_size=1000, num_epochs=50, shuffle=True)
+  classifier.train(input_fn=train_input_fn)
+
+  # Evaluate
+  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':test_x}, test_y, batch_size=1000, num_epochs=10, shuffle=True)
+  classifier.evaluate(input_fn=eval_input_fn)
+
+  # Predict
+  predict_input_fn = tf.estimator.inputs.numpy_input_fn({'x':test_x}, num_epochs=1, shuffle=False)
+  pp = classifier.predict(input_fn=predict_input_fn)
+  ll = [ii['class_ids'][0] for ii in pp]
   ```
+  **运行结果**
+  ```python
+  # Train
+  INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpnl63y5i9/model.ckpt.
+  INFO:tensorflow:loss = 103.680214, step = 0
+  INFO:tensorflow:global_step/sec: 114.393
+  INFO:tensorflow:loss = 3.4204082, step = 100 (0.864 sec)
+  INFO:tensorflow:global_step/sec: 122.563
+  ...
+  INFO:tensorflow:loss = 0.04464946, step = 2900 (0.821 sec)
+  INFO:tensorflow:Saving checkpoints for 3000 into /tmp/tmpnl63y5i9/model.ckpt.
+  INFO:tensorflow:Loss for final step: 0.06240763.
+
+  # Evaluate
+  INFO:tensorflow:Restoring parameters from /tmp/tmpnl63y5i9/model.ckpt-3000
+  ...
+  INFO:tensorflow:Saving dict for global step 3000: accuracy = 0.9359, global_step = 3000, loss = 0.98651063
+  Out[37]: {'accuracy': 0.9359, 'loss': 0.98651063, 'global_step': 3000}
+
+  # Predict
+  ll[:10]
+  Out[42]: [7, 2, 1, 0, 4, 1, 4, 9, 5, 9]
+
+  test_y[:10]
+  Out[43]: array([7, 2, 1, 0, 4, 1, 4, 9, 5, 9], dtype=int32)
+  ```
+## TensorBoard
+  - View training results for your custom Estimator in TensorBoard
+    ```python
+    classifier.model_dir
+    # Out[3]: '/tmp/tmpqxh_cbia'
+    ```
+    start TensorBoard from command line
+    ```shell
+    tensorboard --logdir=/tmp/tmpqxh_cbia
+    ```
+    Open TensorBoard by browsing to: http://localhost:6006
+
+    ![](images/tensor_board_custom_estimator.png)
 ***
+
+![](images/opt1.gif)
