@@ -284,6 +284,8 @@
     conda update -n base conda
     conda update anaconda # update anaconda only
     conda update --all  # update all anaconda related packages
+    conda update --all -c conda-forge
+    
     conda clean --all # clean temporary fills
     ```
 ## 启用 GPU 支持
@@ -2635,11 +2637,11 @@
   BOTTLENECK_TENSOR_NAME = 'pool_3/_reshape:0'
   JPEG_DATA_TENSOR_NAME = 'DecodeJpeg/contents:0'
 
-  MODEL_DIR = '/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/inception_dec_2015'
+  MODEL_DIR = '~/workspace/datasets/inception_dec_2015'
   MODEL_FILE= 'tensorflow_inception_graph.pb'
 
   CACHE_DIR = '../../datasets/bottleneck'
-  INPUT_DATA = '/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/flower_photos'
+  INPUT_DATA = '~/workspace/datasets/flower_photos'
 
   VALIDATION_PERCENTAGE = 10
   TEST_PERCENTAGE = 10
@@ -3816,7 +3818,7 @@
   import tensorflow as tf
   from tutorials.rnn.ptb import reader
 
-  DATA_PATH = "/home/leondgarse/workspace/Deep_Learning_with_TensorFlow/datasets/PTB_data"
+  DATA_PATH = "~/workspace/datasets/PTB_data"
   HIDDEN_SIZE = 200
   NUM_LAYERS = 2
   VOCAB_SIZE = 10000
