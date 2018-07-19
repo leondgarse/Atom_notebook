@@ -166,6 +166,31 @@
     In case dpkg indicates missing dependencies, complete the installation by executing the following command:
     apt-get install -f
     ```
+  - **Error while `apt update`: packages have unmet dependencies**
+    ```shell
+    The following packages have unmet dependencies:
+      libglx-mesa0 : Depends: libglapi-mesa (= 18.0.0~rc5-1ubuntu1) but 18.0.5-0ubuntu0~18.04.1 is installed
+    ```
+    **Install by `sudo dpkg -i --force-overwrite`**
+    ```shell
+    sudo dpkg -i --force-overwrite /var/cache/apt/archives/libglapi-mesa_18.0.5-0ubuntu0~18.04.1_amd64.deb
+    sudo apt-get -f install
+    ```
+    **Error again**
+    ```md
+    dpkg: error processing archive /var/cache/apt/archives/libglx-mesa0_18.0.5-0ubuntu0~18.04.1_amd64.deb (--unpack):
+     trying to overwrite '/usr/lib/x86_64-linux-gnu/libGLX_indirect.so.0', which is also in package nvidia-396 396.26-0ubuntu1
+    Errors were encountered while processing:
+     /var/cache/apt/archives/libglx-mesa0_18.0.5-0ubuntu0~18.04.1_amd64.deb
+    ```
+    **Install by overwrite again**
+    ```shell
+    sudo dpkg -i --force-overwrite /var/cache/apt/archives/libglx-mesa0_18.0.5-0ubuntu0~18.04.1_amd64.deb
+    sudo apt-get -f install
+    sudo apt autoremove
+
+    dpkg: error processing archive /var/cache/apt/archives/nvidia-396_396.37-0ubuntu1_amd64.deb (--unpack):
+    ```
 ## echo
   - echo $? 打印终止状态
     ```
