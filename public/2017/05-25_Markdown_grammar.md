@@ -1,11 +1,10 @@
-___Markdown Grammar___
+___2017 - 05 - 25 Markdown Grammar___
 ======================
 *** *** ***
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___Markdown Grammar___](#markdown-grammar)
   - [目录](#目录)
   - [标题 Headers](#标题-headers)
   - [区块引用 Blockquotes](#区块引用-blockquotes)
@@ -26,6 +25,10 @@ ___Markdown Grammar___
   - [其它 Miscellaneous](#其它-miscellaneous)
   - [HTML](#html)
   - [目录跳转](#目录跳转)
+  - [Basket 转化为 markdown](#basket-转化为-markdown)
+  	- [basket 转化为 markdown 转化为 calibre mobi](#basket-转化为-markdown-转化为-calibre-mobi)
+  	- [Basket Notebook 格式分析](#basket-notebook-格式分析)
+  	- [Python 实现](#python-实现)
 
   <!-- /TOC -->
 ***
@@ -471,24 +474,73 @@ ___Markdown Grammar___
     ```md
     Nothing, just place holder
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     ```
 ***
+
+# Basket 转化为 markdown
+## basket 转化为 markdown 转化为 calibre mobi
+  - basket export html web page
+  - 以下 python 程序 python3 basket_2_md.py 将 html 转化为 markdown
+  - atom 打开 markdown，背景选择白色，save as html
+  - calibre add books 添加转化后的html
+  - convert books，TOC 指定自动生成标题，并使用
+    - //h:h1
+    - //h:h2
+    - //h:h3
+## Basket Notebook 格式分析
+  - 转化的 HTML 中的特殊字符
+    ``` python
+    - 注释
+    - 输出
+    - tab / > &nbsp;&gt;&gt;&gt; type(3)
+    - &quot;
+    - &gt;
+    - &nbsp;
+    - &quot;  --> "
+    - &amp;   --> &
+    ```
+    ```python
+    - %s/&gt;&gt;&gt; //g
+    - %s/&gt;/>/g
+    - %s/&nbsp;//g
+    - %s/&quot;/"/g
+    - %s/&lt;/</g
+    ```
+    ```python
+    str_t = str_t.replace('&gt;&gt;&gt; ', '')
+    str_t = str_t.replace('&gt;', '>')
+    str_t = str_t.replace('&nbsp;', '')
+    str_t = str_t.replace('&quot;', '""')
+    str_t = str_t.replace('&lt;', '<')
+    ```
+  - 转化规则
+    - 标题，不缩进
+    - 内容，缩进2
+    - 区块，判断第一行开头
+      - 不是空格，添加添加编号‘- ’，判断上一行是否有缩进，有的话插入新行 **```**
+      - 是空格，插入行 **```**
+      - 一个Tab键，8个空格，缩进 = 标题级别 + 2(区块级别) + 4缩进成块
+## Python 实现
+  - [basket_2_md.py](basket_2_md.py)
+  - 标题替换，添加 `"<span id=" ... ">"`
+    ```shell
+    # 标题替换，添加 "<span id=" ... ">"
+    sed -i 's/^\(#\+\) \(.*\)$/\1 <span id="\2">\2/' 08-06_sql_table_test.md
+    ```
+    ```python
+    # 标题替换，添加 "<span id=" ... ">"
+    f = open('08-06_sql_table_test.md', 'r')
+    l = f.readlines()
+
+    reg_title = re.compile(r'(^#+) (.*)')
+    fout = open('foo.md', 'w')
+    for line in l:
+        if line.startswith('#'):
+            item = reg_title.findall(line)[0]
+            item_id = item[1].replace(' ', '-')
+            item = item[0] + ' <span id="' + item_id + '">' + item[1] + '\n'
+            print(item)
+            fout.write(item)
+        else:
+            fout.write(line)
+    ```
