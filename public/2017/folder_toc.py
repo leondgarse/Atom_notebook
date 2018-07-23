@@ -13,7 +13,7 @@ def is_file_endswith_suffixs(file_name, suffix_list=[]):
 
 def folder_toc(path_name, retract_level, output_file=None, excluded_suffix=[]):
     # print("path_name = %s" % path_name)
-    for sub_item in os.listdir(path_name):
+    for sub_item in sorted(os.listdir(path_name)):
         if is_file_endswith_suffixs(sub_item, excluded_suffix):
             continue
 
