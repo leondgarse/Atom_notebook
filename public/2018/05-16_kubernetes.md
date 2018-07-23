@@ -443,3 +443,58 @@
 
     ```
 ***
+
+# Docker
+  ```shell
+  sudo docker build -t my-rest-client .
+  sudo docker run -it my-rest-client
+
+  sudo docker image ls
+
+  sudo docker image save my-rest-client -o my-rest-client.tar
+  sudo docker image load -i my-rest-client.tar
+
+  sudo docker images
+  sudo docker ps -a
+
+  sudo docker run ubuntu:16.04
+  ```
+  ```shell
+  docker run
+  kubectl run teste-test-e --image=cbur-test-2 --image-pull-policy=Never
+  ```
+- kubernetes uses Docker images by creating local registry
+  ```shell
+  # Use a local registry:
+  docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+  # Now tag your image properly:
+  # Note that localhost should be changed to dns name of the machine running registry container.
+  docker tag ubuntu localhost:5000/ubuntu
+
+  # Now push your image to local registry:
+  docker push localhost:5000/ubuntu
+
+  # You should be pull it back:
+  docker pull localhost:5000/ubuntu
+
+  # Now change your yaml file to use local registry.
+  ```
+- kubernetes uses Docker images for minikube
+  ```shell
+  # Start minikube
+  minikube start
+
+  # Set docker env
+  eval $(minikube docker-env)
+
+  # Build image
+  docker build -t foo:0.0.1 .
+
+  # Run in minikube
+  kubectl run hello-foo --image=foo:0.0.1 --image-pull-policy=Never
+
+  # Check that it's running
+  kubectl get pods
+  ```
+***
