@@ -1999,7 +1999,7 @@
 ***
 
 # argparse 解析参数
-## 脚本中使用
+## 脚本中 argparse 典型格式
   ```python
   import argparse
   import sys
@@ -2033,7 +2033,7 @@
   arg1 = foo, arg2 = goo
   ```
 ## ArgumentParser 初始化参数
-  - **prog / usage / description** ArgumentParser 初始化参数
+  - **prog / usage / description / epilog** ArgumentParser 初始化参数
     ```python
     import argparse
 
@@ -2049,7 +2049,7 @@
     # '%(prog)s [options]'
     print(parser.description)
     # 'descript the function'
-		print(parser.epilog)
+    print(parser.epilog)
     # 'Message after help message'
     parser.print_help()
     # usage: This function [options]
@@ -2059,14 +2059,14 @@
     # optional arguments:
     #   -h, --help  show this help message and exit
 
-		# Message after help message
+    # Message after help message
     ```
-	- **formatter_class** 字符串格式化方式
-		- **argparse.ArgumentDefaultsHelpFormatter** help 信息中添加打印默认值
-		- **argparse.HelpFormatter** 默认的格式化方式
-		- **argparse.MetavarTypeHelpFormatter** help 信息中显示的是参数类型
-		- **argparse.RawDescriptionHelpFormatter** description 部分按照指定格式显示
-		- **argparse.RawTextHelpFormatter**
+  - **formatter_class** 字符串格式化方式
+    - **argparse.ArgumentDefaultsHelpFormatter** help 信息中添加打印默认值
+    - **argparse.HelpFormatter** 默认的格式化方式
+    - **argparse.MetavarTypeHelpFormatter** help 信息中显示的是参数类型
+    - **argparse.RawDescriptionHelpFormatter** description 部分按照指定格式显示
+    - **argparse.RawTextHelpFormatter**
     ```python
     # formatter_class=argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(
@@ -2087,11 +2087,11 @@
     ```python
     # formatter_class=argparse.RawDescriptionHelpFormatter
     parser = argparse.ArgumentParser(
-    	formatter_class=argparse.RawDescriptionHelpFormatter,
-    	description=(
-    			"First line.\n"
-    			"Second line."
-    	)
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=(
+          "First line.\n"
+          "Second line."
+      )
     )
     parser.print_help()
     # usage: ipython [-h]

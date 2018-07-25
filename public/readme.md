@@ -55,6 +55,7 @@
   - [basket_2_md.py](./2017/basket_2_md.py)
   - [folder_toc.py](./2017/folder_toc.py)
   - [images](./2017/images)
+  - [invoiceCalc.py](./2017/invoiceCalc.py)
   - [personal_resume.md](./2017/personal_resume.md)
 - [2018](./2018)
   - [04-16_face_recgnotion.md](./2018/04-16_face_recgnotion.md)
