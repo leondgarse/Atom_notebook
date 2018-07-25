@@ -11,83 +11,83 @@
 - [python程序的执行方式](#python程序的执行方式)
 - [print格式化输出](#print格式化输出)
 - [数据类型 / 运算符](#数据类型-运算符)
-	- [数字常量](#数字常量)
-	- [布尔常量 True / False](#布尔常量-true-false)
-	- [字符串常量](#字符串常量)
-	- [算数运算符](#算数运算符)
-	- [比较运算符 / 逻辑运算符](#比较运算符-逻辑运算符)
+  - [数字常量](#数字常量)
+  - [布尔常量 True / False](#布尔常量-true-false)
+  - [字符串常量](#字符串常量)
+  - [算数运算符](#算数运算符)
+  - [比较运算符 / 逻辑运算符](#比较运算符-逻辑运算符)
 - [if / for / while](#if-for-while)
 - [函数](#函数)
-	- [定义](#定义)
-	- [Python中函数的参数形式](#python中函数的参数形式)
-	- [python内建函数](#python内建函数)
-	- [global](#global)
-	- [默认参数值](#默认参数值)
-	- [指定关键参数](#指定关键参数)
-	- [docstrings 文档字符串](#docstrings-文档字符串)
-	- [在函数中接收元组和列表](#在函数中接收元组和列表)
-	- [在函数中接收字典参数](#在函数中接收字典参数)
-	- [函数返回多个参数 (元组 / 字典)](#函数返回多个参数-元组-字典)
-	- [传递函数 （函数作为参数传递）](#传递函数-函数作为参数传递)
-	- [内嵌函数](#内嵌函数)
+  - [定义](#定义)
+  - [Python中函数的参数形式](#python中函数的参数形式)
+  - [python内建函数](#python内建函数)
+  - [global](#global)
+  - [默认参数值](#默认参数值)
+  - [指定关键参数](#指定关键参数)
+  - [docstrings 文档字符串](#docstrings-文档字符串)
+  - [在函数中接收元组和列表](#在函数中接收元组和列表)
+  - [在函数中接收字典参数](#在函数中接收字典参数)
+  - [函数返回多个参数 (元组 / 字典)](#函数返回多个参数-元组-字典)
+  - [传递函数 （函数作为参数传递）](#传递函数-函数作为参数传递)
+  - [内嵌函数](#内嵌函数)
 - [模块](#模块)
-	- [sys模块](#sys模块)
-	- [字节编译的.pyc文件](#字节编译的pyc文件)
-	- [from ... import ...](#from-import-)
-	- [模块名称 \_\_name\_\_](#模块名称-name)
-	- [dir](#dir)
+  - [sys模块](#sys模块)
+  - [字节编译的.pyc文件](#字节编译的pyc文件)
+  - [from ... import ...](#from-import-)
+  - [模块名称 \_\_name\_\_](#模块名称-name)
+  - [dir](#dir)
 - [数据结构](#数据结构)
-	- [序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)](#序列-切片-索引-in-not-in-转换工厂函数-内建函数)
-	- [列表 list](#列表-list)
-		- [列表方法](#列表方法)
-		- [示例](#示例)
-		- [列表复制](#列表复制)
-		- [列表解析 / 列表生成器](#列表解析-列表生成器)
-		- [map / filter](#map-filter)
-	- [sorted / min的key参数](#sorted-min的key参数)
-	- [元组 tuple](#元组-tuple)
-		- [元组操作](#元组操作)
-		- [元组的作用](#元组的作用)
-	- [字典 dict](#字典-dict)
-		- [创建字典](#创建字典)
-		- [索引 / 删除 / 遍历](#索引-删除-遍历)
-		- [字典的格式化字符串](#字典的格式化字符串)
-		- [字典的方法](#字典的方法)
-	- [字典值排序](#字典值排序)
-	- [集合 set](#集合-set)
-		- [集合比较](#集合比较)
-		- [集合关系运算](#集合关系运算)
-		- [集合的方法](#集合的方法)
+  - [序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)](#序列-切片-索引-in-not-in-转换工厂函数-内建函数)
+  - [列表 list](#列表-list)
+    - [列表方法](#列表方法)
+    - [示例](#示例)
+    - [列表复制](#列表复制)
+    - [列表解析 / 列表生成器](#列表解析-列表生成器)
+    - [map / filter](#map-filter)
+  - [sorted / min的key参数](#sorted-min的key参数)
+  - [元组 tuple](#元组-tuple)
+    - [元组操作](#元组操作)
+    - [元组的作用](#元组的作用)
+  - [字典 dict](#字典-dict)
+    - [创建字典](#创建字典)
+    - [索引 / 删除 / 遍历](#索引-删除-遍历)
+    - [字典的格式化字符串](#字典的格式化字符串)
+    - [字典的方法](#字典的方法)
+  - [字典值排序](#字典值排序)
+  - [集合 set](#集合-set)
+    - [集合比较](#集合比较)
+    - [集合关系运算](#集合关系运算)
+    - [集合的方法](#集合的方法)
 - [字符串](#字符串)
-	- [字符串对象方法](#字符串对象方法)
-	- [字符串方法 （图片）](#字符串方法-图片)
-	- [示例](#示例)
-	- [模块 / 字符串示例程序](#模块-字符串示例程序)
+  - [字符串对象方法](#字符串对象方法)
+  - [字符串方法 （图片）](#字符串方法-图片)
+  - [示例](#示例)
+  - [模块 / 字符串示例程序](#模块-字符串示例程序)
 - [正则表达式 re模块](#正则表达式-re模块)
 - [面向对象的编程](#面向对象的编程)
-	- [类](#类)
-	- [继承](#继承)
+  - [类](#类)
+  - [继承](#继承)
 - [文件](#文件)
-	- [open() / close()](#open-close)
-	- [读文件](#读文件)
-	- [写文件](#写文件)
+  - [open() / close()](#open-close)
+  - [读文件](#读文件)
+  - [写文件](#写文件)
 - [二进制储存器](#二进制储存器)
 - [异常](#异常)
 - [Python标准库 (sys / os)](#python标准库-sys-os)
-	- [sys模块](#sys模块)
-	- [os模块](#os模块)
+  - [sys模块](#sys模块)
+  - [os模块](#os模块)
 - [其他语句 lambda / exec / eval / assert / repr / enumerate / format](#其他语句-lambda-exec-eval-assert-repr-enumerate-format)
-	- [lambda形式，匿名函数](#lambda形式匿名函数)
-	- [exec和eval语句，执行语句 / 表达式](#exec和eval语句执行语句-表达式)
-	- [assert语句，断言](#assert语句断言)
-	- [repr函数，规范字符串表示](#repr函数规范字符串表示)
-	- [range 函数，列表生成器](#range-函数列表生成器)
-	- [enumerate 带指数的列表](#enumerate-带指数的列表)
-	- [format 格式化](#format-格式化)
-	- [Iterables / Generators / Yield](#iterables-generators-yield)
+  - [lambda形式，匿名函数](#lambda形式匿名函数)
+  - [exec和eval语句，执行语句 / 表达式](#exec和eval语句执行语句-表达式)
+  - [assert语句，断言](#assert语句断言)
+  - [repr函数，规范字符串表示](#repr函数规范字符串表示)
+  - [range 函数，列表生成器](#range-函数列表生成器)
+  - [enumerate 带指数的列表](#enumerate-带指数的列表)
+  - [format 格式化](#format-格式化)
+  - [Iterables / Generators / Yield](#iterables-generators-yield)
 - [python 执行 shell 命令](#python-执行-shell-命令)
-	- [os 模块](#os-模块)
-	- [subprocess 模块](#subprocess-模块)
+  - [os 模块](#os-模块)
+  - [subprocess 模块](#subprocess-模块)
 
 <!-- /TOC -->
 ***
@@ -839,8 +839,8 @@
 ### 列表解析 / 列表生成器
   - 动态创建列表，从一个已有的列表导出一个新的列表
   - 列表生成器只能遍历一次
-  	```python
-		[ expression for expr in sequence1
+    ```python
+    [ expression for expr in sequence1
     for expr2 in sequence2 ...
     for exprN in sequenceN
     if condition ]
@@ -855,19 +855,19 @@
     [i+1 for i in range(10) if i%2 == 0]
     [1, 2, 5, 6, 9, 10]
     ```
-	- 返回字典
-		```python
+  - 返回字典
+    ```python
     data = [1, 2, 3, 4]
     {'%s' % ii: ii for ii in data}
-		```
+    ```
   - 列表生成器，返回一个生成器，使用()：
     ```python
     (i+1 for i in range(10) if i % 2 == 0)
     <generator object <genexpr> at 0x7f173064f1a8>        # 返回一个列表生成器，python3中的range()函数的返回值也是一个生成器
     for i in (i+1 for i in range(10) if i % 2 == 0):
-    		print(i, end=' ')
+        print(i, end=' ')
 
-		# [Out]
+    # [Out]
     1 2 5 6 9 10
     ```
 ### map / filter
@@ -1707,54 +1707,47 @@
 ***
 
 # 异常
-  - try..except语句来处理异常，通常的语句放在try-块中，错误处理语句放在except-块中
-  - 可以让try..catch块关联上一个else从句。当没有异常发生的时候,else从句将被执行
-  - raise语句 引发 异常
-  - try / except / raise
+  - **try..except** 语句来处理异常，通常的语句放在 **try** 块中，错误处理语句放在 **except** 块中
+  - **else** 没有异常发生的时候 else 块将被执行
+  - **finally** 异常发生或不发生都会执行 finally 块
+  - **raise** 抛出异常
+  - **builtins** 更多系统预定义异常在模块 `builtins`，python 默认已导入 `from builtins import *`
+    ```python
+    # 查看其他 Error
+    import buildins
+    builtins.ImportError
+    # Out[4]: ImportError
+
+    builtins.IOError
+    # Out[5]: OSError
+    ```
+  - **try / except / else**
     ```python
     #!/usr/bin/python3
     import sys
 
     try:
-      s = input('Enter something --> ')
-    except EOFError:
-      print('\n WHy did you do an EOF on me?')
-      sys.exit()
+        s = input('Enter something --> ')
+    except EOFError as e:
+        print('\n WHy did you do an EOF on me? error = %s' % (e))
+        sys.exit()
+    except KeyboardInterrupt as e:
+        print('\n Key board interrupt, error = %s' % (str(e)))
     except:
-      print('\nSome error occured!')
-    print('Done')
-
+        print('\n Some error occured!')
+    else:
+        print('Done')
+    ```
+    ```shell
     $ python3 try_except.py
-    Enter something -->
-     WHy did you do an EOF on me?
+    Enter something --> <Ctrl + d>
+     WHy did you do an EOF on me? error =
+
     $ python3 try_except.py
     Enter something --> hiya!
     Done
     ```
-  - 自定义异常，继承自Error或Exception类
-    ```python
-    #!/usr/bin/python3
-
-    class ShortInputException(Exception):
-      '''A user-defined exception class.'''
-      def __init__(self, length, atleast):
-         Exception.__init__(self)
-        self.length = length
-        self.atleast = atleast
-
-    try:
-      s= input('Enter somthing --> ')
-      if len(s) < 3:
-        raise ShortInputException(len(s), 3)
-    except EOFError:
-      print('\nWhy did you do an EOF on me?')
-    except ShortInputException as x:        # python2中使用except ShortInputException, x:
-      print('ShortInputException: The input was of length %d, \
-          was expecting at least %d' %(x.length, x.atleast))
-    else:
-      print('No exception was raised.')
-    ```
-  - finally块： 异常触发程序退出时，finally从句仍然被执行
+  - **finally** 异常触发程序退出时，finally 从句仍然被执行
     ```python
     #!/usr/bin/python3
     import time
@@ -1770,7 +1763,8 @@
     finally:
       f.close()
       print('closed the file')
-
+    ```
+    ```shell
     $ python3 finally.py
     ^Cclosed the file
     Traceback (most recent call last):
@@ -1778,21 +1772,40 @@
       time.sleep(2)
     KeyboardInterrupt
     ```
+  - **自定义异常** 继承自 Error 或 Exception 类，在模块 `builtins` 中
+    ```python
+    #!/usr/bin/python3
+
+    class ShortInputException(Exception):
+        '''A user-defined exception class.'''
+        def __init__(self, length, atleast):
+            Exception.__init__(self)
+            self.length = length
+            self.atleast = atleast
+
+    try:
+        s= input('Enter somthing --> ')
+        if len(s) < 3:
+            raise ShortInputException(len(s), 3)
+    except EOFError:
+        print('\nWhy did you do an EOF on me?')
+    except ShortInputException as x:        # python2中使用except ShortInputException, x:
+        print('ShortInputException: The input was of length %d, \
+          was expecting at least %d' %(x.length, x.atleast))
+    else:
+        print('No exception was raised.')
+    ```
 ***
 
 # Python标准库 (sys / os)
 ## sys模块
   - sys模块包含系统对应的功能，如sys.argv列表包含命令行参数
     ```python
-    $ python3
-    Python 3.5.2 (default, Nov 17 2016, 17:05:23)
-    [GCC 5.4.0 20160609] on linux
-    Type "help", "copyright", "credits" or "license" for more information.
     import sys
     sys.version
-    '3.5.2 (default, Nov 17 2016, 17:05:23) \n[GCC 5.4.0 20160609]'
+    # '3.5.2 (default, Nov 17 2016, 17:05:23) \n[GCC 5.4.0 20160609]'
     sys.version_info
-    sys.version_info(major=3, minor=5, micro=2, releaselevel='final', serial=0)
+    # sys.version_info(major=3, minor=5, micro=2, releaselevel='final', serial=0)
     ```
 ## os模块
   - 包含普遍的操作系统功能，用于编写与平台无关的代码，如使用os.sep可以取代操作系统特定的路径分割符
@@ -1983,4 +1996,234 @@
     p.wait()
     # Out[27]: 0
     ```
+***
+
+# argparse 解析参数
+## 脚本中使用
+  ```python
+  import argparse
+  import sys
+
+  def foo(arg1, arg2):
+      print("arg1 = %s, arg2 = %s" % (arg1, arg2))
+
+  def parse_arguments(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("arg1")
+    parser.add_argument("arg2")
+
+    return parser.parse_args(args)
+
+  if __name__ == "__main__":
+      args = parse_arguments(sys.argv[1:])
+      foo(args.arg1, args.arg2)
+  ```
+  ```shell
+  $ python arg_parse.py -h
+  usage: arg_parse.py [-h] arg1 arg2
+
+  positional arguments:
+    arg1
+    arg2
+
+  optional arguments:
+    -h, --help  show this help message and exit
+
+  $ python arg_parse.py foo goo
+  arg1 = foo, arg2 = goo
+  ```
+## ArgumentParser 初始化参数
+  - **prog / usage / description** ArgumentParser 初始化参数
+    ```python
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="This function",
+        usage="%(prog)s [options]",
+        description="descript the function",
+        epilog="Message after help message")
+
+    print(parser.prog)
+    # 'This function'
+    print(parser.usage)
+    # '%(prog)s [options]'
+    print(parser.description)
+    # 'descript the function'
+		print(parser.epilog)
+    # 'Message after help message'
+    parser.print_help()
+    # usage: This function [options]
+
+    # descript the function
+
+    # optional arguments:
+    #   -h, --help  show this help message and exit
+
+		# Message after help message
+    ```
+	- **formatter_class** 字符串格式化方式
+		- **argparse.ArgumentDefaultsHelpFormatter** help 信息中添加打印默认值
+		- **argparse.HelpFormatter** 默认的格式化方式
+		- **argparse.MetavarTypeHelpFormatter** help 信息中显示的是参数类型
+		- **argparse.RawDescriptionHelpFormatter** description 部分按照指定格式显示
+		- **argparse.RawTextHelpFormatter**
+    ```python
+    # formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=(
+            "First line.\n"
+            "Second line."
+        )
+    )
+    parser.print_help()
+    # usage: ipython [-h]
+
+    # First line. Second line.
+    #
+    # optional arguments:
+    #   -h, --help  show this help message and exit
+    ```
+    ```python
+    # formatter_class=argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(
+    	formatter_class=argparse.RawDescriptionHelpFormatter,
+    	description=(
+    			"First line.\n"
+    			"Second line."
+    	)
+    )
+    parser.print_help()
+    # usage: ipython [-h]
+    #
+    # First line.
+    # Second line.
+    #
+    # optional arguments:
+    #   -h, --help  show this help message and exit
+    ```
+## add_argument 位置参数与可选参数
+  - **位置参数 Positional argument** 为必须的参数，按照参数位置指定，不能单独指定
+  - **可选参数 Optional argument** 使用 `-` / `--` 指定
+  - **required=True** 将可选参数变为必须参数
+  ```python
+  parser = argparse.ArgumentParser()
+  parser.add_argument("foo", help="Positional argument")
+  parser.add_argument("--goo", help="Optional argument 1")
+  parser.add_argument("-j", help="Optional argument 2")
+  parser.add_argument("-k", "--koo", help="Optional argument 3")
+
+  parser.print_help()
+  # usage: ipython [-h] [--goo GOO] [-j J] [-k KOO] foo
+  #
+  # positional arguments:
+  #   foo                Positional argument
+  #
+  # optional arguments:
+  #   -h, --help         show this help message and exit
+  #   --goo GOO          Optional argument 1
+  #   -j J               Optional argument 2
+  #   -k KOO, --koo KOO  Optional argument 3
+
+  parser.parse_args(["these", "--goo", "are", "-j", "the", "-k", "args"])
+  # Out[146]: Namespace(foo='these', goo='are', j='the', koo='args')
+
+  parser.parse_args("this --goo is -jan --koo=arg".split())
+  # Out[157]: Namespace(foo='this', goo='is', j='an', koo='arg')
+
+  parser.parse_args("this --g is -jan --ko=arg".split())
+  # Out[159]: Namespace(foo='this', goo='is', j='an', koo='arg')
+  ```
+## add_argument 参数行为 action
+  - **store** 默认操作，存储这个参数值
+  - **store_const** 存储 const 指定的值
+  - **store_false** / **store_true** 分别对应存储 True 和 False 值
+  - **append** 保存为列表格式，将每个参数的值添加到这个列表
+  - **append_const** 保存为列表，但是值必须是 const 指定参数的值
+  ```python
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--foo", action='store_const', const=42, help="store_const")
+  parser.add_argument("--goo", action='store_false', help="store_false")
+  parser.add_argument("--joo", action='store_true', help="store_true")
+  parser.add_argument("--koo", action='append', help="append")
+  parser.add_argument("--loo", action='append_const', const=72, help="append_const int")
+  parser.add_argument("--moo", action='append_const', const='abc', help="append_const str")
+
+  parser.parse_args('--foo --goo --joo --koo 32 --koo 52 --koo 62 --loo --loo --moo'.split())
+  # Out[17]: Namespace(foo=42, goo=False, joo=True, koo=['32', '52', '62'], loo=[72, 72], moo=['abc'])
+  ```
+## add_argument 参数类型 type
+  - **string** 默认参数类型
+  - **FileType** 文件参数，可以指定文件 读写 等
+  - **choices** 提供参数范围，如果提供的参数值不在这个范围之内会报错
+  ```python
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--foo", type=int)
+  parser.add_argument("--goo", type=str)
+  parser.add_argument("--joo", type=float)
+  parser.parse_args("--foo 32 --goo 32 --joo 32".split())
+  # Out[25]: Namespace(foo=32, goo='32', joo=32.0)
+  ```
+  ```python
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--out", type=argparse.FileType('w'))
+  parser.add_argument("--str", type=int, choices=range(5, 10))
+  parser.parse_args("--out foo --str 8".split())
+  # Out[28]: Namespace(out=<_io.TextIOWrapper name='foo' mode='w' encoding='UTF-8'>, str=8)
+  ```
+## add_argument 参数个数 nargs
+  - **整数 N** N 个从命令行中获取的参数将会组成一个列表
+  - **?** 从命令行参数中获取一个值
+  - **\*** 支持多个参数值
+  - **+** 一个或多个参数
+  ```python
+  parser = argparse.ArgumentParser()
+  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+
+  parser.add_argument('--foo', type=int, nargs=2)
+  parser.add_argument('--goo', nargs='*')
+  parser.add_argument('--joo', type=str, nargs='+')
+
+  parser.parse_args('foo foo --foo 1 2 --goo a b cd e --joo fgh i'.split())
+  # Out[23]: Namespace(
+  #     infile=<_io.TextIOWrapper name='foo' mode='r' encoding='UTF-8'>,
+  #     outfile=<_io.TextIOWrapper name='foo' mode='w' encoding='UTF-8'>,
+  #     foo=[1, 2], goo=['a', 'b', 'cd', 'e'], joo=['fgh', 'i'])
+  ```
+## add_argument_group 参数组
+  ```python
+  parser = argparse.ArgumentParser(description="Argparse practice")
+
+  group_1 = parser.add_argument_group("Required arguments")
+  group_1.add_argument("--foo", type=int, required=True, help="foo int")
+  group_1.add_argument("--goo", type=float, required=True, help="goo float")
+
+  group_2 = parser.add_argument_group("List arguments")
+  group_2.add_argument("--joo", type=int, nargs="+", choices=range(0, 5), help="joo (0, 5) int list")
+  group_2.add_argument("--koo", type=str, nargs="+", help="koo string list")
+  ```
+  运行结果
+  ```python
+  In [37]: parser.print_help()
+  usage: ipython [-h] --foo FOO --goo GOO [--joo {0,1,2,3,4} [{0,1,2,3,4} ...]]
+                 [--koo KOO [KOO ...]]
+
+  Argparse practice
+
+  optional arguments:
+    -h, --help            show this help message and exit
+
+  Required arguments:
+    --foo FOO             foo int
+    --goo GOO             goo float
+
+  List arguments:
+    --joo {0,1,2,3,4} [{0,1,2,3,4} ...]
+                          joo (0, 100) int list
+    --koo KOO [KOO ...]   koo string list
+
+  In [38]: parser.parse_args("--foo 32 --goo 0.2 --joo 1 2 3 --koo a b cd".split())
+  Out[38]: Namespace(foo=32, goo=0.2, joo=[1, 2, 3], koo=['a', 'b', 'cd'])
+  ```
 ***

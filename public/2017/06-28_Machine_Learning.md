@@ -534,7 +534,7 @@
   5496  (34.0, 39.0, 86.0, 90.0, 28.0)  (2.0, 85.0)   1.0
   ```
 ## Apriori 算法计算一组数据到目标值的最佳组合
-  - 计算一组发票到目标值的最佳组合
+  - [invoiceCalc.py](invoiceCalc.py)计算一组发票到目标值的最佳组合
   ```python
   # 只有最后一个元素不同的两组组合成新的元素
   levelupList = lambda l : [li | lj for i, li in enumerate(l) for lj in l[i+1:] if list(li)[:-1] == list(lj)[:-1]]
@@ -574,6 +574,9 @@
           max_inhands = max(inhands)
           target -= max_inhands
           inhands.remove(max_inhands)
+          if target <= 0:
+              print("Max bill in hand is :", max_inhands, '\tResult:', max_inhands)
+              return
 
       # 创建单个元素的列表
       inhands = [frozenset([x]) for x in inhands]

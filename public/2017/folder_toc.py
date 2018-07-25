@@ -7,8 +7,8 @@ import argparse
 def is_file_endswith_suffixs(file_name, suffix_list=[]):
     for suffix in suffix_list:
         if file_name.endswith(suffix):
-            return 1
-    return 0
+            return True
+    return False
 
 
 def folder_toc(path_name, retract_level, output_file=None, excluded_suffix=[]):
