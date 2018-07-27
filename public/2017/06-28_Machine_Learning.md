@@ -589,8 +589,8 @@
           inhands = [x for x in inhandsVal if inhandsVal[x] < target]
           inhands = levelupList(inhands)
 
-      # 过滤，只选取满足大于 target 部分最小的 num 个
-      r_valid = filter(lambda x : x[1] > target, r.items())
+      # 过滤，只选取满足大于等于 target 部分最小的 num 个
+      r_valid = filter(lambda x : x[1] >= target, r.items())
       r_sorted = sorted(r_valid, key=lambda x : x[1])
       r = dict(r_sorted[:num])
 

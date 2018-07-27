@@ -35,21 +35,39 @@ def folder_toc_2_file(path_name, retract_level, output_file_name, excluded_suffi
 
 
 def parse_arguments(argv):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument(
-        "--target_path",
+        "-i",
+        "--input_path",
         type=str,
         help="The path used to generate markdown TOC",
         default="./",
     )
-    parser.add_argument("--output", type=str, help="Output file", default="./readme.md")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        help="Output markdown file name",
+        default="./readme.md",
+    )
+    parser.add_argument(
+        "-e",
+        "--excluded_suffix",
+        type=str,
+        nargs="*",
+        default=[".jpg", ".png", ".gif"],
+        help="File suffixes that are exluded in TOC",
+    )
 
     return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
     args = parse_arguments(sys.argv[1:])
-    print("target_path = %s, output = %s" % (args.target_path, args.output))
-    folder_toc_2_file(
-        args.target_path, 0, args.output, excluded_suffix=[".jpg", ".png", ".gif"]
+    print(
+        "input_path = %s, output = %s, excluded_suffix = %s"
+        % (args.input_path, args.output, args.excluded_suffix)
     )
+    folder_toc_2_file(args.input_path, 0, args.output, args.excluded_suffix)

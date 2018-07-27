@@ -70,13 +70,14 @@ def invoiceCalc(inhands, target, exep=None, max_first=True, num=3):
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "inhands", nargs="+", type=str, help="Bills that owned, format 1, 2, 3 or 1 2 3"
     )
-
     parser.add_argument(
-        "-t", "--target", type=float, default=600, help="Target number that is needed"
+        "-t", "--target", required=True, type=float, help="Target number that is needed"
     )
+
     parser.add_argument(
         "-e",
         "--exception",
