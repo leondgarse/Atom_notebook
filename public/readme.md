@@ -63,6 +63,7 @@
   - [06-13_Tensorflow_get_started.md](./2018/06-13_Tensorflow_get_started.md)
   - [06-26_python_data_visualization.md](./2018/06-26_python_data_visualization.md)
   - [07-09_neo4j.md](./2018/07-09_neo4j.md)
+  - [08-01_flask.md](./2018/08-01_flask.md)
   - [images](./2018/images)
   - [neo4j_movie_graph.cypher](./2018/neo4j_movie_graph.cypher)
   - [persona.md](./2018/persona.md)
