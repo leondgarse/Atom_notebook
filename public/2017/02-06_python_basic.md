@@ -1384,6 +1384,26 @@
     aStr = 'What do you think of this saying "No pain, No gain"?'
     tempStr = aStr.split('\"')[1]        # split返回分割后的字符串列表，此时 tempStr = No pain, No gain
     ```
+## 二进制与常规字符串转化
+  - 将字符串转化为二进制编码
+    ```python
+    aa = "hello"
+    aa.encode("ascii")
+    # Out[29]: b'hello'
+    ```
+  - 将二进制编码转化为字符串
+    ```python
+    bb = b"hello"
+    bb.decode("ascii")
+    # Out[34]: 'hello'
+
+    # str 转化
+    str(bb)
+    # Out[35]: "b'hello'"
+
+    str(bb)[2:-1]
+    Out[36]: 'hello'
+    ```
 ## 模块 / 字符串示例程序
   - 将指定的文件备份到指定目录下，创建日期为名的文件夹，文件以时间+注释命名
     ```python
@@ -1859,7 +1879,8 @@
 
     print(twice('word'));
     print(twice(5))
-
+    ```
+    ```shell
     $ python3 lambda.py
     wordword
     10
