@@ -551,7 +551,8 @@
     2  2  7 b o
     3  3  8 b t
     4  4  9 a o
-
+    
+    grouped = df.groupby(df.k1)
     grouped.mean()
     Out[157]:
     k1
