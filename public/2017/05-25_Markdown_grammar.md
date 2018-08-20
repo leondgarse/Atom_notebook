@@ -553,6 +553,9 @@ ___2017 - 05 - 25 Markdown Grammar___
 # LaTeX 公式
   - `Packages` - `Markdown Preview Plus` - `Math Options` - `Enable Math Rendering By Default`
   - [Upmath: Markdown & LaTeX Online Editor](https://upmath.me/)
+  - 在线生成 LaTex 图片 [LaTeX equations for web](https://tex.s2cms.com/)
+
+    ![](https://tex.s2cms.ru/svg/%5Cboxed%7B%0A%20%20%5Cint%5Climits_%7B-%5Cinfty%7D%5E%7B%5Cinfty%7D%0A%20%20e%5E%7B-x%5E2%7D%20%5C%2C%20dx%20%3D%20%5Csqrt%7B%5Cpi%7D%0A%7D)
   - **LaTeX 公式示例** github 不支持显示
     - ![](images/LaTex_1.png)
       ```latex
@@ -584,17 +587,3 @@ ___2017 - 05 - 25 Markdown Grammar___
       ```latex
       $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
       ```
-$$\hat r_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
- {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$$
-
-<span class="math"><script type="math/tex; mode=display">\hat r_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
- {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}</script></span>
-
- <script src="https://tex.s2cms.ru/latex.js"></script>
- <p>$$\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
-    {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$$</p>
-
-<p align="center" style="text-align: center;"><img align="center" src="https://tex.s2cms.ru/svg/%5Chat%7Br%7D_%7Bui%7D%20%3D%20%5Cfrac%7B%5Csum%5Climits_%7Bv%20%5Cin%20N%5Ek_i(u)%7D%20%5Ctext%7Bsim%7D(u.%20v)%20%5Ccdot%20r_%7Bvi%7D%7D%0A%20%20%20%7B%5Csum%5Climits_%7Bv%20%5Cin%20N%5Ek_i(u)%7D%20%5Ctext%7Bsim%7D(u%2C%20v)%7D" alt="\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
-    {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}" /></p>
-
-![](https://tex.s2cms.ru/svg/%5Chat%7Br%7D_%7Bui%7D%20%3D%20%5Cfrac%7B%5Csum%5Climits_%7Bv%20%5Cin%20N%5Ek_i(u)%7D%20%5Ctext%7Bsim%7D(u.%20v)%20%5Ccdot%20r_%7Bvi%7D%7D%0A%20%20%20%7B%5Csum%5Climits_%7Bv%20%5Cin%20N%5Ek_i(u)%7D%20%5Ctext%7Bsim%7D(u%2C%20v)%7D)
