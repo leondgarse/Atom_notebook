@@ -961,6 +961,3 @@
     ```python
     r<ui> = b<ui> = μ + b<u> + b<i>
     ```
-    $\hat{r}_{ui} = b_{ui} = \mu + b_u + b_i$
-    
-    $\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}} {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$

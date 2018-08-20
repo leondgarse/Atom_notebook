@@ -549,3 +549,44 @@ ___2017 - 05 - 25 Markdown Grammar___
 # 生成文件夹的目录
   - [folder_toc.py](folder_toc.py)
 ***
+
+# LaTeX 公式
+  - `Packages` - `Markdown Preview Plus` - `Math Options` - `Enable Math Rendering By Default`
+  - [Upmath: Markdown & LaTeX Online Editor](https://upmath.me/)
+  - **LaTeX 公式示例**
+    - __$\hat{r}_{ui} = b_{ui} = \mu + b_u + b_i$__
+      ```latex
+      __$\hat{r}_{ui} = b_{ui} = \mu + b_u + b_i$__
+      ```
+    - $\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
+       {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$
+      ```latex
+      $\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
+       {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$
+      ```
+    - **$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}$**
+      ```latex
+      **$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}$**
+      ```
+    - $$|\vec{A}|=\sqrt{A_x^2 + A_y^2 + A_z^2}(1)$$
+      ```latex
+      $$|\vec{A}|=\sqrt{A_x^2 + A_y^2 + A_z^2}(1)$$
+      ```
+    - $$T^{\mu\nu}=\begin{pmatrix}
+      \varepsilon&0&0&0\\
+      0&\varepsilon/3&0&0\\
+      0&0&\varepsilon/3&0\\
+      0&0&0&\varepsilon/3
+      \end{pmatrix},$$
+      ```latex
+      $$T^{\mu\nu}=\begin{pmatrix}
+      \varepsilon&0&0&0\\
+      0&\varepsilon/3&0&0\\
+      0&0&\varepsilon/3&0\\
+      0&0&0&\varepsilon/3
+      \end{pmatrix},$$
+      ```
+    - $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
+      ```latex
+      $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
+      ```
