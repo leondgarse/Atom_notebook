@@ -956,8 +956,37 @@
   - **BaselineOnly** 位于 `surprise.prediction_algorithms.baseline_only.BaselineOnly`
     ```python
     help(surprise.BaselineOnly)
+    __init__(self, bsl_options={}, verbose=True)
     ```
     计算给定用户 user 与物品 item 的基线 baseline
+
+    ![](images/LaTex_NormalPredictor.png)
+## KNN 相关算法
+  - **KNNBasic** 位于 `surprise.prediction_algorithms.knns.KNNBasic`，基本的协同过滤算法
     ```python
-    r<ui> = b<ui> = μ + b<u> + b<i>
+    help(surprise.KNNBasic)
+    __init__(self, k=40, min_k=1, sim_options={}, verbose=True, **kwargs)
     ```
+    ![](images/LaTex_KNNBasic.png)
+  - **KNNWithMeans**，位于 `surprise.prediction_algorithms.knns.KNNWithMeans`，基本的协同过滤算法，考虑每个用户的评分平均值
+    ```python
+    help(surprise.KNNWithMeans)
+    __init__(self, k=40, min_k=1, sim_options={}, verbose=True, **kwargs)
+    ```
+    ![](images/LaTex_KNNWithMeans.png)
+  - **KNNWithZScore**，位于 `surprise.prediction_algorithms.knns.KNNWithZScore`，基本的协同过滤算法，考虑每个用户的正态标准化 z-score normalization
+    ```python
+    help(surprise.KNNWithZScore)
+    __init__(self, k=40, min_k=1, sim_options={}, verbose=True, **kwargs)
+    ```
+    ![](images/LaTex_KNNWithZScore.png)
+  - **KNNBaseline**，位于 `surprise.prediction_algorithms.knns.KNNBaseline`，基本的协同过滤算法，考虑基线得分 baseline rating，一般 **pearson_baseline** 有更好地预测效果
+    ```python
+    help(surprise.KNNBaseline)
+    __init__(self, k=40, min_k=1, sim_options={}, verbose=True, **kwargs)
+    ```
+    ![](images/LaTex_KNNBaseline.png)
+## Matrix Factorization-based algorithms
+## Slope One
+## Co-clustering
+***

@@ -29,6 +29,8 @@ ___2017 - 05 - 25 Markdown Grammar___
   	- [basket 转化为 markdown 转化为 calibre mobi](#basket-转化为-markdown-转化为-calibre-mobi)
   	- [Basket Notebook 格式分析](#basket-notebook-格式分析)
   	- [Python 实现](#python-实现)
+  - [生成文件夹的目录](#生成文件夹的目录)
+  - [LaTeX 公式](#latex-公式)
 
   <!-- /TOC -->
 ***
@@ -553,9 +555,9 @@ ___2017 - 05 - 25 Markdown Grammar___
 # LaTeX 公式
   - `Packages` - `Markdown Preview Plus` - `Math Options` - `Enable Math Rendering By Default`
   - [Upmath: Markdown & LaTeX Online Editor](https://upmath.me/)
-  - 在线生成 LaTex 图片 [LaTeX equations for web](https://tex.s2cms.com/)
+  - 在线生成 LaTex 图片 svg / png [LaTeX equations for web](https://tex.s2cms.com/)
 
-    ![](https://tex.s2cms.ru/svg/%5Cboxed%7B%0A%20%20%5Cint%5Climits_%7B-%5Cinfty%7D%5E%7B%5Cinfty%7D%0A%20%20e%5E%7B-x%5E2%7D%20%5C%2C%20dx%20%3D%20%5Csqrt%7B%5Cpi%7D%0A%7D)
+    ![](https://tex.s2cms.ru/svg/%7B%0A%20%20%5Cint%5Climits_%7B-%5Cinfty%7D%5E%7B%5Cinfty%7D%0A%20%20e%5E%7B-x%5E2%7D%20%5C%2C%20dx%20%3D%20%5Csqrt%7B%5Cpi%7D%0A%7D)
   - **LaTeX 公式示例** github 不支持显示
     - ![](images/LaTex_1.png)
       ```latex
@@ -587,3 +589,4 @@ ___2017 - 05 - 25 Markdown Grammar___
       ```latex
       $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
       ```
+***
