@@ -1,1 +1,0 @@
-- [Welcome to Surprise’ documentation!](http://surprise.readthedocs.io/en/stable/index.html)

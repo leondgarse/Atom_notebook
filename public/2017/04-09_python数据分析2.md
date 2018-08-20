@@ -840,7 +840,7 @@
     ```
   ```python
   # 使用一个有关餐馆小费的数据集
-  tips = pd.read_csv('ch08/tips.csv')
+  tips = pd.read_csv('practice_data/tips.csv')
   # 添加“小费占总额百分比”的列
   tips['tip_pct'] = tips['tip'] / tips['total_bill']
   tips[:3]
@@ -964,7 +964,7 @@
   - apply会将待处理的对象拆分成多个片段，然后对各片段调用传入的函数，最后尝试将各片段组合到一起
   ```python
   # 使用一个有关餐馆小费的数据集
-  tips = pd.read_csv('ch08/tips.csv')
+  tips = pd.read_csv('practice_data/tips.csv')
   # 添加“小费占总额百分比”的列
   tips['tip_pct'] = tips['tip'] / tips['total_bill']
 
@@ -1179,7 +1179,7 @@
   - pivot_table默认使用平均值聚合分组数据
     ```python
     # 使用一个有关餐馆小费的数据集
-    tips = pd.read_csv('ch08/tips.csv')
+    tips = pd.read_csv('practice_data/tips.csv')
     # 添加“小费占总额百分比”的列
     tips['tip_pct'] = tips['tip'] / tips['total_bill']
 
@@ -2557,7 +2557,7 @@
   import json
 
   # 加载json数据
-  db = json.load(open('ch07/foods-2011-10-03.json'))
+  db = json.load(open('practice_data/foods-2011-10-03.json'))
 
   # info数据集，抽取一部分字段，将字典列表转换为DataFrame
   # 名称、分类、编号以及制造商
@@ -2604,7 +2604,7 @@
   import json
 
   # 加载json数据
-  db = json.load(open('ch07/foods-2011-10-03.json'))
+  db = json.load(open('practice_data/foods-2011-10-03.json'))
   len(db)
   Out[570]: 6636
 
@@ -2898,7 +2898,7 @@
 ## 可执行代码
   ```python
   # 海地地震数据
-  data = pd.read_csv('ch08/Haiti.csv')
+  data = pd.read_csv('practice_data/Haiti.csv')
 
   # 清除错误位置信息并移除缺失分类信息
   data = data[(data.LATITUDE > 18) & (data.LATITUDE < 20) &(data.LONGITUDE > -75) & (data.LONGITUDE < -70) & data.CATEGORY.notnull()]
@@ -2978,7 +2978,7 @@
 
   m = basic_haiti_map(axes, lllat=lllat, urlat=urlat, lllon=lllon, urlon=urlon)
 
-  shapefile_path = 'ch08/PortAuPrince_Roads/PortAuPrince_Roads'
+  shapefile_path = 'practice_data/PortAuPrince_Roads/PortAuPrince_Roads'
   m.readshapefile(shapefile_path, 'roads')
 
   cat_data = data[data['category_%s' % code_to_play] == 1]
@@ -2991,7 +2991,7 @@
   - basemap提供了许多不同的地球投影以及一种将地球上的经纬度坐标投影转换为二维matplotlib图的方式
   ```python
   # Ushahidi是一家非营利软件公司，人们可以通过短信向其提供有关自然灾害和地缘政治事件的信息，这些数据集会被发布在他们的网站上以供分析和图形化
-  data = pd.read_csv('ch08/Haiti.csv')
+  data = pd.read_csv('practice_data/Haiti.csv')
 
   # 每一行表示一条从某人的手机上发送的紧急或其他问题的报告，每条报告都有一个时间戳和位置
   data[ ['INCIDENT DATE', 'DESCRIPTION', 'LATITUDE', 'LONGITUDE'] ][:3]
@@ -3138,7 +3138,7 @@
   m = basic_haiti_map(axes, lllat=lllat, urlat=urlat, lllon=lllon, urlon=urlon)
 
   # readshapefile 叠加太子港(72..33°W 18.55°N)街道地图
-  shapefile_path = 'ch08/PortAuPrince_Roads/PortAuPrince_Roads'
+  shapefile_path = 'practice_data/PortAuPrince_Roads/PortAuPrince_Roads'
   m.readshapefile(shapefile_path, 'roads')
 
   cat_data = data[data['category_%s' % code_to_play] == 1]
@@ -3231,7 +3231,7 @@
 # 2012联邦选举委员会数据库
   ```python
   # 2012年美国总统大选的数据集
-  fec = pd.read_csv('ch09/P00000001-ALL.csv')
+  fec = pd.read_csv('practice_data/P00000001-ALL.csv')
 
   # 通过unique，可以获取全部的候选人名单
   unique_cands = fec.cand_nm.unique()

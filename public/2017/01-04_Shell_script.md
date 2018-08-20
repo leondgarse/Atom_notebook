@@ -22,17 +22,20 @@
 - shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
   ```shell
   #!/bin/sh
+  #!/usr/bin/env bash
   ```
 - 当前使用的bash：
   ```shell
-  $ ps | grep $$
+  $ echo $$ # 30044
+  $ ps | grep $$  # 30044 pts/0    00:00:00 bash
+
   $ echo $SHELL
   $ which bash
   ```
 - $? - The exit status of the last command executed.
 - $$ - The process ID of the current shell. For shell scripts, this is the process ID under which they are executing.
 - $! - The process number of the last background command.
-- read 用于从用户输入
+- exit(1)表示发生错误后退出程序， exit(0)表示正常退出
 ***
 
 # 变量
@@ -448,28 +451,6 @@
     for ee in $(cat /etc/passwd); do echo $ee; done # 按照 换行符 / 空格划分 [ ??? ]
     while read line; do echo $line; done < /etc/passwd  # 按照换行符划分
     ```
-    ```shell
-TARGET_NAME = 'cbur-master'
-HELM_LIST=( $(helm list) )
-for ((i=0; $i<${#HELM_LIST[*]}; i=$i+1))
-do
-    echo ${HELM_LIST[$i]}
-    name=${HELM_LIST[$i]}
-    app_name = ....
-done
-
-TARGET_NAME='worn-cat'
-TARGET_NAME='cbur-master'
-HELM_LIST=$(helm list "^$TARGET_NAME\$")
-# Judge by string length
-if [ ${#HELM_LIST} -eq 0 ]; then
-    echo '$TARGET_NAME is installed'
-    helm delete $TARGET_NAME
-    helm ls
-fi
-
-# Install
-    ```
 ***
 
 # function 函数
@@ -539,19 +520,17 @@ fi
   - getopts,它不支持长选项 (--help)
   - getopts和getopt功能相似但又不完全相同，其中getopt是独立的可执行文件，而getopts是由Bash内置的,支持长选项以及可选参数
   - getopts options variable
-    ```
-    getopts的设计目标是在循环中运行，
-    每次执行循环，getopts就检查下一个命令行参数，并判断它是否合法,即检查参数是否以-开头，后面跟一个包含在 options 中的字母
-    如果是，就把匹配的选项字母存在指定的变量variable中，并返回退出状态0
-    如果-后面的字母没有包含在options中，就在variable中存入一个 ？，并返回退出状态0
-    如果命令行中已经没有参数，或者下一个参数不以-开头，就返回不为0的退出状态
-    ```
+    - getopts的设计目标是在循环中运行
+    - 每次执行循环，getopts就检查下一个命令行参数，并判断它是否合法,即检查参数是否以-开头，后面跟一个包含在 options 中的字母
+    - 如果是，就把匹配的选项字母存在指定的变量variable中，并返回退出状态0
+    - 如果-后面的字母没有包含在options中，就在variable中存入一个 ？，并返回退出状态0
+    - 如果命令行中已经没有参数，或者下一个参数不以-开头，就返回不为0的退出状态
   - getopts 允许把选项堆叠在一起（如 -ms）
   - 如要带参数，须在对应选项后加 :（如h后需加参数 h:ms）。此时选项和参数之间至少有一个空白字符分隔，这样的选项不能堆叠。
   - 如果在需要参数的选项之后没有找到参数，它就在给定的变量中存入 ? ，并向标准错误中写入错误消息。否则将实际参数写入特殊变量 ：OPTARG
   - 另外一个特殊变量：OPTIND，反映下一个要处理的参数索引，初值是 1，每次执行 getopts 时都会更新。
   - Example:
-    ```
+    ```shell
     #!/bin/bash
     while getopts h:ms option
     do
@@ -575,8 +554,9 @@ fi
     done
 
     echo "*** do something now ***"
-
+    ```
     Execut:
+    ```shell
     $ ./getopt.sh -h 100 -msd
     option:h, value 100
     next arg index:3
@@ -589,4 +569,49 @@ fi
     -h means hours
     -m means minutes
     -s means seconds
+    ```
+***
+
+# read 用户输入
+  - **将用户输入读入变量**
+    ```shell
+    # echo -n 指定不换行
+    echo -n "Input a string: " && read USER_STRING
+    echo $USER_STRING
+    ```
+  - **-p** 输入提示
+    ```shell
+    read -p "Input a string: " USER_STRING
+    ```
+    ```shell
+    TARGET='./foo'
+    read -p "Target file $TARGET exist, overrite it? (Y/n):" RESULT
+    if [[ ! $RESULT =~ ^[yY] ]]; then
+        echo 'Please give another name then'
+    else
+        rm -f $TARGET
+    fi
+    ```
+  - **REPLY** 如果不指定变量名，read 的结果保存在 `$REPLY` 中，不是 `REPLAY`
+    ```shell
+    read
+    echo $REPLY
+    ```
+  - **-t** 设置超时时间，超时返回非零
+    ```shell
+    read -t 5 -p "Input: " USER_STRING
+    echo $? # 142
+    ```
+  - **-s** 隐藏用户输入
+    ```shell
+    read -s -p "Input: " USER_STRING
+    ```
+  - **time** 结合 `read` 计时
+    ```shell
+    time read # real	0m4.776s
+    ```
+  - **读取文件**
+    ```shell
+    cat /etc/passwd | while read line; do echo $line; done
+    while read line; do echo $line; done < /etc/passwd
     ```

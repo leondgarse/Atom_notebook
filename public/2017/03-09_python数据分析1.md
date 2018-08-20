@@ -439,8 +439,8 @@ nonzero / where / choose
     ```
   - 第一个函数（set_trace）非常简单，可以将其放在代码中任何希望停下来查看一番的地方（比如发生异常的地方）：
     ```python
-    In [7]: run ch03/ipython_bug.py
-    > /home/wesm/book_scripts/ch03/ipython_bug.py(16)calling_things()
+    In [7]: run ipython_bug.py
+    > ipython_bug.py(16)calling_things()
          15       set_trace()
     ---> 16       throws_an_exception()
          17
@@ -1235,7 +1235,7 @@ nonzero / where / choose
         [False, False, True],
         [ True, True, True] ], dtype=bool)
     ```
-  - sum / mean / 标准差std / 方差var 等聚合计算（aggregation，通常叫做约简（reduction））既可以当做数组的实例方法调用，也可以当做顶级NumPy函数使用
+  - sum / mean / 标准差 std / 方差 var / 中位数 median 等聚合计算（aggregation，通常叫做约简（reduction））既可以当做数组的实例方法调用，也可以当做顶级NumPy函数使用
     ```python
     arr = np.random.randn(5, 4)
     arr.mean()
@@ -1247,6 +1247,14 @@ nonzero / where / choose
     arr.sum(0)        # arr.sum(axis=0) 计算纵轴上的和
     arr.sum(1)        # arr.sum(axis=1) 计算横轴上的和
     arr.sum(-1)       # axis=-1 指定最后一个坐标轴
+    ```
+  - **median 中位数** 按照大小排序后，当数组长度为奇数时，中位数为 **处于中间位置的变量值**，当数组长度为偶数时，中位数为 **中间位置的2个变量值的平均数**
+    ```python
+    np.median([1, 3, 3, 6, 5, 6, 2])
+    # Out[322]: 3.0
+
+    np.median([1, 3, 3, 6, 5, 6])
+    # Out[323]: 4.0
     ```
   - 其他方法 add / sin / power / sign
     ```python
@@ -2766,8 +2774,8 @@ nonzero / where / choose
   - DataFrame每条轴都可以有分层索引
     ```python
     frame = DataFrame(np.arange(12).reshape((4, 3)),
-       ...: index=[ ['a', 'a', 'b', 'b'], [1, 2, 1, 2] ],
-       ...: columns=[ ['Ohio', 'Ohio', 'Colorado'], ['Green', 'Red', 'Green'] ])
+        index=[ ['a', 'a', 'b', 'b'], [1, 2, 1, 2] ],
+        columns=[ ['Ohio', 'Ohio', 'Colorado'], ['Green', 'Red', 'Green'] ])
     ```
   - MultiIndex
     ```python
@@ -2823,8 +2831,8 @@ nonzero / where / choose
   - DataFrame的set_index函数会将其一个或多个列转换为行索引，并创建一个新的DataFrame
     ```python
     frame = DataFrame({'a': range(7), 'b': range(7, 0, -1),
-       ...: 'c': ['one', 'one', 'one', 'two', 'two', 'two', 'two'],
-       ...: 'd': [0, 1, 2, 0, 1, 2, 3]})
+        'c': ['one', 'one', 'one', 'two', 'two', 'two', 'two'],
+        'd': [0, 1, 2, 0, 1, 2, 3]})
     frame2 = frame.set_index(['c', 'd'])
     ```
   - 默认情况下，那些列会从DataFrame中移除，但也可以指定drop=False将其保留下来
@@ -3038,28 +3046,28 @@ nonzero / where / choose
     ```
   - read_csv / read_table读取文本文件
     ```python
-    df = pd.read_csv('ch06/ex1.csv')        # 默认使用第一行作为标题行
-    pd.read_table('ch06/ex1.csv', sep=',')        # 指定分隔符
-    pd.read_csv('ch06/ex2.csv', header=None)        # 如果文件没有标题行，指定自动分配标题
-    pd.read_csv('ch06/ex2.csv', names=list('abcd')+['message'], index_col='message')        # 指定标题名，以及作为index使用的列
-    pd.read_csv('ch06/csv_mindex.csv', index_col=['key1', 'key2'])        # 指定两个列作为层次化索引
-    pd.read_table('ch06/ex3.txt', sep='\s+')        # 分隔符是数量不等的空格，使用正则表达式指定多个空格
-    pd.read_csv('ch06/ex4.csv', skiprows=[0, 2, 3])        # 指定跳过 0, 2, 3 行
+    df = pd.read_csv('practice_data/ex1.csv')        # 默认使用第一行作为标题行
+    pd.read_table('practice_data/ex1.csv', sep=',')        # 指定分隔符
+    pd.read_csv('practice_data/ex2.csv', header=None)        # 如果文件没有标题行，指定自动分配标题
+    pd.read_csv('practice_data/ex2.csv', names=list('abcd')+['message'], index_col='message')        # 指定标题名，以及作为index使用的列
+    pd.read_csv('practice_data/csv_mindex.csv', index_col=['key1', 'key2'])        # 指定两个列作为层次化索引
+    pd.read_table('practice_data/ex3.txt', sep='\s+')        # 分隔符是数量不等的空格，使用正则表达式指定多个空格
+    pd.read_csv('practice_data/ex4.csv', skiprows=[0, 2, 3])        # 指定跳过 0, 2, 3 行
     ```
   - na_values 缺失值处理：
     ```python
     缺失数据经常是要么没有（空字符串），要么用某个标记值表示
     默认情况下，pandas会用一组经常出现的标记值进行识别，如NA、-1.#IND以及NULL等
-    pd.read_csv('ch06/ex5.csv', na_values=['foo'])        # 指定其他作为缺失值处理的字符串
+    pd.read_csv('practice_data/ex5.csv', na_values=['foo'])        # 指定其他作为缺失值处理的字符串
     sentinels = {'something':['two'], 'message':['foo']}
-    pd.read_csv('ch06/ex5.csv', na_values=sentinels)        # 使用字典，为不同的列指定不同的缺失值字符串
+    pd.read_csv('practice_data/ex5.csv', na_values=sentinels)        # 使用字典，为不同的列指定不同的缺失值字符串
     ```
   - chunksize 逐块读取文本文件
     ```python
-    pd.read_csv('ch06/ex6.csv', nrows=5)        # 指定读取前5行
+    pd.read_csv('practice_data/ex6.csv', nrows=5)        # 指定读取前5行
 
     # 要逐块读取文件，需要设置chunksize（行数）
-    chunker = pd.read_csv('ch06/ex6.csv', chunksize=1000)        # 根据chunksize对文件进行逐块迭代
+    chunker = pd.read_csv('practice_data/ex6.csv', chunksize=1000)        # 根据chunksize对文件进行逐块迭代
     # 迭代处理ex6.csv，将值计数聚合到"key"列中
     tot = Series([])
     tot = Series([])
@@ -3071,7 +3079,7 @@ nonzero / where / choose
     ```
   - to_csv 将数据写出到文本格式
     ```python
-    data.to_csv('ch06/out.csv')        # 将DataFrame输出到csv文件中
+    data.to_csv('practice_data/out.csv')        # 将DataFrame输出到csv文件中
     data.to_csv(sys.stdout, sep='|')        # 写入到stdout，使用|作为分隔符
 
     缺失值在输出结果中会被表示为空字符串
@@ -3086,17 +3094,17 @@ nonzero / where / choose
 
     dates = pd.date_range('1/1/2000', periods=7)
     ts = Series(np.arange(7), index=dates)
-    ts.to_csv('ch06/tseries.csv')
-    Series.from_csv('ch06/tseries.csv')
+    ts.to_csv('practice_data/tseries.csv')
+    Series.from_csv('practice_data/tseries.csv')
     ```
 ## 手工处理分隔符格式 csv.reader / csv.writer
   - 对于任何单字符分隔符文件，可以直接使用Python内置的csv模块，将任意已打开的文件或文件型的对象传给csv.reader
     ```python
     import csv
-    f = open('ch06/ex7.csv')
+    f = open('practice_data/ex7.csv')
     reader = csv.reader(f)
     # 为了使数据格式合乎要求，需要对其做一些整理工作
-    lines = list(csv.reader(open('ch06/ex7.csv')))
+    lines = list(csv.reader(open('practice_data/ex7.csv')))
     header, values = lines[0], lines[1:]
     data_dict = {h: v for h, v in zip(header, zip(*values))}
     ```
@@ -3124,12 +3132,12 @@ nonzero / where / choose
   - pickle存储方式默认是二进制方式，python3中与文件交互需要指定'wb' / 'rb'
   - pandas对象都有一个用于将数据以pickle形式保存到磁盘上的save方法
     ```python
-    frame = pd.read_csv('ch06/ex1.csv')
-    frame.save('ch06/frame_pickle')
+    frame = pd.read_csv('practice_data/ex1.csv')
+    frame.save('practice_data/frame_pickle')
     ```
   - pandas.load将数据读回到Python
     ```python
-    pd.load('ch06/frame_pickle')
+    pd.load('practice_data/frame_pickle')
     pickle仅建议用于短期存储格式。其原因是很难保证该格式永远是稳定的
     ```
 ## HDF5格式 (HDFStore)
@@ -3193,7 +3201,7 @@ nonzero / where / choose
   - pandas的ExcelFile类支持读取存储在Excel 2003（或更高版本）中的表格型数据
     ```python
     # 通过传入一个xls或xlsx文件的路径即可创建一个ExcelFile实例
-    xls_file = pd.ExcelFile('ch06/ex1.xlsx')
+    xls_file = pd.ExcelFile('practice_data/ex1.xlsx')
     xls_file.sheet_names
     Out[89]: ['Sheet1']
 
@@ -3466,7 +3474,7 @@ nonzero / where / choose
     ```python
     # lxml.objectify解析XML文件
     from lxml import objectify
-    path = 'ch06/mta_perf/Performance_MNR.xml'
+    path = 'practice_data/mta_perf/Performance_MNR.xml'
 
     parsed = objectify.parse(open(path))
 
@@ -4338,7 +4346,7 @@ nonzero / where / choose
 ## get_dummies 计算电影数据的各标签分布
   ```python
   mnames = ['movie_id', 'title', 'genres']
-  movies = pd.read_table('ch02/movielens/movies.dat', sep='::', header=None, names=mnames)
+  movies = pd.read_table('practice_data/movielens/movies.dat', sep='::', header=None, names=mnames)
   movies[:3]
   Out[400]:
     movie_id          title            genres

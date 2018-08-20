@@ -253,6 +253,8 @@
     sudo docker volume ls
     sudo docker volume rm hello
 
+    sudo docker container ls
+
     sudo docker image ls
     sudo docker image rm c8a8409297f2
     sudo docker rm `sudo docker image rm c8a8409297f2 2>&1 | cut -d' ' -f 21`
@@ -285,7 +287,7 @@
     conda update anaconda # update anaconda only
     conda update --all  # update all anaconda related packages
     conda update --all -c conda-forge
-    
+
     conda clean --all # clean temporary fills
     ```
 ## 启用 GPU 支持

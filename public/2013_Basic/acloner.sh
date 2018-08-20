@@ -69,9 +69,11 @@ function generate_exclude_list_base {
 /lost+found
 /home/lost+found
 /root/.gvfs
+/var/crash
 `ls -1 /home/*/.gvfs 2>/dev/null`
 `ls -1 /lib/modules/\`uname -r\`/volatile/ 2>/dev/null`
 `ls -1 /var/cache/apt/archives/partial/ 2>/dev/null`
+`ls -d1 /var/log/journal/* 2>/dev/null`
 `find /run/user/* -maxdepth 1 -name gvfs 2>/dev/null`
 " > $EXCLUDE_FILE
 
@@ -226,6 +228,13 @@ UUID=$DIST_SWAP_UUID       none            swap    sw              0       0
 else
     # Backup mode
     generate_exclude_list_addition
+    if [ -e $SQUASHFS_BACKUP_TO ]; then
+        read -p "Target file $SQUASHFS_BACKUP_TO exist, overrite it? (Y/n):" RESULT
+        if [[ ! $RESULT =~ ^[yY] ]]; then echo 'Please give another name then'; exit; fi
+
+        rm -f $SQUASHFS_BACKUP_TO
+    fi
+
     mksquashfs / "$SQUASHFS_BACKUP_TO" -no-duplicates -ef $EXCLUDE_FILE -e "$SQUASHFS_BACKUP_TO"
     if [ $? -ne 0 ]; then echo "mksquashfs error"; exit; fi
 
@@ -241,6 +250,9 @@ else
     cd -
     rm $TEMP_SYSTEM_DIR -rf
     rm $EXCLUDE_FILE -f
+
+    BACKUP_SIZE=`ls $SQUASHFS_BACKUP_TO -lh | cut -d ' ' -f 5`
+    echo "Backup size = $BACKUP_SIZE"
 fi
 
 DATE_END_S=`date +%s`

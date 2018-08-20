@@ -1,18 +1,6 @@
 # ___2017 - 01 - 17 shell 流处理命令___
 ***
 
-xargs
-set -o vi,这个时候整个命令状态就是VI编辑器了
-rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/thumbdrive/
-rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
-rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
-http://wanwentao.blog.51cto.com/2406488/582432/
-
-cat files | xargs -i -p sh -c "touch {};rm {}"
-cat files | awk '{print "touch "$1;print "rm "$1;}' | sh
-ls *.jpg *.png | sed 's/.jpg//' | sed 's/.png//' | xargs -i sh -c "mkdir -p '{}' && mv -f '{}.jpg' '{}.png' '{}'"
-mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
-
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -22,15 +10,15 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - [find](#find)
   - [grep](#grep)
   - [awk](#awk)
-  	- [awk工作流程：](#awk工作流程)
-  	- [示例：](#示例)
-  	- [awk内置变量：](#awk内置变量)
-  	- [awk自定义变量：](#awk自定义变量)
-  	- [awk 正则表达式 ~](#awk-正则表达式-)
-  	- [awk 使用 if / for 语句：](#awk-使用-if-for-语句)
+  	- [awk工作流程](#awk工作流程)
+  	- [示例](#示例)
+  	- [awk内置变量](#awk内置变量)
+  	- [awk自定义变量](#awk自定义变量)
+  	- [awk 正则表达式匹配](#awk-正则表达式匹配)
+  	- [awk 使用 if / for 语句](#awk-使用-if-for-语句)
   	- [awk 变量](#awk-变量)
-  	- [awk 其他选项：](#awk-其他选项)
-  	- [awk编程：](#awk编程)
+  	- [awk 其他选项](#awk-其他选项)
+  	- [awk编程](#awk编程)
   	- [重定向和管道](#重定向和管道)
   - [awk内置函数](#awk内置函数)
   	- [算术函数](#算术函数)
@@ -47,27 +35,51 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - [wc](#wc)
   - [diff](#diff)
   - [rename](#rename)
-  - [sort](#sort)
-  	- [-n、-r、-k、-t选项的使用：](#-n-r-k-t选项的使用)
-  	- [-k选项的语法格式](#-k选项的语法格式)
+  - [sort 排序](#sort-排序)
+  	- [参数](#参数)
+  	- [指定 分隔符 域 的排序](#指定-分隔符-域-的排序)
+  	- [k 选项的语法格式](#k-选项的语法格式)
+  	- [t 选项分割](#t-选项分割)
   - [expect](#expect)
   	- [命令](#命令)
-  	- [参数:](#参数)
-  	- [Tcl函数:](#tcl函数)
-  	- [if判断 / for循环](#if判断-for循环)
-  	- [Example expect file(exp_timeout.sh):](#example-expect-fileexptimeoutsh)
+  	- [参数](#参数)
+  	- [Tcl 函数](#tcl-函数)
+  	- [if 判断 for 循环](#if-判断-for-循环)
+  	- [Example expect file(exp_timeout.sh)](#example-expect-fileexptimeoutsh)
   - [xargs](#xargs)
   	- [FOO](#foo)
 
   <!-- /TOC -->
 ***
 
-# Three ways finding a string in a file
+# Q / A
+## 其他命令
+  - 比较两个排序后的文件内容 **comm**
+  - **dirname** 获取文件夹名，**basename** 获取文件名，**pwd** 获取当前文件夹名
+  - **set -o vi** 将整个命令状态设置为 VI 编辑器
+  - **rsync** [rsync详解之exclude排除文件](http://wanwentao.blog.51cto.com/2406488/582432/)
+    ```shell
+    rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/thumbdrive/
+    rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
+    rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
+    ```
+## grep sed awk 查找字符串
   ```shell
   $ grep -n root /etc/passwd
   $ sed -n "/root/=;/root/p" /etc/passwd
   $ cat -n /etc/passwd | sed -n '/root/p'
   $ awk '/root/{print NR": "$0}' /etc/passwd
+  ```
+## Shell 执行 python 语句
+  ```shell
+  # 执行 python 语句，将 bb 下与 aa 中文件同名的文件，复制到 cc
+  $ python -c "
+  import os
+  import shutil
+  for tt in os.listdir('./aa'):
+      if os.path.exists(os.path.join('./bb', tt)):
+          shutil.copyfile(os.path.join('./bb', tt), os.path.join('./cc', tt))
+  "
   ```
 ***
 
@@ -81,15 +93,24 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     # l symbolic link
     find ./* -maxdepth 0 -type l
     ```
-  - 流式编辑器sed命令修改当前文件夹下所有Makefile：
+  - find exec 后面需要跟上 `\;` 表示命令的分割符
+    ```shell
+    find ./* -type f -exec echo {} \;
+    ```
+    exec 后面的命令实际是展开成多条命令，需要 `;` 分割
+    ```shell
+    $ find ./* -type f -exec echo {}
+    find: missing argument to -exec
+    ```
+  - 流式编辑器sed命令修改当前文件夹下所有Makefile
     ```shell
     find ./ -name 'Makefile' -exec sed -i "s/CC = gcc/CC = arm-linux-gcc/g" {} \;
     ```
-  - insmod所有的.ko文件：
+  - insmod所有的.ko文件
     ```shell
     find ./ -name '*.ko' -exec insmod {} \;
     ```
-  - 以下命令开机加载所有的模块(/etc/init.d/rcS)：
+  - 以下命令开机加载所有的模块(/etc/init.d/rcS)
     ```shell
     find /ehome/modules/ -name *.ko -exec insmod {} \;
     ```
@@ -159,7 +180,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 ***
 
 # awk
-## awk工作流程：
+## awk工作流程
   - awk '{pattern + action}' {filenames}
   - awk [-F field-separator] 'commands' input-file(s)
   - awk -f awk-script-file input-file(s)
@@ -169,7 +190,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - 随后开始执行模式所对应的动作action
   - 接着开始读入第二条记录，直到所有的记录都读完
   - 最后执行END操作。
-## 示例：
+## 示例
   ```bash
   awk -F ':' '{print $1}' /etc/passwd
   awk -F ':' '{print $1"\t"$7}' /etc/passwd
@@ -199,7 +220,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
       echo "FDD = $FDD"
   done
   ```
-## awk内置变量：
+## awk内置变量
   ```
   # ARGC        命令行参数个数
   # ARGV        命令行参数排列
@@ -219,7 +240,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   printf version:
   awk -F ':' '{printf("filename: %-15s linenumber: %-3s columns: %-3s linecontent: %s\n",FILENAME,NR,NF,$0)}' /etc/passwd
   ```
-## awk自定义变量：
+## awk自定义变量
   ```
   # 统计/etc/passwd的账户人数
   awk 'BEGIN {count=0;print "[start]user count is ", count} {count=count+1;print $0;} END{print "[end]user count is ", count}' /etc/passwd
@@ -227,8 +248,8 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   # 统计某个文件夹下的文件占用的字节数
   ls -l | awk 'BEGIN {size=0;} {size=size+$5;} END{print "[end]size is ", size}'
   ```
-## awk 正则表达式 ~
-  ```
+## awk 正则表达式匹配
+  ```shell
   awk 'BEGIN {info="this is a test"; if(info ~ /test/){print "ok"}}'        # 包含字符串test
   awk 'BEGIN {info="hi i a"; if(info !~ "[test]"){print "ok"}}'        # 包含test中的任意一个字符
   awk 'BEGIN {info="hi i a"; if(info !~ /[test]/){print "ok"}}'        
@@ -236,7 +257,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 
   awk -F ']' '{if($1 !~ "\\[SSTK") {print $0}}' cvp.log.sstk > foo        # 特殊字符匹配转义使用 \\
   ```
-## awk 使用 if / for 语句：
+## awk 使用 if / for 语句
   - 打印第四个字段长度大于3的行
     ```
     awk -F: '{if (length($4)>3) print $0}' /etc/passwd
@@ -290,13 +311,13 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     变量列表在前面已列出，$ awk -F: '{IGNORECASE=1; $1 == "MARY"{print NR,$1,$2,$NF}'test
     把IGNORECASE设为1代表忽略大小写，打印第一个域是mary的记录数、第一个域、第二个域和最后一个域
     ```
-## awk 其他选项：
+## awk 其他选项
   - -v 定义变量值
     ```
     查找长度为3个字母的字符串：
     printf "%s\n%s\n%s\n" aaaa adf bbb | awk -F '' -vs=3 '{for(i=1; i<=NF;i++)if($i~/[a-z]/)num++; if(num==s)print $0; num=0}'
     ```
-## awk编程：
+## awk编程
   - 用户tty号
     ```
     who am i | awk '{print $2}'
@@ -692,35 +713,39 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 
 # cut
   - cut 命令从文件的每一行剪切字节、字符和字段并将这些字节、字符和字段写至标准输出
-  - cut  [-bn] [file] 或 cut [-c] [file]  或  cut [-df] [file]
-  - 必须指定 -b、-c 或 -f 标志之一
-  - -b ：以字节为单位进行分割。这些字节位置将忽略多字节字符边界，除非也指定了 -n 标志
-  - -c ：以字符为单位进行分割
-  - -d ：自定义分隔符，默认为制表符
-  - -f ：与-d一起使用，指定显示哪个区域
-  - -s, --only-delimited, do not print lines not containing delimiters
-  - 以字节为单位 -b:
+    ```shell
+    cut  [-bn] [file]
+    cut [-c] [file]
+    cut [-df] [file]
     ```
+  - **参数** 必须指定 -b / -c / -f 标志之一
+    - **-b** 以字节为单位进行分割。这些字节位置将忽略多字节字符边界，除非也指定了 -n 标志
+    - **-c** 以字符为单位进行分割
+    - **-d** 自定义分隔符，默认为制表符
+    - **-f** 与-d一起使用，指定显示哪个区域
+    - **-s** --only-delimited, do not print lines not containing delimiters
+  - **-b** 以字节为单位
+    ```shell
     $ who|cut -b 3 # extracting 3rd character
     $ who|cut -b 3-5,8 # extracting 3,4,5,8characters
     $ who|cut -b -3 # extracting first 3 characters
     $ who|cut -b 3- # extracting characters except first 3
     ```
-  - 以字符为单位 -c:
-    ```
+  - **-c** 以字符为单位
+    ```shell
     echo "星期一" | cut -c 2 # [working?]
     ```
-  - 域分割 -f:
-    ```
+  - **-f** 域分割
+    ```shell
     $ cut -d: -f1 /etc/passwd
     $ cut -d: -f1-3,5 /etc/passwd
     ```
-  - only-delimited -s:
-    ```
+  - **-s** only-delimited
+    ```shell
     $ cut -d1 -f1 /etc/passwd # output lines dont contain '1'
     $ cut -d1 -sf1 /etc/passwd # ignore lines dont contain '1'
     ```
-  - 如果文件里面的某些域是由若干个空格来间隔的，那么用cut就有点麻烦了，因为cut只擅长处理“以一个字符间隔”的文本内容
+  - cut 只擅长处理 **以一个字符间隔** 的文本内容，如果文件里面的某些域是由若干个空格来间隔的，那么用cut就有点麻烦了
     ```shell
     echo "   fff  ggg  hhh" > foo
     cat foo #    fff  ggg  hhh
@@ -736,9 +761,10 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
   - l 统计行数
   - w 统计字数
   - 这些选项可以组合使用, 输出列的顺序和数目不受选项的顺序和数目的影响, 总是按下述顺序显示并且每项最多一列
-    ```bash
+    ```shell
     行数 字数 字节数 文件名
-
+    ```
+    ```shell
     wc -lcw foo
     4 4 40 foo
     ```
@@ -847,77 +873,146 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```
 ***
 
-# sort
-  - 将文件进行排序，并将排序结果标准输出
-  - 参 数：
+# sort 排序
+## 参数
+  - **-b** 忽略每行前面开始出的空格字符
+  - **-c** 检查文件是否已经按照顺序排序
+  - **-d** 排序时，处理英文字母、数字及空格字符外，忽略其他的字符
+  - **-f** 排序时，将小写字母视为大写字母
+  - **-i** 排序时，除了040至176之间的ASCII字符外，忽略其他的字符
+  - **-k** 选择以哪个区间进行排序
+  - **-m** 将几个排序好的文件进行合并
+  - **-M** 将前面3个字母依照月份的缩写进行排序
+  - **-n** 依照数值的大小排序
+  - **-h** 按照可读方式的数字排序，如 K / M / G 大小排序
+  - **-o<输出文件>** 将排序后的结果存入指定的文件
+  - **-r** 以相反的顺序来排序
+  - **-t<分隔字符>** 指定排序时所用的栏位分隔字符
+  - **-u**  输出行中去除重复行
+  - **+<起始栏位>-<结束栏位>** 以指定的栏位来排序，范围由 **起始栏位** 到 **结束栏位的前一栏位**
+  - **--debug** 显示用于排序的域
+  - 示例
+    ```shell
+    sort foo
+    sort -u foo # 去除重复行
+    sort -r foo # 逆序排序
+    sort -n foo # 按照文件中的数字排序
+    du -hd1 | sort -h # 按照可读方式的数字排序
     ```
-    -b：忽略每行前面开始出的空格字符
-    -c：检查文件是否已经按照顺序排序
-    -d：排序时，处理英文字母、数字及空格字符外，忽略其他的字符
-    -f：排序时，将小写字母视为大写字母
-    -i：排序时，除了040至176之间的ASCII字符外，忽略其他的字符
-    -k:  选择以哪个区间进行排序
-    -m：将几个排序号的文件进行合并
-    -M：将前面3个字母依照月份的缩写进行排序
-    -n：依照数值的大小排序
-    -o<输出文件>：将排序后的结果存入制定的文件,将结果写入原文件
-    -r：以相反的顺序来排序
-    -t<分隔字符>：指定排序时所用的栏位分隔字符
-    -u: 输出行中去除重复行
-    +<起始栏位>-<结束栏位>：以指定的栏位来排序，范围由起始栏位到结束栏位的前一栏位
+## 指定 分隔符 域 的排序
+  - sort.txt
+    ```shell
+    $ cat sort.txt
+    AAA:BB:CC
+    aaa:30:1.6
+    ccc:50:3.3
+    ddd:20:4.2
+    bbb:10:2.5
+    eee:40:5.4
+    eee:60:5.1
     ```
+  - 将 BB 列按照数字从小到大顺序排列
+    ```shell
+    $ sort -n -k 2 -t: sort.txt
     ```
-    $ sort foo
-    $ sort -u foo
-    $ sort -r foo
-    $ sort -n foo
+  - 将 CC 列数字从大到小顺序排列
+    ```shell
+    $ sort -nr k 3 -t: sort.txt
     ```
-## -n、-r、-k、-t选项的使用：
-  ```
-  $ cat sort.txt
-  AAA:BB:CC
-  aaa:30:1.6
-  ccc:50:3.3
-  ddd:20:4.2
-  bbb:10:2.5
-  eee:40:5.4
-  eee:60:5.1
-  ```
-  ```
-  将BB列按照数字从小到大顺序排列
-  $ sort -nk 2 -t: sort.txt
-  将CC列数字从大到小顺序排列
-  $ sort -nrk 3 -t: sort.txt
-  ```
-## -k选项的语法格式
-  - -k选项的语法格式
-    ```
-    FStart.CStart Modifie,       FEnd.CEnd Modifier
+## k 选项的语法格式
+  - **-k 选项** 的语法格式 `F[.C][OPTS][,F[.C][OPTS]]`
+    ```shell
+    FStart.CStart Options,       FEnd.CEnd Options
     -------Start--------,        -------End--------
     FStart.CStart 选项 ,          FEnd.CEnd 选项
-
-    这个语法格式可以被其中的逗号,分为两大部分，Start部分和End部分。
-    Start部分也由三部分组成，其中的Modifier部分就是我们之前说过的类似n和r的选项部分
-
-    C.Start也是可以省略的，省略的话就表示从本域的开头部分开始
-    FStart.CStart，其中FStart就是表示使用的域，而CStart则表示在FStart域中从第几个字符开始算“排序首字符”
-    同理，在End部分中，可以设定FEnd.CEnd，如果省略.CEnd，则表示结尾到“域尾”，即本域的最后一个字符
-    如果将CEnd设定为0(零)，也是表示结尾到“域尾”。
     ```
-    ```
-    对第一个域的第二个字符开始到本域的最后一个字符为止的字符串进行排序
-    $ sort -t ' ' -k 1.2 foo
+    - 语法格式按照逗号分为两大部分，**Start 部分** 和 **End 部分**
+    - 其中的 **Options 部分** 是类似 n 和 r 的选项部分，表示单独指定该域使用的排序方式
+    - **Start 部分 FStart.CStart** 其中 **FStart** 表示使用的域，**CStart** 表示在 FStart 域中从第几个字符开始算 **排序首字符**
+    - **.CStart** 可以省略，表示从本域的开头部分开始
+    - **End 部分 FEnd.CEnd**，表示域结束的字符位置，如果不指定 End，则到整个字符串的结尾
+    - **.CEnd** 也可以省略，表示结尾到 **域尾**，即本域的最后一个字符，设定为 **0**，也是表示 **结尾到域尾**
+  - **示例**
+    ```shell
+    # 第一个域的第二个字符 到 本域的最后一个字符 排序
+    sort -t ' ' -k 1.2,1 foo
 
-    只对第一个域的第二个字母进行排序，如果相同的按照第三个域进行排序
+    # 第一个域开头 到 第一个域第二个字符 排序
+    sort -t ' ' -k 1,1.2 foo
+
+    # 只对第一个域的第二个字母进行排序，如果相同的按照第三个域进行排序
     $ sort -t ' ' -k 1.2,1.2 -nrk 3,3
     ```
+## t 选项分割
+  - **-t** 分割字符，默认按照一个或多个空格 / 制表符 分割，但划分出的字符串会包含空格
+  - 自定义分隔符时，只能指定一个，如指定空格时，如果字符串包含多个连续空格，将按照单个空格划分成多个空白部分 [ ??? ]
+    ```shell
+    $ printf "foo  bar\ngoo car\n" | sort -t " " -k2,2 --debug
+    sort: using ‘en_US.UTF-8’ sorting rules
+    foo  bar
+        ^ no match for key
+    ________
+    goo car
+        ___
+    _______
+    ```
+  - `du` 自定义指定按照 `<tab>` 分割
+    ```shell
+    du -d1 | sort -t $'\t' -k 1,1n
+    ```
+  - `ls -l` 只按照时间排序
+    ```shell
+    $ ls -l | grep -i shell
+    -rwxr-xr-x 1 leondgarse leondgarse  17660 六月 28 13:24 01-04_Shell_script.md
+    -rwxr-xr-x 1 leondgarse leondgarse  51414 八月  3 15:57 01-17_shell流处理命令.md
+    ```
+    使用默认的分隔符，会使划分出的字符串包含空格
+    ```shell
+    $ ls -l | grep -i shell | sort -k 8,8.2 -k 8.4,8 --debug
+    -rwxr-xr-x 1 leondgarse leondgarse  17660 六月 28 13:24 01-04_Shell_script.md
+                                                     __
+                                                        ___
+    _____________________________________________________________________________
+    -rwxr-xr-x 1 leondgarse leondgarse  51460 八月  3 15:58 01-17_shell流处理命令.md
+                                                     __
+                                                        ___
+    ________________________________________________________________________________
+    ```
+    可以指定 `-b` 参数，去除空格
+    ```shell
+    $ ls -l | grep -i shell | sort -b -k 8,8.2 -k 8.4,8 --debug
+    $ ls -l | grep -i shell | sort -k 8b,8.2bn -k 8.4b,8n --debug
+    ```
+    使用自定义的分隔符时，可以先用 `sed` 替换
+    ```shell
+    $ ls -l | grep -i shell | sed 's/ \+/ /g' | sort -t " " -k 8,8.2n -k 8.4,8n --debug
+    -rwxr-xr-x 1 leondgarse leondgarse 17660 六月 28 13:24 01-04_Shell_script.md
+                                                     __
+                                                        __
+    ____________________________________________________________________________
+    -rwxr-xr-x 1 leondgarse leondgarse 52009 八月 3 16:02 01-17_shell流处理命令.md
+                                                    __
+                                                       __
+    ______________________________________________________________________________
+
+    ```
+## ls 的排序功能
+  ```shell
+  ls -lh | sort -k 5,5 -h # 按照可读方式的数字排序
+
+  ls -lh | sort -k 5,5 -hr  # 等价于 ls -lhS
+  ls -lh | sort -k 5,5 -h  # 等价于 ls -lhSr
+
+  ls -lh --time-style=iso | sort -b -k6,6.3nr -k 6.5,6nr -k 7,7.3nr -k 7.5,7nr  # 等价于 ls -lht --time-style=iso
+  ls -lh --time-style=iso | sort -b -k6,6.3n -k 6.5,6n -k 7,7.3n -k 7.5,7n  # 等价于 ls -lhtr --time-style=iso
+  ```
 ***
 
 # expect
+## 命令
   - 实现自动和交互式任务进行通信
   - expect需要Tcl编程语言的支持，要在系统上运行Expect必须首先安装Tcl
-  - 第一行使用 #!/usr/bin/expect
-## 命令
+  - 第一行使用 `#!/usr/bin/expect`
   - set, 设置变量
   - set timeout, 设置后面所有的expect命令的等待响应的超时时间, -1参数用来关闭任何超时设置
   - spawn, expect内部命令, 开始一个expect交互进程，只有spawn执行的命令结果才会被expect捕捉到
@@ -963,7 +1058,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 
     send_user "val_val = $val_val\n"
     ```
-  - 用于minicom的示例：
+  - 用于 minicom 的示例：
     ```python
     set DEV "/dev/ttyUSB0"
     if {$argc>0} {
@@ -979,38 +1074,57 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```shell
     expect -c "spawn smbpasswd -a test; set timeout 2; expect \"New SMB password:\" {send \"123456\r\n\"; sleep 1}; expect \"Retype new SMB password:\" {send \"123456\r\n\"; sleep 1}; send_user \"\n\""
     ```
-## 参数:
-  ```
-  -c, 从命令行执行expect脚本
-          expect -c 'expect "\n" {send "pressed enter\n"}'
-  -re, 表示指定的的字符串是一个正则表达式
-          expect -c 'expect -re "\\\[(.*)" {puts "$expect_out(1,string)"}' # capturing [xxx, and print xxx.
-          在一个正则表达时中，可以在()中包含若干个部分并通过expect_out数组访问它们
-  -i, 可以通过来自于标准输入的读命令来交互地执行expect脚本
-          expect -i arg1 arg2 arg3
-  -d,当执行expect脚本的时候，输出调试信息
-          expect -d sample.sh
-  -D, 启动expect调试器
-          选项左边的选项会在调试器启动以前被处理。然后，在调试器启动以后，剩下的命令才会被执行
-          接受一个布尔值的参数。这个参数表示提示器必须马上启动，还是只是初始化调试器，以后再使用它
-          expect -c 'set timeout 10' -D 1 -c 'set a 1'
-  -b, 逐行地执行expect脚本
-          expect -b sample.sh
-  ```
-## Tcl函数:
-  - set response [string trimright "$raw" " "]
+## 参数
+  - **-c** 从命令行执行expect脚本
+    ```shell
+    expect -c 'expect "\n" {send "pressed enter\n"}'
     ```
-    lindex, Tcl函数，从列表/数组得到一个特定的元素
-            set user [lindex $argv 0]
-            []用来实现将函数lindex的返回值作为set命令的参数
-    isfile, Tcl函数, 验证参数指定的文件存在
-            if {[file isfile $file]!=1}
-    lappend, append string to a string array
-             lappend parametre "[lindex $argv $i]"
+  - **-r** 表示指定的的字符串是一个正则表达式
+    ```shell
+    # capturing [xxx, and print xxx.
+    expect -c 'expect -re "\\\[(.*)" {puts "$expect_out(1,string)"}'
     ```
-## if判断 / for循环
-  - if判断:
+    在一个正则表达时中，可以在 `()` 中包含若干个部分并通过 expect_out 数组访问它们
+  - **-i** 可以通过来自于标准输入的读命令来交互地执行 expect 脚本
+    ```shell
+    expect -i arg1 arg2 arg3
     ```
+  - **-d** 当执行 expect 脚本的时候，输出调试信息
+    ```shell
+    expect -d sample.sh
+    ```
+  - **-D** 启动expect调试器
+    ```shell
+    expect -c 'set timeout 10' -D 1 -c 'set a 1'
+    ```
+    - 选项左边的选项会在调试器启动以前被处理
+    - 然后，在调试器启动以后，剩下的命令才会被执行
+    - 接受一个布尔值的参数，表示提示器必须马上启动，还是只是初始化调试器，以后再使用它
+  - **-b** 逐行地执行expect脚本
+    ```shell
+    expect -b sample.sh
+    ```
+## Tcl 函数
+  - **lindex** Tcl 函数，从列表 / 数组得到一个特定的元素
+    ```python
+    set user [lindex $argv 0]
+    ```
+    `[]` 用来实现将函数 lindex 的返回值作为 set 命令的参数
+  - **isfile** Tcl 函数, 验证参数指定的文件存在
+    ```python
+    if {[file isfile $file]!=1}
+    ```
+  - **lappend** append string to a string array
+    ```python
+    lappend parametre "[lindex $argv $i]"
+    ```
+  - **trimright**
+    ```python
+    set response [string trimright "$raw" " "]
+    ```
+## if 判断 for 循环
+  - if判断
+    ```python
     if {[file isfile $file]!=1}
 
     if { {${ops}} == {telnet} } {
@@ -1022,8 +1136,8 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
       exit
     }
     ```
-  - for循环:
-    ```
+  - for循环
+    ```python
     for {set i 0} {$i<$argc} {incr i} { puts "arg$i = [lindex $argv $i]" }
 
     set parametre {}
@@ -1037,7 +1151,7 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
       incr i
     }
     ```
-## Example expect file(exp_timeout.sh):
+## Example expect file(exp_timeout.sh)
   ```python
   #!/usr/bin/expect
   # Prompt function with timeout and default.
@@ -1075,7 +1189,11 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
 ***
 
 # xargs
-## FOO
+  - xargs 与 awk
+    ```python
+    ls -1 | awk '{print "echo "$1; print "touch "$1}' | sh  
+    ls -1 | xargs -i sh -c 'echo {}; touch {}'
+    ```
   - 删除不同文件夹中的同名文件
     ```shell
     ls foo/ | sed "s/ /\\\ /g" | sed "s/'/\\\'/g" | xargs -I '{}' rm -f bar/{}
@@ -1086,7 +1204,11 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     ```
   - 将当前文件夹下所有文件夹压缩到单独的压缩文件
     ```shell
-    ls | xargs -I {} zip {}.zip {}
+    ls -1 | xargs -I {} zip -r {}.zip {}
+
+    ls -1 *.zip | sed "s/'/\\\'/" | xargs -I "{}" unzip "{}"
+    rm *.zip
+    ls -1 | sed "s/'/\\\'/" | xargs -I {} sh -c "zip -r '{}'.zip {} rm {} -r"
     ```
   - 将当前文件夹下的所有文件重命名成 `pic_` + `递增数字` + `后缀类型名` 的格式
     ```shell
@@ -1094,25 +1216,20 @@ mv ./*/* ./ && find ./* -type d | xargs -i rm -r {}
     # awk 中 $NF 表示最后一个域，NR 表示行数
     ls | sed 's/ /\\\\ /; s/(/\\\\(/; s/)/\\\\)/' | awk -F '.' 'BEGIN {IND=0;} {name[IND]=$0; type[IND]=$NF; IND++} END {for (i = 0; i < NR; i++) print name[i] " pic_" i "." type[i]}' | xargs -I {} sh -c 'mv {}'
     ```
+  - 将当前文件夹下同名的 `jpg` / `png` 移动到同一个文件夹下
+    ```shell
+    ls *.jpg *.png | sed 's/.jpg//' | sed 's/.png//' | xargs -i sh -c "mkdir -p '{}' && mv -f '{}.jpg' '{}.png' '{}'"
+    ```
+  - 移除当前路径下的所有文件夹，文件夹下的文件放到当前路径
+    ```shell
+    find ./* -type f -exec mv {} ./ \; && find ./* -type d | xargs -i rm -rf {}
+    ```
+  - 复制当前文件夹的目录结构到另一个文件夹
+    ```shell
+    find ./ -type d | sed "s/ /\\\ /g" | xargs -I "{}" mkdir ~/foo/{} -p
+    ```
+  - mp3info 查找音频文件，并删除比特率大于 320 的
+    ```shell
+    mp3info -x -p "%r#%f\n" *.mp3 | grep 320 | cut -d '#' -f 2- | sed 's/ /\\ /g' | xargs rm {} \;
+    ```
 ***
-
--size n[cwbkMG]
-       File uses n units of space, rounding up.  The following suffixes can be used:
-
-       `b'    for 512-byte blocks (this is the default if no suffix is used)
-
-       `c'    for bytes
-
-       `w'    for two-byte words
-
-       `k'    for Kibibytes (KiB, units of 1024 bytes)
-
-       `M'    for Mebibytes (MiB, units of 1024 * 1024 = 1048576 bytes)
-
-       `G'    for Gibibytes (GiB, units of 1024 * 1024 * 1024 = 1073741824 bytes)
-
-       The size does not count indirect blocks, but it does count blocks in sparse files that are not actually allocated.  Bear in mind that the `%k' and `%b'  format  specifiers  of  -printf  handle
-       sparse files differently.  The `b' suffix always denotes 512-byte blocks and never 1024-byte blocks, which is different to the behaviour of -ls.
-
-       The  +  and  - prefixes signify greater than and less than, as usual; i.e., an exact size of n units does not match.  Bear in mind that the size is rounded up to the next unit. Therefore -size
-       -1M is not equivalent to -size -1048576c.  The former only matches empty files, the latter matches files from 0 to 1,048,575 bytes.

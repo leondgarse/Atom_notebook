@@ -73,31 +73,6 @@
 
 # 参数
 ## Q / A
-  - 查看gcc版本号：gcc --version
-  - 查看linux内核版本号：uname -a
-  - exit 35     # 添加一个 exit 退出命令
-  - 比较两个排序后的文件内容 comm
-  - **dirname** 获取文件夹名，**basename** 获取文件名，**pwd** 获取当前文件夹名
-  - mp3info查找音频文件，并删除比特率大于320的
-    ```shell
-    mp3info -x -p "%r#%f\n" *.mp3 | grep 320 | cut -d '#' -f 2- | sed 's/ /\\ /g' | xargs rm {} \;
-    ```
-  - 挂载ISO文件
-    ```shell
-    sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/cn_windows_7_ultimate_with_sp1.iso /media/cdrom0/
-    ```
-  - 挂载squashfs
-    ```shell
-    sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/squashfs_backup/2017-01-19_201732.squashfs /media/cdrom0/
-    ```
-  - 格式化为FAT32，-I选项指定整个盘，NTFS格式使用mkfs.ntfs
-    ```shell
-    sudo mkfs.vfat -F 32 -I /dev/sdc
-    ```
-  - mkisofs 制作 iso 文件
-    ```shell
-    mkisofs -r -o file.iso your_folder_name/
-    ```
   - root 不能删除 ldlinux.sys 文件
     ```shell
     $ sudo rm /cdrom/boot/ -rf
@@ -193,9 +168,7 @@
     ```
 ## echo
   - echo $? 打印终止状态
-    ```
-    exit(1)表示发生错误后退出程序， exit(0)表示正常退出。
-    ```
+  - **-n** 指定不换行
   - echo "✨ 🍰 ✨"
 ## ls
   - 参数
@@ -203,6 +176,8 @@
     - **-d** 只列出目录，不显示目录中的内容
     - **-t** 时间顺序排序
     - **-r** 反序排列
+    - **-S** 按照文件大小由到小排序
+    - **--time-style** 指定时间格式 iso / full-iso / long-iso / local / +FORMAT
 ## ps
   - -a 显示有其他用户所拥有的进程的状态，
   - -x 显示没有控制终端的进程状态，
@@ -258,6 +233,7 @@
     cat -n hug-tool.txt | sed -n '5,10p'
     ```
 ## gcc
+  - 查看gcc版本号：gcc --version
   - 显示 gcc 当前搜索库文件的路径
     ```shell
     gcc -print-search-dirs
@@ -281,15 +257,10 @@
   - 使用 PS1=user$: 命令临时更改显示的命令提示符
     ```c
     PS1='[\u@\h: $PWD]# '
-
     ```
     ubuntu不能man pthread库函数：
     ```c
     sudo apt-get install manpages-posix-dev
-    ```
-  - 发行版本信息
-    ```shell
-    $ cat /proc/version
     ```
   - 禁用PrintScreen截屏
     ```shell
@@ -314,17 +285,6 @@
       ```bash
       useradd -p 'pass' test
       echo 'test:pass' | chpasswd
-      ```
-  - 取消挂载 umount 时出现的 “Device is busy”
-    - fuser 可以显示出当前哪个程序在使用磁盘上的某个文件、挂载点、甚至网络端口，并给出程序进程的详细信息
-    - fuser -mv /tmp
-      - **-m** 参数显示所有使用指定文件系统的进程，后面可以跟挂载点，或是dev设备，-v 参数给出详细的输出
-      - **-k** 参数自动把霸占着 /media/USB/ 的程序杀死
-      - **-i** 参数，这样每杀死一个程序前，都会询问
-      - fuser -mv -ik /tmp
-    - 执行延迟卸载，延迟卸载（lazy unmount）会立即卸载目录树里的文件系统，等到设备不再繁忙时才清理所有相关资源
-      ```shell
-      umount -vl /mnt/mymount/     
       ```
 ## 环境变量
   - 修改：sudo vi /etc/environment添加，或者vi ~/.bashrc添加
@@ -1001,6 +961,7 @@
     ```
     在运行e2fsck命令前，请保证设备没有被挂载
 ## NTFS disk mount error
+  - Linux 挂载 Windows 磁盘后处于只读状态
     ```shell
     The disk contains an unclean file system (0, 0).
     Metadata kept in Windows cache, refused to mount.
@@ -1008,42 +969,47 @@
     unsafe state. Please resume and shutdown Windows fully (no hibernation
     or fast restarting.)
     ```
-    The solution is so simple :
+  - 原因是 Windows 启用了 fast restart，关机后处于休眠 hibernation 状态，磁盘处于只读状态
+  - 可以重启 Windows 避免进入休眠状态
+  - 停用休眠模式
     ```shell
-    here is where NTFS-3G project come to help us:
-
-    On computers which can be dual-booted into Windows or Linux, Windows has to be fully shut down before booting into Linux, otherwise the NTFS file systems on internal disks may be left in an inconsistent state and changes made by Linux may be ignored by Windows.
-
-    So, Windows may not be left in hibernation when starting Linux, in order to avoid inconsistencies. Moreover, the fast restart feature available on recent Windows systems has to be disabled. This can be achieved by issuing as an Administrator the Windows command which disables both hibernation and fast restarting.
-
-    Double-booting Linux and Windows 8
-
-    When Windows 8 is restarted using its fast restarting feature, part of the metadata of all mounted partitions are restored to the state they were at the previous closing down. As a consequence, changes made on Linux may be lost. This can happen on any partition of an internal disk when leaving Windows 8 by selecting Shut down or Hibernate. Leaving Windows 8 by selecting Restart is apparently safe.
-
-    To avoid any loss of data, be sure the fast restarting of Windows 8 is disabled. This can be achieved by issuing as an administrator the command :
-
-    or follow this step :
-
-    Settings
-     > control panel
-     > system security
-     > administrative tools
-     > system configuration
-     > tools
-     > command prompt and launch it and type this :
-
-        powercfg /h off
-
-    You can check the current settings on :
-
-    Control Panel
-        > Hardware and Sound
-        > Power Options
-        > System Setting
-        > Choose what the power buttons do
-
+    # Windows 中
+    control panel -> system security -> administrative tools -> system configuration -> tools
+    command prompt and launch it and type this : -> "powercfg /h off"
+    ```
+    检查
+    ```shell
+    Hardware and Sound -> Power Options -> System Setting -> Choose what the power buttons do
     The box "Turn on fast startup" should either be disabled or missing.
     ```
+## 挂载与格式化
+  - **挂载 ISO 文件**
+    ```shell
+    sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/cn_windows_7_ultimate_with_sp1.iso /media/cdrom0/
+    ```
+  - **挂载 squashfs**
+    ```shell
+    sudo mount -o loop /media/leondgarse/GrandFiles_Seag/Operating_Systems/squashfs_backup/2017-01-19_201732.squashfs /media/cdrom0/
+    ```
+  - **格式化为 FAT32** `-I` 选项指定整个盘，`NTFS` 格式使用 `mkfs.ntfs`
+    ```shell
+    sudo mkfs.vfat -F 32 -I /dev/sdc
+    ```
+  - **mkisofs** 制作 iso 文件
+    ```shell
+    mkisofs -r -o file.iso your_folder_name/
+    ```
+  - 取消挂载 umount 时出现的 “Device is busy”
+    - fuser 可以显示出当前哪个程序在使用磁盘上的某个文件、挂载点、甚至网络端口，并给出程序进程的详细信息
+    - fuser -mv /tmp
+      - **-m** 参数显示所有使用指定文件系统的进程，后面可以跟挂载点，或是dev设备，-v 参数给出详细的输出
+      - **-k** 参数自动把霸占着 /media/USB/ 的程序杀死
+      - **-i** 参数，这样每杀死一个程序前，都会询问
+      - fuser -mv -ik /tmp
+    - 执行延迟卸载，延迟卸载（lazy unmount）会立即卸载目录树里的文件系统，等到设备不再繁忙时才清理所有相关资源
+      ```shell
+      umount -vl /mnt/mymount/     
+      ```
 ## gsettings schema
   ```shell
   gsettings list-schemas
@@ -1053,6 +1019,114 @@
   ibus list-engine | grep -A 5 Cinese
   gsettings set org.gnome.desktop.input-sources sources "[('ibus', 'libpinyin')]"
   ```
+## 发行版本信息
+  - `uname -a`
+  - **查看文件方式**
+    ```shell
+    $ cat /proc/version
+    # Linux version 4.15.0-30-generic (buildd@lgw01-amd64-060) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #32-Ubuntu SMP Thu Jul 26 17:42:43 UTC 2018
+
+    $ cat /etc/issue
+    # Ubuntu 18.04.1 LTS \n \l
+
+    $ ls /etc/*-release -l
+    # -rw-r--r-- 1 root root 105 七月 24 03:40 /etc/lsb-release
+    # lrwxrwxrwx 1 root root  21 七月 24 03:42 /etc/os-release -> ../usr/lib/os-release
+
+    $ cat /etc/os-release
+    # NAME="Ubuntu"
+    # VERSION="18.04.1 LTS (Bionic Beaver)"
+    # ID=ubuntu
+    # ID_LIKE=debian
+    # PRETTY_NAME="Ubuntu 18.04.1 LTS"
+    # VERSION_ID="18.04"
+    # HOME_URL="https://www.ubuntu.com/"
+    # SUPPORT_URL="https://help.ubuntu.com/"
+    # BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+    # PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+    # VERSION_CODENAME=bionic
+    # UBUNTU_CODENAME=bionic
+    ```
+  - **lsb_release**
+    ```shell
+    $ lsb_release -a
+    # No LSB modules are available.
+    # Distributor ID:	Ubuntu
+    # Description:	Ubuntu 18.04.1 LTS
+    # Release:	18.04
+    # Codename:	bionic
+    ```
+  - **dmesg**
+    ```shell
+    $ dmesg | grep "Linux version"
+    [    0.000000] Linux version 4.15.0-30-generic (buildd@lgw01-amd64-060) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #32-Ubuntu SMP Thu Jul 26 17:42:43 UTC 2018 (Ubuntu 4.15.0-30.32-generic 4.15.18)
+    ```
+  - **apt-cache**
+    ```shell
+    $ apt-cache policy vim
+    # vim:
+    #   Installed: 2:8.0.1453-1ubuntu1
+    #   Candidate: 2:8.0.1453-1ubuntu1
+    #   Version table:
+    #  *** 2:8.0.1453-1ubuntu1 500
+    #         500 http://cn.archive.ubuntu.com/ubuntu bionic/main amd64 Packages
+    #         100 /var/lib/dpkg/status
+
+    $ apt-cache policy gnome
+    # gnome:
+    #   Installed: (none)
+    #   Candidate: 1:3.22+9
+    #   Version table:
+    #      1:3.22+9 500
+    #         500 http://cn.archive.ubuntu.com/ubuntu bionic/universe amd64 Packages
+
+    $ apt-cache policy gcc
+    # gcc:
+    #   Installed: 4:7.3.0-3ubuntu2
+    #   Candidate: 4:7.3.0-3ubuntu2
+    #   Version table:
+    #  *** 4:7.3.0-3ubuntu2 500
+    #         500 http://cn.archive.ubuntu.com/ubuntu bionic/main amd64 Packages
+    #         100 /var/lib/dpkg/status
+    ```
+## journal
+  - Log 位置 `/var/log/journal`
+  - Log 磁盘使用情况
+    ```shell
+    $ journalctl --disk-usage
+    Archived and active journals take up 128.0M in the file system.
+    ```
+  - 删除 Log 到指定大小
+    ```shell
+    $ journalctl --vacuum-size=128M
+    Vacuuming done, freed 0B of archived journals from /var/log/journal/f79f87246e1e43b58dc9d94640cc2f26.
+    ```
+  - 验证 Log 工作正常
+    ```shell
+    $ journalctl --verify
+    PASS: /var/log/journal/f79f87246e1e43b58dc9d94640cc2f26/user-1000.journal
+    PASS: /var/log/journal/f79f87246e1e43b58dc9d94640cc2f26/user-1000@2677c2c78a4049d0a50ac24990177f85-000000000001e7d4-0005730372a49376.journal
+    PASS: /var/log/journal/f79f87246e1e43b58dc9d94640cc2f26/system.journal
+    ```
+  - 限制系统中 Log 大小
+    ```shell
+    $ vi /etc/systemd/journald.conf
+    - #SystemMaxUse=
+    + SystemMaxUse=128M
+    ```
+    或者限制单个文件大小与文件数量
+    ```shell
+    $ vi /etc/systemd/journald.conf
+    - #SystemMaxFileSize=
+    - #SystemMaxFiles=100
+    + SystemMaxFileSize=12M
+    + SystemMaxFiles=10
+    ```
+  - 重启服务
+    ```shell
+    $ sudo systemctl status systemd-journald.service
+    $ sudo systemctl restart systemd-journald.service
+    ```
 ***
 
 # 软件
@@ -1273,13 +1347,18 @@
     New Keyring Name: [Unprotected] -> Set password as empty
     Right click on the new keyring -> Set as default    
     ```
-## Numix
-  ```shell
-  sudo add-apt-repository ppa:numix/ppa
-  sudo apt-get install numix-...
-
-  # Set icon / theme as Numix using gnome-tweak-tool
-  ```
+## Numix FlatRemix 主题
+  - Set Themes / Cursor / Icons / Shell theme using **gnome-tweak-tool**
+  - **Numix**
+    ```shell
+    sudo add-apt-repository ppa:numix/ppa
+    sudo apt-get install numix-...
+    ```
+  - **Flat Remix**
+    ```shell
+    sudo add-apt-repository ppa:daniruiz/flat-remix
+    sudo apt-get install flat-remix
+    ```
 ## Shutter
   - [Quick Fix The “Edit” Option Disabled in Shutter in Ubuntu 18.04](http://ubuntuhandbook.org/index.php/2018/04/fix-edit-option-disabled-shutter-ubuntu-18-04/)
   - [libgoocanvas-common](https://launchpad.net/ubuntu/+archive/primary/+files/libgoocanvas-common_1.0.0-1_all.deb)
@@ -1301,6 +1380,24 @@
     sudo apt install libappindicator-dev
     sudo cpan -i Gtk2::AppIndicator
     ```
+## gnome tweak tool
+  - **Enable `Shell theme` in Gnome Tweak Tool in Ubuntu** `Apperance` -> `Shell`
+    - 打开浏览器 [GNOME Shell Extensions](https://extensions.gnome.org)
+    - 安装 **browser extension**，浏览器中点击 `click here to install browser extension`
+    - 刷新网页，如果提示 `native host connector is not detected`，安装 **chrome-gnome-shell**
+      ```shell
+      sudo apt install chrome-gnome-shell
+      ```
+    - [User Themes - GNOME Shell Extensions](https://extensions.gnome.org/extension/19/user-themes/)
+    - 点击切换按钮，安装 `Gnome Shell extension`
+    - 重新打开 `gnome-tweak-tool` -> `Apperance` -> `Shell`
+  - **隐藏系统顶栏 top bar**
+    - 安装 `GNOME Shell Extensions` 后，打开 [Hide Top Bar - GNOME Shell Extensions](https://extensions.gnome.org/extension/545/hide-top-bar/)
+    - 点击切换按钮，安装 `Hide Top Bar`
+    - 打开 `gnome-tweak-tool` -> `Extensions` -> `Hide top bar`
+    - 配置 `Sensitivity` 指定是否鼠标接近屏幕顶部时显示顶栏
+    - 配置 `Keyboard shortcuts` 指定快捷键
+    - 配置 `Intellihide` 指定何时隐藏顶栏
 ***
 
 # 系统备份恢复
