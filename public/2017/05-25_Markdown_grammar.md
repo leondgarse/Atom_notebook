@@ -584,3 +584,8 @@ ___2017 - 05 - 25 Markdown Grammar___
       ```latex
       $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
       ```
+$$\hat r_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
+ {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$$
+
+<span class="math"><script type="math/tex; mode=display">\hat r_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
+ {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}</script></span>
