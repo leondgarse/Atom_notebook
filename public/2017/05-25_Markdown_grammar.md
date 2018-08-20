@@ -553,31 +553,25 @@ ___2017 - 05 - 25 Markdown Grammar___
 # LaTeX 公式
   - `Packages` - `Markdown Preview Plus` - `Math Options` - `Enable Math Rendering By Default`
   - [Upmath: Markdown & LaTeX Online Editor](https://upmath.me/)
-  - **LaTeX 公式示例**
-    - __$\hat{r}_{ui} = b_{ui} = \mu + b_u + b_i$__
+  - **LaTeX 公式示例** github 不支持显示
+    - ![](images/LaTex_1.png)
       ```latex
       __$\hat{r}_{ui} = b_{ui} = \mu + b_u + b_i$__
       ```
-    - $\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
-       {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$
+    - ![](images/LaTex_2.png)
       ```latex
       $\hat{r}_{ui} = \frac{\sum\limits_{v \in N^k_i(u)} \text{sim}(u. v) \cdot r_{vi}}
        {\sum\limits_{v \in N^k_i(u)} \text{sim}(u, v)}$
       ```
-    - **$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}$**
+    - ![](images/LaTex_3.png)
       ```latex
       **$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}$**
       ```
-    - $$|\vec{A}|=\sqrt{A_x^2 + A_y^2 + A_z^2}(1)$$
+    - ![](images/LaTex_4.png)
       ```latex
       $$|\vec{A}|=\sqrt{A_x^2 + A_y^2 + A_z^2}(1)$$
       ```
-    - $$T^{\mu\nu}=\begin{pmatrix}
-      \varepsilon&0&0&0\\
-      0&\varepsilon/3&0&0\\
-      0&0&\varepsilon/3&0\\
-      0&0&0&\varepsilon/3
-      \end{pmatrix},$$
+    - ![](images/LaTex_5.png)
       ```latex
       $$T^{\mu\nu}=\begin{pmatrix}
       \varepsilon&0&0&0\\
@@ -586,7 +580,7 @@ ___2017 - 05 - 25 Markdown Grammar___
       0&0&0&\varepsilon/3
       \end{pmatrix},$$
       ```
-    - $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
+    - ![](images/LaTex_6.png)
       ```latex
       $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
       ```
