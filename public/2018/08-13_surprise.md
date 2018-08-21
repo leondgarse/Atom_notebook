@@ -1,128 +1,66 @@
 # ___2018 - 08 - 13 Surprise___
+***
 
-- [Welcome to Surprise’ documentation!](http://surprise.readthedocs.io/en/stable/index.html)
-## Practice
-  ```shell
-  # user item rating timestamp
-  $ head -n 10 ~/.surprise_data/ml-100k/ml-100k/u.data
-  196	242	3	881250949
-  186	302	3	891717742
-  22	377	1	878887116
-  244	51	2	880606923
-  166	346	1	886397596
-  298	474	4	884182806
-  115	265	2	881171488
-  253	465	5	891628467
-  305	451	3	886324817
-  6	86	3	883603013
-  ```
-  ```python
-  from surprise import Dataset
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  data = Dataset.load_builtin('ml-100k')
-  # Retrieve the trainset.
-  trainset = data.build_full_trainset()
+  - [___2018 - 08 - 13 Surprise___](#2018-08-13-surprise)
+  - [目录](#目录)
+  - [Getting Started](#getting-started)
+  	- [Basic usage](#basic-usage)
+  	- [使用自定义的数据集](#使用自定义的数据集)
+  	- [交叉验证迭代器 cross-validation iterators](#交叉验证迭代器-cross-validation-iterators)
+  	- [GridSearchCV 模型调参 Tune algorithm](#gridsearchcv-模型调参-tune-algorithm)
+  	- [命令行使用](#命令行使用)
+  - [Dataset and trainset](#dataset-and-trainset)
+  	- [预定义的 Dataset 保存位置](#预定义的-dataset-保存位置)
+  	- [文件 与 Dataset 与 trainset 的数据格式](#文件-与-dataset-与-trainset-的数据格式)
+  	- [raw and inner ids](#raw-and-inner-ids)
+  	- [trainset 其他方法](#trainset-其他方法)
+  - [预定义的预测算法 prediction algorithms](#预定义的预测算法-prediction-algorithms)
+  	- [AlgoBase](#algobase)
+  	- [基线法估计配置 Baselines estimates configuration](#基线法估计配置-baselines-estimates-configuration)
+  	- [相似度度量配置 Similarity measure configuration](#相似度度量配置-similarity-measure-configuration)
+  	- [GridSearchCV 中指定 bsl_options sim_options](#gridsearchcv-中指定-bsloptions-simoptions)
+  - [自定义算法 custom prediction algorithm](#自定义算法-custom-prediction-algorithm)
+  	- [The basics](#the-basics)
+  	- [The fit method](#the-fit-method)
+  	- [The trainset attribute](#the-trainset-attribute)
+  	- [When the prediction is impossible](#when-the-prediction-is-impossible)
+  	- [Using similarities and baselines](#using-similarities-and-baselines)
+  - [应用示例](#应用示例)
+  	- [获取每个用户 top-N 的推荐](#获取每个用户-top-n-的推荐)
+  	- [计算每个用户推荐的精确率 precision 与召回率 recall](#计算每个用户推荐的精确率-precision-与召回率-recall)
+  	- [获取用户或物品的 k 个最近邻](#获取用户或物品的-k-个最近邻)
+  	- [算法持久化 serialize an algorithm](#算法持久化-serialize-an-algorithm)
+  	- [获取训练数据集上的准确率](#获取训练数据集上的准确率)
+  	- [从数据集中获取数据用于无偏差的正确率估计 unbiased accuracy estimation](#从数据集中获取数据用于无偏差的正确率估计-unbiased-accuracy-estimation)
+  	- [创建可复现的测试 reproducible experiments](#创建可复现的测试-reproducible-experiments)
+  - [prediction_algorithms 模块](#predictionalgorithms-模块)
+  	- [算法基类 AlgoBase](#算法基类-algobase)
+  	- [predictions 模块](#predictions-模块)
+  	- [基础算法](#基础算法)
+  	- [KNN 相关算法](#knn-相关算法)
+  	- [矩阵分解 Matrix Factorization 相关算法](#矩阵分解-matrix-factorization-相关算法)
+  	- [Slope One 算法](#slope-one-算法)
+  	- [协同聚类 Co-clustering](#协同聚类-co-clustering)
+  - [model_selection 模块](#modelselection-模块)
+  	- [交叉验证迭代器 Cross validation iterators](#交叉验证迭代器-cross-validation-iterators)
+  	- [交叉验证 Cross validation](#交叉验证-cross-validation)
+  	- [参数选择 Parameter search](#参数选择-parameter-search)
+  - [similarities 模块](#similarities-模块)
+  - [accuracy 模块](#accuracy-模块)
+  - [dataset 模块](#dataset-模块)
+  - [Trainset 类](#trainset-类)
+  - [Reader 类](#reader-类)
+  - [dump 模块](#dump-模块)
 
-  aa = list(trainset.all_ratings())
-  aa[:5]
-  # Out[69]: [(0, 0, 3.0), (0, 528, 4.0), (0, 377, 4.0), (0, 522, 3.0), (0, 431, 5.0)]
-
-  [ii for ii in aa if ii[0]==196]
-  [tt for tt in [ii for ii in aa if ii[0]==196] if tt[1] == 302]
-
-  get_user_item_rating = lambda ds, uid, iid: [tt for tt in [ii for ii in ds.all_ratings() if ii[0] == uid] if tt[1] == iid]
-  get_user_item_rating(trainset, 196, 302)
-  # Out[73]: [(196, 302, 3.0)]
-
-  df = DataFrame(list(trainset.all_ratings()), columns=['user', 'item', 'rating'])
-  df[df.user == 196][df.item == 302]
-  df[np.logical_and(df.user == 196, df.item == 302)]
-  # Out[74]:
-  #        user  item  rating
-  # 28241   196   302     3.0
-
-  trainset.knows_user(196)
-  # Out[56]: True
-
-  trainset.knows_item(302)
-  # Out[57]: True
-
-  trainset.n_users
-  # Out[58]: 943
-
-  trainset.n_items
-  # Out[59]: 1682
-
-  trainset.n_ratings
-  # Out[60]: 100000
-
-  trainset.ur.get(196)
-  [ii for ii in trainset.ur.get(196) if ii[0] == 302]
-  dict(trainset.ur.get(196)).get(302)
-  # Out[79]: 3.0
-
-  trainset.ir.get(302)
-  [ii for ii in trainset.ir.get(302) if ii[0] == 196]
-
-  uid = trainset.to_raw_uid(196)
-  uid
-  # Out[22]: '164'
-
-  trainset.to_inner_uid(uid)
-  # Out[23]: 196
-  ```
-  ```python
-  from surprise import KNNBasic
-  from surprise import Dataset
-
-  # Load the movielens-100k dataset
-  data = Dataset.load_builtin('ml-100k')
-
-  # Retrieve the trainset.
-  trainset = data.build_full_trainset()
-
-  # Build an algorithm, and train it.
-  algo = KNNBasic()
-  algo.fit(trainset)
-
-  algo.predict(uid=196, iid=302, r_ui=4, verbose=True)
-  # Out[26]: Prediction(uid=196, iid=302, r_ui=4, est=3.52986, details={'was_impossible': True, 'reason': 'User and/or item is unkown.'})
-
-  algo.predict(uid=str(196), iid=str(302), r_ui=4, verbose=True)
-  # Out[28]: Prediction(uid='196', iid='302', r_ui=4, est=4.06292421377939, details={'actual_k': 40, 'was_impossible': False})
-
-  algo.predict(uid=trainset.to_raw_uid(196), iid=trainset.to_raw_iid(302), r_ui=4, verbose=True)
-  # Out[30]: Prediction(uid='164', iid='845', r_ui=4, est=3.772560784013482, details={'actual_k': 40, 'was_impossible': False})
-  ```
-  ```python
-  # Compute the rating prediction for given user and item.
-  predict(uid, iid, r_ui=None, clip=True, verbose=False)
-  ```
-  - uid: (Raw) id of the user. See :ref:`this note<raw_inner_note>`
-  - iid: (Raw) id of the item. See :ref:`this note<raw_inner_note>`
-  - r_ui(float): The true rating :math:`r_{ui}`. Optional, default is ``None``
-## What are raw and inner ids
-  - **Raw ids** 从文件 / dataframe 读取到的 id，可以是字符串 / 数字，从文件中读取到的会转化为字符串
-  - **Inner ids** 创建 trainset 时，每个 raw id 会被转化成唯一的整数型 inner id，用于 surprise 的计算
-  - **转化方法** trainset 的 id 转化方法 **to_inner_uid** / **to_inner_iid** / **to_raw_uid** / **to_raw_iid**
-## Where are datasets stored and how to change it?
-  By default, datasets downloaded by Surprise will be saved in the '~/.surprise_data' directory. This is also where dump files will be stored. You can change the default directory by setting the 'SURPRISE_DATA_FOLDER' environment variable.
-## prediction_algorithms
-  random_pred.NormalPredictor 	Algorithm predicting a random rating based on the distribution of the training set, which is assumed to be normal.
-  baseline_only.BaselineOnly 	Algorithm predicting the baseline estimate for given user and item.
-  knns.KNNBasic 	A basic collaborative filtering algorithm.
-  knns.KNNWithMeans 	A basic collaborative filtering algorithm, taking into account the mean ratings of each user.
-  knns.KNNWithZScore 	A basic collaborative filtering algorithm, taking into account the z-score normalization of each user.
-  knns.KNNBaseline 	A basic collaborative filtering algorithm taking into account a baseline rating.
-  matrix_factorization.SVD 	The famous SVD algorithm, as popularized by Simon Funk during the Netflix Prize.
-  matrix_factorization.SVDpp 	The SVD++ algorithm, an extension of SVD taking into account implicit ratings.
-  matrix_factorization.NMF 	A collaborative filtering algorithm based on Non-negative Matrix Factorization.
-  slope_one.SlopeOne 	A simple yet accurate collaborative filtering algorithm.
-  co_clustering.CoClustering 	A collaborative filtering algorithm based on co-clustering.
+  <!-- /TOC -->
 ***
 
 # Getting Started
 ## Basic usage
+  - [Welcome to Surprise’ documentation!](http://surprise.readthedocs.io/en/stable/index.html)
   - **交叉验证 cross-validation**
     ```python
     from surprise import SVD
@@ -187,26 +125,27 @@
     algo = KNNBasic()
     algo.fit(trainset)
     ```
-    预测用户 `user_id = 196` 对物品 `item_id = 302` 的得分 `rating`
+    预测用户 `user_id = 196` 对物品 `item_id = 242` 的得分 `rating`
     ```python
-    # the true rating
-    dict(trainset.ur.get(196)).get(302)
-    # Out[80]: 3.0
+    # the true rating， using inner_id
+    dict(trainset.ur[trainset.to_inner_uid('196')])[trainset.to_inner_iid('242')]
+    # Out[175]: 3.0
 
     # Predicting
     uid = str(196)  # raw user id (as in the ratings file). They are **strings**!
-    iid = str(302)  # raw item id (as in the ratings file). They are **strings**!
+    iid = str(242)  # raw item id (as in the ratings file). They are **strings**!
 
     # get a prediction for specific users and items.
     pred = algo.predict(uid, iid, r_ui=4, verbose=True)
-    # user: 196        item: 302        r_ui = 4.00   est = 4.06   {'actual_k': 40, 'was_impossible': False}
+    # user: 196        item: 242        r_ui = 4.00   est = 3.80   {'actual_k': 40, 'was_impossible': False}
     ```
     **predict** 方法使用的是 `raw ids`
     ```python
     predict(uid, iid, r_ui=None, clip=True, verbose=False)
 
-    uid: (Raw) id of the user. See :ref:`this note<raw_inner_note>`.
-    iid: (Raw) id of the item. See :ref:`this note<raw_inner_note>`.
+    uid: (Raw) id of the user. See :ref:`this note<raw_inner_note>`
+    iid: (Raw) id of the item. See :ref:`this note<raw_inner_note>`
+    r_ui(float): The true rating :math:`r_{ui}`. Optional, default is ``None``
     ```
 ## 使用自定义的数据集
   - 自定义数据集可以使用 csv 文件 / dataframe
@@ -367,30 +306,175 @@
     ```
 ***
 
+# Dataset and trainset
+## 预定义的 Dataset 保存位置
+  - 默认保存在 `~/.surprise_data`
+  - 同时是 `dump` 时保存算法文件的位置
+  - 通过环境变量 `SURPRISE_DATA_FOLDER` 来设置
+## 文件 与 Dataset 与 trainset 的数据格式
+  - **文件** `~/.surprise_data` 中下载的数据文件
+    ```shell
+    # user item rating timestamp
+    $ head -n 5 ~/.surprise_data/ml-100k/ml-100k/u.data
+    196	242	3	881250949
+    186	302	3	891717742
+    22	377	1	878887116
+    244	51	2	880606923
+    166	346	1	886397596
+    ```
+  - **Dataset** 按照格式 `uid`, `iid`, `rating`, `time stamp` 格式加载数据
+    ```python
+    from surprise import Dataset
+    data = Dataset.load_builtin('ml-100k')
+    data.raw_ratings[:5]
+
+    Out[63]:
+    [('196', '242', 3.0, '881250949'),
+     ('186', '302', 3.0, '891717742'),
+     ('22', '377', 1.0, '878887116'),
+     ('244', '51', 2.0, '880606923'),
+     ('166', '346', 1.0, '886397596')]
+    ```
+  - **trainset** 用于 fit 时的训练数据集，使用内部 `inner_id`
+    ```python
+    trainset = data.build_full_trainset()
+    list(trainset.all_ratings())[:5]
+    Out[77]:
+    [(0, 0, 3.0),
+     (0, 528, 4.0),
+     (0, 377, 4.0),
+     (0, 522, 3.0),
+     (0, 431, 5.0)]
+    ```
+## raw and inner ids
+  - **Raw ids** 从文件 / dataframe 读取到的 id，可以是字符串 / 数字，从文件中读取到的会转化为字符串
+  - **Inner ids** 创建 trainset 时，每个 raw id 会被转化成唯一的整数型 inner id，用于 surprise 的计算
+  - **转化方法** trainset 的 id 转化方法 **to_inner_uid** / **to_inner_iid** / **to_raw_uid** / **to_raw_iid**
+  - **Dataset 与 trainset 获取数据示例**
+    ```python
+    trainset.to_inner_uid('196')
+    # Out[78]: 0
+
+    trainset.to_inner_iid('242')
+    # Out[80]: 0
+
+    trainset.to_raw_uid(196)
+    # Out[146]: '164'
+
+    trainset.to_raw_iid(242)
+    # Out[147]: '508'
+
+    dict(trainset.ur.get(0)).get(0)
+    # Out[119]: 3.0
+    [tt for tt in [ii for ii in trainset.all_ratings() if ii[0] == 0] if tt[1] == 0]
+    # Out[128]: [(0, 0, 3.0)]
+
+    dict({ii[1]: ii[2] for ii in data.raw_ratings if ii[0] == '196'}).get('242')
+    # Out[126]: 3.0
+
+    aa = [(trainset.to_inner_iid(ii[1]), ii[2])for ii in data.raw_ratings if ii[0] == '196']
+    bb = trainset.ur.get(trainset.to_inner_uid('196'))
+    aa[:5]
+    # Out[103]: [(0, 3.0), (528, 4.0), (377, 4.0), (522, 3.0), (431, 5.0)]
+
+    bb[:5]
+    # Out[104]: [(0, 3.0), (528, 4.0), (377, 4.0), (522, 3.0), (431, 5.0)]
+    aa == bb
+    # Out[102]: True
+    ```
+## trainset 其他方法
+  - **ur / ir** 用户评分 / 物品评分，字典格式，使用 inner_id 作为键，值是 list
+    ```python
+    trainset.ur.get(0)
+    [ii for ii in trainset.ur.get(0) if ii[0] == 0]
+    dict(trainset.ur.get(0)).get(0)
+    # Out[137]: 3.0
+
+    trainset.ir.get(trainset.to_inner_iid('242'))
+    [ii for ii in trainset.ir.get(trainset.to_inner_iid('242')) if ii[0] == trainset.to_inner_uid('196')]
+    # Out[141]: [(0, 3.0)]
+    ```
+  - **knows_item(iid) / knows_user(uid)** 判断 id 是否是 trainset 中的元素
+    ```python
+    trainset.knows_user(1)
+    # Out[144]: True
+
+    trainset.knows_item(1)
+    # Out[145]: True
+    ```
+  - **n_users / n_items / n_ratings** 数据库中 用户 / 物品 / 评分 的数量
+    ```python
+    trainset.n_users
+    # Out[58]: 943
+
+    trainset.n_items
+    # Out[59]: 1682
+
+    trainset.n_ratings
+    # Out[60]: 100000
+    ```
+  - **rating_scale / global_mean** 得分范围 / 得分平均值
+    ```python
+    trainset.rating_scale
+    # Out[148]: (1, 5)
+
+    trainset.global_mean
+    # Out[149]: 3.52986
+    ```
+  - **all_users() / all_items() / all_ratings()** 遍历所有用户 / 物品 / 得分
+    ```python
+    trainset.all_users()
+    # Out[176]: range(0, 943)
+
+    trainset.all_items()
+    # Out[177]: range(0, 1682)
+
+    list(trainset.all_ratings())[:5]
+    # Out[180]: [(0, 0, 3.0), (0, 528, 4.0), (0, 377, 4.0), (0, 522, 3.0), (0, 431, 5.0)]
+    ```
+    ```python
+    # all_ratings() 转化为 DataFrame
+    df = DataFrame(list(trainset.all_ratings()), columns=['user', 'item', 'rating'])
+    df[np.logical_and(df.user == 0, df.item == 0)]
+    #    user  item  rating
+    # 0     0     0     3.0
+    ```
+  - **build_testset()** 返回整个训练数据集作为测试数据集，使用 raw_id，用于 predict
+    ```python
+    aa = trainset.build_testset()
+    len(aa)
+    # Out[184]: 100000
+
+    '242' in [ii[1] for ii in aa if ii[0] == '196']
+    # Out[195]: True
+
+    '302' in [ii[1] for ii in aa if ii[0] == '196']
+    # Out[196]: False
+    ```
+  - **build_anti_testset(fill=None)** 创建测试数据集，使用 已知的用户 / 已知的物品，创建出未知的 `用户-物品` 得分组合
+    ```python
+    bb = trainset.build_anti_testset()
+    len(bb)
+    # Out[186]: 1486126
+
+    '242' in [ii[1] for ii in bb if ii[0] == '196']
+    # Out[197]: False
+
+    '302' in [ii[1] for ii in bb if ii[0] == '196']
+    # Out[198]: True
+    ```
+***
+
 # 预定义的预测算法 prediction algorithms
 ## AlgoBase
   - Surprise 的算法都是继承自 `AlgoBase`，在 `prediction_algorithms` 包中，位于 `Surprise namespace` 中，可以用 `from surprise import` 导入
     ```python
     help(surprise.prediction_algorithms)
-
-    surprise.prediction_algorithms.AlgoBase
-    surprise.prediction_algorithms.BaselineOnly
-    surprise.prediction_algorithms.CoClustering
-    surprise.prediction_algorithms.KNNBaseline
-    surprise.prediction_algorithms.KNNBasic
-    surprise.prediction_algorithms.KNNWithMeans
-    surprise.prediction_algorithms.KNNWithZScore
-    surprise.prediction_algorithms.NMF
-    surprise.prediction_algorithms.NormalPredictor
-    surprise.prediction_algorithms.SVD
-    surprise.prediction_algorithms.SVDpp
-    surprise.prediction_algorithms.SlopeOne
     ```
 ## 基线法估计配置 Baselines estimates configuration
   - **正则化平方差 regularized squared error**
-    ```
-    ∑(r<ui> ∈ R<train>) (r<ui> − (μ + b<u> + b<i>)) ^ 2 + λ(b<u> ^ 2 + b<i> ^ 2)
-    ```
+
+    ![](images/LaTex_rse.png)
   - **Baselines** 有两种估计方法，算法标准 [Kor10](http://surprise.readthedocs.io/en/stable/notation_standards.html#koren-2010)
     - **SGD** 随机梯度下降 Stochastic Gradient Descent
     - **ALS** 交替最小二乘 Alternating Least Squares
@@ -1047,4 +1131,122 @@
 
     ![](images/LaTex_CoClustering.png)
   - 其中 $\overline{C_{ui}}$ 表示 `Cui` 的平均得分值，$\overline{C_{u}}$ 表示用户 u 的簇的平均得分值，$\overline{C_{i}}$ 表示物品 i 的簇的平均得分值
+***
+
+# model_selection 模块
+## 交叉验证迭代器 Cross validation iterators
+  - **KFold**，位于 `surprise.model_selection.split.KFold`，基本的交叉验证迭代器，使用划分的每一部分作为一次测试数据集，其他的 k-1 部分作为训练数据集
+    ```python
+    help(surprise.model_selection.split.KFold)
+    __init__(self, n_splits=5, random_state=None, shuffle=True)
+    ```
+  - **LeaveOneOut**，位于 `surprise.model_selection.split.LeaveOneOut`，每个用户在测试数据集中都有一个得分测试项
+    ```python
+    help(surprise.model_selection.split.LeaveOneOut)
+    __init__(self, n_splits=5, random_state=None, min_n_ratings=0)
+    ```
+  - **PredefinedKFold**，位于 `surprise.model_selection.split.PredefinedKFold`，处理 `load_from_folds` 加载的数据集
+    ```python
+    help(surprise.model_selection.split.PredefinedKFold)
+    ```
+  - **ShuffleSplit**，位于 `surprise.model_selection.split.ShuffleSplit`，随机划分测试 / 训练数据集
+    ```python
+    help(surprise.model_selection.split.ShuffleSplit)
+    __init__(self, n_splits=5, test_size=0.2, train_size=None, random_state=None, shuffle=True)
+    ```
+  - **train_test_split**，位于 `surprise.model_selection.split.train_test_split`，划分测试 / 训练数据集，不能用作交叉验证迭代器
+    ```python
+    help(surprise.model_selection.split.train_test_split)
+    train_test_split(data, test_size=0.2, train_size=None, random_state=None, shuffle=True)
+    ```
+## 交叉验证 Cross validation
+  - **cross_validate**，位于 `surprise.model_selection.validation.cross_validate`，基于指定算法执行交叉验证，返回正确率以及执行时间
+    ```python
+    help(surprise.model_selection.cross_validate)
+    cross_validate(algo, data, measures=['rmse', 'mae'], cv=None,
+        return_train_measures=False, n_jobs=1, pre_dispatch='2*n_jobs',
+        verbose=False)
+    ```
+## 参数选择 Parameter search
+  - **GridSearchCV**，位于 `surprise.model_selection.search.GridSearchCV`，基于交叉验证，组合不同参数，寻找最佳参数
+    ```python
+    help(surprise.model_selection.GridSearchCV)
+    __init__(self, algo_class, param_grid, measures=['rmse', 'mae'], cv=None,
+        refit=False, return_train_measures=False, n_jobs=1,
+        pre_dispatch='2*n_jobs', joblib_verbose=0)
+    ```
+  - **RandomizedSearchCV**，位于 `surprise.model_selection.search.RandomizedSearchCV`，基于交叉验证，从参数的组合中随机选取，寻找最佳参数
+    ```python
+    help(surprise.model_selection.RandomizedSearchCV)
+    __init__(self, algo_class, param_distributions, n_iter=10,
+        measures=['rmse', 'mae'], cv=None, refit=False,
+        return_train_measures=False, n_jobs=1, pre_dispatch='2*n_jobs',
+        random_state=None, joblib_verbose=0)
+    ```
+***
+
+# similarities 模块
+  - 计算用户 / 物品间的相似度矩阵
+  - **cosine**，位于 `surprise.similarities.cosine`，计算余弦相似度
+  - **msd**，位于 `surprise.similarities.msd`，计算均方差相似度 Mean Squared Difference similarity
+  - **pearson**，位于 `surprise.similarities.pearson`，计算皮尔逊相关系数 Pearson correlation coefficient
+  - **pearson_baseline**，位于 `surprise.similarities.pearson_baseline`，使用基线 baselines 而不是平均值作为中心点 centering，计算皮尔逊相关系数
+***
+
+# accuracy 模块
+  - **fcp**，位于 `surprise.accuracy.fcp`，计算预测值的 Fraction of Concordant Pairs
+  - **mae**，位于 `surprise.accuracy.mae`，计算预测值的平均绝对误差 Mean Absolute Error
+
+    ![](images/LaTex_mae.png)
+  - **rmse**，位于 `surprise.accuracy.rmse`，计算预测值的均方根误差 Root Mean Squared Error
+
+    ![](images/LaTex_rmse.png)
+***
+
+# dataset 模块
+  - 支持预定义的数据库，以及自定义的数据集库
+  - 预定义数据库，使用 `surprise.Dataset.load_builtin()` 加载
+    - **ml-100k** [The movielens-100k dataset](https://grouplens.org/datasets/movielens/)
+    - **ml-1m** [The movielens-1m dataset](https://grouplens.org/datasets/movielens/)
+    - **jester** [The Jester dataset 2](http://eigentaste.berkeley.edu/dataset/)
+  - **Dataset 类**，位于 `surprise.dataset.Dataset`，加载数据，使用 loading 方法初始化
+    - **load_builtin(name=u'ml-100k')**，加载预定义数据库，支持 `ml-100k` / `ml-1m` / `jester`，如果数据未下载则先下载，默认下载路径 `~/.surprise`
+    - **load_from_df(df, reader)**，从 pandas dataframe 中加载数据，需要定义 reader
+    - **load_from_file(file_path, reader)**，从文件加载数据，需要定义 reader
+    - **load_from_folds(folds_files, reader)**，加载预先划分好 训练 / 测试 数据集的数据文件
+  - **DatasetAutoFolds 类**，位于 `surprise.dataset.DatasetAutoFolds`，继承自 Dataset 类，用于没有预定义分组的数据集
+    - **build_full_trainset** 使用整个数据集作为训练数据集
+***
+
+# Trainset 类
+  - **Trainset 类**，位于 `surprise.Trainset`，从原始数据 datasets 初始化成可以用于 fit 等方法的训练数据集
+    ```python
+    help(surprise.Trainset)
+    __init__(self, ur, ir, n_users, n_items, n_ratings, rating_scale, offset, raw2inner_id_users, raw2inner_id_items)
+    ```
+***
+
+# Reader 类
+  - **Reader 类**，位于 `surprise.reader.Reader`，解析数据文件
+    ```python
+    help(surprise.reader.Reader)
+    __init__(self, name=None, line_format='user item rating', sep=None, rating_scale=(1, 5), skip_lines=0)
+    ```
+    数据文件每行包含一个得分值
+    ```python
+    user ; item ; rating ; [timestamp]
+    ```
+***
+
+# dump 模块
+  - **dump**，位于 `surprise.dump.dump`，使用 pickle 序列化 serialize 算法 / 预测值
+    ```python
+    help(surprise.dump.dump)
+    dump(file_name, predictions=None, algo=None, verbose=0)
+    ```
+  - **load**，位于 `surprise.dump.load`，使用 pickle 加载 dump 保存的算法 / 预测值
+    ```python
+    help(surprise.dump.load)
+    load(file_name)
+    ```
 ***
