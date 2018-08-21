@@ -986,7 +986,65 @@
     __init__(self, k=40, min_k=1, sim_options={}, verbose=True, **kwargs)
     ```
     ![](images/LaTex_KNNBaseline.png)
-## Matrix Factorization-based algorithms
-## Slope One
-## Co-clustering
+## 矩阵分解 Matrix Factorization 相关算法
+  - **SVD**，位于 `surprise.prediction_algorithms.matrix_factorization.SVD`
+    ```python
+    help(surprise.SVD)
+    __init__(self, n_factors=100, n_epochs=20, biased=True, init_mean=0, init_std_dev=0.1,
+        lr_all=0.005, reg_all=0.02, lr_bu=None, lr_bi=None, lr_pu=None, lr_qi=None,
+        reg_bu=None, reg_bi=None, reg_pu=None, reg_qi=None, random_state=None,verbose=False)
+    ```
+    - **PMF** Probabilistic Matrix Factorization，概率矩阵分解，SVD 的 `biased` 设置为 `False` 时，等价于 PMF
+    - 预测值 $\hat{r}_{ui}$ 设置为
+
+      ![](images/LaTex_SVD_1.png)
+    - 预测未知值时，将一下正则化平方误差 regularized squared error 缩减到最小
+
+      ![](images/LaTex_SVD_2.png)
+    - 缩减过程使用随机梯度下降 SGD stochastic gradient descent
+
+      ![](images/LaTex_SVD_3.png)
+  - **SVDpp**，位于 `surprise.prediction_algorithms.matrix_factorization.SVDpp`，扩展的 SVD 算法，考虑隐式评分 implicit ratings
+    ```python
+    help(surprise.SVDpp)
+    __init__(self, n_factors=20, n_epochs=20, init_mean=0, init_std_dev=0.1,
+        lr_all=0.007, reg_all=0.02, lr_bu=None, lr_bi=None, lr_pu=None, lr_qi=None,
+          lr_yj=None, reg_yj=None,
+          reg_bu=None, reg_bi=None, reg_pu=None, reg_qi=None, random_state=None, verbose=False)
+    ```
+    ![](images/LaTex_SVDpp.png)
+  - **NMF**，位于 `surprise.prediction_algorithms.matrix_factorization.NMF`，基于非负矩阵分解 Non-negative Matrix Factorization 的协同过滤算法
+    ```python
+    help(surprise.NMF)
+    __init__(self, n_factors=15, n_epochs=50, biased=False, reg_pu=0.06,
+        reg_qi=0.06, reg_bu=0.02, reg_bi=0.02, lr_bu=0.005, lr_bi=0.005,
+        init_low=0, init_high=1, random_state=None, verbose=False)
+    ```
+    - 预测值 $\hat{r}_{ui}$ 设置为
+
+      ![](images/LaTex_NMF_1.png)
+    - 缩减过程使用随机梯度下降 SGD
+
+      ![](images/LaTex_NMF_2.png)
+## Slope One 算法
+  - **SlopeOne**，位于 `surprise.prediction_algorithms.slope_one.SlopeOne`，简单高效的协同过滤算法
+    ```python
+    help(surprise.SlopeOne)
+    ```
+  - 预测值 $\hat{r}_{ui}$ 设置为
+
+    ![](images/LaTex_SlopeOne_1.png)
+  - 其中 $R_i(u)$ 是关联物品的集合，`dev(i,j)` 表示物品 i 与它的关联项目 j 之间的差值
+
+    ![](images/LaTex_SlopeOne_2.png)
+## 协同聚类 Co-clustering
+  - **CoClustering**，位于 `surprise.prediction_algorithms.co_clustering.CoClustering`，基于协同聚类 Co-clustering 的协同过滤算法
+    ```python
+    help(surprise.CoClustering)
+    __init__(self, n_cltr_u=3, n_cltr_i=3, n_epochs=20, random_state=None, verbose=False)
+    ```
+  - 用户以及物品划分到簇 `Cu` / `Ci`，以及协同聚类 `Cui` 中，簇的划分使用类似 `k-means` 的算法，预测值 $\hat{r}_{ui}$ 设置为
+
+    ![](images/LaTex_CoClustering.png)
+  - 其中 $\overline{C_{ui}}$ 表示 `Cui` 的平均得分值，$\overline{C_{u}}$ 表示用户 u 的簇的平均得分值，$\overline{C_{i}}$ 表示物品 i 的簇的平均得分值
 ***
