@@ -3261,6 +3261,37 @@ nonzero / where / choose
     import pandas.io.sql as sql
     sql.read_sql('select * from test', con)        # python3中使用read_sql替代read_frame
     ```
+  - **连接 MySQL 数据库**
+    ```shell
+    conda install -c conda-forge MySQL-python
+    ```
+    ```python
+    import MySQLdb
+
+    # 连接，类似于 mysql -h 127.0.0.1 -P 3306 -D foo -u root -p123456
+    conn = MySQLdb.connect(host='127.0.0.1',port=3306,user='root',passwd='123456',db='foo',charset='utf8', connect_timeout=5)
+    ```
+    **使用 `mysql-connector-python`**
+    ```shell
+    pip install mysql-connector-python
+    ```
+    ```python
+    import mysql.connector
+    conn = mysql.connector.connect(host='127.0.0.1',port=3306,user='root',passwd='123456',db='foo',charset='utf8', connect_timeout=5)
+    ```
+    **操作**
+    ```python
+    # 使用 cursor
+    cur = conn.cursor()
+    cur.execute("select * from websites")
+    aa = cur.fetchall()
+    DataFrame(list(aa), columns=list(zip(*cur.description))[0])
+    cur.close()
+
+    # 使用 read_sql
+    sql.read_sql('select * from websites', conn)
+    conn.close()
+    ```
 ## 存取MongoDB中的数据
   - NoSQL数据库有许多不同的形式
     ```python

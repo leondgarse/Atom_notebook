@@ -9,7 +9,7 @@
   - [Getting Started](#getting-started)
   	- [Basic usage](#basic-usage)
   	- [使用自定义的数据集](#使用自定义的数据集)
-  	- [交叉验证迭代器 cross-validation iterators](#交叉验证迭代器-cross-validation-iterators)
+  	- [使用交叉验证迭代器 cross-validation iterators](#使用交叉验证迭代器-cross-validation-iterators)
   	- [GridSearchCV 模型调参 Tune algorithm](#gridsearchcv-模型调参-tune-algorithm)
   	- [命令行使用](#命令行使用)
   - [Dataset and trainset](#dataset-and-trainset)
@@ -21,7 +21,7 @@
   	- [AlgoBase](#algobase)
   	- [基线法估计配置 Baselines estimates configuration](#基线法估计配置-baselines-estimates-configuration)
   	- [相似度度量配置 Similarity measure configuration](#相似度度量配置-similarity-measure-configuration)
-  	- [GridSearchCV 中指定 bsl_options sim_options](#gridsearchcv-中指定-bsloptions-simoptions)
+  	- [GridSearchCV 中指定 bsl options 与 sim options](#gridsearchcv-中指定-bsl-options-与-sim-options)
   - [自定义算法 custom prediction algorithm](#自定义算法-custom-prediction-algorithm)
   	- [The basics](#the-basics)
   	- [The fit method](#the-fit-method)
@@ -36,7 +36,7 @@
   	- [获取训练数据集上的准确率](#获取训练数据集上的准确率)
   	- [从数据集中获取数据用于无偏差的正确率估计 unbiased accuracy estimation](#从数据集中获取数据用于无偏差的正确率估计-unbiased-accuracy-estimation)
   	- [创建可复现的测试 reproducible experiments](#创建可复现的测试-reproducible-experiments)
-  - [prediction_algorithms 模块](#predictionalgorithms-模块)
+  - [prediction algorithms 模块](#prediction-algorithms-模块)
   	- [算法基类 AlgoBase](#算法基类-algobase)
   	- [predictions 模块](#predictions-模块)
   	- [基础算法](#基础算法)
@@ -44,7 +44,7 @@
   	- [矩阵分解 Matrix Factorization 相关算法](#矩阵分解-matrix-factorization-相关算法)
   	- [Slope One 算法](#slope-one-算法)
   	- [协同聚类 Co-clustering](#协同聚类-co-clustering)
-  - [model_selection 模块](#modelselection-模块)
+  - [model selection 模块](#model-selection-模块)
   	- [交叉验证迭代器 Cross validation iterators](#交叉验证迭代器-cross-validation-iterators)
   	- [交叉验证 Cross validation](#交叉验证-cross-validation)
   	- [参数选择 Parameter search](#参数选择-parameter-search)
@@ -195,7 +195,7 @@
     # We can now use this dataset as we please, e.g. calling cross_validate
     cross_validate(NormalPredictor(), data, cv=2)
     ```
-## 交叉验证迭代器 cross-validation iterators
+## 使用交叉验证迭代器 cross-validation iterators
   - **KFold** 定义一个 K-fold 交叉验证迭代器，**split** 方法将数据划分成 trainset / testset，**test** 测试
     ```python
     from surprise import SVD
@@ -542,7 +542,7 @@
     sim_options = {'name': 'pearson_baseline'}
     algo = KNNBasic(bsl_options=bsl_options, sim_options=sim_options)
     ```
-## GridSearchCV 中指定 bsl_options sim_options
+## GridSearchCV 中指定 bsl options 与 sim options
   ```python
   param_grid = {'k': [10, 20],
                 'sim_options': {'name': ['msd', 'cosine'],
@@ -1011,7 +1011,7 @@
     ```
 ***
 
-# prediction_algorithms 模块
+# prediction algorithms 模块
 ## 算法基类 AlgoBase
   - **AlgoBase** 位于 `surprise.prediction_algorithms.algo_base.AlgoBase`
     ```python
@@ -1133,7 +1133,7 @@
   - 其中 $\overline{C_{ui}}$ 表示 `Cui` 的平均得分值，$\overline{C_{u}}$ 表示用户 u 的簇的平均得分值，$\overline{C_{i}}$ 表示物品 i 的簇的平均得分值
 ***
 
-# model_selection 模块
+# model selection 模块
 ## 交叉验证迭代器 Cross validation iterators
   - **KFold**，位于 `surprise.model_selection.split.KFold`，基本的交叉验证迭代器，使用划分的每一部分作为一次测试数据集，其他的 k-1 部分作为训练数据集
     ```python

@@ -2256,3 +2256,74 @@
   Out[38]: Namespace(foo=32, goo=0.2, joo=[1, 2, 3], koo=['a', 'b', 'cd'])
   ```
 ***
+
+# logging
+  - **初始化设置**
+    ```python
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
+    logging.debug('This message should appear on the console')
+    logging.info('So should this')
+    logging.warning('And this, too')
+
+    # 输出到文件，需要新的执行环境
+    logging.basicConfig(filename='./foo', level=logging.DEBUG)
+    ```
+  - **log 级别**
+    ```python
+    logging.getLevelName(10)
+    # Out[13]: 'DEBUG'
+    ```
+    | NOTSET | DEBUG | INFO | WARN | ERROR | CRITICAL | FATAL |
+    | ------ | ----- | ---- | ---- | ----- | -------- | ----- |
+    | 0      | 10    | 20   | 30   | 40    | 50       | 50    |
+  - **使用 logger**
+    ```python
+    import logging
+
+    # basicConfig 添加 stdout 到 root 的 handlers
+    logging.basicConfig()
+    ll = logging.getLogger()
+    logger.handlers
+    # Out[7]: [<logging.StreamHandler at 0x7f212f9f6d90>]
+
+    ll.level
+    # Out[4]: 30
+
+    ll.setLevel(logging.DEBUG)
+    # Out[6]: 10
+
+    ll.debug('aaa')
+    ll.info('bbb')
+    ll.warning('ccc')
+    ll.error('ddd')
+    ```
+  - **Handler** 输出到文件或其他 stream
+    ```python
+    # 指定文件
+    fh = logging.FileHandler("app.log")
+    fh.setLevel(logging.INFO)
+
+    # 指定标准错误
+    sth = logging.StreamHandler(sys.stderr)
+    sth.setLevel(logging.ERROR)
+
+    # app 中添加 handler
+    ll.addHandler(fh)
+    ll.addHandler(sth)
+
+    # 查看
+    ll.handlers
+    # Out[6]:
+    # [<logging.StreamHandler at 0x7f212f9f6d90>,
+    #  <logging.FileHandler at 0x7f212fa03ad0>,
+    #  <logging.StreamHandler at 0x7f212d658550>]
+
+    # 删除
+    ll.removeHandler(ll.handlers[0])
+    ll.removeHandler(ll.handlers[1])
+    ll.handlers
+    # Out[10]: [<logging.FileHandler at 0x7f212fa03ad0>]
+    ```
+***
