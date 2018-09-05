@@ -400,6 +400,26 @@
     open("./binary", "rb").read()
     # Out[46]: b'{"message":"Hello Data"}'
     ```
+## GET 与 POST
+  - **GET**
+    - URL 中的参数使用明文
+    - 参数在 `request` 对象的 `args` 参数里
+    - 调用时 `requests.get` 方法中应使用 `params` 参数
+    ```python
+    resp = requests.get("http://127.0.0.1:5000/hello", params={"name": "world"})
+    resp.url
+    # Out[112]: 'http://127.0.0.1:5000/hello?name=world'
+    ```
+  - **POST**
+    - URL 中不显示参数
+    - 参数在 `request` 对象的 `from` 参数里
+    - 支持 `headers` 中带 `Content-type`，此时可以使用 `request.json` / `request.data` 解析参数
+    - 调用时 `requests.post` 方法中应使用 `data` 参数
+    ```python
+    resp = requests.post("http://127.0.0.1:5000/messages", headers={"Content-type": "application/json"}, data='{"message":"Hello Data"}')
+    resp.url
+    # Out[114]: 'http://127.0.0.1:5000/messages'
+    ```
 ## 文件上传 File Uploads
   - 需要在 HTML 中设置 `enctype="multipart/form-data"`，否则文件不会上传
   - **request.files** 获取上传的文件
@@ -786,4 +806,41 @@
     </tbody>
     ```
   - 不是所有的 Python 代码都可以写在模板里，如果希望从模板中引用其他文件的函数，需要显式将函数注册到模板中
+***
+
+# 部署 Deployment
+## flask run
+  ```shell
+  flask --help
+
+  export FLASK_APP=hello.py
+  # export FLASK_ENV=development
+  export FLASK_ENV=production
+  flask run
+  ```
+## waitress
+  - [Deploy to Production](flask.pocoo.org/docs/1.0/tutorial/deploy/)
+  - 安装
+    ```shell
+    pip install waitress
+    ```
+  - 脚本中不再调用 `app.run()`，而是定义函数返回 `app`
+    ```python
+    # hello.py
+    app = Flask(__name__)
+
+    def create_app():
+        return app
+
+    if __name__ == '__main__':
+        ...
+        app.run()
+    else:
+        ...
+    ```
+  - 启动，调用模块中指定的方法，如果有 `argparse`，需定义 `--call`
+    ```shell
+    # 默认端口 8080
+    waitress-serve --port 8041 --call 'hello:create_app'
+    ```
 ***

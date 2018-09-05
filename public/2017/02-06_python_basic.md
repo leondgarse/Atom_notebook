@@ -1606,20 +1606,41 @@
         def __init__(self, name, age):
             self.name = name
             self.age = age
-            print '(Initialized SchoolMember: %s)' % self.name
+            print('Initialized SchoolMember: %s' % self.name)
         def tell(self):
             '''Tell my details.'''
-            print 'Name:"%s" Age:"%s"' % (self.name, self.age),
+            print('Name: %s, Age: %s' % (self.name, self.age))
 
     class Teacher(SchoolMember):
         '''Represents a teacher.'''
         def __init__(self, name, age, salary):
             SchoolMember.__init__(self, name, age)
             self.salary = salary
-            print '(Initialized Teacher: %s)' % self.name
+            print('Initialized Teacher: %s' % self.name)
         def tell(self):
             SchoolMember.tell(self)
-            print 'Salary: "%d"' % self.salary
+            print('Salary: %d' % self.salary)
+
+    class MathTeacher(Teacher):
+        '''Represents a math teacher.'''
+        def __init__(self, name, age, salary):
+            super(MathTeacher, self).__init__(name, age, salary)
+            self.area = 'Math'
+            print('Initialized Math Teacher: %s' % self.name)
+        def tell(self):
+            SchoolMember.tell(self)
+            print('Salary: %d, Area: %s' % (self.salary, self.area))
+    ```
+    **运行结果**
+    ```py
+    mm = MathTeacher('aa', 25, 10000)
+    # Initialized SchoolMember: aa
+    # Initialized Teacher: aa
+    # Initialized Math Teacher: aa
+
+    mm.tell()
+    # Name: aa, Age: 25
+    # Salary: 10000, Area: Math
     ```
 ***
 
