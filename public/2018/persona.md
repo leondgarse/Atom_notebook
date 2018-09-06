@@ -41,12 +41,3 @@ Step5: 完善人物原型
 - 简单总结下，与用户画像（User Persona）主要来源于产品与运营人员对于客户的理解、调研与认知，用户画像（User Profile）则主要是基于真实积累的用户行为结合具体的业务场景产生的一系列标签，这些标签共同构成了对于一个用户的真实描述。
 
 - 一个典型的Persona = 名字+头像、行为、人口统计数据、需求、目标
-
-```python
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots()
-# Do the plot code
-fig.savefig('myimage.svg', format='svg', dpi=1200)
-
-I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape.
-```

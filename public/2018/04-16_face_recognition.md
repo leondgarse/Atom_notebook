@@ -1317,39 +1317,81 @@ cv2.destroyAllWindows()
   (512, 512)
   ```  
   ```python
-import imageio
-import skimage
-import time
+  import imageio
+  import skimage
+  import time
 
-vid = imageio.get_reader('/home/leondgarse/Videos/VID_20171029_062238.mp4')
-for num, im in enumerate(vid):  
-    # image 的类型是mageio.core.util.Image可用下面这一注释行转换为arrary  
-    print(im.mean())
-    image = skimage.img_as_float(im).astype(np.float64)
-    plt.clf()
-    plt.text(0, 0, 'abc')
-    plt.imshow(im)
-    time.sleep(1)
-    fig = pylab.figure()
-    fig.suptitle('image #{}'.format(num), fontsize=20)
-    pylab.imshow(im)
+  vid = imageio.get_reader('/home/leondgarse/Videos/VID_20171029_062238.mp4')
+  for num, im in enumerate(vid):  
+      # image 的类型是mageio.core.util.Image可用下面这一注释行转换为arrary  
+      print(im.mean())
+      image = skimage.img_as_float(im).astype(np.float64)
+      plt.clf()
+      plt.text(0, 0, 'abc')
+      plt.imshow(im)
+      time.sleep(1)
+      fig = pylab.figure()
+      fig.suptitle('image #{}'.format(num), fontsize=20)
+      pylab.imshow(im)
   ```
-```python
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy as np
+  ```python
+  import matplotlib.pyplot as plt
+  import matplotlib.animation as animation
+  import numpy as np
 
-# Paste your code here
-fig, ax = plt.subplots()
-ims = []
-N = 500
-x = np.random.rand(N, 50, 2)
-fakenp = np.random.rand(N, 50, 2)
-for i in range(N):
-    im1, = plt.plot(x[i, :, 0], x[i, :, 1], 'b.')
-    im2, = plt.plot(fakenp[i, :, 0], fakenp[i, :, 1], 'rx')
-    ims.append([im1, im2])
-ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
-                                repeat_delay=1000)
-ani.save('sample.mp4', writer='ffmpeg')
-```
+  # Paste your code here
+  fig, ax = plt.subplots()
+  ims = []
+  N = 500
+  x = np.random.rand(N, 50, 2)
+  fakenp = np.random.rand(N, 50, 2)
+  for i in range(N):
+      im1, = plt.plot(x[i, :, 0], x[i, :, 1], 'b.')
+      im2, = plt.plot(fakenp[i, :, 0], fakenp[i, :, 1], 'rx')
+      ims.append([im1, im2])
+  ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
+                                  repeat_delay=1000)
+  ani.save('sample.mp4', writer='ffmpeg')
+  ```
+  ```python
+  ''' 将长方形图片转化为圆形 '''
+  def image_rec_2_circle(im):
+    # 计算圆心与半径
+    xc = int(im.shape[1] / 2)
+    yc = int(im.shape[0] / 2)
+    rad = int(np.min([xc, yc]))
+
+    # 将图片转化为正方形
+    imm = im[yc - rad: yc + rad, xc - rad: xc + rad, :]
+
+    # 添加 alpha 通道，默认值 0，即全透明
+    alpha_array = np.ones((imm.shape[0], imm.shape[1], 1)) * 0
+    alpha_array = alpha_array.astype(np.uint8)
+    imm = np.concatenate([imm, alpha_array], axis=-1)
+
+    # 逐行遍历图片，计算该行的圆形区域，透明度改为 255
+    for ii in range(imm.shape[0]):
+      jj = int(np.sqrt(rad **2 - (ii - rad) ** 2))
+      imm[ii, (rad - jj):(rad + jj), 3] = 255
+
+    return imm
+
+  im = plt.imread('/home/leondgarse/Pictures/imagination_into_reality_by_angelleila-d39jvu5.jpg')
+  imm = image_rec_2_circle(im)
+  plt.imshow(imm)
+  ```
+  ```py
+  ''' 将二进制图片转化为 array '''
+  import io
+
+  imm = open('/home/leondgarse/Pictures/imagination_into_reality_by_angelleila-d39jvu5.jpg', 'rb').read()
+  im = imread(io.BytesIO(imm), format='jpg')
+  ```
+  ```python
+  import matplotlib.pyplot as plt
+  fig, ax = plt.subplots()
+  # Do the plot code
+  fig.savefig('myimage.svg', format='svg', dpi=1200)
+
+  I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape.
+  ```
