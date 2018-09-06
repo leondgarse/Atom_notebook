@@ -1,17 +1,111 @@
 # ___2018 - 08 - 27 Tensorflow Programmer's Guide___
 ***
-- [Programmer's Guide](https://www.tensorflow.org/guide/)
-- [ResNet50](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples/resnet50)
-- [mnist_eager.py](https://github.com/tensorflow/models/blob/master/official/mnist/mnist_eager.py)
-- [tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)
-- [Google Colaboratory](https://colab.research.google.com/)
-- [Save and Restore](https://github.com/tensorflow/docs/blob/master/site/en/guide/saved_model.md)
-- [Vector Representations of Words](https://github.com/tensorflow/docs/blob/master/site/en/tutorials/representation/word2vec.md)
-- [TensorFlow Debugger](https://github.com/tensorflow/docs/blob/master/site/en/guide/debugger.md)
-```python
-InternalError: Could not find valid device for node name: "SparseSoftmaxCrossEntropyWithLogits"
-```
 
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2018 - 08 - 27 Tensorflow Programmer's Guide___](#2018-08-27-tensorflow-programmers-guide)
+  - [目录](#目录)
+  - [介绍](#介绍)
+  	- [链接](#链接)
+  	- [High-level Tensorflow APIs](#high-level-tensorflow-apis)
+  	- [Checkin code for tensorflow](#checkin-code-for-tensorflow)
+  	- [Q / A](#q-a)
+  - [Keras](#keras)
+  	- [Keras 简介](#keras-简介)
+  	- [建立模型](#建立模型)
+  	- [训练](#训练)
+  	- [评估与预测](#评估与预测)
+  	- [建立复杂模型](#建立复杂模型)
+  	- [Model 与 Layer 自定义继承类](#model-与-layer-自定义继承类)
+  	- [回调 Callbacks](#回调-callbacks)
+  	- [模型存储与加载](#模型存储与加载)
+  	- [Estimators](#estimators)
+  	- [多 GPU 运行](#多-gpu-运行)
+  - [Eager Execution](#eager-execution)
+  	- [基本使用](#基本使用)
+  	- [计算梯度 GradientTape](#计算梯度-gradienttape)
+  	- [模型训练 MNIST](#模型训练-mnist)
+  	- [保存加载模型 Checkpoint](#保存加载模型-checkpoint)
+  	- [度量方式与汇总 metrics and summary](#度量方式与汇总-metrics-and-summary)
+  	- [自动梯度计算 automatic differentiation](#自动梯度计算-automatic-differentiation)
+  	- [自定义梯度计算 Custom gradients](#自定义梯度计算-custom-gradients)
+  	- [性能 Performance](#性能-performance)
+  	- [Graph 运行环境中使用 eager execution](#graph-运行环境中使用-eager-execution)
+  - [Eager execution environment and Keras layers API](#eager-execution-environment-and-keras-layers-api)
+  - [Datasets Importing Data](#datasets-importing-data)
+  	- [data API](#data-api)
+  	- [Dataset 结构](#dataset-结构)
+  	- [创建迭代器 Iterator](#创建迭代器-iterator)
+  	- [从迭代器中读取数据](#从迭代器中读取数据)
+  	- [保存迭代器状态](#保存迭代器状态)
+  	- [读取输入数据 NumPy arrays](#读取输入数据-numpy-arrays)
+  	- [读取输入数据 TFRecord data](#读取输入数据-tfrecord-data)
+  	- [读取输入数据 text data](#读取输入数据-text-data)
+  	- [读取输入数据 CSV data](#读取输入数据-csv-data)
+  	- [map 转化数据](#map-转化数据)
+  	- [打包 Batching](#打包-batching)
+  	- [Dataset 多次迭代](#dataset-多次迭代)
+  	- [随机打乱数据 Randomly shuffling input data](#随机打乱数据-randomly-shuffling-input-data)
+  	- [在其他高级 APIs 中的使用](#在其他高级-apis-中的使用)
+  - [Estimators](#estimators)
+  	- [Advantages of Estimators](#advantages-of-estimators)
+  	- [Estimator pre-made DNN model](#estimator-pre-made-dnn-model)
+  - [Estimator Checkpoints](#estimator-checkpoints)
+  	- [Estimator 保存模型](#estimator-保存模型)
+  	- [模型保存频率 Checkpointing Frequency](#模型保存频率-checkpointing-frequency)
+  	- [模型恢复 Restore](#模型恢复-restore)
+  	- [Avoiding a bad restoration](#avoiding-a-bad-restoration)
+  - [Feature Columns](#feature-columns)
+  	- [tf.feature_column 模块](#tffeaturecolumn-模块)
+  	- [Numeric column 数值列](#numeric-column-数值列)
+  	- [Bucketized column 分桶列](#bucketized-column-分桶列)
+  	- [Categorical identity column 分类识别列](#categorical-identity-column-分类识别列)
+  	- [Categorical vocabulary column 分类词汇列](#categorical-vocabulary-column-分类词汇列)
+  	- [Hashed column 哈希列](#hashed-column-哈希列)
+  	- [Crossed column 交叉列](#crossed-column-交叉列)
+  	- [Indicator columns 指示列](#indicator-columns-指示列)
+  	- [embedding columns 嵌入列](#embedding-columns-嵌入列)
+  	- [Weighted categorical column 权重分类列](#weighted-categorical-column-权重分类列)
+  	- [Passing feature columns to Estimators](#passing-feature-columns-to-estimators)
+  	- [Linear model 线性模型](#linear-model-线性模型)
+  	- [tf.make_parse_example_spec 输入转化为字典](#tfmakeparseexamplespec-输入转化为字典)
+  - [Datasets for Estimators](#datasets-for-estimators)
+  	- [Basic input](#basic-input)
+  	- [Reading a CSV File](#reading-a-csv-file)
+  - [Creating Custom Estimators](#creating-custom-estimators)
+  	- [Custom estimators 与 model function](#custom-estimators-与-model-function)
+  	- [定义模型的前向传播](#定义模型的前向传播)
+  	- [Implement training, evaluation, and prediction](#implement-training-evaluation-and-prediction)
+  	- [使用自定义模型实例化 Estimator](#使用自定义模型实例化-estimator)
+  	- [python 完整实现](#python-完整实现)
+  	- [TensorBoard](#tensorboard)
+  - [计算设备 CPU GPU TPU](#计算设备-cpu-gpu-tpu)
+  	- [支持的设备类型](#支持的设备类型)
+  	- [手动分配设备](#手动分配设备)
+  	- [TPU 使用简介](#tpu-使用简介)
+  - [Embeddings](#embeddings)
+  	- [Embeddings in TensorFlow](#embeddings-in-tensorflow)
+  	- [TensorBoard Embedding Projector](#tensorboard-embedding-projector)
+  	- [Metadata](#metadata)
+  - [TensorBoard](#tensorboard)
+  	- [TensorBoard Visualizing Learning](#tensorboard-visualizing-learning)
+
+  <!-- /TOC -->
+***
+
+# 介绍
+## 链接
+  - [Programmer's Guide](https://www.tensorflow.org/guide/)
+  - [Google Colaboratory](https://colab.research.google.com/)
+  - [Save and Restore](https://github.com/tensorflow/docs/blob/master/site/en/guide/saved_model.md)
+  - [TensorFlow Debugger](https://github.com/tensorflow/docs/blob/master/site/en/guide/debugger.md)
+  - [TensorBoard](https://github.com/tensorflow/docs/blob/master/site/en/guide/index.md#tensorboard)
+
+  - [ResNet50](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples/resnet50)
+  - [mnist_eager.py](https://github.com/tensorflow/models/blob/master/official/mnist/mnist_eager.py)
+  - [tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)
+  - [Vector Representations of Words](https://github.com/tensorflow/docs/blob/master/site/en/tutorials/representation/word2vec.md)
 ## High-level Tensorflow APIs
   - TensorFlow 程序结构
     - Import and parse the data sets
@@ -73,6 +167,18 @@ InternalError: Could not find valid device for node name: "SparseSoftmaxCrossEnt
     git push
     ```
   - Making a Pull Request on github
+## Q / A
+  - Q: Eager 执行环境中提示 `InternalError: Could not find valid device for node name: "xxx"`
+    ```py
+    tf.enable_eager_execution()
+    tf.sqrt(4)
+    # InternalError: Could not find valid device for node name: "Sqrt"
+    ```
+    A: 错误原因可能是参数类型不匹配，尝试转化为 float / int / 其他类型，同样的错误也发生在其他操作上，如 `SparseSoftmaxCrossEntropyWithLogits`
+    ```py
+    tf.sqrt(4.).numpy()
+    # Out[5]: 2.0
+    ```
 ***
 
 # Keras
@@ -2769,7 +2875,7 @@ InternalError: Could not find valid device for node name: "SparseSoftmaxCrossEnt
     ```
     start TensorBoard from command line
     ```shell
-    tensorboard --logdir=/tmp/tmpqxh_cbia
+    tensorboard --logdir=/tmp/tmpnl63y5i9
     ```
     Open TensorBoard by browsing to: http://localhost:6006
 
@@ -2979,3 +3085,123 @@ InternalError: Could not find valid device for node name: "SparseSoftmaxCrossEnt
 ***
 
 # TensorBoard
+## TensorBoard Visualizing Learning
+  - **序列化记录数据 Serializing the data**
+    - 创建计算图，并选择需要记录的节点，如使用 `tf.summary.scalar` 记录学习率变化，`tf.summary.histogram` 记录权重变化
+    - 在训练过程中 / 训练结束，重新运行记录的 summaries 操作，可以使用 `tf.summary.merge_all` 将所有的记录合并成一个
+    - 运行合并后的 summary 操作，生成 protobuf 记录数据
+    - 将记录数据写到硬盘，使用 `tf.summary.FileWriter`
+    - 在训练过程中指定 `n` 步运行一次 summary
+  - [mnist_with_summaries](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/mnist/mnist_with_summaries.py)
+    ```python
+    def variable_summaries(var):
+      """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+      with tf.name_scope('summaries'):
+        mean = tf.reduce_mean(var)
+        tf.summary.scalar('mean', mean)
+        with tf.name_scope('stddev'):
+          stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.summary.scalar('stddev', stddev)
+        tf.summary.scalar('max', tf.reduce_max(var))
+        tf.summary.scalar('min', tf.reduce_min(var))
+        tf.summary.histogram('histogram', var)
+
+    def nn_layer(input_tensor, input_dim, output_dim, layer_name, act=tf.nn.relu):
+      """Reusable code for making a simple neural net layer.
+
+      It does a matrix multiply, bias add, and then uses relu to nonlinearize.
+      It also sets up name scoping so that the resultant graph is easy to read,
+      and adds a number of summary ops.
+      """
+      # Adding a name scope ensures logical grouping of the layers in the graph.
+      with tf.name_scope(layer_name):
+        # This Variable will hold the state of the weights for the layer
+        with tf.name_scope('weights'):
+          weights = weight_variable([input_dim, output_dim])
+          variable_summaries(weights)
+        with tf.name_scope('biases'):
+          biases = bias_variable([output_dim])
+          variable_summaries(biases)
+        with tf.name_scope('Wx_plus_b'):
+          preactivate = tf.matmul(input_tensor, weights) + biases
+          tf.summary.histogram('pre_activations', preactivate)
+        activations = act(preactivate, name='activation')
+        tf.summary.histogram('activations', activations)
+        return activations
+
+    hidden1 = nn_layer(x, 784, 500, 'layer1')
+
+    with tf.name_scope('dropout'):
+      keep_prob = tf.placeholder(tf.float32)
+      tf.summary.scalar('dropout_keep_probability', keep_prob)
+      dropped = tf.nn.dropout(hidden1, keep_prob)
+
+    # Do not apply softmax activation yet, see below.
+    y = nn_layer(dropped, 500, 10, 'layer2', act=tf.identity)
+
+    with tf.name_scope('cross_entropy'):
+      # The raw formulation of cross-entropy,
+      #
+      # tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(tf.softmax(y)),
+      #                               reduction_indices=[1]))
+      #
+      # can be numerically unstable.
+      #
+      # So here we use tf.losses.sparse_softmax_cross_entropy on the
+      # raw logit outputs of the nn_layer above.
+      with tf.name_scope('total'):
+        cross_entropy = tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y)
+    tf.summary.scalar('cross_entropy', cross_entropy)
+
+    with tf.name_scope('train'):
+      train_step = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(
+          cross_entropy)
+
+    with tf.name_scope('accuracy'):
+      with tf.name_scope('correct_prediction'):
+        correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+      with tf.name_scope('accuracy'):
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    tf.summary.scalar('accuracy', accuracy)
+
+    # Merge all the summaries and write them out to /tmp/mnist_logs (by default)
+    merged = tf.summary.merge_all()
+    train_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/train',
+                                          sess.graph)
+    test_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/test')
+    tf.global_variables_initializer().run()
+    ```
+    训练 / 测试过程中使用 `FileWriters` 保存记录数据
+    ```python
+    # Train the model, and also write summaries.
+    # Every 10th step, measure test-set accuracy, and write test summaries
+    # All other steps, run train_step on training data, & add training summaries
+
+    def feed_dict(train):
+      """Make a TensorFlow feed_dict: maps data onto Tensor placeholders."""
+      if train or FLAGS.fake_data:
+        xs, ys = mnist.train.next_batch(100, fake_data=FLAGS.fake_data)
+        k = FLAGS.dropout
+      else:
+        xs, ys = mnist.test.images, mnist.test.labels
+        k = 1.0
+      return {x: xs, y_: ys, keep_prob: k}
+
+    for i in range(FLAGS.max_steps):
+      if i % 10 == 0:  # Record summaries and test-set accuracy
+        summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(False))
+        test_writer.add_summary(summary, i)
+        print('Accuracy at step %s: %s' % (i, acc))
+      else:  # Record train set summaries, and train
+        summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
+        train_writer.add_summary(summary, i)
+    ```
+  - **打开 TensorBoard** 查看记录的数据
+    ```py
+    tensorboard --logdir=path/to/log-directory
+    tensorboard --logdir=/tmp/tensorflow/mnist/logs/mnist_with_summaries/
+    # TensorBoard 1.10.0 at http://HP-Pavilion-Laptop-15:6006 (Press CTRL+C to quit)
+    ```
+    ![](images/tensorboard_scalar.png)
+    ![](images/tensorboard_histograms.png)
+***
