@@ -191,25 +191,25 @@
   - 接着开始读入第二条记录，直到所有的记录都读完
   - 最后执行END操作。
 ## 示例
-  ```bash
+  ```sh
   awk -F ':' '{print $1}' /etc/passwd
   awk -F ':' '{print $1"\t"$7}' /etc/passwd
   awk -F ':' 'BEGIN {print "name,shell"} {print $1","$7} END {print "blue,/bin/nosh"}' /etc/passwd
   ```
-  ```bash
+  ```sh
   awk -F: '/root/' /etc/passwd        # 查找root，并打印整行
   awk -F: '/root/{print $7}' /etc/passwd        # 查找root，并打印第7个分割的字符串
   ```
-  ```bash
+  ```sh
   echo "this is a test" | awk '$0~/test/{print $0}'        # 匹配正则表达式则打印
 
   awk -F : '$0~/leondgarse/{print $1}' /etc/group         # 查找用户属于的组
 
-  awk -F: '$3~/[0-9][0-9]$/{print $1"\t"$3}' /etc/passwd 第三个域以两个数字结束就打印这个记录。
-  awk -F: '$3>200 || $4==65534' /etc/passwd 第三个域大于200或者第四个域等于65534，则打印该行。
+  awk -F: '$3~/[0-9][0-9]$/{print $1"\t"$3}' /etc/passwd # 第三个域以两个数字结束就打印这个记录
+  awk -F: '$3>200 || $4==65534' /etc/passwd # 第三个域大于200或者第四个域等于65534，则打印该行
   ```
-  在 shell 脚本中，$ 需要转义
-  ```bash
+  **在 shell 脚本中，$ 需要转义**
+  ```sh
   DD="fff ggg  hhh"
   for (( i=1; ; i=$i+1 ))
   do
@@ -219,6 +219,16 @@
       fi
       echo "FDD = $FDD"
   done
+  ```
+  **计算**
+  ```sh
+  # 浮点数除法
+  awk -v aa=1 -v bb=30 'BEGIN {printf "%0.2f\n", aa / bb}'
+  awk -v aa=1 -v bb=30 'BEGIN {printf "%0.2f%%\n", aa / bb * 100}'
+
+  # 计算器
+  calc() { awk "BEGIN {print $*}"; }
+  calc '1 + 2 * 3 / 4'  # 2.5
   ```
 ## awk内置变量
   ```
@@ -1231,5 +1241,44 @@
   - mp3info 查找音频文件，并删除比特率大于 320 的
     ```shell
     mp3info -x -p "%r#%f\n" *.mp3 | grep 320 | cut -d '#' -f 2- | sed 's/ /\\ /g' | xargs rm {} \;
+    ```
+***
+
+# bc 计算
+  - **bc** 是一种任意精度的计算语言，提供了一些语法结构，比如条件判断、循环等，支持三角函数 / 指数 / 对数等运算
+  - **参数**
+    - **-i** 强制交互模式
+    - **-l** 使用bc的内置库，bc 里有一些数学库，对三角计算等非常实用
+    - **-q** 进入 bc 交互模式时不再输出版本等多余的信息
+    - **ibase** / **obase** 用于进制转换，ibase 是输入的进制，obase 是输出的进制，默认是十进制
+    - **scale** 小数保留位数，默认保留0位，`-l` 下默认保留 21 位
+  - **命令行计算**
+    ```sh
+    echo "scale=5; 1 / 30" | bc  # .03333
+    echo "scale=5; sqrt(15)" | bc  # 3.87298
+    echo "scale=5; 9 + 8 - 7 * 6 / 5 ^ 2" | bc # 15.32000
+
+    # 进制转换
+    echo "ibase=16; obase=2; ABC" | bc # 101010111100
+
+    # 计算 sin(30°)，其中 4 * arctan(1) == π
+    echo "4 * a (1)" | bc -l # 3.14159265358979323844
+    echo "scale=5; s(4 * a (1) / 6)" | bc -l  # .49999
+    ```
+  - **交互式计算**
+    ```sh
+    bc -l -q
+
+    4 / 3
+    1.33333333333333333333
+
+    scale = 5
+    4 / 3
+    1.33333
+
+    ibase = 2; 1010101
+    85
+
+    quit
     ```
 ***

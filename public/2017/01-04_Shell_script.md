@@ -158,20 +158,75 @@
     ```
 ***
 
-# 计算
-  - expr 3 \ * 2 expr 用于对一个表达式求值，乘法符号必须被转义
-  - echo $? 显示结果
-  - $((expression)) 双括号代替 expr 命令计算表达式的值
-  - 计算时间间隔
+# 计算 expr
+  - **expr** 用于对一个表达式求值，只适用于整数运算，乘法符号必须被转义
+    ```sh
+    ''' 数学运算 + / - / * / / / % '''
+    expr 3 \* 2 # 6
+
+    ''' 关系运算 | / & '''
+    expr 3 \| 2 # 3
+    expr 0 \| 2 # 2
+
+    ''' 逻辑运算 < / <= / > / >= / = / !='''
+    expr 0 \< 2 # 1
+    expr 0 != 2 # 1
+    expr 0 == 2 # 0
+    ```
+  - **`$((expression))` / `$[expression]`** 双括号 / 方括号代替 expr 命令计算表达式的值
+    - 使用 `$(( ))` / `$[ ]` 效果类似
+    - `*` 乘法符号等不需要转义
+    - `|` / `&` / `^` 表示二进制运算
+    - `||` / `&&` 表示逻辑运算
+    - `==` 用于判断相等
+    ```py
+    echo $(( 2 * 5 )) # 10
+
+    echo $(( 2 | 5 )) # 7
+    echo $(( 2 & 5 )) # 0
+    echo $(( 2 ^ 5 )) # 7
+
+    echo $(( 2 || 0 ))  # 1
+    echo $(( 2 && 0 ))  # 0
+
+    echo $(( 2 == 3 ))  # 0
+    ```
+  - **用于字符串**
+    ```sh
+    ''' length 计算字符串长度'''
+    expr length 'foo'
+    # 3
+
+    ''' substr 抽取子字符串 '''
+    expr substr 'foogoo' 4 6
+    # goo
+
+    ''' match 从第一个字符匹配正则表达式，返回匹配到的长度 '''
+    expr match 'fooogoo' '.*g'
+    # 5
+    expr match 'fooogoo' '.*g*'
+    # 7
+    expr match 'fooogoo' 'goo'
+    # 0
+
+    ''' index 第一个匹配到任意一个字符的位置 '''
+    expr index 'foogoo' 'o'
+    # 2
+    expr index 'foogoo' 'og'
+    # 2
+    ```
+  - **计算时间间隔**
     ```shell
     DA=`date +%s`
     echo $DA  # 1510222879
     DB=`date +%s`
     echo $DB  # 1510224086
+
     TM=$(expr \( $DB - $DA \) / 60)
     echo $TM # 20
     TS=$(expr \( $DB - $DA \) % 60)
     echo $TS # 7
+
     echo $TM"m"$TS"s"  # 20m7s
     ```
 ***
@@ -194,14 +249,21 @@
     STRING="this is a string"
     POS=1
     LEN=3
-    echo ${STRING:$POS:$LEN}  # 从 $STRING 中 $POS 处开始的 $LEN 个字符
-    # >output: his
 
-    echo ${STRING:0:-1}  # 长度可以是负值，表示倒数第几个字符
-    # >getstatusoutput: this is a strin
+    # 从 $STRING 中 $POS 处开始的 $LEN 个字符
+    echo ${STRING:$POS:$LEN} # > his
 
-    echo ${STRING:12}     # 省略$LEN，抽取到结尾
-    # >output: ring
+    # 长度可以是负值，表示倒数第几个字符
+    echo ${STRING:0:-1} # > this is a strin
+
+    # 省略$LEN，抽取到结尾
+    echo ${STRING:12} # > ring
+
+    # 从结尾抽取，不能直接使用 ${STRING:-3}
+    echo ${STRING:-3} # 输出的是整个字符串 this is a string
+    echo ${STRING:0 - 3}  # > ing
+    echo ${STRING:3 * -1} # > ing
+    echo ${STRING:${#STRING} - 3} # > ing
 
     # Code to extract the First name from the data record
     DATARECORD="last=Clifford,first=Johnny Boy,state=CA"
@@ -514,6 +576,55 @@
       echo "Total count of arguments: $#"
     }
     ```
+***
+
+## 示例 expr 计算浮点数除法
+  - expr 只可以计算整数值运算，浮点数运算可以使用 `awk` / `bc` / `dc`
+  ```sh
+  function expr_dev_float() {
+      aa=$1
+      bb=$2
+      if [ $# -ge 3 ]; then precision=$3; else precision=2; fi
+
+      if [ $(expr index $aa '.') -eq 0 ]; then aa_float_len=0; else aa_float_len=$(expr $(expr length $aa) - $(expr index $aa '.')); fi
+      if [ $(expr index $bb '.') -eq 0 ]; then bb_float_len=0; else bb_float_len=$(expr $(expr length $bb) - $(expr index $bb '.')); fi
+      if [[ $aa_float_len -ne 0 || $bb_float_len -ne 0 ]]; then
+          if [ $aa_float_len -gt $bb_float_len ]; then magnify=$aa_float_len; else magnify=$bb_float_len; fi
+          aa=${aa[@]/'.'/}
+          for ((i=$aa_float_len; i<$magnify; i=$i+1)); do aa=$aa'0'; done
+          bb=${bb[@]/'.'/}
+          for ((i=$bb_float_len; i<$magnify; i=$i+1)); do bb=$bb'0'; done
+      fi
+
+      pp=1
+      fraction_zero=''
+      for ((i=0; $i<$precision; i=$i+1)); do pp=$(($pp * 10)); fraction_zero=$fraction_zero'0'; done
+
+      integer_p=$(expr $aa / $bb)
+      if [ $integer_p -eq 0 ]; then integer_p_len=0; else integer_p_len=${#integer_p}; fi
+
+      integer_fraction_p=$(expr $aa \* $pp / $bb)
+      fraction_p=${integer_fraction_p:$integer_p_len}
+      fraction_zero_len=$(($precision - ${#fraction_p}))
+
+      echo $integer_p'.'${fraction_zero:0:$fraction_zero_len}$fraction_p
+  }
+
+  expr_dev_float 4 3 3 # 1.333
+  expr_dev_float 1 30 3 # 0.033
+  expr_dev_float 1.5 `expr_float 1 3 4` 2 # 4.50
+  ```
+  ```sh
+  awk -v aa=1 -v bb=30 'BEGIN {printf "%.3f\n", aa / bb}' # 0.033
+  echo 'scale=3; 1 / 30' | bc # .033
+  python -c 'print("%.2f" % (1 / 3))' # 0.33
+
+  expr_dev_float 1.5 `awk -v aa=1 -v bb=30 'BEGIN {printf "%.6f\n", aa / bb}'` 3  # 45.000
+  expr_dev_float 1.5 `echo 'scale=6; 1 / 30' | bc` 3  # 45.000
+
+  calc() { awk "BEGIN {print $*}"; }
+  calc '1 + 2 * 3 / 4'  # 2.5
+  ```
 ***
 
 # getopts 命令行参数处理

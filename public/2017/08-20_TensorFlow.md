@@ -1,77 +1,7 @@
 # ___2017 - 08 - 20 TensorFlow___
 ***
 
-- [Getting Started With TensorFlow](https://www.tensorflow.org/get_started/get_started)
-- [TensorFlow 官方文档中文版](http://www.tensorfly.cn/tfdoc/get_started/introduction.html)
-
-# 目录
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-
-- [___2017 - 08 - 20 TensorFlow___](#2017-08-20-tensorflow)
-- [目录](#目录)
-- [FOO](#foo)
-- [TensorFlow 基础](#tensorflow-基础)
-	- [安装](#安装)
-	- [启用 GPU 支持](#启用-gpu-支持)
-	- [Hello World](#hello-world)
-	- [基本概念 Tensors / Graph / Session](#基本概念-tensors-graph-session)
-	- [placeholders / Variables](#placeholders-variables)
-	- [损失函数 loss function](#损失函数-loss-function)
-	- [tf.train API](#tftrain-api)
-	- [tf.estimator API](#tfestimator-api)
-	- [自定义模型 custom model](#自定义模型-custom-model)
-	- [tf.estimator 的输入功能 Input Function](#tfestimator-的输入功能-input-function)
-	- [模型使用 input_fn 的数据 ???](#模型使用-inputfn-的数据-)
-- [应用示例](#应用示例)
-	- [MNIST Softmax Regression](#mnist-softmax-regression)
-	- [MNIST 多层卷积神经网络 CNN](#mnist-多层卷积神经网络-cnn)
-	- [tf.estimator DNNClassifier 用于 Iris 数据集](#tfestimator-dnnclassifier-用于-iris-数据集)
-	- [预测 Boston 房价的神经网络模型](#预测-boston-房价的神经网络模型)
-- [TensorFlow Mechanics 101](#tensorflow-mechanics-101)
-- [TensorBoard](#tensorboard)
-
-<!-- /TOC -->
-***
-
-# FOO
-  ```python
-  ===
-  a placeholder, a value that we'll input when we ask TensorFlow to run a computation.
-  The shape argument to placeholder is optional, but it allows TensorFlow to automatically catch bugs stemming from inconsistent tensor shapes.
-  ===
-  A Variable is a modifiable tensor that lives in TensorFlow's graph of interacting operations. It can be used and even modified by the computation. For machine learning applications, one generally has the model parameters be Variables.
-  ===
-  Here mnist is a lightweight class which stores the training, validation, and testing sets as NumPy arrays. It also provides a function for iterating through data minibatches, which we will use below.
-  Start TensorFlow InteractiveSession
-
-  TensorFlow relies on a highly efficient C++ backend to do its computation. The connection to this backend is called a session. The common usage for TensorFlow programs is to first create a graph and then launch it in a session.
-  ===
-  Here we instead use the convenient InteractiveSession class, which makes TensorFlow more flexible about how you structure your code. It allows you to interleave operations which build a computation graph with ones that run the graph. This is particularly convenient when working in interactive contexts like IPython. If you are not using an InteractiveSession, then you should build the entire computation graph before starting a session and launching the graph.
-
-  import tensorflow as tf
-  sess = tf.InteractiveSession()
-
-  We will also use tf.Session rather than tf.InteractiveSession. This better separates the process of creating the graph (model specification) and the process of evaluating the graph (model fitting). It generally makes for cleaner code. The tf.Session is created within a with block so that it is automatically destroyed once the block is exited.
-  ===
-  To do efficient numerical computing in Python, we typically use libraries like NumPy that do expensive operations such as matrix multiplication outside Python, using highly efficient code implemented in another language. Unfortunately, there can still be a lot of overhead from switching back to Python every operation. This overhead is especially bad if you want to run computations on GPUs or in a distributed manner, where there can be a high cost to transferring data.
-
-  TensorFlow also does its heavy lifting outside Python, but it takes things a step further to avoid this overhead. Instead of running a single expensive operation independently from Python, TensorFlow lets us describe a graph of interacting operations that run entirely outside Python. This approach is similar to that used in  a few machine learning libraries like Theano or Torch.
-
-  The role of the Python code is therefore to build this external computation graph, and to dictate which parts of the computation graph should be run. See the Computation Graph section of Getting Started With TensorFlow for more detail.
-  Build a Softmax Regression Model
-  ===
-  What TensorFlow actually did in that single line was to add new operations to the computation graph. These operations included ones to compute gradients, compute parameter update steps, and apply update steps to the parameters.
-
-  The returned operation train_step, when run, will apply the gradient descent updates to the parameters. Training the model can therefore be accomplished by repeatedly running train_step.
-
-  We then run the train_step operation, using feed_dict to replace the placeholder tensors x and y_ with the training examples. Note that you can replace any tensor in your computation graph using feed_dict -- it's not restricted to just placeholders
-  ===
-  For this small convolutional network, performance is actually nearly identical with and without dropout. Dropout is often very effective at reducing overfitting, but it is most useful when training very large neural networks.
-  ```
-***
-
 ## tf.estimator API
-
   ```python
   # tf.estimator 实现线性模型
   # 声明特征列表，只包含一列数值型特征
