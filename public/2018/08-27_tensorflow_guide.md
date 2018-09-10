@@ -20,7 +20,7 @@
   	- [Model 与 Layer 自定义继承类](#model-与-layer-自定义继承类)
   	- [回调 Callbacks](#回调-callbacks)
   	- [模型存储与加载](#模型存储与加载)
-  	- [Estimators](#estimators)
+  	- [Keras 模型转化为 Estimators](#keras-模型转化为-estimators)
   	- [多 GPU 运行](#多-gpu-运行)
   - [Eager Execution](#eager-execution)
   	- [基本使用](#基本使用)
@@ -49,7 +49,10 @@
   	- [在其他高级 APIs 中的使用](#在其他高级-apis-中的使用)
   - [Estimators](#estimators)
   	- [Advantages of Estimators](#advantages-of-estimators)
+  	- [Estimator LinearRegressor](#estimator-linearregressor)
   	- [Estimator pre-made DNN model](#estimator-pre-made-dnn-model)
+  	- [Estimator 的输入功能 Input Function](#estimator-的输入功能-input-function)
+  	- [模型使用 input_fn 的数据 ???](#模型使用-inputfn-的数据-)
   - [Estimator Checkpoints](#estimator-checkpoints)
   	- [Estimator 保存模型](#estimator-保存模型)
   	- [模型保存频率 Checkpointing Frequency](#模型保存频率-checkpointing-frequency)
@@ -72,13 +75,13 @@
   - [Datasets for Estimators](#datasets-for-estimators)
   	- [Basic input](#basic-input)
   	- [Reading a CSV File](#reading-a-csv-file)
-  - [Creating Custom Estimators](#creating-custom-estimators)
+  - [自定义模型](#自定义模型)
   	- [Custom estimators 与 model function](#custom-estimators-与-model-function)
   	- [定义模型的前向传播](#定义模型的前向传播)
   	- [Implement training, evaluation, and prediction](#implement-training-evaluation-and-prediction)
   	- [使用自定义模型实例化 Estimator](#使用自定义模型实例化-estimator)
   	- [python 完整实现](#python-完整实现)
-  	- [TensorBoard](#tensorboard)
+  	- [Estimator TensorBoard](#estimator-tensorboard)
   - [计算设备 CPU GPU TPU](#计算设备-cpu-gpu-tpu)
   	- [支持的设备类型](#支持的设备类型)
   	- [手动分配设备](#手动分配设备)
@@ -495,7 +498,7 @@
     # Recreate the exact same model, including weights and optimizer.
     model = keras.models.load_model('my_model.h5')
     ```
-## Estimators
+## Keras 模型转化为 Estimators
   - **tf.keras.estimator.model_to_estimator** 将 keras 模型转化为 `tf.estimator.Estimator`，之后可以使用 `tf.estimator` API
     ```python
     model = keras.Sequential([layers.Dense(10,activation='softmax'),
@@ -2823,7 +2826,7 @@
   test_y[:10]
   Out[43]: array([7, 2, 1, 0, 4, 1, 4, 9, 5, 9], dtype=int32)
   ```
-## TensorBoard
+## Estimator TensorBoard
   - View training results for your custom Estimator in TensorBoard
     ```python
     classifier.model_dir
