@@ -106,6 +106,8 @@
   - [mnist_eager.py](https://github.com/tensorflow/models/blob/master/official/mnist/mnist_eager.py)
   - [tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)
   - [Vector Representations of Words](https://github.com/tensorflow/docs/blob/master/site/en/tutorials/representation/word2vec.md)
+  - [Machine Learning Fairness](https://developers.google.com/machine-learning/fairness-overview/)
+  - [TensorFlow Hub](https://www.tensorflow.org/hub/)
 ## High-level Tensorflow APIs
   - TensorFlow 程序结构
     - Import and parse the data sets
@@ -1033,7 +1035,7 @@
     ```
 ***
 
-# Eager execution environment and Keras layers API
+# Eager 执行环境与 Keras layers API 分类 Iris 数据集
   - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
     ```python
     import os
@@ -1083,6 +1085,37 @@
     print("example label:", label[0])
     # example label: tf.Tensor(0, shape=(), dtype=int32)
     ```
+  - **tf.contrib.data.make_csv_dataset** 加载 csv 文件为 dataset，可以替换 `TextLineDataset` 与 `decode_csv`，默认 `shuffle=True` `num_epochs=None`
+    ```py
+    # column order in CSV file
+    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    feature_names = column_names[:-1]
+    label_name = column_names[-1]
+
+    batch_size = 32
+    train_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name=label_name,
+        num_epochs=1)
+    features, labels = next(iter(train_dataset))
+    print({kk: vv.numpy()[0] for kk, vv in features.items()})
+    # {'sepal_length': 5.1, 'sepal_width': 3.8, 'petal_length': 1.6, 'petal_width': 0.2}
+    print(labels.numpy()[0])
+    # 0
+    ```
+    ```py
+    # Repackage the features dictionary into a single array
+    def pack_features_vector(features, labels):
+        """Pack the features into a single array."""
+        features = tf.stack(list(features.values()), axis=1)
+        return features, labels
+    train_dataset = train_dataset.map(pack_features_vector)
+    features, labels = next(iter(train_dataset))
+    print(features.numpy()[0])
+    # [6. , 2.2, 5. , 1.5]
+    ```
   - **tf.keras API** 创建模型以及层级结构
     - **tf.keras.layers.Dense** 添加一个全连接层
     - **tf.keras.Sequential** 线性叠加各个层
@@ -1093,6 +1126,13 @@
         tf.keras.layers.Dense(10, activation="relu"),
         tf.keras.layers.Dense(3)
         ])
+
+    # 测试
+    predictions = model(features)
+    print(predictions.numpy()[0])
+    # [ 0.9281509   0.39843088 -1.3780175 ]
+    print(tf.argmax(tf.nn.softmax(predictions), axis=1).numpy()[:5])
+    # [0 0 0 0 0]
     ```
   - **损失函数 loss function** 与 **优化程序 optimizer**
     - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
@@ -1175,11 +1215,15 @@
     test_url = "http://download.tensorflow.org/data/iris_test.csv"
     test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
 
-    test_dataset = tf.data.TextLineDataset(test_fp)
-    test_dataset = test_dataset.skip(1)             # skip header row
-    test_dataset = test_dataset.map(parse_csv)      # parse each row with the funcition created earlier
-    test_dataset = test_dataset.shuffle(1000)       # randomize
-    test_dataset = test_dataset.batch(32)           # use the same batch size as the training set
+    test_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name='species',
+        num_epochs=1,
+        shuffle=False)
+
+    test_dataset = test_dataset.map(pack_features_vector)
 
     test_accuracy = tfe.metrics.Accuracy()
 
@@ -1192,8 +1236,6 @@
     ```
   - **模型预测 Use the trained model to make predictions**
     ```python
-    class_ids = ["Iris setosa", "Iris versicolor", "Iris virginica"]
-
     predict_dataset = tf.convert_to_tensor([
         [5.1, 3.3, 1.7, 0.5,],
         [5.9, 3.0, 4.2, 1.5,],
@@ -1204,14 +1246,15 @@
 
     for i, logits in enumerate(predictions):
         class_idx = tf.argmax(logits).numpy()
-        name = class_ids[class_idx]
-        print("Example {} prediction: {}".format(i, name))
+        p = tf.nn.softmax(logits)[class_idx]
+        name = class_names[class_idx]
+        print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
     ```
     Out
     ```python
-    Example 0 prediction: Iris setosa
-    Example 1 prediction: Iris versicolor
-    Example 2 prediction: Iris virginica
+    Example 0 prediction: Iris setosa (62.7%)
+    Example 1 prediction: Iris virginica (54.7%)
+    Example 2 prediction: Iris virginica (62.8%)
     ```
 ***
 
@@ -1794,6 +1837,35 @@
     # To train, we call Estimator's train function:
     est_inception_v3.train(input_fn=train_input_fn, steps=2000)
     ```
+## Estimator LinearRegressor
+  ```python
+  # tf.estimator 实现线性模型
+  # 声明特征列表，只包含一列数值型特征
+  feature_columns = [tf.feature_column.numeric_column("x", shape=[1])]
+
+  # tf.estimator 方法提供训练 / 评估模型，包含很多预定义的模型
+  # LinearRegressor 用于线性回归
+  estimator = tf.estimator.LinearRegressor(feature_columns=feature_columns)
+
+  # TensorFlow 提供一些用于读取 / 设置数据集的方法，分别定义训练集与测试集
+  x_train = np.array([1., 2., 3., 4.])
+  y_train = np.array([0., -1., -2., -3.])
+  x_eval = np.array([2., 5., 8., 1.])
+  y_eval = np.array([-1.01, -4.1, -7, 0.])
+  # num_epochs 指定 batches 数量，batch_size 指定每个 batch 大小
+  input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=None, shuffle=True)
+  train_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_train}, y_train, batch_size=4, num_epochs=1000, shuffle=True)
+  eval_input_fn = tf.estimator.inputs.numpy_input_fn({'x':x_eval}, y_eval, batch_size=4, num_epochs=1000, shuffle=True)
+
+  # 模型训练，指定训练数据集，并指定迭代1000次
+  estimator.train(input_fn=input_fn, steps=1000)
+  # 分别在训练集与测试集上评估模型
+  estimator.evaluate(input_fn=train_input_fn)
+  # Out[19]: {'average_loss': 1.3505429e-08, 'global_step': 1000, 'loss': 5.4021715e-08}
+
+  estimator.evaluate(input_fn=eval_input_fn)
+  # Out[20]: {'average_loss': 0.0025362344, 'global_step': 1000, 'loss': 0.010144938}
+  ```
 ## Estimator pre-made DNN model
   - **tf.keras.utils.get_file** / **pd.read_csv** 加载数据集
     ```python
@@ -1939,6 +2011,106 @@
     Prediction is "Setosa" (99.8%), expected "Setosa"
     Prediction is "Versicolor" (99.8%), expected "Versicolor"
     Prediction is "Virginica" (96.0%), expected "Virginica"
+    ```
+## Estimator 的输入功能 Input Function
+  - **input_fn** 用于向 Estimator 中训练 train / 评估 evaluate / 预测 predict 方法传递特征 / 目标数据，包括数据预处理，如清除异常值
+  - Input functions 的返回值中必须包含最终的特征 / 目标值
+    - **feature_cols** 键值对的字典值，特征列名对应包含特征数据的 Tensors / SparseTensors
+    - **labels** 用于预测的目标值 Tensor
+  - **特征数据转化为 Tensors** 如果输入数据类型是 pandas dataframes / numpy arrays，可以使用 pandas_input_fn / numpy_input_fn 构造 input_fn
+    ```python
+    import numpy as np
+    # numpy input_fn.
+    my_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": np.array(x_data)},
+        y=np.array(y_data),
+        ...)
+    ```
+    ```python
+    import pandas as pd
+    # pandas input_fn.
+    my_input_fn = tf.estimator.inputs.pandas_input_fn(
+        x=pd.DataFrame({"x": x_data}),
+        y=pd.Series(y_data),
+        ...)
+    ```
+  - 对于稀疏数据集 sparse data，大多数数据值为0，可以使用 **SparseTensor**
+    - **dense_shape** Tensor 的形状，如 dense_shape=[3,6]
+    - **indices** 非0值的位置，如 indices=[[1,3], [2,4]]
+    - **values** 非0值的值，如 values=[18, 3.6]
+    ```python
+    sparse_tensor = tf.SparseTensor(indices=[[0,1], [2,4]],
+                                    values=[6, 0.5],
+                                    dense_shape=[3, 5])
+    # 定义的 tensor 数据
+    sess = tf.Session()
+    sess.run(tf.sparse_tensor_to_dense(sparse_tensor))
+    Out[30]:
+    array([[ 0. ,  6. ,  0. ,  0. ,  0. ],
+           [ 0. ,  0. ,  0. ,  0. ,  0. ],
+           [ 0. ,  0. ,  0. ,  0. ,  0.5]], dtype=float32)
+    ```
+## 模型使用 input_fn 的数据 ???
+  - 模型 train / evaluate / predict 方法的 input_fn 参数用于传递用户自定义的 input function
+    ```python
+    classifier.train(input_fn=my_input_fn, steps=2000)
+    ```
+  - 通过创建接受一个 dataset 参数的 input_fn，train / evaluate / predict 数据可以使用统一的接口
+    ```python
+    # 分别定义的输入功能函数
+    classifier.train(input_fn=input_fn_train, steps=2000)
+    classifier.evaluate(input_fn=input_fn_test, steps=2000)
+    classifier.predict(input_fn=input_fn_predict, steps=2000)
+    ```
+    input_fn 参数的值必须是一个函数，而不能是函数的返回值，如果需要向定义的 input_fn 中传递参数，直接在参数中传递将产生类型错误 TypeError
+    ```python
+    def my_input_fn(data_set):
+        ...
+
+    # 将产生类型错误 TypeError    
+    classifier.train(input_fn=my_input_fn(training_set), steps=2000)
+    ```
+  - **方法一** 定义一个包装函数 wrapper function
+    ```python
+    def my_input_fn(data_set):
+        ...
+
+    def my_input_fn_training_set():
+        return my_input_fn(training_set)
+
+    classifier.train(input_fn=my_input_fn_training_set, steps=2000)
+    ```
+  - **方法二** 使用 python 的 functools.partial 方法，构造一个所有参数固定的新函数
+    ```python
+    import functools
+    classifier.train(
+        input_fn=functools.partial(my_input_fn, data_set=training_set),
+        steps=2000)
+    ```
+  - **方法三** 使用 lambda 包装函数
+    ```python
+    classifier.train(input_fn=lambda: my_input_fn(training_set), steps=2000)
+    ```
+  - 使用 pandas dataframes / numpy arrays 数据的 input_fn 示例
+    ```python
+    # num_epochs and shuffle control how the input_fn iterates over the data
+    import pandas as pd
+
+    def get_input_fn_from_pandas(data_set, num_epochs=None, shuffle=True):
+      return tf.estimator.inputs.pandas_input_fn(
+          x=pdDataFrame(...),
+          y=pd.Series(...),
+          num_epochs=num_epochs,
+          shuffle=shuffle)
+
+    import numpy as np
+
+    def get_input_fn_from_numpy(data_set, num_epochs=None, shuffle=True):
+      return tf.estimator.inputs.numpy_input_fn(
+          x={...},
+          y=np.array(...),
+          num_epochs=num_epochs,
+          shuffle=shuffle)
     ```
 ***
 
@@ -2639,7 +2811,7 @@
     ```
 ***
 
-# Creating Custom Estimators
+# 自定义模型
 ## Custom estimators 与 model function
   - 预定义的模型 pre-made Estimators 是 `tf.estimator.Estimator` 的子类，自定义的模型 custom Estimators 是 `tf.estimator.Estimator` 类的实例化
 
