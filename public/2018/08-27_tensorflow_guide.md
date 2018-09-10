@@ -32,7 +32,6 @@
   	- [自定义梯度计算 Custom gradients](#自定义梯度计算-custom-gradients)
   	- [性能 Performance](#性能-performance)
   	- [Graph 运行环境中使用 eager execution](#graph-运行环境中使用-eager-execution)
-  - [Eager execution environment and Keras layers API](#eager-execution-environment-and-keras-layers-api)
   - [Datasets Importing Data](#datasets-importing-data)
   	- [data API](#data-api)
   	- [Dataset 结构](#dataset-结构)
@@ -1035,229 +1034,6 @@
     ```
 ***
 
-# Eager 执行环境与 Keras layers API 分类 Iris 数据集
-  - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
-    ```python
-    import os
-    import matplotlib.pyplot as plt
-    import tensorflow as tf
-    import tensorflow.contrib.eager as tfe
-
-    tf.enable_eager_execution()
-
-    print("TensorFlow version: {}".format(tf.VERSION))
-    # TensorFlow version: 1.8.0
-    print("Eager execution: {}".format(tf.executing_eagerly()))
-    # Eager execution: True
-    ```
-  - **tf.keras.utils.get_file** 下载数据集，返回下载到本地的文件路径
-    ```python
-    # Iris dataset
-    train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
-    train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
-
-    print("Local copy of the dataset file: {}".format(train_dataset_fp))
-    # Local copy of the dataset file: /home/leondgarse/.keras/datasets/iris_training.csv
-    ```
-  - **tf.decode_csv** 解析 csv 文件，获取特征与标签 feature and label
-    ```python
-    def parse_csv(line):
-        example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
-        parsed_line = tf.decode_csv(line, example_defaults)
-        # First 4 fields are features, combine into single tensor
-        features = tf.reshape(parsed_line[:-1], shape=(4,))
-        # Last field is the label
-        label = tf.reshape(parsed_line[-1], shape=())
-        return features, label
-    ```
-  - **tf.data.TextLineDataset** 加载 CSV 格式文件，创建 tf.data.Dataset
-    ```python
-    train_dataset = tf.data.TextLineDataset(train_dataset_fp)
-    train_dataset = train_dataset.skip(1)             # skip the first header row
-    train_dataset = train_dataset.map(parse_csv)      # parse each row
-    train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
-    train_dataset = train_dataset.batch(32)
-
-    # View a single example entry from a batch
-    features, label = iter(train_dataset).next()
-    print("example features:", features[0])
-    # example features: tf.Tensor([4.8 3.  1.4 0.3], shape=(4,), dtype=float32)
-    print("example label:", label[0])
-    # example label: tf.Tensor(0, shape=(), dtype=int32)
-    ```
-  - **tf.contrib.data.make_csv_dataset** 加载 csv 文件为 dataset，可以替换 `TextLineDataset` 与 `decode_csv`，默认 `shuffle=True` `num_epochs=None`
-    ```py
-    # column order in CSV file
-    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-    feature_names = column_names[:-1]
-    label_name = column_names[-1]
-
-    batch_size = 32
-    train_dataset = tf.contrib.data.make_csv_dataset(
-        train_dataset_fp,
-        batch_size,
-        column_names=column_names,
-        label_name=label_name,
-        num_epochs=1)
-    features, labels = next(iter(train_dataset))
-    print({kk: vv.numpy()[0] for kk, vv in features.items()})
-    # {'sepal_length': 5.1, 'sepal_width': 3.8, 'petal_length': 1.6, 'petal_width': 0.2}
-    print(labels.numpy()[0])
-    # 0
-    ```
-    ```py
-    # Repackage the features dictionary into a single array
-    def pack_features_vector(features, labels):
-        """Pack the features into a single array."""
-        features = tf.stack(list(features.values()), axis=1)
-        return features, labels
-    train_dataset = train_dataset.map(pack_features_vector)
-    features, labels = next(iter(train_dataset))
-    print(features.numpy()[0])
-    # [6. , 2.2, 5. , 1.5]
-    ```
-  - **tf.keras API** 创建模型以及层级结构
-    - **tf.keras.layers.Dense** 添加一个全连接层
-    - **tf.keras.Sequential** 线性叠加各个层
-    ```python
-    # 输入 4 个节点，包含两个隐藏层，输出 3 个节点
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
-        tf.keras.layers.Dense(10, activation="relu"),
-        tf.keras.layers.Dense(3)
-        ])
-
-    # 测试
-    predictions = model(features)
-    print(predictions.numpy()[0])
-    # [ 0.9281509   0.39843088 -1.3780175 ]
-    print(tf.argmax(tf.nn.softmax(predictions), axis=1).numpy()[:5])
-    # [0 0 0 0 0]
-    ```
-  - **损失函数 loss function** 与 **优化程序 optimizer**
-    - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
-    - **tf.GradientTape** 记录模型优化过程中的梯度运算
-    - **tf.train.GradientDescentOptimizer** 实现 stochastic gradient descent (SGD) 算法
-    ```python
-    def loss(model, x, y):
-        y_ = model(x)
-        return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
-
-    def grad(model, inputs, targets):
-        with tf.GradientTape() as tape:
-            loss_value = loss(model, inputs, targets)
-        return tape.gradient(loss_value, model.variables)
-
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
-    ```
-  - **模型训练 Training loop**
-    ```python
-    ## Note: Rerunning this cell uses the same model variables
-
-    # keep results for plotting
-    train_loss_results = []
-    train_accuracy_results = []
-
-    num_epochs = 201
-
-    for epoch in range(num_epochs):
-        epoch_loss_avg = tfe.metrics.Mean()
-        epoch_accuracy = tfe.metrics.Accuracy()
-
-        # Training loop - using batches of 32
-        for x, y in train_dataset:
-            # Optimize the model
-            grads = grad(model, x, y)
-            optimizer.apply_gradients(zip(grads, model.variables),
-                                      global_step=tf.train.get_or_create_global_step())
-
-            # Track progress
-            epoch_loss_avg(loss(model, x, y))  # add current batch loss
-            # compare predicted label to actual label
-            epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
-
-        # end epoch
-        train_loss_results.append(epoch_loss_avg.result())
-        train_accuracy_results.append(epoch_accuracy.result())
-
-        if epoch % 50 == 0:
-            print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(
-                epoch,
-                epoch_loss_avg.result(),
-                epoch_accuracy.result()))
-
-    # [Out]
-    # Epoch 000: Loss: 1.833, Accuracy: 30.000%
-    # Epoch 050: Loss: 0.394, Accuracy: 90.833%
-    # Epoch 100: Loss: 0.239, Accuracy: 97.500%
-    # Epoch 150: Loss: 0.161, Accuracy: 96.667%
-    # Epoch 200: Loss: 0.121, Accuracy: 98.333%
-    ```
-  - **图形化显示模型损失变化 Visualize the loss function over time**
-    ```python
-    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
-    fig.suptitle('Training Metrics')
-
-    axes[0].set_ylabel("Loss", fontsize=14)
-    axes[0].plot(train_loss_results)
-
-    axes[1].set_ylabel("Accuracy", fontsize=14)
-    axes[1].set_xlabel("Epoch", fontsize=14)
-    axes[1].plot(train_accuracy_results)
-
-    plt.show()
-    ```
-    ![](images/output_30_0.png)
-  - **模型评估 Evaluate the model on the test dataset**
-    - **tf.keras.utils.get_file** / **tf.data.TextLineDataset** 加载测试数据集
-    - **tfe.metrics.Accuracy** 计算正确率
-    ```python
-    test_url = "http://download.tensorflow.org/data/iris_test.csv"
-    test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
-
-    test_dataset = tf.contrib.data.make_csv_dataset(
-        train_dataset_fp,
-        batch_size,
-        column_names=column_names,
-        label_name='species',
-        num_epochs=1,
-        shuffle=False)
-
-    test_dataset = test_dataset.map(pack_features_vector)
-
-    test_accuracy = tfe.metrics.Accuracy()
-
-    for (x, y) in test_dataset:
-        prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
-        test_accuracy(prediction, y)
-
-    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
-    # Test set accuracy: 96.667%
-    ```
-  - **模型预测 Use the trained model to make predictions**
-    ```python
-    predict_dataset = tf.convert_to_tensor([
-        [5.1, 3.3, 1.7, 0.5,],
-        [5.9, 3.0, 4.2, 1.5,],
-        [6.9, 3.1, 5.4, 2.1]
-    ])
-
-    predictions = model(predict_dataset)
-
-    for i, logits in enumerate(predictions):
-        class_idx = tf.argmax(logits).numpy()
-        p = tf.nn.softmax(logits)[class_idx]
-        name = class_names[class_idx]
-        print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
-    ```
-    Out
-    ```python
-    Example 0 prediction: Iris setosa (62.7%)
-    Example 1 prediction: Iris virginica (54.7%)
-    Example 2 prediction: Iris virginica (62.8%)
-    ```
-***
-
 # Datasets Importing Data
 ## data API
   - **tf.data** 创建输入 pipelines，引入了两个重要的概念 `tf.data.Dataset` / `tf.data.Iterator`
@@ -2017,15 +1793,23 @@
   - Input functions 的返回值中必须包含最终的特征 / 目标值
     - **feature_cols** 键值对的字典值，特征列名对应包含特征数据的 Tensors / SparseTensors
     - **labels** 用于预测的目标值 Tensor
-  - **特征数据转化为 Tensors** 如果输入数据类型是 pandas dataframes / numpy arrays，可以使用 pandas_input_fn / numpy_input_fn 构造 input_fn
-    ```python
-    import numpy as np
-    # numpy input_fn.
-    my_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(x_data)},
-        y=np.array(y_data),
-        ...)
+  - **特征数据转化为 Tensors** 如果输入数据类型是 pandas dataframes / numpy arrays，可以使用 `pandas_input_fn` / `numpy_input_fn` 构造 input_fn
+    ```py
+    numpy_input_fn(x, y=None, batch_size=128, num_epochs=1, shuffle=None, queue_capacity=1000, num_threads=1)
+    pandas_input_fn(x, y=None, batch_size=128, num_epochs=1, shuffle=None, queue_capacity=1000, num_threads=1, target_column='target')
     ```
+    ```python
+    age = np.arange(4) * 1.0
+    height = np.arange(32, 36)
+    y_labels = np.arange(-32, -28)
+
+    my_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={'age': age, 'height': height},
+        y=y_labels,
+        batch_size=2, shuffle=False, num_epochs=1
+    )
+    ```
+
     ```python
     import pandas as pd
     # pandas input_fn.

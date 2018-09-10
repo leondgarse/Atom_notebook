@@ -120,7 +120,7 @@
       plot_value_array(i, predictions, test_labels)
     ```
     ![](images/tensorflow_mnist_fashion_predict.png)
-## 文本分类 IMDB 评论数据集
+## 文本分类 IMDB 电影评论数据集
   - **pad_sequences** 将序列中的元素长度整理成相同长度
     ```py
     pad_sequences(sequences, maxlen=None, dtype='int32', padding='pre', truncating='pre', value=0.0)
@@ -635,8 +635,231 @@
     ```
 ***
 
+# Eager 执行环境与 Keras layers API 分类 Iris 数据集
+  - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
+    ```python
+    import os
+    import matplotlib.pyplot as plt
+    import tensorflow as tf
+    import tensorflow.contrib.eager as tfe
+
+    tf.enable_eager_execution()
+
+    print("TensorFlow version: {}".format(tf.VERSION))
+    # TensorFlow version: 1.8.0
+    print("Eager execution: {}".format(tf.executing_eagerly()))
+    # Eager execution: True
+    ```
+  - **tf.keras.utils.get_file** 下载数据集，返回下载到本地的文件路径
+    ```python
+    # Iris dataset
+    train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
+    train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
+
+    print("Local copy of the dataset file: {}".format(train_dataset_fp))
+    # Local copy of the dataset file: /home/leondgarse/.keras/datasets/iris_training.csv
+    ```
+  - **tf.decode_csv** 解析 csv 文件，获取特征与标签 feature and label
+    ```python
+    def parse_csv(line):
+        example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
+        parsed_line = tf.decode_csv(line, example_defaults)
+        # First 4 fields are features, combine into single tensor
+        features = tf.reshape(parsed_line[:-1], shape=(4,))
+        # Last field is the label
+        label = tf.reshape(parsed_line[-1], shape=())
+        return features, label
+    ```
+  - **tf.data.TextLineDataset** 加载 CSV 格式文件，创建 tf.data.Dataset
+    ```python
+    train_dataset = tf.data.TextLineDataset(train_dataset_fp)
+    train_dataset = train_dataset.skip(1)             # skip the first header row
+    train_dataset = train_dataset.map(parse_csv)      # parse each row
+    train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
+    train_dataset = train_dataset.batch(32)
+
+    # View a single example entry from a batch
+    features, label = iter(train_dataset).next()
+    print("example features:", features[0])
+    # example features: tf.Tensor([4.8 3.  1.4 0.3], shape=(4,), dtype=float32)
+    print("example label:", label[0])
+    # example label: tf.Tensor(0, shape=(), dtype=int32)
+    ```
+  - **tf.contrib.data.make_csv_dataset** 加载 csv 文件为 dataset，可以替换 `TextLineDataset` 与 `decode_csv`，默认 `shuffle=True` `num_epochs=None`
+    ```py
+    # column order in CSV file
+    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    feature_names = column_names[:-1]
+    label_name = column_names[-1]
+
+    batch_size = 32
+    train_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name=label_name,
+        num_epochs=1)
+    features, labels = next(iter(train_dataset))
+    print({kk: vv.numpy()[0] for kk, vv in features.items()})
+    # {'sepal_length': 5.1, 'sepal_width': 3.8, 'petal_length': 1.6, 'petal_width': 0.2}
+    print(labels.numpy()[0])
+    # 0
+    ```
+    ```py
+    # Repackage the features dictionary into a single array
+    def pack_features_vector(features, labels):
+        """Pack the features into a single array."""
+        features = tf.stack(list(features.values()), axis=1)
+        return features, labels
+    train_dataset = train_dataset.map(pack_features_vector)
+    features, labels = next(iter(train_dataset))
+    print(features.numpy()[0])
+    # [6. , 2.2, 5. , 1.5]
+    ```
+  - **tf.keras API** 创建模型以及层级结构
+    - **tf.keras.layers.Dense** 添加一个全连接层
+    - **tf.keras.Sequential** 线性叠加各个层
+    ```python
+    # 输入 4 个节点，包含两个隐藏层，输出 3 个节点
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
+        tf.keras.layers.Dense(10, activation="relu"),
+        tf.keras.layers.Dense(3)
+        ])
+
+    # 测试
+    predictions = model(features)
+    print(predictions.numpy()[0])
+    # [ 0.9281509   0.39843088 -1.3780175 ]
+    print(tf.argmax(tf.nn.softmax(predictions), axis=1).numpy()[:5])
+    # [0 0 0 0 0]
+    ```
+  - **损失函数 loss function** 与 **优化程序 optimizer**
+    - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
+    - **tf.GradientTape** 记录模型优化过程中的梯度运算
+    - **tf.train.GradientDescentOptimizer** 实现 stochastic gradient descent (SGD) 算法
+    ```python
+    def loss(model, x, y):
+        y_ = model(x)
+        return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
+
+    def grad(model, inputs, targets):
+        with tf.GradientTape() as tape:
+            loss_value = loss(model, inputs, targets)
+        return tape.gradient(loss_value, model.variables)
+
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+    ```
+  - **模型训练 Training loop**
+    ```python
+    ## Note: Rerunning this cell uses the same model variables
+
+    # keep results for plotting
+    train_loss_results = []
+    train_accuracy_results = []
+
+    num_epochs = 201
+
+    for epoch in range(num_epochs):
+        epoch_loss_avg = tfe.metrics.Mean()
+        epoch_accuracy = tfe.metrics.Accuracy()
+
+        # Training loop - using batches of 32
+        for x, y in train_dataset:
+            # Optimize the model
+            grads = grad(model, x, y)
+            optimizer.apply_gradients(zip(grads, model.variables),
+                                      global_step=tf.train.get_or_create_global_step())
+
+            # Track progress
+            epoch_loss_avg(loss(model, x, y))  # add current batch loss
+            # compare predicted label to actual label
+            epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
+
+        # end epoch
+        train_loss_results.append(epoch_loss_avg.result())
+        train_accuracy_results.append(epoch_accuracy.result())
+
+        if epoch % 50 == 0:
+            print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(
+                epoch,
+                epoch_loss_avg.result(),
+                epoch_accuracy.result()))
+
+    # [Out]
+    # Epoch 000: Loss: 1.833, Accuracy: 30.000%
+    # Epoch 050: Loss: 0.394, Accuracy: 90.833%
+    # Epoch 100: Loss: 0.239, Accuracy: 97.500%
+    # Epoch 150: Loss: 0.161, Accuracy: 96.667%
+    # Epoch 200: Loss: 0.121, Accuracy: 98.333%
+    ```
+  - **图形化显示模型损失变化 Visualize the loss function over time**
+    ```python
+    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
+    fig.suptitle('Training Metrics')
+
+    axes[0].set_ylabel("Loss", fontsize=14)
+    axes[0].plot(train_loss_results)
+
+    axes[1].set_ylabel("Accuracy", fontsize=14)
+    axes[1].set_xlabel("Epoch", fontsize=14)
+    axes[1].plot(train_accuracy_results)
+
+    plt.show()
+    ```
+    ![](images/output_30_0.png)
+  - **模型评估 Evaluate the model on the test dataset**
+    - **tf.keras.utils.get_file** / **tf.data.TextLineDataset** 加载测试数据集
+    - **tfe.metrics.Accuracy** 计算正确率
+    ```python
+    test_url = "http://download.tensorflow.org/data/iris_test.csv"
+    test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
+
+    test_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name='species',
+        num_epochs=1,
+        shuffle=False)
+
+    test_dataset = test_dataset.map(pack_features_vector)
+
+    test_accuracy = tfe.metrics.Accuracy()
+
+    for (x, y) in test_dataset:
+        prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
+        test_accuracy(prediction, y)
+
+    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
+    # Test set accuracy: 96.667%
+    ```
+  - **模型预测 Use the trained model to make predictions**
+    ```python
+    predict_dataset = tf.convert_to_tensor([
+        [5.1, 3.3, 1.7, 0.5,],
+        [5.9, 3.0, 4.2, 1.5,],
+        [6.9, 3.1, 5.4, 2.1]
+    ])
+
+    predictions = model(predict_dataset)
+
+    for i, logits in enumerate(predictions):
+        class_idx = tf.argmax(logits).numpy()
+        p = tf.nn.softmax(logits)[class_idx]
+        name = class_names[class_idx]
+        print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
+    ```
+    Out
+    ```python
+    Example 0 prediction: Iris setosa (62.7%)
+    Example 1 prediction: Iris virginica (54.7%)
+    Example 2 prediction: Iris virginica (62.8%)
+    ```
+***
+
 # ML at production scale
-# Build a linear model with Estimators
+## Build a linear model with Estimators
   - **Census 收入数据集** 包含了 1994 - 1995 个人的年龄 / 教育水平 / 婚姻状况 / 职业等信息，预测年收入是否达到 50,000 美元
   - [Predicting Income with the Census Income Dataset](https://github.com/tensorflow/models/tree/master/official/wide_deep)
     ```py
@@ -656,13 +879,20 @@
     ! python -m official.wide_deep.census_main --model_type=wide --train_epochs=2 --dd '../datasets/census_data/'
     cd -
     ```
-  - **读取 Census 数据集** 数据中包含 离散的类别列 Categorical column/ 连续数字列 continuous column / 分桶列 Bucketized column
+  - **读取 Census 数据集** 数据中包含 离散的类别列 categorical column / 连续数字列 continuous numeric column 等
     ```py
+    tf.enable_eager_execution()
+
     train_file = "datasets/census_data/adult.data"
     test_file = "datasets/census_data/adult.test"
 
-    train_df = pd.read_csv(train_file, header = None, names = census_dataset._CSV_COLUMNS)
-    test_df = pd.read_csv(test_file, header = None, names = census_dataset._CSV_COLUMNS)
+    column_names = ['age', 'workclass', 'fnlwgt', 'education', 'education_num',
+            'marital_status', 'occupation','relationship', 'race', 'gender',
+            'capital_gain', 'capital_loss', 'hours_per_week', 'native_country',
+            'income_bracket']
+
+    train_df = pd.read_csv(train_file, header = None, names = column_names)
+    test_df = pd.read_csv(test_file, header = None, names = column_names)
 
     train_df.head()
     # Out[18]:
@@ -675,104 +905,297 @@
 
     # [5 rows x 15 columns]
     ```
-  - **数据转化为 Tensor** `tf.estimator` 使用输入功能 `input_fn`
+  - **使用自定义函数定义 input function** 数据转化为 Tensor，`tf.estimator` 使用输入功能 `input_fn`，函数要求没有参数，返回值中包含最终的特征 / 目标值
     ```py
-    def easy_input_function(df, label_key, num_epochs, shuffle, batch_size):
-        label = df[label_key]
-        ds = tf.data.Dataset.from_tensor_slices((dict(df),label))
+    ''' 使用自定义函数 '''
+    print(train_df['income_bracket'].unique())
+    # ['<=50K' '>50K']
 
-        if shuffle:
-          ds = ds.shuffle(10000)
-
+    def easy_input_function(df, num_epochs, shuffle, batch_size):
+        label = df['income_bracket']
+        label = np.equal(label, '>50K')
+        ds = tf.data.Dataset.from_tensor_slices((df.to_dict('series'), label))
+        if shuffle: ds = ds.shuffle(10000)
         ds = ds.batch(batch_size).repeat(num_epochs)
 
         return ds
 
-    ds = easy_input_function(train_df, label_key='income_bracket', num_epochs=5, shuffle=True, batch_size=10)
-
-    for feature_batch, label_batch in ds.take(1):
-      print('Some feature keys:', list(feature_batch.keys())[:5])
-      print()
-      print('A batch of Ages  :', feature_batch['age'])
-      print()
-      print('A batch of Labels:', label_batch )
+    ds = easy_input_function(train_df, num_epochs=5, shuffle=True, batch_size=10)
+    feature_batch, label_batch = list(ds.take(1))[0]
 
     import functools
 
-    train_inpf = functools.partial(census_dataset.input_fn, train_file, num_epochs=2, shuffle=True, batch_size=64)
-    test_inpf = functools.partial(census_dataset.input_fn, test_file, num_epochs=1, shuffle=False, batch_size=64)
+    # 不能使用 train_inpf = lambda : ds
+    train_inpf = lambda: easy_input_function(train_df, num_epochs=5, shuffle=True, batch_size=64)
+    test_inpf = functools.partial(easy_input_function, test_df, num_epochs=1, shuffle=False, batch_size=64)
     ```
-  - Selecting and Engineering Features for the Model
-
-    Estimators use a system called feature columns to describe how the model should interpret each of the raw input features. An Estimator expects a vector of numeric inputs, and feature columns describe how the model should convert each feature.
+  - **使用 pandas_input_fn / numpy_input_fn 定义 input function**
     ```py
+    ''' 使用 pandas_input_fn / numpy_input_fn '''
+    def get_input_fn(df, num_epochs, shuffle, batch_size):
+        xx, yy = df, df.pop('income_bracket')
+        yy = np.equal(yy, '>50K')
+        return tf.estimator.inputs.pandas_input_fn(x=xx, y=yy, batch_size=batch_size, shuffle=shuffle, num_epochs=num_epochs)
+
+    train_inpf = get_input_fn(train_df, num_epochs=5, shuffle=True, batch_size=64)
+    test_inpf = get_input_fn(test_df, num_epochs=1, shuffle=False, batch_size=64)
+
+    # 定义单独使用 'age' 列的 input function
+    train_features, train_labels = train_df, train_df.pop('income_bracket')
+    train_labels = train_labels == '>50K'
+    train_inpf = tf.estimator.inputs.numpy_input_fn(x={'age': train_features['age'].values}, y=train_labels.values, batch_size=64, shuffle=True, num_epochs=5)
+    train_inpf = tf.estimator.inputs.pandas_input_fn(x=train_features[['age']], y=train_labels, batch_size=64, shuffle=True, num_epochs=5)
+    ```
+  - **tf.feature_column.numeric_column** 定义数字特征列，Estimators 使用 `feature columns` 描述模型如何读取每一个特征列
+    ```py
+    import tensorflow.feature_column as fc
+
+    ''' 数字列 Numeric Column '''
+    age = fc.numeric_column('age')
+    print(fc.input_layer(feature_batch, [age]).numpy())
+    # [[25.], [61.], [51.], [24.], [42.], [30.], [63.], [34.], [34.], [25.]]
+
     classifier = tf.estimator.LinearClassifier(feature_columns=[age])
     classifier.train(train_inpf)
     result = classifier.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.7486641, 'loss': 33.442234, 'precision': 0.16935484, 'global_step': 2544}
+    ```
+  - **定义其他的数字特征列**
+    ```py
+    print(train_df.dtypes[train_df.dtypes == np.int64].index.tolist())
+    # ['age', 'fnlwgt', 'education_num', 'capital_gain', 'capital_loss', 'hours_per_week']
 
-    clear_output()  # used for display in notebook
-    print(result)
+    education_num = fc.numeric_column('education_num')
+    capital_gain = fc.numeric_column('capital_gain')
+    capital_loss = fc.numeric_column('capital_loss')
+    hours_per_week = fc.numeric_column('hours_per_week')
 
-    education_num = tf.feature_column.numeric_column('education_num')
-    capital_gain = tf.feature_column.numeric_column('capital_gain')
-    capital_loss = tf.feature_column.numeric_column('capital_loss')
-    hours_per_week = tf.feature_column.numeric_column('hours_per_week')
-
-    my_numeric_columns = [age,education_num, capital_gain, capital_loss, hours_per_week]
-
-    fc.input_layer(feature_batch, my_numeric_columns).numpy()
+    my_numeric_columns = [age, education_num, capital_gain, capital_loss, hours_per_week]
+    print(fc.input_layer(feature_batch, my_numeric_columns).numpy()[0])
+    # [53.  0.  0.  9. 40.]
 
     classifier = tf.estimator.LinearClassifier(feature_columns=my_numeric_columns)
     classifier.train(train_inpf)
-
     result = classifier.evaluate(test_inpf)
-
-    clear_output()
-
-    for key,value in sorted(result.items()):
-      print('%s: %s' % (key, value))
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.78250724, 'loss': 133.76312, 'precision': 0.61509436, 'global_step': 2544}
+    ```
+  - **tf.feature_column.categorical_column_with_vocabulary_list** 定义离散类别特征列，使用单词列表
+    ```py
+    ''' 离散类别列 Categorical Column '''
+    print(train_df['relationship'].unique())
+    # ['Not-in-family' 'Husband' 'Wife' 'Own-child' 'Unmarried' 'Other-relative']
 
     relationship = fc.categorical_column_with_vocabulary_list(
-      'relationship',
-      ['Husband', 'Not-in-family', 'Wife', 'Own-child', 'Unmarried', 'Other-relative'])
-    fc.input_layer(feature_batch, [age, fc.indicator_column(relationship)])
+            key='relationship',
+            vocabulary_list=train_df['relationship'].unique())
+    # fc.input_layer 需要使用 fc.indicator_column 将离散特征列转化为 one-hot 特征列，在用于 input_fn 时不需要转化
+    print(fc.input_layer(feature_batch, [age, fc.indicator_column(relationship)]).numpy()[0])
+    # [53.  0.  1.  0.  0.  0.  0.]
+    ```
+  - **tf.feature_column.categorical_column_with_hash_bucket** 定义离散类别特征列，使用类别哈希值，哈希值的重复是不可避免的，在类别不可知时使用
+    ```py
+    print(train_df['occupation'].unique().shape[0])
+    # 15
 
-    occupation = tf.feature_column.categorical_column_with_hash_bucket('occupation', hash_bucket_size=1000)
-    for item in feature_batch['occupation'].numpy():
-        print(item.decode())
-
+    occupation = fc.categorical_column_with_hash_bucket('occupation', hash_bucket_size=40)
     occupation_result = fc.input_layer(feature_batch, [fc.indicator_column(occupation)])
+    print(occupation_result.numpy().shape)
+    # (10, 40)
+    print(tf.argmax(occupation_result, axis=1).numpy())
+    # [26 31  7 31 16 31 16 20 19 16]
+    print([ii.decode() for ii in feature_batch['occupation'].numpy()])
+    # ['Craft-repair', 'Sales', 'Other-service', 'Sales', 'Adm-clerical', 'Sales',
+    #  'Farming-fishing', 'Transport-moving', 'Prof-specialty', 'Adm-clerical']
+    ```
+  - **定义其他的离散类别特征列**
+    ```py
+    def get_categorical_columns(df, cate_column_names):
+        feature_columns = []
+        for cc in cate_column_names:
+            tt = fc.categorical_column_with_vocabulary_list(key=cc, vocabulary_list=df[cc].unique())
+            feature_columns.append(tt)
+        return feature_columns
 
-    occupation_result.numpy().shape
-    education = tf.feature_column.categorical_column_with_vocabulary_list(
-        'education', [
-            'Bachelors', 'HS-grad', '11th', 'Masters', '9th', 'Some-college',
-            'Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school',
-            '5th-6th', '10th', '1st-4th', 'Preschool', '12th'])
+    cate_column_names = ['workclass', 'education', 'marital_status', 'relationship']
+    my_categorical_columns = get_categorical_columns(train_df, cate_column_names)
+    print(fc.input_layer(feature_batch, [fc.indicator_column(cc) for cc in my_categorical_columns]).numpy()[0])
+    # [0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.
+    #  0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 1. 0.
+    #  0. 0. 0. 0. 0.]
 
-    marital_status = tf.feature_column.categorical_column_with_vocabulary_list(
-        'marital_status', [
-            'Married-civ-spouse', 'Divorced', 'Married-spouse-absent',
-            'Never-married', 'Separated', 'Married-AF-spouse', 'Widowed'])
-
-    workclass = tf.feature_column.categorical_column_with_vocabulary_list(
-        'workclass', [
-            'Self-emp-not-inc', 'Private', 'State-gov', 'Federal-gov',
-            'Local-gov', '?', 'Self-emp-inc', 'Without-pay', 'Never-worked'])
-
-
-    my_categorical_columns = [relationship, occupation, education, marital_status, workclass]
-
-    classifier = tf.estimator.LinearClassifier(feature_columns=my_numeric_columns+my_categorical_columns)
+    classifier = tf.estimator.LinearClassifier(feature_columns=my_numeric_columns + my_categorical_columns)
     classifier.train(train_inpf)
     result = classifier.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.8286346, 'loss': 32.47456, 'precision': 0.6233069, 'global_step': 2544}
+    ```
+  - **tf.feature_column.bucketized_column** 定义分桶列，将数值范围划分成不同的类别，每一个作为一个 bucket
+    - 对于年龄数据，与收入的关系是非线性的，如在某个年龄段收入增长较快，在退休以后收入开始减少，可以将年龄数据分装成不同的 bucket
+    ```py
+    # source_column 使用的是其他的 feature_column 数据
+    age_buckets = fc.bucketized_column(source_column=age, boundaries=[18, 25, 30, 35, 40, 45, 50, 55, 60, 65])
+    print(fc.input_layer(feature_batch, [age, age_buckets]).numpy()[:5])
+    # [[53.  0.  0.  0.  0.  0.  0.  0.  1.  0.  0.  0.]
+    #  [45.  0.  0.  0.  0.  0.  0.  1.  0.  0.  0.  0.]
+    #  [50.  0.  0.  0.  0.  0.  0.  0.  1.  0.  0.  0.]
+    #  [25.  0.  0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]
+    #  [28.  0.  0.  1.  0.  0.  0.  0.  0.  0.  0.  0.]]
+    ```
+  - **tf.feature_column.crossed_column** 把多个特征合并成为一个特征，通常称为 **feature crosses**
+    - 对于 education 与 occupation 数据，教育水平对收入的影响，在不同职业下是不同的，因此可以将这两个特征组合成一个特征，使模型学习不同组合下对收入的影响
+    ```py
+    print(train_df.education.unique().shape[0] * train_df.occupation.unique().shape[0])
+    # 240
+    education_x_occupation = fc.crossed_column(keys=['education', 'occupation'], hash_bucket_size=500)
 
-    clear_output()
+    # Create another crossed feature combining 'age' 'education' 'occupation'
+    age_buckets_x_education_x_occupation = tf.feature_column.crossed_column([age_buckets, 'education', 'occupation'], hash_bucket_size=1000)
+    ```
+  - **定义线性模型 LinearClassifier 训练评估预测** train / evaluate / predict
+    ```py
+    ''' 训练 '''
+    import tempfile
+    print(tempfile.mkdtemp())
+    # /tmp/tmpzwj_y6bg
+
+    wide_feature_columns = my_categorical_columns + [occupation, age_buckets, education_x_occupation, age_buckets_x_education_x_occupation]
+    model = tf.estimator.LinearClassifier(
+            model_dir=tempfile.mkdtemp(),
+            feature_columns=wide_feature_columns,
+            optimizer=tf.train.FtrlOptimizer(learning_rate=0.1)
+    )
+
+    train_inpf = tf.estimator.inputs.pandas_input_fn(x=train_features, y=train_labels, batch_size=64, shuffle=True, num_epochs=40)
+    train_inpf = lambda: easy_input_function(train_df, num_epochs=40, shuffle=True, batch_size=64)
+
+    model.train(train_inpf)
+    # INFO:tensorflow:Loss for final step: 14.044264.
+
+    ''' 评估 '''
+    result = model.evaluate(test_inpf)
 
     for key,value in sorted(result.items()):
-      print('%s: %s' % (key, value))
+        print('%s: %0.2f' % (key, value))
+    # accuracy: 0.84
+    # accuracy_baseline: 0.76
+    # auc: 0.88
+    # auc_precision_recall: 0.69
+    # average_loss: 0.35
+    # global_step: 20351.00
+    # label/mean: 0.24
+    # loss: 22.64
+    # precision: 0.69
+    # prediction/mean: 0.24
+    # recall: 0.56
+
+    ''' 预测 '''
+    test_df = pd.read_csv(test_file, header = None, names = column_names)
+    sample_size = 40
+    predict_inpf = tf.estimator.inputs.pandas_input_fn(test_df[:sample_size], num_epochs=1, shuffle=False, batch_size=10)
+    pred_iter = model.predict(input_fn=predict_inpf)
+    pred_result = np.array([ ii['class_ids'][0] for ii in pred_iter ])
+    true_result = (test_df.income_bracket[:sample_size] == '>50K').values.astype(np.int64)
+    print((true_result == pred_result).sum())
+    # 33
+    print((true_result == pred_result).sum() / sample_size)
+    # 0.825
     ```
+  - **添加正则化损失防止过拟合**
+    ```py
+    model_l1 = tf.estimator.LinearClassifier(
+            feature_columns=wide_feature_columns,
+            optimizer=tf.train.FtrlOptimizer(
+              learning_rate=0.1,
+              l1_regularization_strength=10.0,
+              l2_regularization_strength=0.0))
+
+    model_l1.train(train_inpf)
+    result = model_l1.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.83594376, 'loss': 22.464794, 'precision': 0.685624, 'global_step': 20351}
+
+    model_l2 = tf.estimator.LinearClassifier(
+            feature_columns=wide_feature_columns,
+            optimizer=tf.train.FtrlOptimizer(
+              learning_rate=0.1,
+              l1_regularization_strength=0.0,
+              l2_regularization_strength=10.0))
+
+    model_l2.train(train_inpf)
+    result = model_l2.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.8363123, 'loss': 22.469425, 'precision': 0.69253343, 'global_step': 20351}
+    ```
+    添加正则化对结果提升不大，可以通过 `model.get_variable_names` 与 `model.get_variable_value` 查看模型参数
+    ```py
+    def get_flat_weights(model):
+        weight_names = [nn for nn in model.get_variable_names() if "linear_model" in nn and "Ftrl" not in nn]
+        weight_values = [model.get_variable_value(name) for name in weight_names]
+        weights_flat = np.concatenate([item.flatten() for item in weight_values], axis=0)
+
+        return weights_flat
+
+    weights_flat = get_flat_weights(model)
+    weights_flat_l1 = get_flat_weights(model_l1)
+    weights_flat_l2 = get_flat_weights(model_l2)
+
+    # There are many more hash bins than categories in some columns, mask zero values
+    print(weights_flat.shape)
+    # (1590,)
+    weight_mask = weights_flat != 0
+    weights_base = weights_flat[weight_mask]
+    print(weights_base.shape)
+    # (1037,)
+
+    weights_l1 = weights_flat_l1[weight_mask]
+    weights_l2 = weights_flat_l2[weight_mask]
+
+    # Now plot the distributions
+    fig = plt.figure()
+    weights = zip(['Base Model', 'L1 Regularization', 'L2 Regularization'], [weights_base, weights_l1, weights_l2])
+    for ii, (nn, ww) in enumerate(weights):
+        fig.add_subplot(3, 1, ii + 1)
+        plt.hist(ww, bins=np.linspace(-3, 3, 30))
+        plt.title(nn)
+        plt.ylim([0, 500])
+    fig.tight_layout()
+    ```
+    ![](images/tensoeflow_census_base_regular.png)
+
+    两种正则化方式都将参数的分布向 0 压缩了，L2 正则化更好地限制了偏离很大的分布，L1 正则化产生了更多的 0 值
+  - **tf.estimator.DNNClassifier 定义 DNN 模型**
+    ```py
+    deep_feature_columns = my_numeric_columns + [fc.indicator_column(cc) for cc in my_categorical_columns] + [fc.embedding_column(occupation, dimension=8)]
+    hidden_units = [100, 75, 50, 25]
+    model = tf.estimator.DNNClassifier(
+            model_dir=tempfile.mkdtemp(),
+            feature_columns=deep_feature_columns,
+            hidden_units=hidden_units)
+
+    model.train(train_inpf)
+    result = model.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.850562, 'loss': 20.83845, 'precision': 0.728863, 'global_step': 20351}
+    ```
+  - **tf.estimator.DNNLinearCombinedClassifier 定义 Linear 与 DNN 结合的模型**
+    ```py
+    model = tf.estimator.DNNLinearCombinedClassifier(
+            model_dir=tempfile.mkdtemp(),
+            linear_feature_columns=wide_feature_columns,
+            dnn_feature_columns=deep_feature_columns,
+            dnn_hidden_units=hidden_units)
+
+    model.train(train_inpf)
+    result = model.evaluate(test_inpf)
+    print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
+    # {'accuracy': 0.8543087, 'loss': 20.270975, 'precision': 0.738203, 'global_step': 20351}
+    ```
+## Boosted trees
+  - [Classifying Higgs boson processes in the HIGGS Data Set](https://github.com/tensorflow/models/tree/master/official/boosted_trees)
 ***
+
 ```py
 import inspect
 print(inspect.getsource(inspect.getsource))
