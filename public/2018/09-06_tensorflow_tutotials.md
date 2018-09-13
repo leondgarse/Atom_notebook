@@ -419,6 +419,8 @@
 
     train_data = multi_hot_sequence(train_data, dimension=NUM_WORDS)
     test_data = multi_hot_sequence(test_data, dimension=NUM_WORDS)
+
+    plt.plot(train_data[0])
     ```
     ![](images/tensorflow_overfit_imdb_data.png)
   - **定义 keras 模型** 定义多个模型，复杂模型更容易过拟合
@@ -502,7 +504,7 @@
         ('l2', l2_history)])
     ```
     ![](images/tensorflow_overfit_l2.png)
-  - **添加 dropout 层** 训练过程中随机丢弃上一层输出中的某些特征，如将 `[0.2, 0.5, 1.3, 0.8, 1.1]`转化为 `[0, 0.5, 1.3, 0, 1.1`，通常 `dropout rate` 设置为 **0.2 - 0.5**
+  - **添加 dropout 层** 训练过程中随机丢弃上一层输出中的某些特征，如将 `[0.2, 0.5, 1.3, 0.8, 1.1]` 转化为 `[0, 0.5, 1.3, 0, 1.1]`，通常 `dropout rate` 设置为 **0.2 - 0.5**
     ```py
     dpt_model = keras.Sequential([
         keras.layers.Dense(16, activation='relu', input_shape=(NUM_WORDS, )),
@@ -1581,7 +1583,7 @@
     predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(test_df, test_df['polarity'], shuffle=False)
     ```
   - **hub.text_embedding_column 定义模型的 Feature columns**
-    - **[nnlm-en-dim128 模块](https://www.tensorflow.org/hub/modules/google/nnlm-en-dim128/1)** TF-Hub 提供的一个用于将指定的文本特征列，转化为 feature column
+    - **[nnlm-en-dim128 模块](https://www.tensorflow.org/hub/modules/google/nnlm-en-dim128/1)** TF-Hub 提供的一个用于将指定的文本特征列转化为 feature column 的模块
     - 该模块使用一组一维张量字符串作为输入
     - 该模块对输入的字符串做预处理，如移除标点 / 按照空格划分单词
     - 该模块可以处理任何输入，如将单词表中没有的单词散列到大约 20,000 个桶中
