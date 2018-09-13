@@ -291,6 +291,20 @@
     conda clean --all # clean temporary fills
     ```
 ## 启用 GPU 支持
+  - **测试**
+    ```py
+    import tensorflow as tf
+    tf.test.is_built_with_cuda()
+    # Out[1]: True
+
+    tf.test.is_gpu_available()
+    # ...
+    # Adding visible gpu devices: 0
+    # Out[2]: True
+
+    from tensorflow.python.client import device_lib
+    print(device_lib.list_local_devices())
+    ```
   - [NVIDIA/nvidia-docker](https://github.com/NVIDIA/nvidia-docker) 用于安装启用 GPU 的 docker
     ```shell
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -397,16 +411,17 @@
 ## Hello World
   ```python
   import tensorflow as tf
+
   hello = tf.constant('Hello TensorFlow')
   sess = tf.Session()
   sess.run(hello)
-  Out[5]: b'Hello TensorFlow'
+  # Out[5]: b'Hello TensorFlow'
   ```
   ```python
   a = tf.constant(10)
   b = tf.constant(32)
-  sess.run(a+b)
-  Out[9]: 42
+  sess.run(a + b)
+  # Out[9]: 42
   ```
 ***
 
@@ -3536,9 +3551,9 @@
   - **单层全连接神经网络作为循环体的循环神经网络结构**
 
     ![](images/rnn_simple_cell.png)
-    - 输入向量的维度为 x，状态向量维度为 h，循环体的全连接层神经网络的 **输入大小为 h+x**
-    - 输出为当前时刻的状态，于是 **输出层的节点个数为h**
-    - 循环体中的 **参数个数为（h+x）×h+h个**
+    - 输入向量的维度为 x，状态向量维度为 h，循环体的全连接层神经网络的 **输入大小为 h + x**
+    - 输出为当前时刻的状态，于是 **输出层的节点个数为 h**
+    - 循环体中的 **参数个数为 (h + x) × h + h 个**
     - 为了将当前时刻的状态转化为最终的输出，循环神经网络还需要另外一个全连接神经网络来完成这个过程
   - python 实现
     ```python

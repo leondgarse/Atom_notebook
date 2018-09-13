@@ -109,7 +109,6 @@
   - [tensorflow/contrib/eager/python/examples](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/eager/python/examples)
   - [Vector Representations of Words](https://github.com/tensorflow/docs/blob/master/site/en/tutorials/representation/word2vec.md)
   - [Machine Learning Fairness](https://developers.google.com/machine-learning/fairness-overview/)
-  - [TensorFlow Hub](https://www.tensorflow.org/hub/)
 ## High-level Tensorflow APIs
   - TensorFlow 程序结构
     - Import and parse the data sets
@@ -170,7 +169,7 @@
     git commit -m 'commit' file
     git push
     ```
-  - Making a Pull Request on github
+  - Making a Pull Request on github `New pull request` -> `Create pull request` -> `Add comments` -> 
 ## Q / A
   - Q: Eager 执行环境中提示 `InternalError: Could not find valid device for node name: "xxx"`
     ```py
@@ -725,7 +724,7 @@
     ```py
     tf.enable_eager_execution()
 
-    # Conv2D 值支持 NHWC 格式数据，即 'channels_last'，对应的是 'channels_first'
+    # Conv2D 只支持 NHWC 格式数据，即 'channels_last'，对应的是 'channels_first'
     data_format = 'channels_last'
     input_shape = [1, 28, 28]
     model = tf.keras.Sequential( [

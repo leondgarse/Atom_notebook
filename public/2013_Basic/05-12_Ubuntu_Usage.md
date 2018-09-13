@@ -1127,6 +1127,18 @@
     $ sudo systemctl status systemd-journald.service
     $ sudo systemctl restart systemd-journald.service
     ```
+## unzip 中文乱码
+  - **-O** 指定字符编码
+  - **-d** 指定输出目录
+    ```sh
+    unzip -O CP936 foo.zip -d foo
+    ```
+  - 在环境变量中指定 unzip 参数，总是以指定的字符集显示和解压文件
+    ```sh
+    # vi /etc/environment
+    UNZIP="-O CP936"
+    ZIPINFO="-O CP936"
+    ```
 ***
 
 # 软件

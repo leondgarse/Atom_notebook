@@ -5,8 +5,30 @@
 # 目录
 ***
 
+# TensorFlow Official Models
+  - [TensorFlow Official Models](https://github.com/tensorflow/models/tree/master/official#tensorflow-official-models)
+  - **依赖 Requirements**
+    ```shell
+    git clone https://github.com/tensorflow/models.git
+
+    # 添加到 python 环境变量
+    export PYTHONPATH="$PYTHONPATH:/path/to/models"
+    export PYTHONPATH="$PYTHONPATH:$HOME/workspace/tensorflow_models"
+
+    # 安装依赖
+    pip install --user -r official/requirements.txt
+    ```
+  - **提供的可用模型 Available models**
+    - [boosted_trees](boosted_trees): A Gradient Boosted Trees model to classify higgs boson process from HIGGS Data Set.
+    - [mnist](mnist): A basic model to classify digits from the MNIST dataset.
+    - [resnet](resnet): A deep residual network that can be used to classify both CIFAR-10 and ImageNet's dataset of 1000 classes.
+    - [transformer](transformer): A transformer model to translate the WMT English to German dataset.
+    - [wide_deep](wide_deep): A model that combines a wide model and deep network to classify census income data.
+    - More models to come!
+***
+
 # Learn and use ML
-## 基本分类模型 Fasion MNIST 数据集
+## Keras 基本分类模型 Fasion MNIST 数据集
   - **import**
     ```py
     import tensorflow as tf
@@ -49,7 +71,6 @@
         keras.layers.Dense(128, activation=tf.nn.relu),
         keras.layers.Dense(10, activation=tf.nn.softmax)
     ])
-
 
     model.compile(optimizer=tf.train.AdamOptimizer(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     model.fit(train_images, train_labels, epochs=5)
@@ -120,7 +141,7 @@
       plot_value_array(i, predictions, test_labels)
     ```
     ![](images/tensorflow_mnist_fashion_predict.png)
-## 文本分类 IMDB 电影评论数据集
+## Keras 文本分类 IMDB 电影评论数据集
   - **pad_sequences** 将序列中的元素长度整理成相同长度
     ```py
     pad_sequences(sequences, maxlen=None, dtype='int32', padding='pre', truncating='pre', value=0.0)
@@ -246,7 +267,7 @@
     fig.tight_layout()
     ```
     ![](images/tensorflow_text_classifier.png)
-## 回归预测 Boston 房价数据集
+## Keras 回归预测 Boston 房价数据集
   - **EarlyStopping** 在指定的监控数据停止提高时，停止训练，可以防止过拟合
     ```py
     class EarlyStopping(Callback)
@@ -635,7 +656,7 @@
     ```
 ***
 
-# Eager 执行环境与 Keras layers API 分类 Iris 数据集
+# Eager 执行环境与 Keras 定义 DNN 模型分类 Iris 数据集
   - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
     ```python
     import os
@@ -859,7 +880,7 @@
 ***
 
 # ML at production scale
-## Build a linear model with Estimators
+## Estimators 使用 LinearClassifier 线性模型用于 Census 数据集
   - **Census 收入数据集** 包含了 1994 - 1995 个人的年龄 / 教育水平 / 婚姻状况 / 职业等信息，预测年收入是否达到 50,000 美元
   - [Predicting Income with the Census Income Dataset](https://github.com/tensorflow/models/tree/master/official/wide_deep)
     ```py
@@ -905,7 +926,7 @@
 
     # [5 rows x 15 columns]
     ```
-  - **使用自定义函数定义 input function** 数据转化为 Tensor，`tf.estimator` 使用输入功能 `input_fn`，函数要求没有参数，返回值中包含最终的特征 / 目标值
+  - **使用自定义函数定义 input function** 数据转化为 Tensor，输入功能 `input_fn`，用于向 Estimators 输入数据，函数要求没有参数，返回值中包含最终的特征 / 目标值
     ```py
     ''' 使用自定义函数 '''
     print(train_df['income_bracket'].unique())
@@ -946,7 +967,7 @@
     train_inpf = tf.estimator.inputs.numpy_input_fn(x={'age': train_features['age'].values}, y=train_labels.values, batch_size=64, shuffle=True, num_epochs=5)
     train_inpf = tf.estimator.inputs.pandas_input_fn(x=train_features[['age']], y=train_labels, batch_size=64, shuffle=True, num_epochs=5)
     ```
-  - **tf.feature_column.numeric_column** 定义数字特征列，Estimators 使用 `feature columns` 描述模型如何读取每一个特征列
+  - **tf.feature_column.numeric_column** 定义数字特征列，`feature columns` 用于定义 Estimators 模型结构，描述模型如何读取每一个特征列
     ```py
     import tensorflow.feature_column as fc
 
@@ -1053,7 +1074,7 @@
     # Create another crossed feature combining 'age' 'education' 'occupation'
     age_buckets_x_education_x_occupation = tf.feature_column.crossed_column([age_buckets, 'education', 'occupation'], hash_bucket_size=1000)
     ```
-  - **定义线性模型 LinearClassifier 训练评估预测** train / evaluate / predict
+  - **定义线性模型 LinearClassifier 训练评估预测 train / evaluate / predict**
     ```py
     ''' 训练 '''
     import tempfile
@@ -1194,19 +1215,1233 @@
     ```
 ## Boosted trees
   - [Classifying Higgs boson processes in the HIGGS Data Set](https://github.com/tensorflow/models/tree/master/official/boosted_trees)
+  - [train_higgs_test.py using tf.test.TestCase](https://github.com/tensorflow/models/blob/master/official/boosted_trees/train_higgs_test.py)
+  -  Higgs boson processes 希格斯玻色子过程
+  - **tensorflow.contrib.estimator.boosted_trees_classifier_train_in_memory** Trains a boosted tree classifier with in memory dataset
+    ```py
+    boosted_trees_classifier_train_in_memory(
+        train_input_fn, feature_columns, model_dir=None, n_classes=<object object at 0x7fbf2a72c260>,
+        weight_column=None, label_vocabulary=None, n_trees=100, max_depth=6, learning_rate=0.1,
+        l1_regularization=0.0, l2_regularization=0.0, tree_complexity=0.0,
+        min_node_weight=0.0, config=None, train_hooks=None, center_bias=False)
+    ```
+    ```python
+    bucketized_feature_1 = bucketized_column(
+      numeric_column('feature_1'), BUCKET_BOUNDARIES_1)
+    bucketized_feature_2 = bucketized_column(
+      numeric_column('feature_2'), BUCKET_BOUNDARIES_2)
+
+    def train_input_fn():
+      dataset = create-dataset-from-training-data
+      # This is tf.data.Dataset of a tuple of feature dict and label.
+      #   e.g. Dataset.zip((Dataset.from_tensors({'f1': f1_array, ...}),
+      #                     Dataset.from_tensors(label_array)))
+      # The returned Dataset shouldn't be batched.
+      # If Dataset repeats, only the first repetition would be used for training.
+      return dataset
+
+    classifier = boosted_trees_classifier_train_in_memory(
+        train_input_fn,
+        feature_columns=[bucketized_feature_1, bucketized_feature_2],
+        n_trees=100,
+        ... <some other params>
+    )
+
+    def input_fn_eval():
+      ...
+      return dataset
+
+    metrics = classifier.evaluate(input_fn=input_fn_eval, steps=10)
+    ```
+  ```py
+  URL_ROOT = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280"
+  INPUT_FILE = "HIGGS.csv.gz"
+  NPZ_FILE = "HIGGS.csv.gz.npz"  # numpy compressed file to contain "data" array.
+
+  def download_higgs_data_and_save_npz(data_dir):
+      """Download higgs data and store as a numpy compressed file."""
+      input_url = os.path.join(URL_ROOT, INPUT_FILE)
+      np_filename = os.path.join(data_dir, NPZ_FILE)
+      if tf.gfile.Exists(np_filename):
+          print('Data already downloaded: {}'.format(np_filename))
+          return
+
+      tf.gfile.MkDir(data_dir)
+      try:
+          # 2.8 GB to download.
+          temp_filename, _ = urllib.request.urlretrieve(input_url)
+          # Reading and parsing 11 million csv lines takes 2~3 minutes.
+          with gzip.open(temp_filename, 'rb') as csv_file:
+              data = pd.read_csv(
+                  csv_file, dtype=np.fload32,
+                  name=['c%02d' % ii for ii in range(29)] # label + 28 features.
+              ).as_matrix()
+      finally:
+          tf.gfile.Remove(temp_filename)
+
+      # Writing to temporary location then copy to the data_dir (0.8 GB).
+      f = tempfile.NamedTemporaryFile()
+      np.savez_compressed(f, data=data)
+      tf.gfile.Copy(f.name, np_filename)
+      print('Data saved to: {}'.format(np_filename))
+  ```
+  ```py
+  train_start = 0
+  train_count = 1000000
+  eval_start = 10000000
+  eval_count = 1000000
+  n_trees = 100
+  max_depth = 6
+  learning_rate = 0.1
+  data_dir = '/home/leondgarse/workspace/datasets'
+
+  def read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count):
+      npz_filename = os.path.join(data_dir, NPZ_FILE)
+      # gfile allows numpy to read data from network data sources as well.
+      with tf.gfile.Open(npz_filename, "rb") as npz_file:
+          with np.load(npz_file) as npz:
+              data = npz["data"]
+      return (data[train_start:train_start+train_count], data[eval_start:eval_start+eval_count])
+
+  # This showcases how to make input_fn when the input data is available in the form of numpy arrays.
+  def make_inputs_from_np_arrays(features_np, label_np):
+    """Makes and returns input_fn and feature_columns from numpy arrays.
+    The generated input_fn will return tf.data.Dataset of feature dictionary and a
+    label, and feature_columns will consist of the list of
+    tf.feature_column.BucketizedColumn.
+    Note, for in-memory training, tf.data.Dataset should contain the whole data
+    as a single tensor. Don't use batch.
+    Args:
+      features_np: A numpy ndarray (shape=[batch_size, num_features]) for
+          float32 features.
+      label_np: A numpy ndarray (shape=[batch_size, 1]) for labels.
+    Returns:
+      input_fn: A function returning a Dataset of feature dict and label.
+      feature_names: A list of feature names.
+      feature_column: A list of tf.feature_column.BucketizedColumn.
+    """
+    num_features = features_np.shape[1]
+    features_np_list = np.split(features_np, num_features, axis=1)
+    # 1-based feature names.
+    feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
+
+    # Create source feature_columns and bucketized_columns.
+    def get_bucket_boundaries(feature):
+      """Returns bucket boundaries for feature by percentiles."""
+      return np.unique(np.percentile(feature, range(0, 100))).tolist()
+    source_columns = [
+        tf.feature_column.numeric_column(
+            feature_name, dtype=tf.float32,
+            # Although higgs data have no missing values, in general, default
+            # could be set as 0 or some reasonable value for missing values.
+            default_value=0.0)
+        for feature_name in feature_names
+    ]
+    bucketized_columns = [
+        tf.feature_column.bucketized_column(
+            source_columns[i],
+            boundaries=get_bucket_boundaries(features_np_list[i]))
+        for i in range(num_features)
+    ]
+
+    # Make an input_fn that extracts source features.
+    def input_fn():
+      """Returns features as a dictionary of numpy arrays, and a label."""
+      features = {
+          feature_name: tf.constant(features_np_list[i])
+          for i, feature_name in enumerate(feature_names)
+      }
+      return tf.data.Dataset.zip((tf.data.Dataset.from_tensors(features),
+                                  tf.data.Dataset.from_tensors(label_np),))
+
+  return input_fn, feature_names, bucketized_columns
+  def make_eval_inputs_from_np_arrays(features_np, label_np):
+    """Makes eval input as streaming batches."""
+    num_features = features_np.shape[1]
+    features_np_list = np.split(features_np, num_features, axis=1)
+    # 1-based feature names.
+    feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
+
+    def input_fn():
+      features = {
+          feature_name: tf.constant(features_np_list[i])
+          for i, feature_name in enumerate(feature_names)
+      }
+      return tf.data.Dataset.zip((
+          tf.data.Dataset.from_tensor_slices(features),
+          tf.data.Dataset.from_tensor_slices(label_np),)).batch(1000)
+
+    return input_fn
+
+
+  def _make_csv_serving_input_receiver_fn(column_names, column_defaults):
+    """Returns serving_input_receiver_fn for csv.
+    The input arguments are relevant to `tf.decode_csv()`.
+    Args:
+      column_names: a list of column names in the order within input csv.
+      column_defaults: a list of default values with the same size of
+          column_names. Each entity must be either a list of one scalar, or an
+          empty list to denote the corresponding column is required.
+          e.g. [[""], [2.5], []] indicates the third column is required while
+              the first column must be string and the second must be float/double.
+    Returns:
+      a serving_input_receiver_fn that handles csv for serving.
+    """
+    def serving_input_receiver_fn():
+      csv = tf.placeholder(dtype=tf.string, shape=[None], name="csv")
+      features = dict(zip(column_names, tf.decode_csv(csv, column_defaults)))
+      receiver_tensors = {"inputs": csv}
+      return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+
+    return serving_input_receiver_fn
+
+  train_data, eval_data = read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count)
+
+  # Data consists of one label column followed by 28 feature columns.
+  train_input_fn, feature_names, feature_columns = make_inputs_from_np_arrays(
+      features_np=train_data[:, 1:], label_np=train_data[:, 0:1])
+  eval_input_fn = make_eval_inputs_from_np_arrays(
+  features_np=eval_data[:, 1:], label_np=eval_data[:, 0:1])
+  # Though BoostedTreesClassifier is under tf.estimator, faster in-memory
+  # training is yet provided as a contrib library.
+  classifier = tf.contrib.estimator.boosted_trees_classifier_train_in_memory(
+      train_input_fn,
+      feature_columns,
+      model_dir=flags_obj.model_dir or None,
+      n_trees=flags_obj.n_trees,
+      max_depth=flags_obj.max_depth,
+      learning_rate=flags_obj.learning_rate)
+
+  # Evaluation.
+  eval_results = classifier.evaluate(eval_input_fn)
+  # Benchmark the evaluation results
+  benchmark_logger.log_evaluation_result(eval_results)
+
+  # Exporting the savedmodel with csv parsing.
+  if flags_obj.export_dir is not None:
+    classifier.export_savedmodel(
+        flags_obj.export_dir,
+        _make_csv_serving_input_receiver_fn(
+            column_names=feature_names,
+            # columns are all floats.
+            column_defaults=[[0.0]] * len(feature_names)))
+  ```
+## Estimators DNNClassifier 使用 TF Hub module 作为 embedding 进行文本分类
+  - **[TensorFlow Hub](https://www.tensorflow.org/hub/)**
+    - Google 提供的机器学习分享平台，将 TensorFlow 的训练模型发布成模组
+    - 方便再次使用或是共享机器学习中可重用的部分，包括 TensorFlow_Graph / 权重 / 外部档案等
+    - 模型第一次下载需要较长时间，下载完成后再次使用不需要重复下载
+    - 默认保存位置 `/tmp/tfhub_modules/`，可以通过环境变量 `TFHUB_CACHE_DIR` 指定自定义位置
+    ```sh
+    pip install tensorflow-hub
+
+    # nnlm-en-dim128 module, about 484M
+    python -c 'import tensorflow_hub as hub; hub.Module("https://tfhub.dev/google/nnlm-en-dim128/1")'
+    # random-nnlm-en-dim128, about 484M
+    python -c 'import tensorflow_hub as hub; hub.Module("https://tfhub.dev/google/random-nnlm-en-dim128/1")'
+    # universal-sentence-encoder-large module, about 811M
+    python -c 'import tensorflow_hub as hub; hub.Module("https://tfhub.dev/google/universal-sentence-encoder-large/3")'
+
+    # Default saving path
+    du -hd1 /tmp/tfhub_modules/
+
+    # Change modules saving path by environment argument
+    export TFHUB_CACHE_DIR="$HOME/workspace/module_cache/"
+    ```
+    **模块测试**
+    ```py
+    # Try with nnlm-en-dim128
+    import tensorflow_hub as hub
+
+    embed_nnlm = hub.Module("https://tfhub.dev/google/nnlm-en-dim128/1")
+    embed_usel = hub.Module("https://tfhub.dev/google/universal-sentence-encoder-large/3")
+
+    sess = tf.InteractiveSession()
+    tf.tables_initializer().run()
+    tf.global_variables_initializer().run()
+
+    embeddings_nnlm = embed_nnlm(["cat is on the mat", "dog is in the fog"]).eval()
+    print(embeddings.shape)
+    # (2, 128)
+
+    embeddings_usel = embed_usel(["cat is on the mat", "dog is in the fog"]).eval()
+    print(embeddings_usel.shape)
+    # (2, 512)
+    ```
+  - **import**
+    ```py
+    import tensorflow as tf
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    import os
+    import re
+
+    import tensorflow_hub as hub
+    ```
+  - **加载 IMDB 电影评论数据集** [Large Movie Review Dataset v1.0](http://ai.stanford.edu/%7Eamaas/data/sentiment/)
+    - 解压后的文件包含 train / test 文件夹
+    - train 文件夹中包含 neg / pos / unsup 文件夹
+    - neg / pos 文件夹中分别包含 12500 调评论数据
+    - 每条评论数据的命名格式 `ID_情绪等级 sentiment`，其中情绪等级取值 1-10
+    ```py
+    # Download the dataset files.
+    dataset = tf.keras.utils.get_file(
+        fname="aclImdb.tar.gz",
+        origin="http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz",
+        extract=True)
+
+    ! ls ~/.keras/datasets/aclImdb/train/
+    # labeledBow.feat  neg  pos  unsup  unsupBow.feat  urls_neg.txt  urls_pos.txt  urls_unsup.txt
+    ! ls ~/.keras/datasets/aclImdb/test
+    # labeledBow.feat  neg  pos  urls_neg.txt  urls_pos.txt
+    ! ls ~/.keras/datasets/aclImdb/train/pos | wc -l
+    # 12500
+    print(len(os.listdir('/home/leondgarse/.keras/datasets/aclImdb/test/neg')))
+    # 12500
+    print(os.listdir('/home/leondgarse/.keras/datasets/aclImdb/train/pos')[:5])
+    # ['0_9.txt', '10000_8.txt', '10001_10.txt', '10002_7.txt', '10003_8.txt']
+    ```
+    ```py
+    # Load all files from a directory in a DataFrame.
+    def load_directory_data(directory):
+        data_sentence = []
+        data_sentiment = []
+        for fn in os.listdir(directory):
+            with tf.gfile.GFile(os.path.join(directory, fn), 'r') as ff:
+                data_sentence.append(ff.read())
+                data_sentiment.append(re.match("\d+_(\d+)\.txt", fn).group(1))
+        return pd.DataFrame({"sentence": data_sentence, "sentiment": data_sentiment})
+
+    # Merge positive and negative examples, add a polarity column and shuffle.
+    def load_dataset(directory):
+        pos_df = load_directory_data(os.path.join(directory, 'pos'))
+        neg_df = load_directory_data(os.path.join(directory, 'neg'))
+        pos_df['polarity'] = 1
+        neg_df['polarity'] = 0
+        # Merge then shuffle
+        return pd.concat([pos_df, neg_df]).sample(frac=1).reset_index(drop=True)
+
+    pos_df = load_directory_data('/home/leondgarse/.keras/datasets/aclImdb/train/pos')
+    print(pos_df.shape)
+    # (12500, 2)
+    print(pos_df.head())
+    #                                             sentence sentiment
+    # 0  Bromwell High is a cartoon comedy. It ran at t...         9
+    # 1  Homelessness (or Houselessness as George Carli...         8
+    # 2  Brilliant over-acting by Lesley Ann Warren. Be...        10
+    # 3  This is easily the most underrated film inn th...         7
+    # 4  This is not the typical Mel Brooks film. It wa...         8
+    ```
+    ```py
+    def download_or_load_datasets(save_path=os.path.join(os.environ['HOME'], 'workspace/datasets/aclImdb')):
+        train_save_path = os.path.join(save_path, 'train.csv')
+        test_save_path = os.path.join(save_path, 'test.csv')
+        if tf.gfile.Exists(train_save_path) and tf.gfile.Exists(test_save_path):
+            print('Loading from local saved datasets...')
+            train_df = pd.read_csv(train_save_path)
+            test_df = pd.read_csv(test_save_path)
+        else:
+            print('Downloading from web...')
+            dataset = tf.keras.utils.get_file(
+                fname="aclImdb.tar.gz",
+                origin="http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz",
+                extract=True)
+
+            train_df = load_dataset(os.path.join(os.path.dirname(dataset), 'aclImdb', 'train'))
+            test_df = load_dataset(os.path.join(os.path.dirname(dataset), 'aclImdb', 'test'))
+
+            train_df.to_csv(train_save_path, index=False)
+            test_df.to_csv(test_save_path, index=False)
+
+        return train_df, test_df
+
+    train_df, test_df = download_or_load_datasets()
+    print(train_df.shape)
+    # (25000, 3)
+    print(train_df.head())
+    #                                             sentence sentiment  polarity
+    # 0  Having not seen the films before (and not bein...         8         1
+    # 1  The first few minutes of "The Bodyguard" do ha...         2         0
+    # 2  I can't believe this movie managed to get such...         1         0
+    # 3  This movie is unbelievably ridiculous. I love ...         1         0
+    # 4  I was watching this movie on Friday,Apr 7th. I...         7         1
+    print(train_df.sentiment.unique())
+    # ['8' '2' '1' '7' '3' '4' '9' '10']
+    ```
+  - **tf.estimator.inputs.pandas_input_fn 定义模型的输入功能**
+    ```py
+    # Training input on the whole training set with no limit on training epochs.
+    train_input_fn = tf.estimator.inputs.pandas_input_fn(train_df, train_df['polarity'], num_epochs=None, shuffle=True)
+
+    # Prediction on the whole training set.
+    predict_train_input_fn = tf.estimator.inputs.pandas_input_fn(train_df, train_df['polarity'], shuffle=False)
+    # Prediction on the test set.
+    predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(test_df, test_df['polarity'], shuffle=False)
+    ```
+  - **hub.text_embedding_column 定义模型的 Feature columns**
+    - **[nnlm-en-dim128 模块](https://www.tensorflow.org/hub/modules/google/nnlm-en-dim128/1)** TF-Hub 提供的一个用于将指定的文本特征列，转化为 feature column
+    - 该模块使用一组一维张量字符串作为输入
+    - 该模块对输入的字符串做预处理，如移除标点 / 按照空格划分单词
+    - 该模块可以处理任何输入，如将单词表中没有的单词散列到大约 20,000 个桶中
+    ```py
+    # Define feature columns.
+    embedded_text_feature_column = hub.text_embedding_column(
+        key="sentence",
+        module_spec="https://tfhub.dev/google/nnlm-en-dim128/1")
+    ```
+  - **tf.estimator.DNNClassifier 创建 DNN 模型训练评估预测 train / evaluate / predict**
+    ```py
+    estimator = tf.estimator.DNNClassifier(
+        hidden_units=[500, 100],
+        feature_columns=[embedded_text_feature_column],
+        n_classes=2,
+        optimizer=tf.train.AdagradOptimizer(learning_rate=0.003))
+
+    # Training for 1,000 steps means 128,000 training examples with the default
+    # batch size. This is roughly equivalent to 5 epochs since the training dataset
+    # contains 25,000 examples.
+    estimator.train(input_fn=train_input_fn, steps=1000)
+    # INFO:tensorflow:Loss for final step: 60.31695
+
+    # Run predictions for both training and test set.
+    train_eval_result = estimator.evaluate(input_fn=predict_train_input_fn)
+    test_eval_result = estimator.evaluate(input_fn=predict_test_input_fn)
+
+    print("Training set accuracy: {accuracy}".format(**train_eval_result))
+    # Training set accuracy: 0.8023999929428101
+    print("Test set accuracy: {accuracy}".format(**test_eval_result))
+    # Test set accuracy: 0.7928400039672852
+    ```
+  - **创建混淆矩阵 Confusion matrix** 使用混淆矩阵图形化显示错误分类的分布情况
+    ```py
+    def get_predictions(estimator, input_fn):
+        return [x["class_ids"][0] for x in estimator.predict(input_fn=input_fn)]
+
+    LABELS = [ "negative", "positive" ]
+
+    # Create a confusion matrix on training data.
+    with tf.Graph().as_default():
+        cm = tf.confusion_matrix(train_df["polarity"], get_predictions(estimator, predict_train_input_fn))
+        with tf.Session() as session:
+            cm_out = session.run(cm)
+
+    # Normalize the confusion matrix so that each row sums to 1.
+    cm_out = cm_out.astype(float) / cm_out.sum(axis=1)[:, np.newaxis]
+
+    sns.heatmap(cm_out, annot=True, xticklabels=LABELS, yticklabels=LABELS)
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    ```
+    ![](images/tensorflow_text_classifier_confusion_matrix.png)
+  - **进一步提高模型效果**
+    - **使用情绪数据 sentiment 做回归预测** 不使用简单的 pos / neg 划分进行分类预测，而是将情绪数据 sentiment 作为连续值做回归预测，使用 `DNN Regressor` 替换 `DNN Classifier`
+    - **定义更大的模型** 示例中使用较小的模型以节省内存占用，对于更大的单词向量空间，可以定义更大的模型，提高准确率
+    - **参数调整** 可以通过调整模型的学习率 / 训练步骤等提高预测准确率，并且应定义验证数据集，以检查训练过程中的模型效果
+    - **使用更复杂的模块** 可以通过使用更复杂的模块，如 Universal Sentence Encoder module 替换 nnlm-en-dim128 模块，或混合使用多个 TF-Hub 模块
+    - **正则化** 可以使用其他优化器 optimizer 添加正则化防止过拟合，如 Proximal Adagrad Optimizer
+  - **迁移学习 Transfer learning** 可以节省计算并实现良好的模型泛化，即使在小数据集也可以达到很好的效果
+    - 示例使用两个不同的 TF-Hub 模块进行训练
+      - `nnlm-en-dim128` 预训练好的文本嵌入模块
+      - `random-nnlm-en-dim128` 类似 nnlm-en-dim128 的网络结构，但参数只是随机初始化，没有在真实数据上训练
+    - 通过两种模式进行训练
+      - 只训练分类器
+      - 同时训练分类器与模块
+    ```py
+    def train_and_evaluate_with_module(hub_module, train_module=False):
+        embedded_text_feature_column = hub.text_embedding_column(
+            key="sentence", module_spec=hub_module, trainable=train_module)
+
+        estimator = tf.estimator.DNNClassifier(
+            hidden_units=[500, 100],
+            feature_columns=[embedded_text_feature_column],
+            n_classes=2,
+            optimizer=tf.train.AdagradOptimizer(learning_rate=0.003))
+
+        estimator.train(input_fn=train_input_fn, steps=1000)
+
+        train_eval_result = estimator.evaluate(input_fn=predict_train_input_fn)
+        test_eval_result = estimator.evaluate(input_fn=predict_test_input_fn)
+
+        training_set_accuracy = train_eval_result["accuracy"]
+        test_set_accuracy = test_eval_result["accuracy"]
+
+        return {
+            "Training accuracy": training_set_accuracy,
+            "Test accuracy": test_set_accuracy
+        }
+
+
+    results = {}
+    results["nnlm-en-dim128"] = train_and_evaluate_with_module(
+        "https://tfhub.dev/google/nnlm-en-dim128/1")
+    results["nnlm-en-dim128-with-module-training"] = train_and_evaluate_with_module(
+        "https://tfhub.dev/google/nnlm-en-dim128/1", True)
+    results["random-nnlm-en-dim128"] = train_and_evaluate_with_module(
+        "https://tfhub.dev/google/random-nnlm-en-dim128/1")
+    results["random-nnlm-en-dim128-with-module-training"] = train_and_evaluate_with_module(
+        "https://tfhub.dev/google/random-nnlm-en-dim128/1", True)
+
+    # Let's look at the results.
+    pd.DataFrame.from_dict(results, orient="index")
+    #                                             Training accuracy  Test accuracy
+    # nnlm-en-dim128                                        0.80048        0.79264
+    # nnlm-en-dim128-with-module-training                   0.95108        0.87120
+    # random-nnlm-en-dim128                                 0.72168        0.68004
+    # random-nnlm-en-dim128-with-module-training            0.76460        0.72132
+
+    # The baseline accuracy of the test set
+    print(estimator.evaluate(input_fn=predict_test_input_fn)["accuracy_baseline"])
+    # 0.5
+    ```
+    - 即使使用固定的随机分配的 embeddings，模型依然可以通过全连接层将不同类别区分开，达到一定的分类效果
+    - 允许在预训练好的 / 随机分配的 embeddings 模块上继续训练，将可以提高训练 / 测试数据集上的正确率
+    - 在预训练好的模型上集训训练很可能导致模型在训练数据集上过拟合
+    ```py
+    # Try with universal-sentence-encoder-large module
+    results_usnl = train_and_evaluate_with_module('https://tfhub.dev/google/universal-sentence-encoder-large/3')
+    print(results_usnl)
+    # {'Training accuracy': 0.84496, 'Test accuracy': 0.84316}
+
+    # This cannot be done...
+    results_usnl_training = train_and_evaluate_with_module('https://tfhub.dev/google/universal-sentence-encoder-large/3', True)
+    ```
+## Text classifier with TF Hub on kaggle
+  ```py
+  ! pip install kaggle
+
+  import tensorflow as tf
+  import tensorflow_hub as hub
+  import matplotlib.pyplot as plt
+  import numpy as np
+  import pandas as pd
+  import seaborn as sns
+  import zipfile
+
+  from sklearn import model_selection
+  ```
+  Since this tutorial will be using a dataset from Kaggle, it requires creating an API Token for your Kaggle account, and uploading it to the Colab environment.
+  ```py
+  import os
+
+  # Upload the API token.
+  def get_kaggle_credentials():
+    token_dir = os.path.join(os.path.expanduser("~"),".kaggle")
+    token_file = os.path.join(token_dir, "kaggle.json")
+    if not os.path.isdir(token_dir):
+      os.mkdir(token_dir)
+    try:
+      with open(token_file,'r') as f:
+        pass
+    except IOError as no_file:
+      try:
+        from google.colab import files
+      except ImportError:
+        raise no_file
+
+      uploaded = files.upload()
+      with open(token_file, "w") as f:
+        f.write(uploaded["kaggle.json"])
+      os.chmod(token_file, 600)
+
+  get_kaggle_credentials()
+  # Note: Only import kaggle after adding the credentials.
+  import kaggle
+  ```
+
+  Getting started
+  Data
+
+  We will try to solve the Sentiment Analysis on Movie Reviews task from Kaggle. The dataset consists of syntactic subphrases of the Rotten Tomatoes movie reviews. The task is to label the phrases as negative or positive on the scale from 1 to 5.
+
+  You must accept the competition rules before you can use the API to download the data.
+
+  ```py
+  SENTIMENT_LABELS = [
+      "negative", "somewhat negative", "neutral", "somewhat positive", "positive"
+  ]
+
+  # Add a column with readable values representing the sentiment.
+  def add_readable_labels_column(df, sentiment_value_column):
+    df["SentimentLabel"] = df[sentiment_value_column].replace(
+        range(5), SENTIMENT_LABELS)
+
+
+  # Download data from Kaggle and create a DataFrame.
+  def load_data_from_zip(competition, file):
+    with zipfile.ZipFile(os.path.join(competition, file), "r") as zip_ref:
+      unzipped_file = zip_ref.namelist()[0]
+      zip_ref.extractall(competition)
+      return pd.read_csv(
+          os.path.join(competition, unzipped_file), sep="\t", index_col=0)
+
+
+  # The data does not come with a validation set so we'll create one from the
+  # training set.
+  def get_data(competition, train_file, test_file, validation_set_ratio=0.1):
+    kaggle.api.competition_download_files(competition, competition)
+    train_df = load_data_from_zip(competition, train_file)
+    test_df = load_data_from_zip(competition, test_file)
+
+    # Add a human readable label.
+    add_readable_labels_column(train_df, "Sentiment")
+
+    # We split by sentence ids, because we don't want to have phrases belonging
+    # to the same sentence in both training and validation set.
+    train_indices, validation_indices = model_selection.train_test_split(
+        np.unique(train_df["SentenceId"]),
+        test_size=validation_set_ratio,
+        random_state=0)
+
+    validation_df = train_df[train_df["SentenceId"].isin(validation_indices)]
+    train_df = train_df[train_df["SentenceId"].isin(train_indices)]
+    print("Split the training data into %d training and %d validation examples." %
+          (len(train_df), len(validation_df)))
+
+    return train_df, validation_df, test_df
+
+
+  train_df, validation_df, test_df = get_data(
+      "sentiment-analysis-on-movie-reviews", "train.tsv.zip", "test.tsv.zip")
+  train_df.head()
+  ```
+  Training an Estimator
+
+  We will use a premade DNN Classifier along with text_embedding_column that applies a TF-Hub module on the given text feature and returns the embedding vectors.
+
+  Note: We could model this task also as a regression, see Text classification with TF-Hub.
+
+  ```py
+  # Training input on the whole training set with no limit on training epochs.
+  train_input_fn = tf.estimator.inputs.pandas_input_fn(
+      train_df, train_df["Sentiment"], num_epochs=None, shuffle=True)
+
+  # Prediction on the whole training set.
+  predict_train_input_fn = tf.estimator.inputs.pandas_input_fn(
+      train_df, train_df["Sentiment"], shuffle=False)
+  # Prediction on the validation set.
+  predict_validation_input_fn = tf.estimator.inputs.pandas_input_fn(
+      validation_df, validation_df["Sentiment"], shuffle=False)
+  # Prediction on the test set.
+  predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(
+      test_df, shuffle=False)
+
+  embedded_text_feature_column = hub.text_embedding_column(
+      key="Phrase",
+      module_spec="https://tfhub.dev/google/nnlm-en-dim128/1")
+
+  estimator = tf.estimator.DNNClassifier(
+      hidden_units=[500, 100],
+      feature_columns=[embedded_text_feature_column],
+      n_classes=5,
+      optimizer=tf.train.AdagradOptimizer(learning_rate=0.003))
+
+  estimator.train(input_fn=train_input_fn, steps=10000);
+  ```
+  Prediction
+
+  Run predictions for the validation set and training set.
+  ```py
+  train_eval_result = estimator.evaluate(input_fn=predict_train_input_fn)
+  validation_eval_result = estimator.evaluate(input_fn=predict_validation_input_fn)
+
+  print("Training set accuracy: {accuracy}".format(**train_eval_result))
+  print("Validation set accuracy: {accuracy}".format(**validation_eval_result))
+  ```
+  Confusion matrix
+
+  Another very interesting statistic, especially for multiclass problems, is the confusion matrix. The confusion matrix allows visualization of the proportion of correctly and incorrectly labelled examples. We can easily see how much our classifier is biased and whether the distribution of labels makes sense. Ideally the largest fraction of predictions should be distributed along the diagonal.
+
+  ```py
+  def get_predictions(estimator, input_fn):
+    return [x["class_ids"][0] for x in estimator.predict(input_fn=input_fn)]
+
+  # Create a confusion matrix on training data.
+  with tf.Graph().as_default():
+    cm = tf.confusion_matrix(train_df["Sentiment"],
+                             get_predictions(estimator, predict_train_input_fn))
+    with tf.Session() as session:
+      cm_out = session.run(cm)
+
+  # Normalize the confusion matrix so that each row sums to 1.
+  cm_out = cm_out.astype(float) / cm_out.sum(axis=1)[:, np.newaxis]
+
+  sns.heatmap(
+      cm_out,
+      annot=True,
+      xticklabels=SENTIMENT_LABELS,
+      yticklabels=SENTIMENT_LABELS)
+  plt.xlabel("Predicted")
+  plt.ylabel("True")
+  ```
+  We can easily submit the predictions back to Kaggle.
+  ```py
+  test_df["Predictions"] = get_predictions(estimator, predict_test_input_fn)
+  test_df.to_csv(
+      tf.gfile.GFile("predictions.csv", "w"),
+      columns=["Predictions"],
+      header=["Sentiment"])
+  kaggle.api.competition_submit("predictions.csv", "Submitted from Colab",
+                                "sentiment-analysis-on-movie-reviews")
+  ```
+## Estimators 自定义 CNN 多层卷积神经网络用于 MNIST 数据集
+  - **加载 MNIST 手写数字数据集** 包含 60,000 个训练样本，10,000 个测试样本，每个样本是一个 28x28 像素的单色图片，代表手写的 0-9 数字
+    ```py
+    mnist = tf.keras.datasets.mnist
+    (train_data, train_labels), (test_data, test_labels) = mnist.load_data()
+
+    print(train_data.shape, test_data.shape)
+    # (60000, 28, 28) (10000, 28, 28)
+    print(train_labels[:10])
+    # [5 0 4 1 9 2 1 3 1 4]
+    ```
+  - **CNNs** 多层卷积神经网络 Multilayer Convolutional Neural Networks，主要用于图片识别
+    - CNNs 在图片的原始像素上应用多个过滤器，将其转化成更高层的特征，模型可以使用转化后的特征进行分类训练等
+    - **卷积层 Convolutional layers** 将输入的一块指定大小数据区域，转化为一个数值作为输出，通常还会应用一个 `ReLU` 激活函数去线性化
+    - **池化层 Pooling layers** 进一步采样降低卷积层输出结果的数据大小，最常使用的是 `max pooling`，返回一个数据区域上的最大值
+    - **全连接层 Dense layers** 对卷积层与池化层转化后的特征进行分类
+    - CNN 通常包含多个 **卷积-池化** 层进行特征提取，最后一个卷积层通常跟随一个或多个 **全连接层** 进行分类
+    - 最后一个全连接层的输出维度通常是分类目标的数量，通过一个 `softmax` 激活函数，指示一个给定图片所属的类别
+  - **CNN MNIST 分类器结构**
+    - **卷积层 1** 输出深度 filters = 32 / 过滤器大小 kernel_size = [5, 5] / ReLU 激活函数
+    - **池化层 1** max pooling / 过滤器大小 pool_size = [2, 2] / 步长 stride = 2
+    - **卷积层 2** 输出深度 filters = 64 / 过滤器大小 kernel_size = [5, 5] / ReLU 激活函数
+    - **池化层 2** max pooling / 过滤器大小 pool_size = [2, 2] / 步长 stride = 2
+    - **全连接层 1** 隐藏层神经元数量 = 1,024
+    - **dropout 层** dropout rate = 0.4
+    - **全连接层 2** 输出层 Logits Layer / 隐藏层神经元数量 = 10
+  - **tf.layers 模块**
+    - **conv2d()** 创建二维的卷积层
+      ```py
+      conv2d(inputs, filters, kernel_size, strides=(1, 1), padding='valid', data_format='channels_last', activation=None, ...)
+      ```
+    - **max_pooling2d()** 创建二维的最大池化层
+      ```py
+      max_pooling2d(inputs, pool_size, strides, padding='valid', data_format='channels_last', name=None)
+      ```
+    - **dense()** 创建全连接层
+      ```py
+      dense(inputs, units, activation=None, use_bias=True, activity_regularizer=None, ...)
+      ```
+  - **输入层 Input Layer**
+    - 卷积层与池化层的数据输入格式
+      - 默认为 `[batch_size, image_height, image_width, channels]`，即 `NHWC` 数据格式，通过参数 `data_format='channels_last'` 指定
+      - 对应的是 `NCHW` 数据格式，通过参数 `data_format='channels_first'` 指定
+    - MNIST 每个样本是 28x28 像素的图片，因此输入层的维度为 `[batch_size, 28, 28, 1]`
+      ```py
+      input_layer_temp = np.reshape(train_data, [-1, 28, 28, 1])
+      print(input_layer_temp.shape)
+      # (60000, 28, 28, 1)
+      ```
+  - **CNN 模型前向传播过程**
+    ```py
+    ''' Define the CNN inference process '''
+    def cnn_model_inference(input_layer, training, dropout_rate=0.4):
+        # Input: [batch_size, 28, 28, 1], output: [batch_size, 28, 28, 32]
+        conv1 = tf.layers.conv2d(
+            inputs=input_layer,
+            filters=32,
+            kernel_size=[5, 5],
+            padding='same',
+            activation=tf.nn.relu)
+
+        # Output: [batch_size, 14, 14, 32]
+        pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+
+        # Output: [batch_size, 14, 14, 64]
+        conv2 = tf.layers.conv2d(
+            inputs=pool1,
+            filters=64,
+            kernel_size=[5, 5],
+            padding="same",
+            activation=tf.nn.relu)
+
+        # Output: [batch_size, 7, 7, 64]
+        pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+
+        # Flatten to two dimensions, output: [batch_size, 7 * 7 * 64]
+        pool2_flat = tf.layers.flatten(pool2)
+        # Output: [batch_size, 1024]
+        dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+        # Dropout regularization layer, output: [batch_size, 1024]
+        # Dropout will only be performed if training is True
+        dropout = tf.layers.dropout(inputs=dense, rate=dropout_rate, training=training)
+
+        # Logits Layer, output: [batch_size, 10]
+        logits = tf.layers.dense(inputs=dropout, units=10)
+
+        return logits, [conv1, pool1, conv2, pool2, pool2_flat, dense, dropout, logits]
+
+    ''' Test inference with session '''
+    BATCH_SIZE = 100
+    input_layer = tf.placeholder(tf.float32, [BATCH_SIZE, 28, 28, 1])
+    training = True
+    dropout_rate = 0.4
+
+    tt, hh = cnn_model_inference(input_layer, training, dropout_rate)
+    print({ll.name: ll.shape.as_list() for ll in hh})
+    # {'conv2d/Relu:0': [100, 28, 28, 32],
+    #  'max_pooling2d/MaxPool:0': [100, 14, 14, 32],
+    #  'conv2d_1/Relu:0': [100, 14, 14, 64],
+    #  'max_pooling2d_1/MaxPool:0': [100, 7, 7, 64],
+    #  'flatten/Reshape:0': [100, 3136],
+    #  'dense/Relu:0': [100, 1024],
+    #  'dropout/dropout/mul:0': [100, 1024],
+    #  'dense_1/BiasAdd:0': [100, 10]}
+
+    sess = tf.InteractiveSession()
+    tf.global_variables_initializer().run()
+    aa = sess.run(tt, feed_dict={input_layer: input_layer_temp[:BATCH_SIZE]})
+    print(aa[:3])
+    # [[ -3.2941093   3.7527535 -30.847082  -22.214169   -2.7270699  18.16967
+    #     6.5825205  -3.5771027   3.0754633 -10.337991 ]
+    #  [-23.97932   -18.125025   -0.9602623 -10.381845  -11.011532   16.995234
+    #    -9.359307  -51.07291    21.290535  -38.749466 ]
+    #  [ 13.618255   -1.1365948  16.149418   -9.945418  -15.528702   21.677935
+    #   -16.846024  -20.45825    -0.2609415 -39.40958  ]]
+    print(tf.argmax(aa[:10], axis=1).eval())
+    # [5 8 5 6 6 8 6 6 6 1]
+
+    ''' Test inference with Eager execution '''
+    # Rerun python
+    tf.enable_eager_execution()
+    # Rerun previous code
+    aa = tf.convert_to_tensor(input_layer_temp[:3].astype(np.float32))
+    print(cnn_model_inference(aa, True)[0].numpy())
+    # [[-58.099987  -27.92639    42.71275    23.317656   -2.2976465  37.94627
+    #    35.879013   11.523968    5.1203656   2.5368996]
+    #  [-39.770252  -32.36274    61.28269    21.879997    9.790689   19.838257
+    #   -16.680183    5.0793905  15.984894  -31.47673  ]
+    #  [ -6.301746  -11.510033   10.256875   -8.47909     5.424719   15.285409
+    #   -18.704355  -33.391552    9.175503   -8.884123 ]]
+    ```
+  - **定义 Estimator 的 model function**
+    ```py
+    def cnn_model_fn(features, labels, mode):
+        """Model function for CNN."""
+        # Input Layer
+        input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
+
+        # Model inference to logits
+        training = mode == tf.estimator.ModeKeys.TRAIN
+        logits, _ = cnn_model_inference(input_layer, training=training, dropout_rate=0.4)
+
+        predictions = {
+            # Generate predictions (for PREDICT and EVAL mode)
+            "classes": tf.argmax(input=logits, axis=1),
+            # Add `softmax_tensor` to the graph. It is used for PREDICT and by the `logging_hook`.
+            "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+        }
+
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+
+        # Calculate Loss (for both TRAIN and EVAL modes)
+        loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+
+        # Configure the Training Op (for TRAIN mode)
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+            train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
+            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+
+        # Add evaluation metrics (for EVAL mode)
+        eval_metric_ops = {
+            "accuracy": tf.metrics.accuracy(labels=labels, predictions=predictions["classes"])}
+        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+    ```
+  - **CNN Estimator MNIST 分类器训练与评估**
+    ```py
+    # Create the Estimator
+    mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="/tmp/mnist_convnet_model")
+
+    # Set up logging for predictions
+    tensors_to_log = {"probabilities": "softmax_tensor"}
+    logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=50)
+
+    ''' Train the Model'''
+    # Input functions
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={'x': train_data.astype(np.float32)},
+        y=train_labels.astype(np.int32),
+        batch_size=100,
+        num_epochs=None,
+        shuffle=True)
+
+    # mnist_classifier.train(input_fn=train_input_fn, steps=20000)
+    mnist_classifier.train(input_fn=train_input_fn, steps=20000, hooks=[logging_hook])
+    # INFO:tensorflow:Loss for final step: 0.0027697133
+
+    ''' Evaluate the Model '''
+    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": test_data.astype(np.float32)},
+        y=test_labels.astype(np.int32),
+        num_epochs=1,
+        shuffle=False)
+
+    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+    print(eval_results)
+    # {'accuracy': 0.9895, 'loss': 0.031874545, 'global_step': 20000}
+    ```
 ***
 
-```py
-import inspect
-print(inspect.getsource(inspect.getsource))
-```
-# optimizer
-![](images/opt1.gif)
+# Generative models
+## Eager 执行环境与 Keras 定义 RNN 模型自动生成文本
+  - [Text Generation using a RNN](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/text_generation.ipynb)
+  - **加载数据集** [Shakespeare's writing 文本数据](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)
+    ```py
+    # Note: Once you enable eager execution, it cannot be disabled.
+    tf.enable_eager_execution()
+
+    path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
+    ```
+  - **Unicode 编码转化为 ASCII**
+    ```py
+    ! pip install unidecode
+
+    import unidecode
+    print(unidecode.unidecode('Unicode 编码转化为 ASCII'))
+    # Unicode Bian Ma Zhuan Hua Wei  ASCII
+
+    text = unidecode.unidecode(open(path_to_file, 'r').read())
+    print(len(text))
+    # 1115394
+
+    print(text[:100])
+    # First Citizen:
+    # Before we proceed any further, hear me speak.
+
+    # All:
+    # Speak, speak.
+
+    # First Citizen:
+    # You
+    ```
+  - **将字符转化为数字 ID** 用于将输入文本转化为向量
+    ```py
+    # unique_c contains all the unique characters in the file
+    unique_c = sorted(set(text))
+    print(len(unique_c))
+    # 65 --> 13 + 26 + 26
+    print(unique_c[:20])
+    # ['\n', ' ', '!', '$', '&', "'", ',', '-', '.', '3', ':', ';', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G']
+
+    # creating a mapping from unique characters to indices
+    char2idx = {u: i for i, u in enumerate(unique_c)}
+    idx2char = {i: u for i, u in enumerate(unique_c)}
+    ```
+  - **创建输入与输出 tensors**
+    - 将输入字符串文本转化为数字向量
+    - 整个文本划分成多个块 `chunks`，每个块的长度为 `max_length`
+    - **输入向量 feature** 为整个块 `chunks[0: max_length]`
+    - **输出向量 target** 为整个块的下一个字符 `chunks[1: max_length + 1]`
+    - 对于字符串 `'tensorflow eager'` / `max_length = 10`，输入输出向量为 `'tensorflow'` / `'ensorflow '`，`' eager'` / `'eager'`
+    ```py
+    # setting the maximum length sentence we want for a single input in characters
+    max_length = 100
+    input_text = []
+    target_text = []
+
+    for ss in arange(0, len(text) - max_length, max_length):
+        inps = text[ss: ss + max_length]
+        targ = text[ss + 1: ss + max_length + 1]
+
+        input_text.append([char2idx[ii] for ii in inps])
+        target_text.append([char2idx[ii] for ii in targ])
+
+    print(np.shape(input_text), np.shape(target_text))
+    # (11153, 100) (11153, 100)
+
+    # buffer size to shuffle our dataset
+    BUFFER_SIZE = 10000
+    # batch size
+    BATCH_SIZE = 64
+    dataset = tf.data.Dataset.from_tensor_slices((input_text, target_text)).shuffle(BUFFER_SIZE)
+    # Batch and omits the final small batch (if present)
+    dataset = dataset.batch(batch_size=BATCH_SIZE, drop_remainder=True)
+
+    itrt = dataset.make_one_shot_iterator()
+    ii, tt = itrt.next()
+    print(ii.shape.as_list(), tt.shape.as_list())
+    # [64, 100] [64, 100]
+
+    print(''.join(idx2char[aa] for aa in ii[0].numpy()))
+    # ed me.
+    #
+    # KING RICHARD III:
+    # Well, but what's o'clock?
+    #
+    # BUCKINGHAM:
+    # Upon the stroke of ten.
+    #
+    # KING RICHA
+    ```
+  - **keras 定义使用 GRU 结构的 RNN 神经网络模型** GRU 即 Gated Recurrent Unit，是 LSTM 的一个变体，只有两个门结构 **更新门** / **重置门**，在保持 LSTM 效果的同时使结构更加简单
+    ```py
+    class GRU(RNN)
+    __init__(self, units, activation='tanh', recurrent_activation='hard_sigmoid', dropout=0.0, recurrent_dropout=0.0, implementation=1, ...)
+
+    # Fast GRU implementation backed by cuDNN
+    class CuDNNGRU(_CuDNNRNN)
+    __init__(self, units, kernel_initializer='glorot_uniform', recurrent_initializer='orthogonal', return_sequences=False, return_state=False, ...)
+    ```
+    模型包括 **三层结构** `嵌入层 Embedding layer` / `GRU 层，也可以使用 LSTM 层` / `全链接层 Fully connected layer`
+    ```py
+    class MModel(tf.keras.Model):
+        def __init__(self, vocab_size, embedding_dim, units, batch_size):
+            super(MModel, self).__init__()
+            self.units = units
+            self.batch_size = batch_size
+
+            self.embedding = tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=embedding_dim)
+            if tf.test.is_gpu_available():
+                self.gru = tf.keras.layers.CuDNNGRU(self.units,
+                              return_sequences=True,
+                              return_state=True,
+                              recurrent_initializer='glorot_uniform')
+            else:
+                self.gru = tf.keras.layers.GRU(self.units,
+                              return_sequences=True,
+                              return_state=True,
+                              recurrent_activation='sigmoid',
+                              recurrent_initializer='glorot_uniform')
+            self.fc = tf.keras.layers.Dense(vocab_size)
+
+        def call(self, x, hidden):
+            x = self.embedding(x)
+
+            # output shape == (batch_size, max_length, hidden_size)
+            # states shape == (batch_size, hidden_size)
+
+            # states variable to preserve the state of the model
+            # this will be used to pass at every step to the model while training
+            output, states = self.gru(x, initial_state=hidden)
+
+            # reshaping the output so that we can pass it to the Dense layer
+            # after reshaping the shape is (batch_size * max_length, hidden_size)
+            output = tf.reshape(output, (-1, output.shape[2]))
+
+            # The dense layer will output predictions for every time_steps(max_length)
+            # output shape after the dense layer == (max_length * batch_size, vocab_size)
+            x = self.fc(output)
+
+            return x, states
+    ```
+  - **模型训练，训练过程中保存模型 Checkpoints**
+    - **隐藏状态 hidden state** 初始值是 0
+    - **模型的输入** 是 `上一个 batch 的隐藏状态 H0` 与 `当前 batch 的输入 I1`
+    - **模型的输出** 是 `预测值 P1` 与 `隐藏状态 H1`
+    - 每次迭代模型通过文本学习到的上下文关系保存在 `hidden state` 中，每个 epoch 结束重新初始化 `hidden state`
+    ```py
+    import time
+
+    # length of the vocabulary in chars
+    vocab_size = len(unique_c)
+    # the embedding dimension
+    embedding_dim = 256
+    # number of RNN (here GRU) units
+    units = 1024
+
+    model = MModel(vocab_size, embedding_dim, units, BATCH_SIZE)
+
+    optimizer = tf.train.AdamOptimizer()
+    # using sparse_softmax_cross_entropy so that we don't have to create one-hot vectors
+    loss_function = lambda real, preds: tf.losses.sparse_softmax_cross_entropy(labels=real, logits=preds)
+
+    # Checkpoints (Object-based saving)
+    checkpoint_dir = './training_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
+
+    # Training step
+    EPOCHS = 30
+    for epoch in range(EPOCHS):
+        start = time.time()
+        # hidden = None, initializing the hidden state at the start of every epoch
+        hidden = model.reset_states()
+        for (batch, (inp, target)) in enumerate(dataset):
+            with tf.GradientTape() as tape:
+                # feeding the hidden state back into the model
+                # This is the interesting step
+                prediction, hidden = model(inp, hidden)
+                # reshaping the target because that's how the loss function expects it
+                # target shape [BATCH_SIZE, max_length] -> [BATCH_SIZE * max_length]
+                target = tf.reshape(target, (-1, ))
+                loss = loss_function(target, prediction)
+
+            grads = tape.gradient(loss, model.variables)
+            optimizer.apply_gradients(zip(grads, model.variables), global_step=tf.train.get_or_create_global_step())
+
+            if batch % 100 == 0:
+                print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1, batch, loss))
+
+        # saving (checkpoint) the model every 5 epochs
+        if (epoch + 1) % 5 == 0:
+            checkpoint.save(file_prefix = checkpoint_prefix)  
+
+        print('Epoch {} Loss {:.4f}'.format(epoch + 1, loss))
+        print('Time taken for 1 epoch {} sec'.format(time.time() - start))
+
+    # Epoch 30 Batch 0 Loss 0.6842
+    # Epoch 30 Batch 100 Loss 0.7961
+    # Epoch 30 Loss 0.8500
+    # Time taken for 1 epoch 48.24203586578369 sec
+    ```
+  - **重新加载训练过的模型 Restore the latest checkpoint**
+    ```py
+    tf.enable_eager_execution()
+    # --> Redefine MModel
+
+    units = 1024
+    model = MModel(65, 256, units, 64)
+
+    # Redefine checkpoint
+    checkpoint_dir = './training_checkpoints'
+    checkpoint = tf.train.Checkpoint(model=model)
+    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+
+    # Redefine char2idx, idx2char
+    import unidecode
+
+    path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
+    text = unidecode.unidecode(open(path_to_file, 'r').read())
+    unique_c = sorted(set(text))
+    char2idx = {u: i for i, u in enumerate(unique_c)}
+    idx2char = {i: u for i, u in enumerate(unique_c)}
+    ```
+  - **模型预测** 使用模型生成文本
+    - 定义初始字符串，并初始化隐藏状态，不同的初始字符串生成的文本不同
+    - 将模型预测的下一个字符作为模型的下一次输入，输出的隐藏状态作为下一次的隐藏状态，隐藏状态中包含了文本的上下文关系
+    - **tf.multinomial** 多项式随机采样，根据 `logits` 指定的各个分类的概率分布，随机生成 `num_samples` 个采样数据
+      ```py
+      # Draws samples from a multinomial distribution.
+      tf.multinomial(logits, num_samples, seed=None, name=None, output_dtype=None)
+
+
+      # Example
+      print(tf.log([[10., 10.]]).numpy())
+      # [[2.3025851 2.3025851]]
+      # samples has shape [1, 5], where each value is either 0 or 1 with equal probability.
+      print(tf.multinomial(tf.log([[10., 10.]]), 5).numpy())
+      # [[1 1 0 0 0]]
+      print(tf.multinomial(tf.log([[10., 10.]]), 5).numpy())
+      # [[0 1 1 0 0]]
+      ```
+      - **logits 参数** 二维向量 `[batch_size, num_classes]`，指定每个分类的概率分布
+      - **num_samples 参数** 对于每一个 batch 生成的采样数量，返回值维度 `[batch_size, num_samples]`
+    ```py
+    # You can change the start string to experiment
+    ss = 'QUEEN'
+    ss_id = [char2idx[ii] for ii in ss]
+
+    # Use hidden = [[0...]] to initialize model prediction state, here batch size == 1
+    pp, hh = model(tf.convert_to_tensor([ss_id]), tf.zeros([1, units]))
+    # Output pp is the probability of all words in vocab list
+    print(pp.shape.as_list())
+    # [5, 65]
+    ppid = np.argmax(pp, axis=1)
+    print(''.join(idx2char[ii] for ii in ppid))
+    # UEEN:
+
+    def generate_text(start_string, num_generate, temperature=1.0):
+        input_eval = tf.convert_to_tensor([[char2idx[ii] for ii in start_string]])
+        hh = tf.zeros([1, units])
+        text_generated = start_string
+
+        for ii in range(num_generate):
+            pp, hh = model(input_eval, hh)
+
+            # higher temperatures will lower all probabilities, results in more randomized text
+            pp = pp / temperature
+            # using a multinomial distribution to predict the word returned by the model, use only the last word
+            ppid = tf.multinomial(tf.exp(pp), num_samples=1)[-1, 0].numpy()
+            # Next input is the predicted character, not the whole predicted string.
+            input_eval = tf.convert_to_tensor([[ppid]])
+            text_generated += idx2char[ppid]
+
+        return text_generated
+
+    print(generate_text('QUEEN', 146))
+    # QUEEN:
+    # The grand the devil, at thy good Lord Cambio;
+    # That is not hot then better than a present and a soldier
+    # Even to the gates. The matter, and my son
+    ```
+## Neural Machine Translation with Attention
+  - [Neural Machine Translation with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/nmt_with_attention/nmt_with_attention.ipynb)
 ***
 
-# 应用示例
-## MNIST 多层卷积神经网络 CNN
-  - **CNN** 多层卷积神经网络 Multilayer Convolutional Neural Network
+# FOO
+## GOO
+  - [TensorFlow Hub](https://www.tensorflow.org/hub/)
+  - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
+  class MModel(tensorflow.python.keras.engine.training.Model)
+   |  `Model` groups layers into an object with training and inference features.
+   |  
+   |  There are two ways to instantiate a `Model`:
+   |  
+   |  1 - With the "functional API", where you start from `Input`,
+   |  you chain layer calls to specify the model's forward pass,
+   |  and finally you create your model from inputs and outputs:
+   |  
+   |  ```python
+   |  import tensorflow as tf
+   |  
+   |  inputs = tf.keras.Input(shape=(3,))
+   |  x = tf.keras.layers.Dense(4, activation=tf.nn.relu)(inputs)
+   |  outputs = tf.keras.layers.Dense(5, activation=tf.nn.softmax)(x)
+   |  model = tf.keras.Model(inputs=inputs, outputs=outputs)
+   |  ```
+   |  
+   |  2 - By subclassing the `Model` class: in that case, you should define your
+   |  layers in `__init__` and you should implement the model's forward pass
+   |  in `call`.
+   |  
+   |  ```python
+   |  import tensorflow as tf
+   |  
+   |  class MyModel(tf.keras.Model):
+   |  
+   |    def __init__(self):
+   |      self.dense1 = tf.keras.layers.Dense(4, activation=tf.nn.relu)
+   |      self.dense2 = tf.keras.layers.Dense(5, activation=tf.nn.softmax)
+   |  
+   |    def call(self, inputs):
+   |      x = self.dense1(inputs)
+   |      return self.dense2(x)
+   |  
+   |  model = MyModel()
+   |  ```
+   |  If you subclass `Model`, you can optionally have
+   |  a `training` argument (boolean) in `call`, which you can use to specify
+   |  a different behavior in training and inference:
+   |  
+   |  ```python
+   |  import tensorflow as tf
+   |  
+   |  class MyModel(tf.keras.Model):
+   |  
+   |    def __init__(self):
+   |      self.dense1 = tf.keras.layers.Dense(4, activation=tf.nn.relu)
+   |      self.dense2 = tf.keras.layers.Dense(5, activation=tf.nn.softmax)
+   |      self.dropout = tf.keras.layers.Dropout(0.5)
+   |  
+   |    def call(self, inputs, training=False):
+   |      x = self.dense1(inputs)
+   |      if training:
+   |        x = self.dropout(x, training=training)
+   |      return self.dense2(x)
+   |  
+   |  model = MyModel()
+   |  ```
+
+  ```py
+  import inspect
+  print(inspect.getsource(inspect.getsource))
+  ```
+  ![](images/opt1.gif)
+## MNIST CNN classification model without estimators using lower-level TensorFlow operations
   - **权重初始化 Weight Initialization** 初始化时加入少量的噪声，以 **打破对称性 Symmetry Breaking** 以及避免倒数为 0
     ```python
     def weight_variable(shape):
@@ -1702,3 +2937,4 @@ print(inspect.getsource(inspect.getsource))
     ```python
     Predictions: [35.306267, 18.697575, 24.233162, 35.991249, 16.141064, 20.229273]
     ```
+***
