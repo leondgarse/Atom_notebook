@@ -1460,7 +1460,7 @@
         [Session contains]
     ```
 ## MNIST Softmax Regression
-  - [mnist_softmax.py](https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/examples/tutorials/mnist/mnist_softmax.py)
+  - [mnist_softmax.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/mnist/mnist_softmax.py)
   - **MNIST 手写数字数据集**，每组数据包含两部分，手写图像数据 x 与对应的标签 y，每个图像包含 28x28 像素，所有数据划分成三部分
   	- 训练数据集 training data，55,000 组数据，mnist.train
   	- 测试数据集 test data，10,000 组数据，mnist.test

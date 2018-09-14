@@ -2237,6 +2237,7 @@
     - 每次迭代模型通过文本学习到的上下文关系保存在 `hidden state` 中，每个 epoch 结束重新初始化 `hidden state`
     ```py
     import time
+    tfe = tf.contrib.eager
 
     # length of the vocabulary in chars
     vocab_size = len(unique_c)
@@ -2254,10 +2255,10 @@
     # Checkpoints (Object-based saving)
     checkpoint_dir = './training_checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
+    checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model, unique_c=tfe.Variable(unique_c))
 
     # Training step
-    EPOCHS = 30
+    EPOCHS = 20
     for epoch in range(EPOCHS):
         start = time.time()
         # hidden = None, initializing the hidden state at the start of every epoch
@@ -2280,7 +2281,7 @@
 
         # saving (checkpoint) the model every 5 epochs
         if (epoch + 1) % 5 == 0:
-            checkpoint.save(file_prefix = checkpoint_prefix)  
+            checkpoint.save(file_prefix=checkpoint_prefix)  
 
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, loss))
         print('Time taken for 1 epoch {} sec'.format(time.time() - start))
@@ -2293,22 +2294,22 @@
   - **重新加载训练过的模型 Restore the latest checkpoint**
     ```py
     tf.enable_eager_execution()
+    tfe = tf.contrib.eager
     # --> Redefine MModel
 
     units = 1024
-    model = MModel(65, 256, units, 64)
+    vocab_size = 65
+    optimizer = tf.train.AdamOptimizer()
+    model = MModel(vocab_size, 256, units, 64)
+    unique_c = tfe.Variable([''] * vocab_size)
 
     # Redefine checkpoint
     checkpoint_dir = './training_checkpoints'
-    checkpoint = tf.train.Checkpoint(model=model)
+    checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model, unique_c=unique_c)
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
     # Redefine char2idx, idx2char
-    import unidecode
-
-    path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt')
-    text = unidecode.unidecode(open(path_to_file, 'r').read())
-    unique_c = sorted(set(text))
+    unique_c = [ii.decode() for ii in unique_c.numpy()]
     char2idx = {u: i for i, u in enumerate(unique_c)}
     idx2char = {i: u for i, u in enumerate(unique_c)}
     ```
@@ -2364,20 +2365,169 @@
 
         return text_generated
 
-    print(generate_text('QUEEN', 146))
+    print(generate_text('QUEEN:', 146))
     # QUEEN:
-    # The grand the devil, at thy good Lord Cambio;
-    # That is not hot then better than a present and a soldier
-    # Even to the gates. The matter, and my son
+    # My lord, I have seen thee in his true heart's love,
+    # That starts and men of sacrifice,
+    # Even when the sun under the gods, have at thee, for my dear
     ```
 ## Neural Machine Translation with Attention
   - [Neural Machine Translation with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/nmt_with_attention/nmt_with_attention.ipynb)
+  - [Tensorflow nmt](https://github.com/tensorflow/nmt)
+  - [Thang Luong's Thesis on Neural Machine Translation](https://github.com/lmthang/thesis)
+  - Neural Machine Translation (NMT)
+  - seq2seq 模型
+    The translation quality is reasonable for a toy example, but the generated attention plot is perhaps more interesting. This shows which parts of the input sentence has the model's attention while translating:
+  - **import**
+    ```py
+    # Import TensorFlow >= 1.10 and enable eager execution
+    import tensorflow as tf
+
+    tf.enable_eager_execution()
+
+    import matplotlib.pyplot as plt
+    from sklearn.model_selection import train_test_split
+
+    import unicodedata
+    import re
+    import numpy as np
+    import os
+    import time
+
+    print(tf.__version__)
+    # 1.10.1
+    ```
+  - **加载 spa-eng 西班牙语-英语数据集** [Tab-delimited Bilingual Sentence Pairs](http://www.manythings.org/anki/) 提供其他语种与英语的文本数据集，两种语言使用 `Tab` 分隔
+    After downloading the dataset, here are the steps we'll take to prepare the data:
+    Add a start and end token to each sentence.
+    Clean the sentences by removing special characters.
+    Create a word index and reverse word index (dictionaries mapping from word → id and id → word).
+    Pad each sentence to a maximum length.
+```py
+# Download the file
+# Handle 403: Name or service not known here
+import urllib.request
+opener = urllib.request.build_opener()
+opener.addheaders = [('User-agent', 'Firefox/61.0')]
+urllib.request.install_opener(opener)
+
+path_to_zip = tf.keras.utils.get_file('spa-eng.zip', origin='http://www.manythings.org/anki/spa-eng.zip', extract=True)
+path_to_file = os.path.dirname(path_to_zip) + "/spa-eng/spa.txt"
+lines = open(path_to_file, encoding='UTF-8').read().strip().split('\n')
+num_examples = 30000
+word_pairs = [[preprocess_sentence(w) for w in l.split('\t')]  for l in lines[:num_examples]]
+w = lines[100].split('\t')
+s = w[0].lower().strip()
+''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+import unicodedata
+''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+s = w[1].lower().strip()
+''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+''.join(c for c in unicodedata.normalize('NFD', '拟合哦') if unicodedata.category(c) != 'Mn')
+
+
+# Converts the unicode file to ascii
+def unicode_to_ascii(s):
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
+def preprocess_sentence(w):
+    w = unicode_to_ascii(w.lower().strip())
+
+    # creating a space between a word and the punctuation following it
+    # eg: "he is a boy." => "he is a boy ."
+    # Reference:- https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
+    w = re.sub(r"([?.!,¿])", r" \1 ", w)
+    w = re.sub(r'[" "]+', " ", w)
+
+    # replacing everything with space except (a-z, A-Z, ".", "?", "!", ",")
+    w = re.sub(r"[^a-zA-Z?.!,¿]+", " ", w)
+
+    w = w.rstrip().strip()
+
+    # adding a start and an end token to the sentence
+    # so that the model know when to start and stop predicting.
+    w = '<start> ' + w + ' <end>'
+    return w
+
+# 1. Remove the accents
+# 2. Clean the sentences
+# 3. Return word pairs in the format: [ENGLISH, SPANISH]
+def create_dataset(path, num_examples):
+    lines = open(path, encoding='UTF-8').read().strip().split('\n')
+
+    word_pairs = [[preprocess_sentence(w) for w in l.split('\t')]  for l in lines[:num_examples]]
+
+    return word_pairs
+
+# This class creates a word -> index mapping (e.g,. "dad" -> 5) and vice-versa
+# (e.g., 5 -> "dad") for each language,
+class LanguageIndex():
+  def __init__(self, lang):
+    self.lang = lang
+    self.word2idx = {}
+    self.idx2word = {}
+    self.vocab = set()
+
+    self.create_index()
+
+  def create_index(self):
+    for phrase in self.lang:
+      self.vocab.update(phrase.split(' '))
+
+    self.vocab = sorted(self.vocab)
+
+    self.word2idx['<pad>'] = 0
+    for index, word in enumerate(self.vocab):
+      self.word2idx[word] = index + 1
+
+    for word, index in self.word2idx.items():
+      self.idx2word[index] = word
+
+def max_length(tensor):
+    return max(len(t) for t in tensor)
+
+
+def load_dataset(path, num_examples):
+    # creating cleaned input, output pairs
+    pairs = create_dataset(path, num_examples)
+
+    # index language using the class defined above    
+    inp_lang = LanguageIndex(sp for en, sp in pairs)
+    targ_lang = LanguageIndex(en for en, sp in pairs)
+
+    # Vectorize the input and target languages
+
+    # Spanish sentences
+    input_tensor = [[inp_lang.word2idx[s] for s in sp.split(' ')] for en, sp in pairs]
+
+    # English sentences
+    target_tensor = [[targ_lang.word2idx[s] for s in en.split(' ')] for en, sp in pairs]
+
+    # Calculate max_length of input and output tensor
+    # Here, we'll set those to the longest sentence in the dataset
+    max_length_inp, max_length_tar = max_length(input_tensor), max_length(target_tensor)
+
+    # Padding the input and output tensor to the maximum length
+    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor,
+                                                                 maxlen=max_length_inp,
+                                                                 padding='post')
+
+    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor,
+                                                                  maxlen=max_length_tar,
+                                                                  padding='post')
+
+    return input_tensor, target_tensor, inp_lang, targ_lang, max_length_inp, max_length_tar
+```
+
 ***
 
 # FOO
 ## GOO
   - [TensorFlow Hub](https://www.tensorflow.org/hub/)
   - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
+  - [基于字符的LSTM+CRF中文实体抽取](https://github.com/jakeywu/chinese_ner)
   class MModel(tensorflow.python.keras.engine.training.Model)
    |  `Model` groups layers into an object with training and inference features.
    |  
@@ -2441,6 +2591,27 @@
   ```py
   import inspect
   print(inspect.getsource(inspect.getsource))
+  ```
+  ```py
+  def get_zip_file(fname, origin, extract=True):
+      import requests
+      import zipfile
+      import io
+      import os
+
+      fname = os.path.join(os.environ['HOME'], '.keras/datasets', filename)
+      if not tf.gfile.Exists(fn):
+          resp = requests.get(origin)
+          # ff = zipfile.ZipFile(io.BytesIO(resp.content), 'r')
+          open(fn, 'wb').write(resp.content)
+
+      if extract:
+          ff = zipfile.ZipFile(fn, 'r')
+          ff.extractall(fname[0:-4])
+
+      return os.path.abspath(fname)
+
+  path_to_zip = get_zip_file('spa-eng.zip', 'http://www.manythings.org/anki/spa-eng.zip')
   ```
   ![](images/opt1.gif)
 ## MNIST CNN classification model without estimators using lower-level TensorFlow operations
@@ -2536,7 +2707,7 @@
             x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
     ```
   - **完整代码**
-    - [mnist_deep.py](https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/examples/tutorials/mnist/mnist_deep.py)
+    - [mnist_deep.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/mnist/mnist_deep.py)
     ```python
     # Weight Initialization
     def weight_variable(shape):
@@ -2851,7 +3022,7 @@
         .format(predicted_classes))
     ```
 ## 预测 Boston 房价的神经网络模型
-  - [boston.py](https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/examples/tutorials/input_fn/boston.py)
+  - [boston.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/input_fn/boston.py)
   - [boston_train.csv](download.tensorflow.org/data/boston_train.csv)
   - [boston_test.csv](download.tensorflow.org/data/boston_test.csv)
   - [boston_predict.csv](download.tensorflow.org/data/boston_predict.csv)

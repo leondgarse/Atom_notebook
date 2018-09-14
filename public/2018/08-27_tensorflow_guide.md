@@ -169,7 +169,7 @@
     git commit -m 'commit' file
     git push
     ```
-  - Making a Pull Request on github `New pull request` -> `Create pull request` -> `Add comments` -> 
+  - Making a Pull Request on github `New pull request` -> `Create pull request` -> `Add comments` ->
 ## Q / A
   - Q: Eager 执行环境中提示 `InternalError: Could not find valid device for node name: "xxx"`
     ```py
@@ -810,7 +810,7 @@
         optimizer.minimize(lambda: loss(model, x, y), global_step=tf.train.get_or_create_global_step())
     ```
 ## 保存加载模型 Checkpoint
-  - **tf.train.Checkpoint** 用于保存变量到 checkpoints
+  - **tf.train.Checkpoint** 用于保存变量到 checkpoints，可以保存的变量类型包括 `tf.train.Optimizer` 实例  / `tf.Variable` / `tf.keras.Layer` 实例 / `tf.keras.Model` 实例
     ```py
     x = tfe.Variable(10.)
     checkpoint = tf.train.Checkpoint(x=x)  # save as "x"
@@ -824,6 +824,44 @@
     checkpoint.restore(save_path)
     print(x.numpy())
     # 2.0
+    ```
+  - 在同一个会话中如果重新定义了 `x`，需要同时重新定义 `checkpoint`，否则 保存 / 加载的还是原来的 `x` 变量
+    ```py
+    x = tfe.Variable(10.)
+    checkpoint = tf.train.Checkpoint(x=x)  # save as "x"
+    save_path = checkpoint.save('./ckpt/')
+
+    x = tfe.Variable(11.)  # Redefine a new x
+
+    # Restore values from the checkpoint
+    checkpoint.restore(save_path)
+    print(x.numpy())
+    # 11.0
+
+    # Need to redefine the checkpoint too
+    checkpoint = tf.train.Checkpoint(x=x)
+    checkpoint.restore(save_path)
+    print(x.numpy())
+    # 10.0
+    ```
+  - 在不同会话中重新加载变量时，需要保证新变量维度与原来的相同
+    ```py
+    x = tfe.Variable([1, 2, 3])
+    checkpoint = tf.train.Checkpoint(x=x)  # save as "x"
+    save_path = checkpoint.save('./ckpt/')
+    print(save_path)
+    # ./ckpt/-1
+
+    # Restart a new python session
+    tf.enable_eager_execution()
+    import tensorflow.contrib.eager as tfe
+
+    x = tfe.Variable([4, 5, 6])
+    save_path = './ckpt/-1'
+    checkpoint = tf.train.Checkpoint(x=x)
+    checkpoint.restore(save_path)
+    print(x.numpy())
+    # [1 2 3]
     ```
   - **tf.train.Checkpoint** 保存 / 加载模型
     ```py

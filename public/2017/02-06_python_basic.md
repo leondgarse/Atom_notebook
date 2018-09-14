@@ -2348,3 +2348,16 @@
     # Out[10]: [<logging.FileHandler at 0x7f212fa03ad0>]
     ```
 ***
+
+# zipfile 解压缩
+  ```py
+  import zipfile
+
+  fn = 'spa-eng.zip'
+  ff = zipfile.ZipFile(fn, 'r')
+  print(ff.namelist())  # ['_about.txt', 'spa.txt']
+
+  # 解压文件，默认解压到当前文件夹下
+  f.extractall(fn[0:-4])
+  ```
+***

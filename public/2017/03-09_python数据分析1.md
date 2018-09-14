@@ -3367,7 +3367,7 @@ nonzero / where / choose
     urllib / urllib2 (Python 3中被urllib.request代替)
     httplib / httplib2 (Python 3中被http.client代替)
     ```
-  - python3中相关函数
+  - python3 中相关函数
     ```python
     打开 urllib.request.urlopen('URL')
     读取 r.read(), r.readline(), r.readlines()等方法
@@ -3376,11 +3376,34 @@ nonzero / where / choose
     import urllib.request
     r = urllib.request.urlopen('http://www.baidu.com/').read()        # python3中使用urllib.request.urlopen
     with urllib.request.urlopen('http://www.baidu.com') as url:        # 或使用 with 语句，使用完后自动关闭
-    ...   r = url.read()
-    ...
+        r = url.read()
+
     r
     ```
-  - requests包使用Web API
+  - urllib 指定 **headers** 参数，当发生 `403 forbidden` / 报告 ‘Cheating’ 时可以指定 headers 参数
+    ```py
+    from urllib.request import Request, urlopen
+
+    headers = {'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'}
+    headers = {'User-Agent':'Firefox/61.0'}
+    url = 'http://www.manythings.org/anki/spa-eng.zip'
+
+    req = Request(url, headers=headers)
+    resp = urlopen(req).read()
+    print('Data get {:.2f}M'.format(len(resp) / 1024 / 1024))
+    # Data get 2.66M
+    ```
+    **urlretrieve** 使用 **headers** 参数
+    ```py
+    from urllib.request import build_opener, install_opener, urlretrieve
+
+    opener = build_opener()
+    opener.addheaders = [('User-agent', 'Firefox/61.0')]
+    install_opener(opener)
+
+    urlretrieve(url, './foo.zip')
+    ```
+  - requests 包使用 Web API
     ```python
     许多网站都有一些通过JSON或其他格式提供数据的公共API
     一个简单易用的办法（推荐）是requests包（http://docs.python-requests.org）
