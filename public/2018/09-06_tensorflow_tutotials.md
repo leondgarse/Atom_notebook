@@ -27,13 +27,14 @@
     - More models to come!
 ***
 
-# Learn and use ML
+# 学习与使用机器学习 Learn and use ML
 ## Keras 基本分类模型 Fasion MNIST 数据集
   - **import**
     ```py
     import tensorflow as tf
     from tensorflow import keras
     import numpy as np
+    import pandas as pd
     import matplotlib.pyplot as plt
 
     print(tf.__version__) # 1.10.1
@@ -881,7 +882,7 @@
     ```
 ***
 
-# ML at production scale
+# 生产环境中的机器学习 ML at production scale
 ## Estimators 使用 LinearClassifier 线性模型用于 Census 数据集
   - **Census 收入数据集** 包含了 1994 - 1995 个人的年龄 / 教育水平 / 婚姻状况 / 职业等信息，预测年收入是否达到 50,000 美元
   - [Predicting Income with the Census Income Dataset](https://github.com/tensorflow/models/tree/master/official/wide_deep)
@@ -1428,7 +1429,7 @@
             # columns are all floats.
             column_defaults=[[0.0]] * len(feature_names)))
   ```
-## Estimators DNNClassifier 使用 TF Hub module 作为 embedding 进行文本分类
+## Estimators DNNClassifier 与 TF Hub module embedding 进行文本分类
   - **[TensorFlow Hub](https://www.tensorflow.org/hub/)**
     - Google 提供的机器学习分享平台，将 TensorFlow 的训练模型发布成模组
     - 方便再次使用或是共享机器学习中可重用的部分，包括 TensorFlow_Graph / 权重 / 外部档案等
@@ -1470,24 +1471,15 @@
     print(embeddings_usel.shape)
     # (2, 512)
     ```
-  - **import**
-    ```py
-    import tensorflow as tf
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    import seaborn as sns
-    import os
-    import re
-
-    import tensorflow_hub as hub
-    ```
   - **加载 IMDB 电影评论数据集** [Large Movie Review Dataset v1.0](http://ai.stanford.edu/%7Eamaas/data/sentiment/)
     - 解压后的文件包含 train / test 文件夹
     - train 文件夹中包含 neg / pos / unsup 文件夹
     - neg / pos 文件夹中分别包含 12500 调评论数据
     - 每条评论数据的命名格式 `ID_情绪等级 sentiment`，其中情绪等级取值 1-10
     ```py
+    import os
+    import re
+
     # Download the dataset files.
     dataset = tf.keras.utils.get_file(
         fname="aclImdb.tar.gz",
@@ -1582,12 +1574,14 @@
     # Prediction on the test set.
     predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(test_df, test_df['polarity'], shuffle=False)
     ```
-  - **hub.text_embedding_column 定义模型的 Feature columns**
+  - **tensorflow_hub.text_embedding_column 定义模型的 Feature columns**
     - **[nnlm-en-dim128 模块](https://www.tensorflow.org/hub/modules/google/nnlm-en-dim128/1)** TF-Hub 提供的一个用于将指定的文本特征列转化为 feature column 的模块
     - 该模块使用一组一维张量字符串作为输入
     - 该模块对输入的字符串做预处理，如移除标点 / 按照空格划分单词
     - 该模块可以处理任何输入，如将单词表中没有的单词散列到大约 20,000 个桶中
     ```py
+    import tensorflow_hub as hub
+
     # Define feature columns.
     embedded_text_feature_column = hub.text_embedding_column(
         key="sentence",
@@ -1618,6 +1612,9 @@
     ```
   - **创建混淆矩阵 Confusion matrix** 使用混淆矩阵图形化显示错误分类的分布情况
     ```py
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
     def get_predictions(estimator, input_fn):
         return [x["class_ids"][0] for x in estimator.predict(input_fn=input_fn)]
 
@@ -1709,184 +1706,145 @@
     # This cannot be done...
     results_usnl_training = train_and_evaluate_with_module('https://tfhub.dev/google/universal-sentence-encoder-large/3', True)
     ```
-## Text classifier with TF Hub on kaggle
-  ```py
-  ! pip install kaggle
+## 使用 Kaggle 的数据集进行文本分类
+  - [Kaggle](https://www.kaggle.com)
+    - **python 包**
+      ```py
+      pip install kaggle
+      ```
+    - **添加 API Token**
+      - `My account` -> `API` -> `Create New API Token`
+      - `Download kaggle.json` -> `Move to ~/.kaggle` -> `chmod 600 ~/.kaggle/kaggle.json`
+    - **测试**
+      ```sh
+      # 列出属于Health这一类的所有比赛
+      kaggle competitions list -s health
 
-  import tensorflow as tf
-  import tensorflow_hub as hub
-  import matplotlib.pyplot as plt
-  import numpy as np
-  import pandas as pd
-  import seaborn as sns
-  import zipfile
+      # 下载 <competition_name> 下的Data中所有文件，指定下载路径<path>
+      kaggle competitions download -c <competition_name> -p <path>
 
-  from sklearn import model_selection
-  ```
-  Since this tutorial will be using a dataset from Kaggle, it requires creating an API Token for your Kaggle account, and uploading it to the Colab environment.
-  ```py
-  import os
+      # 下载 <competition_name>下的Data中某个文件 <filename>，指定下载路径<path>
+      kaggle competitions download -c <competition_name> -f <filename> -p <path>
 
-  # Upload the API token.
-  def get_kaggle_credentials():
-    token_dir = os.path.join(os.path.expanduser("~"),".kaggle")
-    token_file = os.path.join(token_dir, "kaggle.json")
-    if not os.path.isdir(token_dir):
-      os.mkdir(token_dir)
-    try:
-      with open(token_file,'r') as f:
-        pass
-    except IOError as no_file:
-      try:
-        from google.colab import files
-      except ImportError:
-        raise no_file
+      # 提交结果
+      kaggle competitions submit [-h] [-c COMPETITION] -f FILE -m MESSAGE [-q]
+      ```
+  - **从 kaggle 加载 Rotten Tomatoes 电影评论数据集** Kaggle Sentiment Analysis on Movie Reviews Task，标准电影评论的积极程度 1-5，下载前必须接受 competition rules
+      ```py
+      # Error message before accept the competition rules
+      HTTP response body: b'{"code":403,"message":"You must accept this competition\\u0027s rules before you can continue"}'
+      ```
+      ```py
+      import zipfile
+      from sklearn import model_selection
 
-      uploaded = files.upload()
-      with open(token_file, "w") as f:
-        f.write(uploaded["kaggle.json"])
-      os.chmod(token_file, 600)
+      SENTIMENT_LABELS = ["negative", "somewhat negative", "neutral", "somewhat positive", "positive"]
 
-  get_kaggle_credentials()
-  # Note: Only import kaggle after adding the credentials.
-  import kaggle
-  ```
-
-  Getting started
-  Data
-
-  We will try to solve the Sentiment Analysis on Movie Reviews task from Kaggle. The dataset consists of syntactic subphrases of the Rotten Tomatoes movie reviews. The task is to label the phrases as negative or positive on the scale from 1 to 5.
-
-  You must accept the competition rules before you can use the API to download the data.
-
-  ```py
-  SENTIMENT_LABELS = [
-      "negative", "somewhat negative", "neutral", "somewhat positive", "positive"
-  ]
-
-  # Add a column with readable values representing the sentiment.
-  def add_readable_labels_column(df, sentiment_value_column):
-    df["SentimentLabel"] = df[sentiment_value_column].replace(
-        range(5), SENTIMENT_LABELS)
+      # Add a column with readable values representing the sentiment.
+      def add_readable_labels_column(df, sentiment_value_column):
+        df["SentimentLabel"] = df[sentiment_value_column].replace(
+            range(5), SENTIMENT_LABELS)
 
 
-  # Download data from Kaggle and create a DataFrame.
-  def load_data_from_zip(competition, file):
-    with zipfile.ZipFile(os.path.join(competition, file), "r") as zip_ref:
-      unzipped_file = zip_ref.namelist()[0]
-      zip_ref.extractall(competition)
-      return pd.read_csv(
-          os.path.join(competition, unzipped_file), sep="\t", index_col=0)
+      # Download data from Kaggle and create a DataFrame.
+      def load_data_from_zip(competition, file):
+        with zipfile.ZipFile(os.path.join(competition, file), "r") as zip_ref:
+          unzipped_file = zip_ref.namelist()[0]
+          zip_ref.extractall(competition)
+          return pd.read_csv(
+              os.path.join(competition, unzipped_file), sep="\t", index_col=0)
 
 
-  # The data does not come with a validation set so we'll create one from the
-  # training set.
-  def get_data(competition, train_file, test_file, validation_set_ratio=0.1):
-    kaggle.api.competition_download_files(competition, competition)
-    train_df = load_data_from_zip(competition, train_file)
-    test_df = load_data_from_zip(competition, test_file)
+      # The data does not come with a validation set so we'll create one from the
+      # training set.
+      def get_data(competition, train_file, test_file, validation_set_ratio=0.1):
+        kaggle.api.competition_download_files(competition, competition)
+        train_df = load_data_from_zip(competition, train_file)
+        test_df = load_data_from_zip(competition, test_file)
 
-    # Add a human readable label.
-    add_readable_labels_column(train_df, "Sentiment")
+        # Add a human readable label.
+        add_readable_labels_column(train_df, "Sentiment")
 
-    # We split by sentence ids, because we don't want to have phrases belonging
-    # to the same sentence in both training and validation set.
-    train_indices, validation_indices = model_selection.train_test_split(
-        np.unique(train_df["SentenceId"]),
-        test_size=validation_set_ratio,
-        random_state=0)
+        # We split by sentence ids, because we don't want to have phrases belonging
+        # to the same sentence in both training and validation set.
+        train_indices, validation_indices = model_selection.train_test_split(
+            np.unique(train_df["SentenceId"]),
+            test_size=validation_set_ratio,
+            random_state=0)
 
-    validation_df = train_df[train_df["SentenceId"].isin(validation_indices)]
-    train_df = train_df[train_df["SentenceId"].isin(train_indices)]
-    print("Split the training data into %d training and %d validation examples." %
-          (len(train_df), len(validation_df)))
+        validation_df = train_df[train_df["SentenceId"].isin(validation_indices)]
+        train_df = train_df[train_df["SentenceId"].isin(train_indices)]
+        print("Split the training data into %d training and %d validation examples." %
+              (len(train_df), len(validation_df)))
 
-    return train_df, validation_df, test_df
+        return train_df, validation_df, test_df
 
 
-  train_df, validation_df, test_df = get_data(
-      "sentiment-analysis-on-movie-reviews", "train.tsv.zip", "test.tsv.zip")
-  train_df.head()
-  ```
-  Training an Estimator
+      train_df, validation_df, test_df = get_data("sentiment-analysis-on-movie-reviews", "train.tsv.zip", "test.tsv.zip")
+      train_df.head()
+      ```
+  - **DNN 模型训练评估与 TF-Hub module embedding**
+    ```py
+    import tensorflow_hub as hub
 
-  We will use a premade DNN Classifier along with text_embedding_column that applies a TF-Hub module on the given text feature and returns the embedding vectors.
+    # Training input on the whole training set with no limit on training epochs.
+    train_input_fn = tf.estimator.inputs.pandas_input_fn(train_df, train_df["Sentiment"], num_epochs=None, shuffle=True)
 
-  Note: We could model this task also as a regression, see Text classification with TF-Hub.
+    # Prediction on the whole training set.
+    predict_train_input_fn = tf.estimator.inputs.pandas_input_fn(train_df, train_df["Sentiment"], shuffle=False)
+    # Prediction on the validation set.
+    predict_validation_input_fn = tf.estimator.inputs.pandas_input_fn(validation_df, validation_df["Sentiment"], shuffle=False)
+    # Prediction on the test set.
+    predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(test_df, shuffle=False)
 
-  ```py
-  # Training input on the whole training set with no limit on training epochs.
-  train_input_fn = tf.estimator.inputs.pandas_input_fn(
-      train_df, train_df["Sentiment"], num_epochs=None, shuffle=True)
+    embedded_text_feature_column = hub.text_embedding_column(key="Phrase", module_spec="https://tfhub.dev/google/nnlm-en-dim128/1")
 
-  # Prediction on the whole training set.
-  predict_train_input_fn = tf.estimator.inputs.pandas_input_fn(
-      train_df, train_df["Sentiment"], shuffle=False)
-  # Prediction on the validation set.
-  predict_validation_input_fn = tf.estimator.inputs.pandas_input_fn(
-      validation_df, validation_df["Sentiment"], shuffle=False)
-  # Prediction on the test set.
-  predict_test_input_fn = tf.estimator.inputs.pandas_input_fn(
-      test_df, shuffle=False)
+    estimator = tf.estimator.DNNClassifier(
+        hidden_units=[500, 100],
+        feature_columns=[embedded_text_feature_column],
+        n_classes=5,
+        optimizer=tf.train.AdagradOptimizer(learning_rate=0.003))
 
-  embedded_text_feature_column = hub.text_embedding_column(
-      key="Phrase",
-      module_spec="https://tfhub.dev/google/nnlm-en-dim128/1")
+    estimator.train(input_fn=train_input_fn, steps=10000);
 
-  estimator = tf.estimator.DNNClassifier(
-      hidden_units=[500, 100],
-      feature_columns=[embedded_text_feature_column],
-      n_classes=5,
-      optimizer=tf.train.AdagradOptimizer(learning_rate=0.003))
+    # Run predictions for the validation set and training set.
+    train_eval_result = estimator.evaluate(input_fn=predict_train_input_fn)
+    validation_eval_result = estimator.evaluate(input_fn=predict_validation_input_fn)
 
-  estimator.train(input_fn=train_input_fn, steps=10000);
-  ```
-  Prediction
+    print("Training set accuracy: {accuracy}".format(**train_eval_result))
+    print("Validation set accuracy: {accuracy}".format(**validation_eval_result))
+    ```
+  - **混淆矩阵 Confusion matrix**
+    ```py
+    import seaborn as sns
 
-  Run predictions for the validation set and training set.
-  ```py
-  train_eval_result = estimator.evaluate(input_fn=predict_train_input_fn)
-  validation_eval_result = estimator.evaluate(input_fn=predict_validation_input_fn)
+    def get_predictions(estimator, input_fn):
+      return [x["class_ids"][0] for x in estimator.predict(input_fn=input_fn)]
 
-  print("Training set accuracy: {accuracy}".format(**train_eval_result))
-  print("Validation set accuracy: {accuracy}".format(**validation_eval_result))
-  ```
-  Confusion matrix
+    # Create a confusion matrix on training data.
+    with tf.Graph().as_default():
+      cm = tf.confusion_matrix(train_df["Sentiment"],
+                               get_predictions(estimator, predict_train_input_fn))
+      with tf.Session() as session:
+        cm_out = session.run(cm)
 
-  Another very interesting statistic, especially for multiclass problems, is the confusion matrix. The confusion matrix allows visualization of the proportion of correctly and incorrectly labelled examples. We can easily see how much our classifier is biased and whether the distribution of labels makes sense. Ideally the largest fraction of predictions should be distributed along the diagonal.
+    # Normalize the confusion matrix so that each row sums to 1.
+    cm_out = cm_out.astype(float) / cm_out.sum(axis=1)[:, np.newaxis]
 
-  ```py
-  def get_predictions(estimator, input_fn):
-    return [x["class_ids"][0] for x in estimator.predict(input_fn=input_fn)]
-
-  # Create a confusion matrix on training data.
-  with tf.Graph().as_default():
-    cm = tf.confusion_matrix(train_df["Sentiment"],
-                             get_predictions(estimator, predict_train_input_fn))
-    with tf.Session() as session:
-      cm_out = session.run(cm)
-
-  # Normalize the confusion matrix so that each row sums to 1.
-  cm_out = cm_out.astype(float) / cm_out.sum(axis=1)[:, np.newaxis]
-
-  sns.heatmap(
-      cm_out,
-      annot=True,
-      xticklabels=SENTIMENT_LABELS,
-      yticklabels=SENTIMENT_LABELS)
-  plt.xlabel("Predicted")
-  plt.ylabel("True")
-  ```
-  We can easily submit the predictions back to Kaggle.
-  ```py
-  test_df["Predictions"] = get_predictions(estimator, predict_test_input_fn)
-  test_df.to_csv(
-      tf.gfile.GFile("predictions.csv", "w"),
-      columns=["Predictions"],
-      header=["Sentiment"])
-  kaggle.api.competition_submit("predictions.csv", "Submitted from Colab",
-                                "sentiment-analysis-on-movie-reviews")
-  ```
+    sns.heatmap(
+        cm_out,
+        annot=True,
+        xticklabels=SENTIMENT_LABELS,
+        yticklabels=SENTIMENT_LABELS)
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    ```
+  - **将结果提交到 Kaggle**
+    ```py
+    test_df["Predictions"] = get_predictions(estimator, predict_test_input_fn)
+    test_df.to_csv(tf.gfile.GFile("predictions.csv", "w"), columns=["Predictions"], header=["Sentiment"])
+    kaggle.api.competition_submit("predictions.csv", "Submitted from Colab", "sentiment-analysis-on-movie-reviews")
+    ```
 ## Estimators 自定义 CNN 多层卷积神经网络用于 MNIST 数据集
   - **加载 MNIST 手写数字数据集** 包含 60,000 个训练样本，10,000 个测试样本，每个样本是一个 28x28 像素的单色图片，代表手写的 0-9 数字
     ```py
@@ -2088,7 +2046,7 @@
     ```
 ***
 
-# Generative models
+# 通用模型 Generative models
 ## Eager 执行环境与 Keras 定义 RNN 模型自动生成文本
   - [Text Generation using a RNN](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/text_generation.ipynb)
   - **加载数据集** [Shakespeare's writing 文本数据](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)
@@ -2258,7 +2216,7 @@
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model, unique_c=tfe.Variable(unique_c))
 
     # Training step
-    EPOCHS = 20
+    EPOCHS = 30
     for epoch in range(EPOCHS):
         start = time.time()
         # hidden = None, initializing the hidden state at the start of every epoch
@@ -2290,6 +2248,21 @@
     # Epoch 30 Batch 100 Loss 0.7961
     # Epoch 30 Loss 0.8500
     # Time taken for 1 epoch 48.24203586578369 sec
+
+    model.summary()
+    # _________________________________________________________________
+    # Layer (type)                 Output Shape              Param #   
+    # =================================================================
+    # embedding_2 (Embedding)      multiple                  16640     
+    # _________________________________________________________________
+    # cu_dnngru_2 (CuDNNGRU)       multiple                  3938304   
+    # _________________________________________________________________
+    # dense_4 (Dense)              multiple                  66625     
+    # =================================================================
+    # Total params: 4,021,569
+    # Trainable params: 4,021,569
+    # Non-trainable params: 0
+    # _________________________________________________________________
     ```
   - **重新加载训练过的模型 Restore the latest checkpoint**
     ```py
@@ -2371,156 +2344,605 @@
     # That starts and men of sacrifice,
     # Even when the sun under the gods, have at thee, for my dear
     ```
-## Neural Machine Translation with Attention
+## Eager 执行环境与 Keras 定义 RNN seq2seq 模型使用注意力机制进行文本翻译
   - [Neural Machine Translation with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/nmt_with_attention/nmt_with_attention.ipynb)
-  - [Tensorflow nmt](https://github.com/tensorflow/nmt)
-  - [Thang Luong's Thesis on Neural Machine Translation](https://github.com/lmthang/thesis)
-  - Neural Machine Translation (NMT)
-  - seq2seq 模型
-    The translation quality is reasonable for a toy example, but the generated attention plot is perhaps more interesting. This shows which parts of the input sentence has the model's attention while translating:
-  - **import**
+  - **基本概念**
+    - [Tensorflow nmt](https://github.com/tensorflow/nmt)
+    - [Thang Luong's Thesis on Neural Machine Translation](https://github.com/lmthang/thesis)
+    - **seq2seq 模型** 是一个 `Encoder–Decoder` 结构的网络，Encoder 将一个输入的可变长度的信号序列变为固定长度的向量表达，Decoder 将这个固定长度的向量变成可变长度的目标的信号序列
+    - **Teacher Forcing** 是一种训练技术，训练早期的 RNN 非常弱，几乎不能给出好的生成结果，以至于产生垃圾的 output 影响后面的 state，因此直接使用 ground truth 的对应上一项，而不是上一个 state 的输出，作为下一个 state 的输入
+    - **Attention mechanism 注意力机制** 模仿人处理信息时的注意力，在处理信息时，每次都根据前一个学习状态得到当前要关注的部分，只处理关注的这部分信息，通过可视化可以显示模型在翻译时主要关注输入的哪一部分
+  - **加载 spa-eng 西班牙语-英语数据集** [Tab-delimited Bilingual Sentence Pairs](http://www.manythings.org/anki/) 提供其他语种与英语的文本数据集，两种语言使用 `Tab` 分隔
+    - 下载数据集
+    - 数据集中的每个句子添加 `<start>` / `<end>` 标签
+    - 移除句子中的特殊字符
+    - 创建单词与数字的映射字典
+    - 通过将每个句子填充到最大长度，使数据集中每个样本有相同的维度
     ```py
     # Import TensorFlow >= 1.10 and enable eager execution
     import tensorflow as tf
 
     tf.enable_eager_execution()
-
-    import matplotlib.pyplot as plt
-    from sklearn.model_selection import train_test_split
-
-    import unicodedata
-    import re
-    import numpy as np
-    import os
-    import time
-
     print(tf.__version__)
     # 1.10.1
+
+    # Download the file
+    # Handle Downloading 403 error: Name or service not known here
+    import urllib.request
+
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Firefox/61.0')]
+    urllib.request.install_opener(opener)
+
+    path_to_zip = tf.keras.utils.get_file('spa-eng.zip', origin='http://www.manythings.org/anki/spa-eng.zip', extract=True)
+    path_to_file = os.path.dirname(path_to_zip) + "/spa.txt"
+    # path_to_zip = tf.keras.utils.get_file('cmn-eng.zip', origin='http://www.manythings.org/anki/cmn-eng.zip', extract=True)
+    # path_to_file = os.path.dirname(path_to_zip) + "/cmn.txt"
+
+
+    ''' Test the file '''
+    lines = open(path_to_file, encoding='UTF-8').read().strip().split('\n')
+    print(len(lines))
+    # 118964
+    print(lines[1150])
+    # I'm coming.	Ahí voy.
+
+    w = lines[1150].split('\t')
+    s = w[0].lower().strip()
+    print(''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
+    # i'm coming.
     ```
-  - **加载 spa-eng 西班牙语-英语数据集** [Tab-delimited Bilingual Sentence Pairs](http://www.manythings.org/anki/) 提供其他语种与英语的文本数据集，两种语言使用 `Tab` 分隔
-    After downloading the dataset, here are the steps we'll take to prepare the data:
-    Add a start and end token to each sentence.
-    Clean the sentences by removing special characters.
-    Create a word index and reverse word index (dictionaries mapping from word → id and id → word).
-    Pad each sentence to a maximum length.
-```py
-# Download the file
-# Handle 403: Name or service not known here
-import urllib.request
-opener = urllib.request.build_opener()
-opener.addheaders = [('User-agent', 'Firefox/61.0')]
-urllib.request.install_opener(opener)
+  - **将文件解析成单词对，每个句子添加 <start> <end> 标签**
+    ```py
+    import unicodedata
+    import re
 
-path_to_zip = tf.keras.utils.get_file('spa-eng.zip', origin='http://www.manythings.org/anki/spa-eng.zip', extract=True)
-path_to_file = os.path.dirname(path_to_zip) + "/spa-eng/spa.txt"
-lines = open(path_to_file, encoding='UTF-8').read().strip().split('\n')
-num_examples = 30000
-word_pairs = [[preprocess_sentence(w) for w in l.split('\t')]  for l in lines[:num_examples]]
-w = lines[100].split('\t')
-s = w[0].lower().strip()
-''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    # Converts the unicode string to ascii
+    def unicode_to_ascii(ss):
+        return ''.join(cc for cc in unicodedata.normalize('NFD', ss) if unicodedata.category(cc) != 'Mn')
 
-import unicodedata
-''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
-s = w[1].lower().strip()
-''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
-''.join(c for c in unicodedata.normalize('NFD', '拟合哦') if unicodedata.category(c) != 'Mn')
+    def preprocess_sentence(ww):
+        ww = unicode_to_ascii(ww.lower().strip())
+
+        # creating a space between a word and the punctuation following it
+        # eg: "he is a boy." => "he is a boy ."
+        # Reference:- https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
+        ww = re.sub(r"([?.!,¿])", r" \1 ", ww)
+        ww = re.sub(r'[" "]+', " ", ww)
+
+        # replacing everything with space except (a-z, A-Z, ".", "?", "!", ",")
+        ww = re.sub(r"[^a-zA-Z?.!,¿]+", " ", ww)
+
+        ww = ww.rstrip().strip()
+
+        # adding a start and an end token to the sentence
+        # so that the model know when to start and stop predicting.
+        ww = '<start> ' + ww + ' <end>'
+        return ww
+
+    # 1. Remove the accents
+    # 2. Clean the sentences
+    # 3. Return word pairs in the format: [ENGLISH, SPANISH]
+    def create_dataset(path, num_examples):
+        lines = open(path, encoding='UTF-8').read().strip().split('\n')
+
+        word_pairs = [[preprocess_sentence(ww) for ww in ll.split('\t')]  for ll in lines[:num_examples]]
+
+        return word_pairs
+
+    num_examples = 30000
+    dd = create_dataset(path_to_file, num_examples)
+    print(dd[500:505])
+    # [['<start> have some . <end>', '<start> tome alguno . <end>'],
+    #  ['<start> he is old . <end>', '<start> el es viejo . <end>'],
+    #  ['<start> he is old . <end>', '<start> el es anciano . <end>'],
+    #  ['<start> he shaved . <end>', '<start> el se afeito . <end>'],
+    #  ['<start> he smiled . <end>', '<start> sonrio . <end>']]
+    ```
+  - **将单词对解析成单词表，以及对应的数字转化字典**
+    ```py
+    # Convert a language sentences to vocab, and the converting maps between word and index
+    class LanguageIndex():
+        def __init__(self, lang):
+            self.lang = lang
+            self.create_index()
+
+        def create_index(self):
+            vocab = set()
+            for ss in self.lang:
+                vocab.update(ss.split(' '))
+            self.vocab = sorted(vocab)
+
+            self.word2idx = {ww: ii + 1 for ii, ww in enumerate(self.vocab)}
+            self.word2idx['<pad>'] = 0
+            self.idx2word = {ii: ww for ww, ii in self.word2idx.items()}
+
+    dd = LanguageIndex('hello world'.split(' '))
+    print(dd.vocab) # ['hello', 'world']
+    print(dd.word2idx)  # {'hello': 1, 'world': 2, '<pad>': 0}
+    print(dd.idx2word)  # {1: 'hello', 2: 'world', 0: '<pad>'}
+    ```
+  - **tf.keras.preprocessing.sequence.pad_sequences** 转化为 tensor，将每个句子填充到最大长度
+    ```py
+    pad_sequences(sequences, maxlen=None, dtype='int32', padding='pre', truncating='pre', value=0.0)
+    ```
+    ```py
+    def load_dataset(path_to_file, num_examples):
+        # creating cleaned input, output pairs
+        pairs = create_dataset(path_to_file, num_examples)
+
+        # index language using the class defined above
+        input_lang = LanguageIndex(sp for en, sp in pairs)
+        target_lang = LanguageIndex(en for en, sp in pairs)
+
+        # Vectorize the input and target languages sentences
+        input_tensor = [[input_lang.word2idx[ss] for ss in sp.split(' ')] for en, sp in pairs]
+        target_tensor = [[target_lang.word2idx[ss] for ss in en.split(' ')] for en, sp in pairs]
+
+        # Calculate max_length of input and output tensor
+        # Here, we'll set those to the longest sentence in the dataset
+        max_length_inp = np.max([len(tt) for tt in input_tensor])
+        max_length_tar = np.max([len(tt) for tt in target_tensor])
+
+        # Padding the input and output tensor to the maximum length
+        input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor,
+                                         maxlen=max_length_inp, padding='post')
+
+        target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor,
+                                         maxlen=max_length_tar, padding='post')
+
+        return input_tensor, target_tensor, input_lang, target_lang, max_length_inp, max_length_tar
+
+    # Try experimenting with the size of that dataset
+    num_examples = 30000
+    input_tensor, target_tensor, inp_lang, targ_lang, max_length_inp, max_length_targ = load_dataset(path_to_file, num_examples)
+
+    print(input_tensor.shape, target_tensor.shape, len(inp_lang.vocab), len(targ_lang.vocab), max_length_inp, max_length_targ)
+    # (30000, 16) (30000, 11) 9413 4934 16 11
+    ```
+  - **sklearn.model_selection.train_test_split** 将数据集划分成训练测试数据集
+    ```py
+    from sklearn.model_selection import train_test_split
+
+    # Creating training and validation sets using an 80-20 split
+    input_tensor_train, input_tensor_val, target_tensor_train, target_tensor_val = train_test_split(input_tensor, target_tensor, test_size=0.2)
+
+    # Show length
+    print(len(input_tensor_train), len(target_tensor_train), len(input_tensor_val), len(target_tensor_val))
+    # 24000 24000 6000 6000
+    ```
+  - **tf.data.Dataset.from_tensor_slices** 创建 tf.data dataset
+    ```py
+    BATCH_SIZE = 64
+    BUFFER_SIZE = len(input_tensor_train)
+    N_BATCH = BUFFER_SIZE // BATCH_SIZE
+
+    dataset = tf.data.Dataset.from_tensor_slices((input_tensor_train, target_tensor_train)).shuffle(BUFFER_SIZE)
+    dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
+
+    ii, tt = dataset.make_one_shot_iterator().next()
+    print(ii.shape.as_list(), tt.shape.as_list())
+    # [64, 16] [64, 11]
+    ```
+  - **Encoder and decoder 模型结构**
+
+    ![](images/tensorflow_encoder_decoder_structure.png)
+    - **Encoder** 每个输入应用注意力机制分配一个权重向量，转化为一个输出 `[batch_size, max_length, hidden_size]`，以及一个隐藏状态 `(batch_size, hidden_size)`，用于 `Decoder` 预测句子的下一个单词
+    - **Decoder 伪代码 pseudo-code:** 使用 `Bahdanau attention` 注意力机制
+      - **Input** = x_input_to_decoder, encoder_output, hidden_state
+      - **score** = tanh(FC(encoder_output) + FC(hidden_state)), **score_shape** = (batch_size, max_length, hidden_size)
+      - **attention_weights** = softmax(FC(score), axis = 1)
+      - **context_vector** = sum(attention_weights * encoder_output, axis = 1)
+      - **embedding_output** = emdedding(x_input_to_decoder)
+      - **merged_vector** = concat(embedding_output, context_vector)
+      - **output**, **state** = gru(merged_vector)
+
+      ![](images/tensorflow_encoder_decoder_latex.png)
+  - **Encoder 模型定义**
+    ```py
+    def gru(units):
+      # If you have a GPU, we recommend using CuDNNGRU(provides a 3x speedup than GRU)
+      # the code automatically does that.
+      if tf.test.is_gpu_available():
+        return tf.keras.layers.CuDNNGRU(units,
+                                        return_sequences=True,
+                                        return_state=True,
+                                        recurrent_initializer='glorot_uniform')
+      else:
+        return tf.keras.layers.GRU(units,
+                                   return_sequences=True,
+                                   return_state=True,
+                                   recurrent_activation='sigmoid',
+                                   recurrent_initializer='glorot_uniform')
+
+    class Encoder(tf.keras.Model):
+        def __init__(self, vocab_size, embedding_dim, enc_units, batch_sz):
+            super(Encoder, self).__init__()
+            self.batch_sz = batch_sz
+            self.enc_units = enc_units
+            self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+            self.gru = gru(self.enc_units)
+
+        def call(self, x, hidden):
+            x = self.embedding(x)
+            output, state = self.gru(x, initial_state = hidden)        
+            return output, state
+
+        def initialize_hidden_state(self):
+            return tf.zeros((self.batch_sz, self.enc_units))
+
+    embedding_dim = 256
+    units = 1024
+    vocab_inp_size = len(inp_lang.word2idx)
+
+    encoder = Encoder(vocab_inp_size, embedding_dim, units, BATCH_SIZE)
+    ```
+  - **Decoder 模型定义**
+    ```py
+    class Decoder(tf.keras.Model):
+        def __init__(self, vocab_size, embedding_dim, dec_units, batch_sz):
+            super(Decoder, self).__init__()
+            self.batch_sz = batch_sz
+            self.dec_units = dec_units
+            self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+            self.gru = gru(self.dec_units)
+            self.fc = tf.keras.layers.Dense(vocab_size)
+
+            # used for attention
+            self.W1 = tf.keras.layers.Dense(self.dec_units)
+            self.W2 = tf.keras.layers.Dense(self.dec_units)
+            self.V = tf.keras.layers.Dense(1)
+
+        def call(self, x, hidden, enc_output):
+            # enc_output shape == (batch_size, max_length, hidden_size)
+
+            # hidden shape == (batch_size, hidden size)
+            # hidden_with_time_axis shape == (batch_size, 1, hidden size)
+            # we are doing this to perform addition to calculate the score
+            hidden_with_time_axis = tf.expand_dims(hidden, 1)
+
+            # score shape == (batch_size, max_length, hidden_size)
+            score = tf.nn.tanh(self.W1(enc_output) + self.W2(hidden_with_time_axis))
+
+            # attention_weights shape == (batch_size, max_length, 1)
+            # we get 1 at the last axis because we are applying score to self.V
+            attention_weights = tf.nn.softmax(self.V(score), axis=1)
+
+            # context_vector shape after sum == (batch_size, hidden_size)
+            context_vector = attention_weights * enc_output
+            context_vector = tf.reduce_sum(context_vector, axis=1)
+
+            # x shape after passing through embedding == (batch_size, 1, embedding_dim)
+            x = self.embedding(x)
+
+            # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
+            x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
+
+            # passing the concatenated vector to the GRU
+            output, state = self.gru(x)
+
+            # output shape == (batch_size * 1, hidden_size)
+            output = tf.reshape(output, (-1, output.shape[2]))
+
+            # output shape == (batch_size * 1, vocab)
+            x = self.fc(output)
+
+            return x, state, attention_weights
+
+        def initialize_hidden_state(self):
+            return tf.zeros((self.batch_sz, self.dec_units))
+
+    vocab_tar_size = len(targ_lang.word2idx)
+    decoder = Decoder(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+    ```
+  - **模型训练，训练过程中保存模型 Checkpoints**
+    - Encoder 将输入字符串转化为 `encoder output` 与 `encoder hidden state`，输入字符串为翻译的源语言
+    - Decoder 输入 `encoder output` / `encoder hidden state` / `decoder input`，其中 `decoder input` 为翻译的目标语言，初始为 `<start>`
+    - Decoder 返回 `预测值 predictions` 与 `decoder hidden state`，其中预测值用作计算模型损失
+    - Decoer 的下一次输入使用 `encoder output` / `decoder hidden state`，以及使用 `Teacher forcing` 机制决定的下一个 `decoder input`
+    ```py
+    ''' Define the optimizer and the loss function '''
+    optimizer = tf.train.AdamOptimizer()
+
+    def loss_function(real, pred):
+      mask = 1 - np.equal(real, 0)
+      loss_ = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=real, logits=pred) * mask
+      return tf.reduce_mean(loss_)
+
+    ''' Checkpoints (Object-based saving) '''
+    checkpoint_dir = './training_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
+
+    ''' Training '''
+    EPOCHS = 10
+    for epoch in range(EPOCHS):
+        start = time.time()
+        hidden = encoder.initialize_hidden_state()
+        total_loss = 0
+
+        for (batch, (inp, targ)) in enumerate(dataset):
+            loss = 0
+            with tf.GradientTape() as tape:
+                enc_output, enc_hidden = encoder(inp, hidden)
+                dec_hidden = enc_hidden
+                dec_input = tf.expand_dims([targ_lang.word2idx['<start>']] * BATCH_SIZE, 1)       
+
+                # Teacher forcing - feeding the target as the next input
+                for t in range(1, targ.shape[1]):
+                    # passing enc_output to the decoder
+                    predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_output)
+                    loss += loss_function(targ[:, t], predictions)
+                    # using teacher forcing
+                    dec_input = tf.expand_dims(targ[:, t], 1)
+
+            batch_loss = (loss / int(targ.shape[1]))
+            total_loss += batch_loss
+            variables = encoder.variables + decoder.variables
+            gradients = tape.gradient(loss, variables)
+            optimizer.apply_gradients(zip(gradients, variables))
+
+            if batch % 100 == 0:
+                print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1, batch, batch_loss.numpy()))
+
+        # saving (checkpoint) the model every 2 epochs
+        if (epoch + 1) % 2 == 0:
+          checkpoint.save(file_prefix = checkpoint_prefix)
+
+        print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / N_BATCH))
+        print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+
+    # Epoch 10 Batch 0 Loss 0.1351
+    # Epoch 10 Batch 100 Loss 0.1293
+    # Epoch 10 Batch 200 Loss 0.1141
+    # Epoch 10 Batch 300 Loss 0.1249
+    # Epoch 10 Loss 0.1397
+    # Time taken for 1 epoch 180.9981062412262 sec
+    ```
+  - **模型预测，将西班牙语翻译成英语**
+    - 在模型预测时，Decoder 的输入使用上一次的预测结果，而不是 teacher forcing 产生的输入
+    ```py
+    def evaluate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ):
+        attention_plot = np.zeros((max_length_targ, max_length_inp))
+
+        sentence = preprocess_sentence(sentence)
+
+        inputs = [inp_lang.word2idx[i] for i in sentence.split(' ')]
+        inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_length_inp, padding='post')
+        inputs = tf.convert_to_tensor(inputs)
+
+        result = ''
+
+        hidden = [tf.zeros((1, units))]
+        enc_out, enc_hidden = encoder(inputs, hidden)
+
+        dec_hidden = enc_hidden
+        dec_input = tf.expand_dims([targ_lang.word2idx['<start>']], 0)
+
+        for t in range(max_length_targ):
+            predictions, dec_hidden, attention_weights = decoder(dec_input, dec_hidden, enc_out)
+
+            # storing the attention weigths to plot later on
+            attention_weights = tf.reshape(attention_weights, (-1, ))
+            attention_plot[t] = attention_weights.numpy()
+
+            predicted_id = tf.argmax(predictions[0]).numpy()
+
+            result += targ_lang.idx2word[predicted_id] + ' '
+
+            if targ_lang.idx2word[predicted_id] == '<end>':
+                return result, sentence, attention_plot
+
+            # the predicted ID is fed back into the model
+            dec_input = tf.expand_dims([predicted_id], 0)
+
+        return result, sentence, attention_plot
+
+    # function for plotting the attention weights
+    def plot_attention(attention, sentence, predicted_sentence):
+        fig = plt.figure(figsize=(10,10))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.matshow(attention, cmap='viridis')
+
+        fontdict = {'fontsize': 14}
+
+        ax.set_xticklabels([''] + sentence, fontdict=fontdict, rotation=90)
+        ax.set_yticklabels([''] + predicted_sentence, fontdict=fontdict)
+        fig.tight_layout()
+
+        plt.show()
+
+    def translate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ):
+        result, sentence, attention_plot = evaluate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ)
+
+        print('Input: {}'.format(sentence))
+        print('Predicted translation: {}'.format(result))
+
+        attention_plot = attention_plot[:len(result.split(' ')), :len(sentence.split(' '))]
+        plot_attention(attention_plot, sentence.split(' '), result.split(' '))
+    ```
+    **测试**
+    ```py
+    translate('hace mucho frio aqui.', encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ)
+    # Input: <start> hace mucho frio aqui . <end>
+    # Predicted translation: it s too cold here . <end>
+    ```
+    ![](images/tensorflow_translate_attention_cold.png)
+    ```py
+    translate('esta es mi vida.', encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ)
+    # Input: <start> esta es mi vida . <end>
+    # Predicted translation: this is my life . <end>
+    ```
+    ![](images/tensorflow_translate_attention_life.png)
+    ```py
+    translate('¿todavia estan en casa?', encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ)
+    # Input: <start> ¿ todavia estan en casa ? <end>
+    # Predicted translation: are you still at home ? <end>
+    ```
+    ![](images/tensorflow_translate_attention_home.png)
+    ```py
+    # wrong translation
+    translate('trata de averiguarlo.', encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ)
+    # Input: <start> trata de averiguarlo . <end>
+    # Predicted translation: try to figure it out . <end>
+    ```
+    ![](images/tensorflow_translate_attention_try.png)
+  - **重新加载模型测试**
+    ```py
+    # restoring the latest checkpoint in checkpoint_dir
+    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    ```
+## Image Captioning with Attention
+  - [Image Captioning with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/image_captioning_with_attention.ipynb)
+    If you run it, it will download the MS-COCO dataset, preprocess and cache a subset of the images using Inception V3, train an encoder-decoder model, and use it to generate captions on new images.
+
+    The code requires TensorFlow version >=1.9. If you're running this in Colab
+
+    In this example, we're training on a relatively small amount of data as an example. On a single P100 GPU, this example will take about ~2 hours to train. We train on the first 30,000 captions (corresponding to about ~20,000 images depending on shuffling, as there are multiple captions per image in the dataset)
+  - **加载 MS-COCO 数据集** This dataset contains >82,000 images, each of which has been annotated with at least 5 different captions
+    ```py
+    annotation_zip = tf.keras.utils.get_file('captions.zip',
+                                          cache_subdir=os.path.abspath('.'),
+                                          origin = 'http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
+                                          extract = True)
+    annotation_file = os.path.dirname(annotation_zip)+'/annotations/captions_train2014.json'
+
+    name_of_zip = 'train2014.zip'
+    if not os.path.exists(os.path.abspath('.') + '/' + name_of_zip):
+      image_zip = tf.keras.utils.get_file(name_of_zip,
+                                          cache_subdir=os.path.abspath('.'),
+                                          origin = 'http://images.cocodataset.org/zips/train2014.zip',
+                                          extract = True)
+      PATH = os.path.dirname(image_zip)+'/train2014/'
+    else:
+      PATH = os.path.abspath('.')+'/train2014/'
 
 
-# Converts the unicode file to ascii
-def unicode_to_ascii(s):
-    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    # Optionally, limit the size of the training set for faster training
+    # read the json file
+    with open(annotation_file, 'r') as f:
+        annotations = json.load(f)
 
+    # storing the captions and the image name in vectors
+    all_captions = []
+    all_img_name_vector = []
 
-def preprocess_sentence(w):
-    w = unicode_to_ascii(w.lower().strip())
+    for annot in annotations['annotations']:
+        caption = '<start> ' + annot['caption'] + ' <end>'
+        image_id = annot['image_id']
+        full_coco_image_path = PATH + 'COCO_train2014_' + '%012d.jpg' % (image_id)
 
-    # creating a space between a word and the punctuation following it
-    # eg: "he is a boy." => "he is a boy ."
-    # Reference:- https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
-    w = re.sub(r"([?.!,¿])", r" \1 ", w)
-    w = re.sub(r'[" "]+', " ", w)
+        all_img_name_vector.append(full_coco_image_path)
+        all_captions.append(caption)
 
-    # replacing everything with space except (a-z, A-Z, ".", "?", "!", ",")
-    w = re.sub(r"[^a-zA-Z?.!,¿]+", " ", w)
+    # shuffling the captions and image_names together
+    # setting a random state
+    train_captions, img_name_vector = shuffle(all_captions,
+                                              all_img_name_vector,
+                                              random_state=1)
 
-    w = w.rstrip().strip()
+    # selecting the first 30000 captions from the shuffled set
+    num_examples = 30000
+    train_captions = train_captions[:num_examples]
+    img_name_vector = img_name_vector[:num_examples]
 
-    # adding a start and an end token to the sentence
-    # so that the model know when to start and stop predicting.
-    w = '<start> ' + w + ' <end>'
-    return w
+    len(train_captions), len(all_captions)
+    ```
+  - **Preprocess the images using InceptionV3** Next, we will use InceptionV3 (pretrained on Imagenet) to classify each image. We will extract features from the last convolutional layer.
+    ```py
+    # First, we will need to convert the images into the format inceptionV3 expects by:
+    #     Resizing the image to (299, 299)
+    #     Using the preprocess_input method to place the pixels in the range of -1 to 1 (to match the format of the images used to train InceptionV3).
+    def load_image(image_path):
+        img = tf.read_file(image_path)
+        img = tf.image.decode_jpeg(img, channels=3)
+        img = tf.image.resize_images(img, (299, 299))
+        img = tf.keras.applications.inception_v3.preprocess_input(img)
+        return img, image_path
 
-# 1. Remove the accents
-# 2. Clean the sentences
-# 3. Return word pairs in the format: [ENGLISH, SPANISH]
-def create_dataset(path, num_examples):
-    lines = open(path, encoding='UTF-8').read().strip().split('\n')
+    # Initialize InceptionV3 and load the pretrained Imagenet weights
+    #
+    # To do so, we'll create a tf.keras model where the output layer is the last convolutional layer in the InceptionV3 architecture.
+    #
+    #     Each image is forwarded through the network and the vector that we get at the end is stored in a dictionary (image_name --> feature_vector).
+    #     We use the last convolutional layer because we are using attention in this example. The shape of the output of this layer is 8x8x2048.
+    #     We avoid doing this during training so it does not become a bottleneck.
+    #     After all the images are passed through the network, we pickle the dictionary and save it to disk.
+    image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
+    new_input = image_model.input
+    hidden_layer = image_model.layers[-1].output
 
-    word_pairs = [[preprocess_sentence(w) for w in l.split('\t')]  for l in lines[:num_examples]]
+    image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
 
-    return word_pairs
+    # Caching the features extracted from InceptionV3
+    #
+    # We will pre-process each image with InceptionV3 and cache the output to disk. Caching the output in RAM would be faster but memory intensive, requiring 8 * 8 * 2048 floats per image. At the time of # writing, this would exceed the memory limitations of Colab (although these may change, an instance appears to have about 12GB of memory currently).
+    #
+    # Performance could be improved with a more sophisticated caching strategy (e.g., by sharding the images to reduce random access disk I/O) at the cost of more code.
+    #
+    # This will take about 10 minutes to run in Colab with a GPU. If you'd like to see a progress bar, you could: install tqdm (!pip install tqdm), then change this line:
 
-# This class creates a word -> index mapping (e.g,. "dad" -> 5) and vice-versa
-# (e.g., 5 -> "dad") for each language,
-class LanguageIndex():
-  def __init__(self, lang):
-    self.lang = lang
-    self.word2idx = {}
-    self.idx2word = {}
-    self.vocab = set()
+    # for img, path in image_dataset:
+    #
+    # to:
+    #
+    # for img, path in tqdm(image_dataset):
 
-    self.create_index()
+    # getting the unique images
+    encode_train = sorted(set(img_name_vector))
 
-  def create_index(self):
-    for phrase in self.lang:
-      self.vocab.update(phrase.split(' '))
+    # feel free to change the batch_size according to your system configuration
+    image_dataset = tf.data.Dataset.from_tensor_slices(
+                                    encode_train).map(load_image).batch(16)
 
-    self.vocab = sorted(self.vocab)
+    for img, path in image_dataset:
+      batch_features = image_features_extract_model(img)
+      batch_features = tf.reshape(batch_features,
+                                  (batch_features.shape[0], -1, batch_features.shape[3]))
 
-    self.word2idx['<pad>'] = 0
-    for index, word in enumerate(self.vocab):
-      self.word2idx[word] = index + 1
+      for bf, p in zip(batch_features, path):
+        path_of_feature = p.numpy().decode("utf-8")
+        np.save(path_of_feature, bf.numpy())
+    ```
+  - **Preprocess and tokenize the captions**
+    First, we'll tokenize the captions (e.g., by splitting on spaces). This will give us a vocabulary of all the unique words in the data (e.g., "surfing", "football", etc).
+    Next, we'll limit the vocabulary size to the top 5,000 words to save memory. We'll replace all other words with the token "UNK" (for unknown).
+    Finally, we create a word --> index mapping and vice-versa.
+    We will then pad all sequences to the be same length as the longest one.
+    ```py
+    # This will find the maximum length of any caption in our dataset
+    def calc_max_length(tensor):
+        return max(len(t) for t in tensor)
 
-    for word, index in self.word2idx.items():
-      self.idx2word[index] = word
+    # The steps above is a general process of dealing with text processing
 
-def max_length(tensor):
-    return max(len(t) for t in tensor)
+    # choosing the top 5000 words from the vocabulary
+    top_k = 5000
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=top_k,
+                                                      oov_token="<unk>",
+                                                      filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ ')
+    tokenizer.fit_on_texts(train_captions)
+    train_seqs = tokenizer.texts_to_sequences(train_captions)
 
+    tokenizer.word_index = {key:value for key, value in tokenizer.word_index.items() if value <= top_k}
+    # putting <unk> token in the word2idx dictionary
+    tokenizer.word_index[tokenizer.oov_token] = top_k + 1
+    tokenizer.word_index['<pad>'] = 0
 
-def load_dataset(path, num_examples):
-    # creating cleaned input, output pairs
-    pairs = create_dataset(path, num_examples)
+    # creating the tokenized vectors
+    train_seqs = tokenizer.texts_to_sequences(train_captions)
 
-    # index language using the class defined above    
-    inp_lang = LanguageIndex(sp for en, sp in pairs)
-    targ_lang = LanguageIndex(en for en, sp in pairs)
+    # creating a reverse mapping (index -> word)
+    index_word = {value:key for key, value in tokenizer.word_index.items()}
 
-    # Vectorize the input and target languages
+    # padding each vector to the max_length of the captions
+    # if the max_length parameter is not provided, pad_sequences calculates that automatically
+    cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding='post')
 
-    # Spanish sentences
-    input_tensor = [[inp_lang.word2idx[s] for s in sp.split(' ')] for en, sp in pairs]
-
-    # English sentences
-    target_tensor = [[targ_lang.word2idx[s] for s in en.split(' ')] for en, sp in pairs]
-
-    # Calculate max_length of input and output tensor
-    # Here, we'll set those to the longest sentence in the dataset
-    max_length_inp, max_length_tar = max_length(input_tensor), max_length(target_tensor)
-
-    # Padding the input and output tensor to the maximum length
-    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor,
-                                                                 maxlen=max_length_inp,
-                                                                 padding='post')
-
-    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor,
-                                                                  maxlen=max_length_tar,
-                                                                  padding='post')
-
-    return input_tensor, target_tensor, inp_lang, targ_lang, max_length_inp, max_length_tar
-```
-
+    # calculating the max_length
+    # used to store the attention weights
+    max_length = calc_max_length(train_seqs)
+    ```
 ***
 
 # FOO
@@ -2591,6 +3013,13 @@ def load_dataset(path, num_examples):
   ```py
   import inspect
   print(inspect.getsource(inspect.getsource))
+  ```
+  ```py
+  print(os.path.expanduser("~"))
+  # /home/leondgarse
+
+  print(os.environ['HOME'])
+  # /home/leondgarse
   ```
   ```py
   def get_zip_file(fname, origin, extract=True):
