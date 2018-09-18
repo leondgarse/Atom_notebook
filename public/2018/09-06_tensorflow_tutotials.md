@@ -1,6 +1,5 @@
 # ___2018 - 09 - 06 Tensorflow Tutorials___
 ***
-
 - [Tensorflow Tutorials](https://www.tensorflow.org/tutorials/)
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -57,6 +56,28 @@
 ***
 
 # 学习与使用机器学习 Learn and use ML
+## Keras MNIST
+  ```py
+  import tensorflow as tf
+  mnist = tf.keras.datasets.mnist
+
+  (x_train, y_train), (x_test, y_test) = mnist.load_data()
+  x_train, x_test = x_train / 255.0, x_test / 255.0
+
+  model = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(512, activation=tf.nn.relu),
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+  ])
+  model.compile(optimizer='adam',
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+
+  model.fit(x_train, y_train, epochs=5)
+  model.evaluate(x_test, y_test)
+  # [0.0712303157694405, 0.9791]
+  ```
 ## Keras 基本分类模型 Fasion MNIST 数据集
   - **import**
     ```py
@@ -685,229 +706,6 @@
     loss, acc = model.evaluate(test_images, test_labels)
     print("Restored model, accuracy: {:5.2f}%".format(100*acc))
     Restored model, accuracy: 86.40%
-    ```
-***
-
-# Eager 执行环境与 Keras 定义 DNN 模型分类 Iris 数据集
-  - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
-    ```python
-    import os
-    import matplotlib.pyplot as plt
-    import tensorflow as tf
-    import tensorflow.contrib.eager as tfe
-
-    tf.enable_eager_execution()
-
-    print("TensorFlow version: {}".format(tf.VERSION))
-    # TensorFlow version: 1.8.0
-    print("Eager execution: {}".format(tf.executing_eagerly()))
-    # Eager execution: True
-    ```
-  - **tf.keras.utils.get_file** 下载数据集，返回下载到本地的文件路径
-    ```python
-    # Iris dataset
-    train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
-    train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
-
-    print("Local copy of the dataset file: {}".format(train_dataset_fp))
-    # Local copy of the dataset file: /home/leondgarse/.keras/datasets/iris_training.csv
-    ```
-  - **tf.decode_csv** 解析 csv 文件，获取特征与标签 feature and label
-    ```python
-    def parse_csv(line):
-        example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
-        parsed_line = tf.decode_csv(line, example_defaults)
-        # First 4 fields are features, combine into single tensor
-        features = tf.reshape(parsed_line[:-1], shape=(4,))
-        # Last field is the label
-        label = tf.reshape(parsed_line[-1], shape=())
-        return features, label
-    ```
-  - **tf.data.TextLineDataset** 加载 CSV 格式文件，创建 tf.data.Dataset
-    ```python
-    train_dataset = tf.data.TextLineDataset(train_dataset_fp)
-    train_dataset = train_dataset.skip(1)             # skip the first header row
-    train_dataset = train_dataset.map(parse_csv)      # parse each row
-    train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
-    train_dataset = train_dataset.batch(32)
-
-    # View a single example entry from a batch
-    features, label = iter(train_dataset).next()
-    print("example features:", features[0])
-    # example features: tf.Tensor([4.8 3.  1.4 0.3], shape=(4,), dtype=float32)
-    print("example label:", label[0])
-    # example label: tf.Tensor(0, shape=(), dtype=int32)
-    ```
-  - **tf.contrib.data.make_csv_dataset** 加载 csv 文件为 dataset，可以替换 `TextLineDataset` 与 `decode_csv`，默认 `shuffle=True` `num_epochs=None`
-    ```py
-    # column order in CSV file
-    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
-    feature_names = column_names[:-1]
-    label_name = column_names[-1]
-
-    batch_size = 32
-    train_dataset = tf.contrib.data.make_csv_dataset(
-        train_dataset_fp,
-        batch_size,
-        column_names=column_names,
-        label_name=label_name,
-        num_epochs=1)
-    features, labels = next(iter(train_dataset))
-    print({kk: vv.numpy()[0] for kk, vv in features.items()})
-    # {'sepal_length': 5.1, 'sepal_width': 3.8, 'petal_length': 1.6, 'petal_width': 0.2}
-    print(labels.numpy()[0])
-    # 0
-    ```
-    ```py
-    # Repackage the features dictionary into a single array
-    def pack_features_vector(features, labels):
-        """Pack the features into a single array."""
-        features = tf.stack(list(features.values()), axis=1)
-        return features, labels
-    train_dataset = train_dataset.map(pack_features_vector)
-    features, labels = next(iter(train_dataset))
-    print(features.numpy()[0])
-    # [6. , 2.2, 5. , 1.5]
-    ```
-  - **tf.keras API** 创建模型以及层级结构
-    - **tf.keras.layers.Dense** 添加一个全连接层
-    - **tf.keras.Sequential** 线性叠加各个层
-    ```python
-    # 输入 4 个节点，包含两个隐藏层，输出 3 个节点
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
-        tf.keras.layers.Dense(10, activation="relu"),
-        tf.keras.layers.Dense(3)
-        ])
-
-    # 测试
-    predictions = model(features)
-    print(predictions.numpy()[0])
-    # [ 0.9281509   0.39843088 -1.3780175 ]
-    print(tf.argmax(tf.nn.softmax(predictions), axis=1).numpy()[:5])
-    # [0 0 0 0 0]
-    ```
-  - **损失函数 loss function** 与 **优化程序 optimizer**
-    - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
-    - **tf.GradientTape** 记录模型优化过程中的梯度运算
-    - **tf.train.GradientDescentOptimizer** 实现 stochastic gradient descent (SGD) 算法
-    ```python
-    def loss(model, x, y):
-        y_ = model(x)
-        return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
-
-    def grad(model, inputs, targets):
-        with tf.GradientTape() as tape:
-            loss_value = loss(model, inputs, targets)
-        return tape.gradient(loss_value, model.variables)
-
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
-    ```
-  - **模型训练 Training loop**
-    ```python
-    ## Note: Rerunning this cell uses the same model variables
-
-    # keep results for plotting
-    train_loss_results = []
-    train_accuracy_results = []
-
-    num_epochs = 201
-
-    for epoch in range(num_epochs):
-        epoch_loss_avg = tfe.metrics.Mean()
-        epoch_accuracy = tfe.metrics.Accuracy()
-
-        # Training loop - using batches of 32
-        for x, y in train_dataset:
-            # Optimize the model
-            grads = grad(model, x, y)
-            optimizer.apply_gradients(zip(grads, model.variables),
-                                      global_step=tf.train.get_or_create_global_step())
-
-            # Track progress
-            epoch_loss_avg(loss(model, x, y))  # add current batch loss
-            # compare predicted label to actual label
-            epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
-
-        # end epoch
-        train_loss_results.append(epoch_loss_avg.result())
-        train_accuracy_results.append(epoch_accuracy.result())
-
-        if epoch % 50 == 0:
-            print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(
-                epoch,
-                epoch_loss_avg.result(),
-                epoch_accuracy.result()))
-
-    # [Out]
-    # Epoch 000: Loss: 1.833, Accuracy: 30.000%
-    # Epoch 050: Loss: 0.394, Accuracy: 90.833%
-    # Epoch 100: Loss: 0.239, Accuracy: 97.500%
-    # Epoch 150: Loss: 0.161, Accuracy: 96.667%
-    # Epoch 200: Loss: 0.121, Accuracy: 98.333%
-    ```
-  - **图形化显示模型损失变化 Visualize the loss function over time**
-    ```python
-    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
-    fig.suptitle('Training Metrics')
-
-    axes[0].set_ylabel("Loss", fontsize=14)
-    axes[0].plot(train_loss_results)
-
-    axes[1].set_ylabel("Accuracy", fontsize=14)
-    axes[1].set_xlabel("Epoch", fontsize=14)
-    axes[1].plot(train_accuracy_results)
-
-    plt.show()
-    ```
-    ![](images/output_30_0.png)
-  - **模型评估 Evaluate the model on the test dataset**
-    - **tf.keras.utils.get_file** / **tf.data.TextLineDataset** 加载测试数据集
-    - **tfe.metrics.Accuracy** 计算正确率
-    ```python
-    test_url = "http://download.tensorflow.org/data/iris_test.csv"
-    test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
-
-    test_dataset = tf.contrib.data.make_csv_dataset(
-        train_dataset_fp,
-        batch_size,
-        column_names=column_names,
-        label_name='species',
-        num_epochs=1,
-        shuffle=False)
-
-    test_dataset = test_dataset.map(pack_features_vector)
-
-    test_accuracy = tfe.metrics.Accuracy()
-
-    for (x, y) in test_dataset:
-        prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
-        test_accuracy(prediction, y)
-
-    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
-    # Test set accuracy: 96.667%
-    ```
-  - **模型预测 Use the trained model to make predictions**
-    ```python
-    predict_dataset = tf.convert_to_tensor([
-        [5.1, 3.3, 1.7, 0.5,],
-        [5.9, 3.0, 4.2, 1.5,],
-        [6.9, 3.1, 5.4, 2.1]
-    ])
-
-    predictions = model(predict_dataset)
-
-    for i, logits in enumerate(predictions):
-        class_idx = tf.argmax(logits).numpy()
-        p = tf.nn.softmax(logits)[class_idx]
-        name = class_names[class_idx]
-        print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
-    ```
-    Out
-    ```python
-    Example 0 prediction: Iris setosa (62.7%)
-    Example 1 prediction: Iris virginica (54.7%)
-    Example 2 prediction: Iris virginica (62.8%)
     ```
 ***
 
@@ -1735,7 +1533,7 @@
     # This cannot be done...
     results_usnl_training = train_and_evaluate_with_module('https://tfhub.dev/google/universal-sentence-encoder-large/3', True)
     ```
-## 使用 Kaggle 的数据集进行文本分类
+## Estimators DNNClassifier 下载 Kaggle 的数据集进行文本分类
   - [Kaggle](https://www.kaggle.com)
     - **python 包**
       ```py
@@ -2076,6 +1874,227 @@
 ***
 
 # 通用模型 Generative models
+## Eager 执行环境与 Keras 定义 DNN 模型分类 Iris 数据集
+  - **tf.enable_eager_execution** 初始化 **Eager** 执行环境
+    ```python
+    import os
+    import matplotlib.pyplot as plt
+    import tensorflow as tf
+    import tensorflow.contrib.eager as tfe
+
+    tf.enable_eager_execution()
+
+    print("TensorFlow version: {}".format(tf.VERSION))
+    # TensorFlow version: 1.8.0
+    print("Eager execution: {}".format(tf.executing_eagerly()))
+    # Eager execution: True
+    ```
+  - **tf.keras.utils.get_file** 下载数据集，返回下载到本地的文件路径
+    ```python
+    # Iris dataset
+    train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
+    train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
+
+    print("Local copy of the dataset file: {}".format(train_dataset_fp))
+    # Local copy of the dataset file: /home/leondgarse/.keras/datasets/iris_training.csv
+    ```
+  - **tf.decode_csv** 解析 csv 文件，获取特征与标签 feature and label
+    ```python
+    def parse_csv(line):
+        example_defaults = [[0.], [0.], [0.], [0.], [0]]  # sets field types
+        parsed_line = tf.decode_csv(line, example_defaults)
+        # First 4 fields are features, combine into single tensor
+        features = tf.reshape(parsed_line[:-1], shape=(4,))
+        # Last field is the label
+        label = tf.reshape(parsed_line[-1], shape=())
+        return features, label
+    ```
+  - **tf.data.TextLineDataset** 加载 CSV 格式文件，创建 tf.data.Dataset
+    ```python
+    train_dataset = tf.data.TextLineDataset(train_dataset_fp)
+    train_dataset = train_dataset.skip(1)             # skip the first header row
+    train_dataset = train_dataset.map(parse_csv)      # parse each row
+    train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
+    train_dataset = train_dataset.batch(32)
+
+    # View a single example entry from a batch
+    features, label = iter(train_dataset).next()
+    print("example features:", features[0])
+    # example features: tf.Tensor([4.8 3.  1.4 0.3], shape=(4,), dtype=float32)
+    print("example label:", label[0])
+    # example label: tf.Tensor(0, shape=(), dtype=int32)
+    ```
+  - **tf.contrib.data.make_csv_dataset** 加载 csv 文件为 dataset，可以替换 `TextLineDataset` 与 `decode_csv`，默认 `shuffle=True` `num_epochs=None`
+    ```py
+    # column order in CSV file
+    column_names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species']
+    feature_names = column_names[:-1]
+    label_name = column_names[-1]
+
+    batch_size = 32
+    train_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name=label_name,
+        num_epochs=1)
+    features, labels = next(iter(train_dataset))
+    print({kk: vv.numpy()[0] for kk, vv in features.items()})
+    # {'sepal_length': 5.1, 'sepal_width': 3.8, 'petal_length': 1.6, 'petal_width': 0.2}
+    print(labels.numpy()[0])
+    # 0
+    ```
+    ```py
+    # Repackage the features dictionary into a single array
+    def pack_features_vector(features, labels):
+        """Pack the features into a single array."""
+        features = tf.stack(list(features.values()), axis=1)
+        return features, labels
+    train_dataset = train_dataset.map(pack_features_vector)
+    features, labels = next(iter(train_dataset))
+    print(features.numpy()[0])
+    # [6. , 2.2, 5. , 1.5]
+    ```
+  - **tf.keras API** 创建模型以及层级结构
+    - **tf.keras.layers.Dense** 添加一个全连接层
+    - **tf.keras.Sequential** 线性叠加各个层
+    ```python
+    # 输入 4 个节点，包含两个隐藏层，输出 3 个节点
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
+        tf.keras.layers.Dense(10, activation="relu"),
+        tf.keras.layers.Dense(3)
+        ])
+
+    # 测试
+    predictions = model(features)
+    print(predictions.numpy()[0])
+    # [ 0.9281509   0.39843088 -1.3780175 ]
+    print(tf.argmax(tf.nn.softmax(predictions), axis=1).numpy()[:5])
+    # [0 0 0 0 0]
+    ```
+  - **损失函数 loss function** 与 **优化程序 optimizer**
+    - **tf.losses.sparse_softmax_cross_entropy** 计算模型预测与目标值的损失
+    - **tf.GradientTape** 记录模型优化过程中的梯度运算
+    - **tf.train.GradientDescentOptimizer** 实现 stochastic gradient descent (SGD) 算法
+    ```python
+    def loss(model, x, y):
+        y_ = model(x)
+        return tf.losses.sparse_softmax_cross_entropy(labels=y, logits=y_)
+
+    def grad(model, inputs, targets):
+        with tf.GradientTape() as tape:
+            loss_value = loss(model, inputs, targets)
+        return tape.gradient(loss_value, model.variables)
+
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+    ```
+  - **模型训练 Training loop**
+    ```python
+    ## Note: Rerunning this cell uses the same model variables
+
+    # keep results for plotting
+    train_loss_results = []
+    train_accuracy_results = []
+
+    num_epochs = 201
+
+    for epoch in range(num_epochs):
+        epoch_loss_avg = tfe.metrics.Mean()
+        epoch_accuracy = tfe.metrics.Accuracy()
+
+        # Training loop - using batches of 32
+        for x, y in train_dataset:
+            # Optimize the model
+            grads = grad(model, x, y)
+            optimizer.apply_gradients(zip(grads, model.variables),
+                                      global_step=tf.train.get_or_create_global_step())
+
+            # Track progress
+            epoch_loss_avg(loss(model, x, y))  # add current batch loss
+            # compare predicted label to actual label
+            epoch_accuracy(tf.argmax(model(x), axis=1, output_type=tf.int32), y)
+
+        # end epoch
+        train_loss_results.append(epoch_loss_avg.result())
+        train_accuracy_results.append(epoch_accuracy.result())
+
+        if epoch % 50 == 0:
+            print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(
+                epoch,
+                epoch_loss_avg.result(),
+                epoch_accuracy.result()))
+
+    # [Out]
+    # Epoch 000: Loss: 1.833, Accuracy: 30.000%
+    # Epoch 050: Loss: 0.394, Accuracy: 90.833%
+    # Epoch 100: Loss: 0.239, Accuracy: 97.500%
+    # Epoch 150: Loss: 0.161, Accuracy: 96.667%
+    # Epoch 200: Loss: 0.121, Accuracy: 98.333%
+    ```
+  - **图形化显示模型损失变化 Visualize the loss function over time**
+    ```python
+    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
+    fig.suptitle('Training Metrics')
+
+    axes[0].set_ylabel("Loss", fontsize=14)
+    axes[0].plot(train_loss_results)
+
+    axes[1].set_ylabel("Accuracy", fontsize=14)
+    axes[1].set_xlabel("Epoch", fontsize=14)
+    axes[1].plot(train_accuracy_results)
+
+    plt.show()
+    ```
+    ![](images/output_30_0.png)
+  - **模型评估 Evaluate the model on the test dataset**
+    - **tf.keras.utils.get_file** / **tf.data.TextLineDataset** 加载测试数据集
+    - **tfe.metrics.Accuracy** 计算正确率
+    ```python
+    test_url = "http://download.tensorflow.org/data/iris_test.csv"
+    test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
+
+    test_dataset = tf.contrib.data.make_csv_dataset(
+        train_dataset_fp,
+        batch_size,
+        column_names=column_names,
+        label_name='species',
+        num_epochs=1,
+        shuffle=False)
+
+    test_dataset = test_dataset.map(pack_features_vector)
+
+    test_accuracy = tfe.metrics.Accuracy()
+
+    for (x, y) in test_dataset:
+        prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
+        test_accuracy(prediction, y)
+
+    print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
+    # Test set accuracy: 96.667%
+    ```
+  - **模型预测 Use the trained model to make predictions**
+    ```python
+    predict_dataset = tf.convert_to_tensor([
+        [5.1, 3.3, 1.7, 0.5,],
+        [5.9, 3.0, 4.2, 1.5,],
+        [6.9, 3.1, 5.4, 2.1]
+    ])
+
+    predictions = model(predict_dataset)
+
+    for i, logits in enumerate(predictions):
+        class_idx = tf.argmax(logits).numpy()
+        p = tf.nn.softmax(logits)[class_idx]
+        name = class_names[class_idx]
+        print("Example {} prediction: {} ({:4.1f}%)".format(i, name, 100*p))
+    ```
+    Out
+    ```python
+    Example 0 prediction: Iris setosa (62.7%)
+    Example 1 prediction: Iris virginica (54.7%)
+    Example 2 prediction: Iris virginica (62.8%)
+    ```
 ## Eager 执行环境与 Keras 定义 RNN 模型自动生成文本
   - [Text Generation using a RNN](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/text_generation.ipynb)
   - **加载数据集** [Shakespeare's writing 文本数据](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt)
@@ -2421,7 +2440,7 @@
     print(''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
     # i'm coming.
     ```
-  - **将文件解析成单词对，每个句子添加 <start> <end> 标签**
+  - **将文件解析成单词对，每个句子添加 `<start>` `<end>` 标签**
     ```py
     import unicodedata
     import re
@@ -2573,16 +2592,16 @@
       # If you have a GPU, we recommend using CuDNNGRU(provides a 3x speedup than GRU)
       # the code automatically does that.
       if tf.test.is_gpu_available():
-        return tf.keras.layers.CuDNNGRU(units,
-                                        return_sequences=True,
-                                        return_state=True,
-                                        recurrent_initializer='glorot_uniform')
+          return tf.keras.layers.CuDNNGRU(units,
+                                          return_sequences=True,
+                                          return_state=True,
+                                          recurrent_initializer='glorot_uniform')
       else:
-        return tf.keras.layers.GRU(units,
-                                   return_sequences=True,
-                                   return_state=True,
-                                   recurrent_activation='sigmoid',
-                                   recurrent_initializer='glorot_uniform')
+          return tf.keras.layers.GRU(units,
+                                     return_sequences=True,
+                                     return_state=True,
+                                     recurrent_activation='sigmoid',
+                                     recurrent_initializer='glorot_uniform')
 
     class Encoder(tf.keras.Model):
         def __init__(self, vocab_size, embedding_dim, enc_units, batch_sz):
@@ -2629,30 +2648,24 @@
             # hidden_with_time_axis shape == (batch_size, 1, hidden size)
             # we are doing this to perform addition to calculate the score
             hidden_with_time_axis = tf.expand_dims(hidden, 1)
-
             # score shape == (batch_size, max_length, hidden_size)
             score = tf.nn.tanh(self.W1(enc_output) + self.W2(hidden_with_time_axis))
-
             # attention_weights shape == (batch_size, max_length, 1)
             # we get 1 at the last axis because we are applying score to self.V
             attention_weights = tf.nn.softmax(self.V(score), axis=1)
-
             # context_vector shape after sum == (batch_size, hidden_size)
             context_vector = attention_weights * enc_output
             context_vector = tf.reduce_sum(context_vector, axis=1)
 
             # x shape after passing through embedding == (batch_size, 1, embedding_dim)
             x = self.embedding(x)
-
             # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
             x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
-
             # passing the concatenated vector to the GRU
             output, state = self.gru(x)
 
             # output shape == (batch_size * 1, hidden_size)
             output = tf.reshape(output, (-1, output.shape[2]))
-
             # output shape == (batch_size * 1, vocab)
             x = self.fc(output)
 
@@ -2674,9 +2687,9 @@
     optimizer = tf.train.AdamOptimizer()
 
     def loss_function(real, pred):
-      mask = 1 - np.equal(real, 0)
-      loss_ = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=real, logits=pred) * mask
-      return tf.reduce_mean(loss_)
+        mask = 1 - np.equal(real, 0)
+        loss_ = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=real, logits=pred) * mask
+        return tf.reduce_mean(loss_)
 
     ''' Checkpoints (Object-based saving) '''
     checkpoint_dir = './training_checkpoints'
@@ -2716,7 +2729,7 @@
 
         # saving (checkpoint) the model every 2 epochs
         if (epoch + 1) % 2 == 0:
-          checkpoint.save(file_prefix = checkpoint_prefix)
+            checkpoint.save(file_prefix = checkpoint_prefix)
 
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / N_BATCH))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
@@ -2821,67 +2834,151 @@
     # restoring the latest checkpoint in checkpoint_dir
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
     ```
-## Image Captioning with Attention
+## Eager 执行环境与 Keras 定义 RNN 模型使用注意力机制为图片命名标题
   - [Image Captioning with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/image_captioning_with_attention.ipynb)
     If you run it, it will download the MS-COCO dataset, preprocess and cache a subset of the images using Inception V3, train an encoder-decoder model, and use it to generate captions on new images.
 
     The code requires TensorFlow version >=1.9. If you're running this in Colab
 
     In this example, we're training on a relatively small amount of data as an example. On a single P100 GPU, this example will take about ~2 hours to train. We train on the first 30,000 captions (corresponding to about ~20,000 images depending on shuffling, as there are multiple captions per image in the dataset)
-  - **加载 MS-COCO 数据集** This dataset contains >82,000 images, each of which has been annotated with at least 5 different captions
+  - **加载 MS-COCO 数据集** 包含了 `>82,000` 张图片，每一张图片有 `5` 个不同的标题
     ```py
     annotation_zip = tf.keras.utils.get_file('captions.zip',
-                                          cache_subdir=os.path.abspath('.'),
                                           origin = 'http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
                                           extract = True)
     annotation_file = os.path.dirname(annotation_zip)+'/annotations/captions_train2014.json'
+    annotation_file = os.path.expanduser('~/.keras/datasets/annotations/captions_train2014.json')
 
-    name_of_zip = 'train2014.zip'
-    if not os.path.exists(os.path.abspath('.') + '/' + name_of_zip):
-      image_zip = tf.keras.utils.get_file(name_of_zip,
-                                          cache_subdir=os.path.abspath('.'),
-                                          origin = 'http://images.cocodataset.org/zips/train2014.zip',
-                                          extract = True)
-      PATH = os.path.dirname(image_zip)+'/train2014/'
-    else:
-      PATH = os.path.abspath('.')+'/train2014/'
+    # 12.58 G, skip this
+    image_zip = tf.keras.utils.get_file('train2014.zip',
+                                        origin = 'http://images.cocodataset.org/zips/train2014.zip',
+                                        extract = True)
+    PATH = os.path.dirname(image_zip)+'/train2014/'
 
+    ''' Test annotations data '''
+    import json
+    annotations = json.load(open(annotation_file, 'r'))
 
-    # Optionally, limit the size of the training set for faster training
-    # read the json file
-    with open(annotation_file, 'r') as f:
-        annotations = json.load(f)
+    print(annotations.keys())
+    # dict_keys(['info', 'images', 'licenses', 'annotations'])
+
+    print(len(annotations['images']), len(annotations['annotations']))
+    # 82783 414113
+
+    print(annotations['images'][0])
+    # {'license': 5,
+    #  'file_name': 'COCO_train2014_000000057870.jpg',
+    #  'coco_url': 'http://images.cocodataset.org/train2014/COCO_train2014_000000057870.jpg',
+    #  'height': 480,
+    #  'width': 640,
+    #  'date_captured': '2013-11-14 16:28:13',
+    #  'flickr_url': 'http://farm4.staticflickr.com/3153/2970773875_164f0c0b83_z.jpg',
+    #  'id': 57870}
+
+    print(annotations['annotations'][0])
+    # {'image_id': 318556, 'id': 48, 'caption': 'A very clean and well decorated empty bathroom'}
+    ```
+    ```py
+    tf.enable_eager_execution()
+    from urllib.request import urlretrieve
+
+    def image_downloader(aa):
+        return urlretrieve(aa[1], aa[0])
+
+    def multi_download(download_dict, thread_num=50):
+        import time
+        from multiprocessing import Pool
+
+        dd = list(download_dict.items())
+        pp = Pool(thread_num)
+        print("Images need to download: {}".format(len(dd)))
+        for ii in range(0, len(dd), thread_num):
+            start = time.time()
+            print('Downloading images {} - {}'.format(ii, ii + thread_num), end=', ')
+            tt = dd[ii: ii + thread_num]
+            pp.map(image_downloader, tt)
+            print ('Time taken for downloading {} images: {:.2f} sec'.format(thread_num, time.time() - start))
 
     # storing the captions and the image name in vectors
-    all_captions = []
-    all_img_name_vector = []
+    def reload_or_download_coco_images(annotation_file, num_examples=1000, image_path=None, is_shuffle=True, is_redownload=False, download_thread=100):
+        from sklearn.utils import shuffle
+        import time
+        import pickle
+        import json
 
-    for annot in annotations['annotations']:
-        caption = '<start> ' + annot['caption'] + ' <end>'
-        image_id = annot['image_id']
-        full_coco_image_path = PATH + 'COCO_train2014_' + '%012d.jpg' % (image_id)
+        if image_path == None:
+            image_path = os.path.expanduser('~/.keras/datasets/train2014/')
+        if not os.path.exists(image_path):
+            os.mkdir(image_path)
 
-        all_img_name_vector.append(full_coco_image_path)
-        all_captions.append(caption)
+        annotation_file = os.path.expanduser(annotation_file)
+        backup_file_path = os.path.join(os.path.dirname(annotation_file), 'taining_data_{}.pkl'.format(num_examples))
+        if not is_redownload and os.path.exists(backup_file_path):
+            print("Load from previous data")
+            dd = pickle.load(open(backup_file_path, 'rb'))
+            return list(dd.keys()), list(dd.values())
 
-    # shuffling the captions and image_names together
-    # setting a random state
-    train_captions, img_name_vector = shuffle(all_captions,
-                                              all_img_name_vector,
-                                              random_state=1)
+        start = time.time()
+        with open(annotation_file, 'r') as ff:
+            annotations = json.load(ff)
 
-    # selecting the first 30000 captions from the shuffled set
-    num_examples = 30000
-    train_captions = train_captions[:num_examples]
-    img_name_vector = img_name_vector[:num_examples]
+        if is_shuffle:
+            annot = shuffle(annotations['annotations'], random_state=1)[:num_examples]
+        else:
+            annot = annotations['annotations'][:num_examples]
 
-    len(train_captions), len(all_captions)
+        annot_images = pd.DataFrame(annotations['images']).set_index('id')
+
+        # storing the captions and the image name in vectors
+        all_captions = []
+        all_img_name_vector = []
+        all_img_url = {}
+        for aa in annot:
+            caption = '<start> ' + aa['caption'] + ' <end>'
+            all_captions.append(caption)
+
+            aa_image = annot_images.loc[aa['image_id']]
+            aa_image_path = os.path.join(image_path, aa_image['file_name'])
+            if not os.path.exists(aa_image_path):
+                all_img_url[aa_image_path] = aa_image['coco_url']
+
+            all_img_name_vector.append(aa_image_path)
+
+        multi_download(all_img_url, download_thread)
+
+        dd = dict(zip(all_captions, all_img_name_vector))
+        pickle.dump(dd, open(backup_file_path, 'wb'))
+        print ('Time taken: {:.2f} sec, images downloaded size: {}\n'.format(time.time() - start, len(all_img_url)))
+
+        return all_captions, all_img_name_vector
+
+    annotation_file = os.path.expanduser('~/.keras/datasets/annotations/captions_train2014.json')
+    train_captions, img_name_vector = reload_or_download_coco_images(annotation_file, num_examples=1000, is_shuffle=True, is_redownload=True)
+    # Images need to download: 996
+    # Downloading images 0 - 100, Time taken for downloading 100 images: 9.31 sec
+    # Time taken: 115.69 sec, images downloaded size: 996
+    # Rerun --> Time taken: 7.30 sec, images downloaded size: 0
+
+    train_captions, img_name_vector = reload_or_download_coco_images(annotation_file, num_examples=6000, is_shuffle=True, is_redownload=True, download_thread=100))
+
+    print(len(train_captions), len(img_name_vector))
+    # 1000 1000
+    print(train_captions[:3])
+    # ['<start> A skateboarder performing a trick on a skateboard ramp. <end>',
+    #  '<start> a person soaring through the air on skis <end>',
+    #  '<start> a wood door with some boards laid against it <end>']
+
+    print(img_name_vector[:3])
+    # ['/home/leondgarse/.keras/datasets/train2014/COCO_train2014_000000324909.jpg',
+    #  '/home/leondgarse/.keras/datasets/train2014/COCO_train2014_000000511972.jpg',
+    #  '/home/leondgarse/.keras/datasets/train2014/COCO_train2014_000000508809.jpg']
     ```
-  - **Preprocess the images using InceptionV3** Next, we will use InceptionV3 (pretrained on Imagenet) to classify each image. We will extract features from the last convolutional layer.
+  - **InceptionV3 模型处理图片** 保存过一次后不需要再执行，使用在 `Imagenet` 上预训练过的 `InceptionV3` 模型处理图片，使用模型的最后一个卷积层的输出作为图片特征
+    - 定义函数将图片大小转化为 `InceptionV3` 需要的大小 (299, 299)，`preprocess_input` 将图片的像素处理成 (-1, 1) 的值，返回处理后的图片与图片路径
+    - 初始化 `InceptionV3` 模型，加载在 `Imagenet` 上预训练过的参数
+    - `tf.keras model` 创建模型提取图片特征，模型使用 `InceptionV3` 的层级结构，最后一层卷积层作为输出，输出层维度为 `8 x 8 x 2048`
+    - 将每张图片经过定义的图片特征提取模型处理，并将处理后的结果保存在硬盘中, `np.save` 保存 `.npy` 文件，每个文件大小为 `'{:.1f}K'.format(8 * 8 * 2048 * size(tf.float32) / 1024) == '512.0K'`
     ```py
-    # First, we will need to convert the images into the format inceptionV3 expects by:
-    #     Resizing the image to (299, 299)
-    #     Using the preprocess_input method to place the pixels in the range of -1 to 1 (to match the format of the images used to train InceptionV3).
     def load_image(image_path):
         img = tf.read_file(image_path)
         img = tf.image.decode_jpeg(img, channels=3)
@@ -2889,70 +2986,65 @@
         img = tf.keras.applications.inception_v3.preprocess_input(img)
         return img, image_path
 
-    # Initialize InceptionV3 and load the pretrained Imagenet weights
-    #
-    # To do so, we'll create a tf.keras model where the output layer is the last convolutional layer in the InceptionV3 architecture.
-    #
-    #     Each image is forwarded through the network and the vector that we get at the end is stored in a dictionary (image_name --> feature_vector).
-    #     We use the last convolutional layer because we are using attention in this example. The shape of the output of this layer is 8x8x2048.
-    #     We avoid doing this during training so it does not become a bottleneck.
-    #     After all the images are passed through the network, we pickle the dictionary and save it to disk.
     image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
+    print(len(image_model.layers))  # 311
     new_input = image_model.input
     hidden_layer = image_model.layers[-1].output
+    print(hidden_layer.shape.as_list()) # [None, None, None, 2048]
 
     image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
+    print(len(image_features_extract_model.layers)) # 311
 
-    # Caching the features extracted from InceptionV3
-    #
-    # We will pre-process each image with InceptionV3 and cache the output to disk. Caching the output in RAM would be faster but memory intensive, requiring 8 * 8 * 2048 floats per image. At the time of # writing, this would exceed the memory limitations of Colab (although these may change, an instance appears to have about 12GB of memory currently).
-    #
-    # Performance could be improved with a more sophisticated caching strategy (e.g., by sharding the images to reduce random access disk I/O) at the cost of more code.
-    #
-    # This will take about 10 minutes to run in Colab with a GPU. If you'd like to see a progress bar, you could: install tqdm (!pip install tqdm), then change this line:
-
+    # If you'd like to see a progress bar, you could: install tqdm (!pip install tqdm), then change this line:
     # for img, path in image_dataset:
-    #
     # to:
-    #
     # for img, path in tqdm(image_dataset):
 
     # getting the unique images
     encode_train = sorted(set(img_name_vector))
 
     # feel free to change the batch_size according to your system configuration
-    image_dataset = tf.data.Dataset.from_tensor_slices(
-                                    encode_train).map(load_image).batch(16)
+    image_dataset = tf.data.Dataset.from_tensor_slices(encode_train).map(load_image).batch(8)
+
+    # Test
+    img, path = image_dataset.make_one_shot_iterator().next()
+    print(np.min(img), np.max(img))
+    # -1.0 1.0
+    print(path.numpy()[0])
+    # b'/home/leondgarse/.keras/datasets/train2014/COCO_train2014_000000001204.jpg'
+    batch_features = image_features_extract_model(img)
+    print(batch_features.shape.as_list())
+    # [8, 8, 8, 2048]
 
     for img, path in image_dataset:
-      batch_features = image_features_extract_model(img)
-      batch_features = tf.reshape(batch_features,
-                                  (batch_features.shape[0], -1, batch_features.shape[3]))
+        batch_features = image_features_extract_model(img)
+        batch_features = tf.reshape(batch_features, (batch_features.shape[0], -1, batch_features.shape[3]))
 
-      for bf, p in zip(batch_features, path):
-        path_of_feature = p.numpy().decode("utf-8")
-        np.save(path_of_feature, bf.numpy())
+        for bf, p in zip(batch_features, path):
+            path_of_feature = p.numpy().decode("utf-8")
+            np.save(path_of_feature, bf.numpy())
     ```
-  - **Preprocess and tokenize the captions**
-    First, we'll tokenize the captions (e.g., by splitting on spaces). This will give us a vocabulary of all the unique words in the data (e.g., "surfing", "football", etc).
-    Next, we'll limit the vocabulary size to the top 5,000 words to save memory. We'll replace all other words with the token "UNK" (for unknown).
-    Finally, we create a word --> index mapping and vice-versa.
-    We will then pad all sequences to the be same length as the longest one.
+  - **图片标题 captions 预处理**
+    - 首先将图片标题按照空格或特殊字符分割为单词，并使用 `tf.keras.preprocessing.text.Tokenizer` 创建单词表
+    - 限制使用 `5000` 个单词，超过数量的单词替换为 `UNK`
+    - 创建 `单词 -> 数字索引` 的字典
+    - `tf.keras.preprocessing.sequence.pad_sequences` 将图片标题数据的长度统一为最大长度
     ```py
-    # This will find the maximum length of any caption in our dataset
-    def calc_max_length(tensor):
-        return max(len(t) for t in tensor)
-
-    # The steps above is a general process of dealing with text processing
-
     # choosing the top 5000 words from the vocabulary
     top_k = 5000
-    tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=top_k,
-                                                      oov_token="<unk>",
-                                                      filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ ')
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=top_k, oov_token="<unk>", filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ ')
+    tokenizer.fit_on_texts(['hello world'])
+    print(tokenizer.texts_to_sequences(['hello world']))
+    # [[8, 9]]
+
     tokenizer.fit_on_texts(train_captions)
     train_seqs = tokenizer.texts_to_sequences(train_captions)
+    print(len(tokenizer.word_index))
+    # 1597
+    print(train_seqs[:2])
+    # [[2, 1, 397, 500, 1, 215, 5, 1, 86, 252, 3], [2, 1, 28, 733, 78, 6, 182, 5, 110, 3]]
 
+    # Keep the top_k word_dict
     tokenizer.word_index = {key:value for key, value in tokenizer.word_index.items() if value <= top_k}
     # putting <unk> token in the word2idx dictionary
     tokenizer.word_index[tokenizer.oov_token] = top_k + 1
@@ -2967,18 +3059,828 @@
     # padding each vector to the max_length of the captions
     # if the max_length parameter is not provided, pad_sequences calculates that automatically
     cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding='post')
+    print(cap_vector.shape)
+    # (1000, 29)
 
-    # calculating the max_length
-    # used to store the attention weights
-    max_length = calc_max_length(train_seqs)
+    # calculating the max_length, used to store the attention weights
+    max_length = max([len(tt) for tt in train_seqs])
+    print(max_length) # 29
     ```
+  - **分割训练 / 测试数据集，并创建 dataset**
+    ```py
+    from sklearn.model_selection import train_test_split
+
+    # Create training and validation sets using 80-20 split
+    img_name_train, img_name_val, cap_train, cap_val = train_test_split(img_name_vector, cap_vector, test_size=0.2, random_state=0)
+
+    print(len(img_name_train), len(cap_train), len(img_name_val), len(cap_val))
+    # 800 800 200 200
+
+    # feel free to change these parameters according to your system's configuration
+    BATCH_SIZE = 64
+    BUFFER_SIZE = 1000
+    embedding_dim = 256
+    units = 512
+    vocab_size = len(tokenizer.word_index)
+    # shape of the vector extracted from InceptionV3 is (64, 2048)
+    # these two variables represent that
+    features_shape = 2048
+    attention_features_shape = 64
+
+    # loading the numpy files
+    def map_func(img_name, cap):
+        img_tensor = np.load(img_name.decode('utf-8')+'.npy')
+        return img_tensor, cap
+
+    dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
+
+    # using map to load the numpy files in parallel
+    # NOTE: Be sure to set num_parallel_calls to the number of CPU cores you have
+    # https://www.tensorflow.org/api_docs/python/tf/py_func
+    dataset = dataset.map(lambda item1, item2: tf.py_func(map_func, [item1, item2], [tf.float32, tf.int32]), num_parallel_calls=8)
+
+    # shuffling and batching
+    dataset = dataset.shuffle(BUFFER_SIZE)
+    # https://www.tensorflow.org/api_docs/python/tf/contrib/data/batch_and_drop_remainder
+    dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
+    dataset = dataset.prefetch(1)
+
+    aa, bb = dataset.make_one_shot_iterator().next()
+    print(aa.shape.as_list(), bb.shape.as_list())
+    # [64, 64, 2048] [64, 29]
+    ```
+  - **创建模型**
+    - [Show, Attend and Tell paper](https://arxiv.org/pdf/1502.03044.pdf)
+    - 模型结构类似 **文本翻译** 的 **Encoder-Decoder** 模型，其中 `Encoder` 只有一个全连接层，`BahdanauAttention` 与 `RNN_Decoder` 组合成 `Decoder`
+    - `Encoder` 的输入使用 `InceptionV3` 提取的图片特征数据，维度为 `(64, 2048)`
+    - `Decoder` 使用一个 `gru` 层解析图片，预测下一个单词
+    ```py
+    def gru(units):
+        # If you have a GPU, we recommend using the CuDNNGRU layer (it provides a
+        # significant speedup).
+        if tf.test.is_gpu_available():
+            return tf.keras.layers.CuDNNGRU(units,
+                                      return_sequences=True,
+                                      return_state=True,
+                                      recurrent_initializer='glorot_uniform')
+        else:
+            return tf.keras.layers.GRU(units,
+                                     return_sequences=True,
+                                     return_state=True,
+                                     recurrent_activation='sigmoid',
+                                     recurrent_initializer='glorot_uniform')
+
+    class BahdanauAttention(tf.keras.Model):
+        def __init__(self, units):
+            super(BahdanauAttention, self).__init__()
+            self.W1 = tf.keras.layers.Dense(units)
+            self.W2 = tf.keras.layers.Dense(units)
+            self.V = tf.keras.layers.Dense(1)
+
+        def call(self, features, hidden):
+            # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
+
+            # hidden shape == (batch_size, hidden_size)
+            # hidden_with_time_axis shape == (batch_size, 1, hidden_size)
+            hidden_with_time_axis = tf.expand_dims(hidden, 1)
+
+            # score shape == (batch_size, 64, hidden_size)
+            score = tf.nn.tanh(self.W1(features) + self.W2(hidden_with_time_axis))
+
+            # attention_weights shape == (batch_size, 64, 1)
+            # we get 1 at the last axis because we are applying score to self.V
+            attention_weights = tf.nn.softmax(self.V(score), axis=1)
+
+            # context_vector shape after sum == (batch_size, hidden_size)
+            context_vector = attention_weights * features
+            context_vector = tf.reduce_sum(context_vector, axis=1)
+
+            return context_vector, attention_weights
+
+    class CNN_Encoder(tf.keras.Model):
+        # Since we have already extracted the features and dumped it using pickle
+        # This encoder passes those features through a Fully connected layer
+        def __init__(self, embedding_dim):
+            super(CNN_Encoder, self).__init__()
+            # shape after fc == (batch_size, 64, embedding_dim)
+            self.fc = tf.keras.layers.Dense(embedding_dim)
+
+        def call(self, x):
+            x = self.fc(x)
+            x = tf.nn.relu(x)
+            return x
+
+    class RNN_Decoder(tf.keras.Model):
+        def __init__(self, embedding_dim, units, vocab_size):
+            super(RNN_Decoder, self).__init__()
+            self.units = units
+
+            self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+            self.gru = gru(self.units)
+            self.fc1 = tf.keras.layers.Dense(self.units)
+            self.fc2 = tf.keras.layers.Dense(vocab_size)
+
+            self.attention = BahdanauAttention(self.units)
+
+        def call(self, x, features, hidden):
+            # defining attention as a separate model
+            context_vector, attention_weights = self.attention(features, hidden)
+            # x shape after passing through embedding == (batch_size, 1, embedding_dim)
+            x = self.embedding(x)
+            # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
+            x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
+            # passing the concatenated vector to the GRU
+            output, state = self.gru(x)
+            # shape == (batch_size, max_length, hidden_size)
+            x = self.fc1(output)
+            # x shape == (batch_size * max_length, hidden_size)
+            x = tf.reshape(x, (-1, x.shape[2]))
+            # output shape == (batch_size * max_length, vocab)
+            x = self.fc2(x)
+
+            return x, state, attention_weights
+
+        def reset_state(self, batch_size):
+            return tf.zeros((batch_size, self.units))
+
+    encoder = CNN_Encoder(embedding_dim)
+    decoder = RNN_Decoder(embedding_dim, units, vocab_size)
+
+    optimizer = tf.train.AdamOptimizer()
+
+    # We are masking the loss calculated for padding
+    def loss_function(real, pred):
+        mask = 1 - np.equal(real, 0)
+        loss_ = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=real, logits=pred) * mask
+        return tf.reduce_mean(loss_)
+    ```
+  - **模型训练**
+    - 从 `.npy` 文件中读取数据，作为 `encoder` 的输入
+    - 使用 `decoder input` / `encoder` 的输出 / `hidden state` 作为 `decoder` 输入，其中 `decoder input` 为图片标题的目标，初始为 `<start>`，`hidden state` 初始为 0
+    - `decoder` 返回 `预测值 predictions` 与 `decoder hidden state`，其中预测值用作计算模型损失，`decoder hidden state` 作为模型下一次输入的 `hidden state`
+    - `decoder` 下一次输入的 `decoder input` 使用 `Teacher forcing` 机制从目标值中获取
+    - 最后计算模型参数的梯度值，并通过 optimizer 应用到模型参数上
+    ```py
+    # adding this in a separate cell because if you run the training cell
+    # many times, the loss_plot array will be reset
+    loss_plot = []
+
+    EPOCHS = 20
+    for epoch in range(EPOCHS):
+        start = time.time()
+        total_loss = 0
+
+        for (batch, (img_tensor, target)) in enumerate(dataset):
+            loss = 0
+
+            # initializing the hidden state for each batch
+            # because the captions are not related from image to image
+            hidden = decoder.reset_state(batch_size=target.shape[0])
+            dec_input = tf.expand_dims([tokenizer.word_index['<start>']] * BATCH_SIZE, 1)
+
+            with tf.GradientTape() as tape:
+                features = encoder(img_tensor)
+
+                for i in range(1, target.shape[1]):
+                    # passing the features through the decoder
+                    predictions, hidden, _ = decoder(dec_input, features, hidden)
+                    loss += loss_function(target[:, i], predictions)
+                    # using teacher forcing
+                    dec_input = tf.expand_dims(target[:, i], 1)
+
+            total_loss += (loss / int(target.shape[1]))
+            variables = encoder.variables + decoder.variables
+            gradients = tape.gradient(loss, variables)
+            optimizer.apply_gradients(zip(gradients, variables), tf.train.get_or_create_global_step())
+
+            if batch % 100 == 0:
+                print ('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1, batch, loss.numpy() / int(target.shape[1])))
+        # storing the epoch end loss value to plot later
+        loss_plot.append(total_loss / len(cap_vector))
+
+        print ('Epoch {} Loss {:.6f}'.format(epoch + 1, total_loss/len(cap_vector)))
+        print ('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+
+    # Epoch 20 Batch 0 Loss 0.4477
+    # Epoch 20 Loss 0.005589
+    # Time taken for 1 epoch 9.095211744308472 sec
+
+    plt.plot(loss_plot)
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Loss Plot')
+    plt.show()
+    ```
+    ![](images/tensorflow_image_caption_loss.png)
+  - **模型预测，生成图片标题**
+    -  在模型预测时，Decoder 的输入使用上一次的预测结果，而不是 teacher forcing 产生的输入
+    ```py
+    def evaluate(image):
+        attention_plot = np.zeros((max_length, attention_features_shape))
+
+        hidden = decoder.reset_state(batch_size=1)
+
+        temp_input = tf.expand_dims(load_image(image)[0], 0)
+        img_tensor_val = image_features_extract_model(temp_input)
+        img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0], -1, img_tensor_val.shape[3]))
+
+        features = encoder(img_tensor_val)
+
+        dec_input = tf.expand_dims([tokenizer.word_index['<start>']], 0)
+        result = []
+
+        for i in range(max_length):
+            predictions, hidden, attention_weights = decoder(dec_input, features, hidden)
+
+            attention_plot[i] = tf.reshape(attention_weights, (-1, )).numpy()
+
+            predicted_id = tf.argmax(predictions[0]).numpy()
+            result.append(index_word[predicted_id])
+
+            if index_word[predicted_id] == '<end>':
+                return result, attention_plot
+
+            dec_input = tf.expand_dims([predicted_id], 0)
+
+        attention_plot = attention_plot[:len(result), :]
+        return result, attention_plot
+
+    def plot_attention(image, result, attention_plot):
+        temp_image = plt.imread(image)
+        fig = plt.figure(figsize=(10, 10))
+
+        len_result = len(result)
+        for l in range(len_result):
+            temp_att = np.resize(attention_plot[l], (8, 8))
+            ax = fig.add_subplot(len_result//2, len_result//2, l+1)
+            ax.set_title(result[l])
+            img = ax.imshow(temp_image)
+            ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
+
+        plt.tight_layout()
+        plt.show()
+
+    # captions on the validation set
+    rid = np.random.randint(0, len(img_name_val))
+    image = img_name_val[rid]
+    real_caption = ' '.join([index_word[i] for i in cap_val[rid] if i not in [0]])
+
+    result, attention_plot = evaluate(image)
+
+    print ('Real Caption:', real_caption)
+    # Real Caption: <start> a woman guides a horse towards a fence at a public event <end>
+    print ('Prediction Caption:', ' '.join(result))
+    # Prediction Caption: an and sheep in uniform playing frisbee <end>
+
+    plot_attention(image, result, attention_plot)
+    ```
+    ![](images/tensorflow_image_caption_prediction.png)
+## Eager 执行环境与 Keras 定义 DCGAN 模型生成手写数字图片
+  - [DCGAN: An example with tf.keras and eager](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/dcgan.ipynb)
+  - **深度卷积对抗生成网络 DCGAN** Deep Convolutional Generative Adverserial Networks https://arxiv.org/pdf/1511.06434.pdf
+  - **加载 MNIST 数据集**
+    ```py
+    tf.enable_eager_execution()
+
+    (train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
+    train_images = train_images.reshape(-1, 28, 28, 1).astype(np.float32)
+    # We are normalizing the images to the range of [-1, 1]
+    train_images = (train_images - 127.5) / 127.5
+
+    BUFFER_SIZE = 60000
+    BATCH_SIZE = 256
+
+    train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+
+    print(train_dataset.make_one_shot_iterator().next().shape.as_list())
+    # [256, 28, 28, 1]
+    ```
+  - **Generator 模型定义** 用于生成手写数字图片，输入是一组随机噪声，最终生成一组 (28, 28, 1) 的图片
+    ```py
+    class Generator(tf.keras.Model):
+        def __init__(self):
+            super(Generator, self).__init__()
+            self.fc1 = tf.keras.layers.Dense(7*7*64, use_bias=False)
+            self.batchnorm1 = tf.keras.layers.BatchNormalization()
+
+            self.conv1 = tf.keras.layers.Conv2DTranspose(64, (5, 5), strides=(1, 1), padding='same', use_bias=False)
+            self.batchnorm2 = tf.keras.layers.BatchNormalization()
+
+            self.conv2 = tf.keras.layers.Conv2DTranspose(32, (5, 5), strides=(2, 2), padding='same', use_bias=False)
+            self.batchnorm3 = tf.keras.layers.BatchNormalization()
+
+            self.conv3 = tf.keras.layers.Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False)
+
+        def call(self, x, training=True):
+            x = self.fc1(x)
+            x = self.batchnorm1(x, training=training)
+            x = tf.nn.relu(x)
+
+            x = tf.reshape(x, shape=(-1, 7, 7, 64))
+
+            x = self.conv1(x)
+            x = self.batchnorm2(x, training=training)
+            x = tf.nn.relu(x)
+
+            x = self.conv2(x)
+            x = self.batchnorm3(x, training=training)
+            x = tf.nn.relu(x)
+
+            x = tf.nn.tanh(self.conv3(x))  
+            return x
+    ```
+    **测试**
+    ```py
+    gg = Generator()
+    noise = tf.random_normal([16, 100])
+    print(gg(noise, training=False).shape.as_list())
+    # [256, 28, 28, 1]
+
+    aa = gg(noise, training=False).numpy()
+    fig = plt.figure(figsize=(4, 4))
+    for ii, pp in enumerate(aa):
+        fig.add_subplot(4, 4, ii + 1)
+        plt.imshow(pp.reshape(28, 28), cmap='gray')
+        plt.axis('off')
+    ```
+    ![](images/tensorflow_DCGAN_generator_test.png)
+  - **Discriminator 模型定义** 用于区分是真实的手写数字图片，还是 Generator 产生的图片
+    ```py
+    class Discriminator(tf.keras.Model):
+        def __init__(self):
+            super(Discriminator, self).__init__()
+            self.conv1 = tf.keras.layers.Conv2D(64, (5, 5), strides=(2, 2), padding='same')
+            self.conv2 = tf.keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same')
+            self.dropout = tf.keras.layers.Dropout(0.3)
+            self.flatten = tf.keras.layers.Flatten()
+            self.fc1 = tf.keras.layers.Dense(1)
+
+        def call(self, x, training=True):
+            x = tf.nn.leaky_relu(self.conv1(x))
+            x = self.dropout(x, training=training)
+            x = tf.nn.leaky_relu(self.conv2(x))
+            x = self.dropout(x, training=training)
+            x = self.flatten(x)
+            x = self.fc1(x)
+
+            return x
+    ```
+    **测试**
+    ```py
+    dd = Discriminator()
+    print(dd(tf.convert_to_tensor(train_images[:4])).numpy())
+    # [[0.23520969] [0.10257578] [0.21434645] [0.24467401]]
+
+    print(dd(tf.convert_to_tensor(aa[:4])).numpy())
+    # [[ 0.0029692 ] [ 0.00318923] [ 0.00415598] [-0.00305315]]
+    ```
+  - **定义损失函数 / 优化器**
+    - **分类器损失 Discriminator loss** 计算真实图片与生成图片的损失，`real_loss` 是真实图片与 **1** 之间的损失，`generated_loss` 是生成图片与 **0** 之间的损失
+    - **图片生成器损失 Generator loss** 定义为生成图片与 **1** 之间的损失
+    - discriminator 与 generator 要分开训练，因此需要分别定义优化器 optimizer
+    ```py
+    # Loss functions
+    def discriminator_loss(real_output, generated_output):
+        # [1,1,...,1] with real output since it is true and we want
+        # our generated examples to look like it
+        real_loss = tf.losses.sigmoid_cross_entropy(multi_class_labels=tf.ones_like(real_output), logits=real_output)
+
+        # [0,0,...,0] with generated images since they are fake
+        generated_loss = tf.losses.sigmoid_cross_entropy(multi_class_labels=tf.zeros_like(generated_output), logits=generated_output)
+
+        total_loss = real_loss + generated_loss
+
+        return total_loss
+
+    def generator_loss(generated_output):
+        return tf.losses.sigmoid_cross_entropy(tf.ones_like(generated_output), generated_output)
+
+    # Optimzers
+    discriminator_optimizer = tf.train.AdamOptimizer(1e-4)
+    generator_optimizer = tf.train.AdamOptimizer(1e-4)
+    ```
+  - **模型训练与生成图片**
+    - 遍历 dataset，每次使用一个 batch
+    - generator 使用一个随机生成的 noise 作为输入，产生一组图片，模仿手写数字
+    - discriminator 分别使用真实图片与生成图片，生成图片真实性的分数
+    - 分别计算 generator 与 discriminator 的损失
+    - 根据损失，优化器在 generator 与 discriminator 的参数上应用梯度计算
+    - 在驯良过程中保存 generator 生成的图片
+    ```py
+    # keeping the random vector constant for generation (prediction) so
+    # it will be easier to see the improvement of the gan.
+    num_examples_to_generate = 16
+    noise_dim = 100
+    random_vector_for_generation = tf.random_normal([num_examples_to_generate, noise_dim])
+
+    IMAGE_SAVE_PATH = './images_gen_epoch_DCGAN'
+    def generate_and_save_images(model, epoch, test_input):
+        # make sure the training parameter is set to False because we
+        # don't want to train the batchnorm layer when doing inference.
+        predictions = model(test_input, training=False)
+
+        fig = plt.figure(figsize=(4,4))
+
+        for i in range(predictions.shape[0]):
+            plt.subplot(4, 4, i+1)
+            plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            plt.axis('off')
+
+        plt.savefig(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch)))
+        plt.close()
+        # plt.show()
+
+    def train(dataset, epochs, noise_dim):
+        for epoch in range(epochs):
+            start = time.time()
+
+            # One batch each time
+            for images in dataset:
+                # generating noise from a uniform distribution
+                noise = tf.random_normal([BATCH_SIZE, noise_dim])
+
+                with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+                    generated_images = generator(noise, training=True)
+
+                    real_output = discriminator(images, training=True)
+                    generated_output = discriminator(generated_images, training=True)
+
+                    gen_loss = generator_loss(generated_output)
+                    disc_loss = discriminator_loss(real_output, generated_output)
+
+                gradients_of_generator = gen_tape.gradient(gen_loss, generator.variables)
+                gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.variables)
+
+                generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.variables))
+                discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.variables))
+
+            if epoch % 1 == 0:
+                generate_and_save_images(generator, epoch + 1, random_vector_for_generation)
+
+            # saving (checkpoint) the model every 15 epochs
+            if (epoch + 1) % 15 == 0:
+                checkpoint.save(file_prefix = checkpoint_prefix)
+
+            print ('Time taken for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
+
+        # generating after the final epoch
+        generate_and_save_images(generator, epochs, random_vector_for_generation)
+
+    generator = Generator()
+    discriminator = Discriminator()
+
+    # Defun gives 10 secs/epoch performance boost
+    generator.call = tf.contrib.eager.defun(generator.call)
+    discriminator.call = tf.contrib.eager.defun(discriminator.call)
+
+    # Checkpoint
+    checkpoint_dir = './training_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
+                                     discriminator_optimizer=discriminator_optimizer,
+                                     generator=generator,
+                                     discriminator=discriminator)
+
+    EPOCHS = 150
+    train(train_dataset, EPOCHS, noise_dim)
+    # Time taken for epoch 148 is 60.98359799385071 sec
+    # Time taken for epoch 149 is 60.96733999252319 sec
+    # Time taken for epoch 150 is 61.09264779090881 sec
+    ```
+    **运行结果**
+    ```py
+    aa = generator(random_vector_for_generation, training=False)
+    fig = plt.figure(figsize=(4, 4))
+    for ii, pp in enumerate(aa.numpy()):
+        fig.add_subplot(4, 4, ii + 1)
+        plt.imshow(pp.reshape(28, 28), cmap='gray')
+        plt.axis('off')
+
+    ggo = discriminator(aa).numpy()
+    rro = discriminator(tf.convert_to_tensor(train_images[:16])).numpy()
+    print(generator_loss(ggo).numpy())
+    # 0.77987427
+
+    print(discriminator_loss(ggo, rro).numpy())
+    # 1.682136
+
+    ''' 使用 train_images, train_labels 训练分类器 '''
+    dataset_train = tf.data.Dataset.from_tensor_slices((train_images, train_labels.astype(np.int64)))
+    dataset_train = dataset_train.shuffle(60000).repeat(4).batch(32)
+
+    ... MNIST train progress ...
+
+    print(tf.argmax(model(aa), axis=1).numpy())
+    # [9 5 9 4 0 1 6 4 8 6 7 9 2 6 9 7]
+    ```
+    ![](images/tensorflow_dcgan_epoch_0150.png)
+  - **重新加载模型**
+    ```py
+    # restoring the latest checkpoint in checkpoint_dir
+    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    ```
+  - **GIF 图片显示生成结果**
+    ```py
+    ''' Display an image using the epoch number '''
+    IMAGE_SAVE_PATH = './images_gen_epoch_DCGAN'
+    def display_image(epoch_no):
+        return plt.imread(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch_no)))
+
+    plt.imshow(display_image(3))
+
+    ''' matplotlib.animation '''
+    from matplotlib import animation
+    import glob
+
+    fig = plt.figure()
+    data = display_image(1)
+    im = plt.imshow(data)
+    plt.axis('off')
+
+    # animation function.  This is called sequentially
+    IMAGES_NUM = len(glob.glob(os.path.join(IMAGE_SAVE_PATH, 'image*.png')))
+    SAMPLE_RATE = 5
+    def animate(i):
+        im_num = (i * SAMPLE_RATE % IMAGES_NUM) + 1
+        data = display_image(im_num)
+        im.set_array(data)
+        return [im]
+
+    anim = animation.FuncAnimation(fig, animate, frames=int(IMAGES_NUM / SAMPLE_RATE), interval=60, blit=True)
+    plt.show()
+    anim.save(os.path.join(IMAGE_SAVE_PATH, 'dcgan.gif'), writer='imagemagick', dpi=100)
+    ```
+    ![](images/tensorflow_dcgan.gif)
+
+    **使用 imageio 保存 GIF**
+    ```py
+    ''' imageio '''
+    import imageio
+
+    IMAGE_SAVE_PATH = './images_gen_epoch_DCGAN'
+    IMAGES_NUM = len(glob.glob(os.path.join(IMAGE_SAVE_PATH, 'image*.png')))
+    with imageio.get_writer('dcgan.gif', mode='I') as writer:
+        filenames = glob.glob(os.path.join(IMAGE_SAVE_PATH, 'image*.png'))
+        filenames = sorted(filenames)
+        last = -1
+        for i,filename in enumerate(filenames):
+            frame = 2*(i**0.5)
+            if round(frame) > round(last):
+                last = frame
+            else:
+                continue
+            image = imageio.imread(filename)
+            writer.append_data(image)
+        image = imageio.imread(filename)
+        writer.append_data(image)
+    ```
+## Eager 执行环境与 Keras 定义 VAE 模型生成手写数字图片
+  - [Convolutional VAE: An example with tf.keras and eager](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/cvae.ipynb)
+  - **变分自编码器 VAE** Variational Autoencoder，不关注隐含向量所服从的分布，只需要告诉网络想让这个分布转换为什么样子，VAE 对隐层的输出增加了长约束，而在对隐层的采样过程也能起到和一般 dropout 效果类似的正则化作用
+  - **潜变量 Latent variables** ，与可观察变量相对，不能直接观察但可以通过观察到的其他变量推断，一个潜变量往往对应着多个显变量，可以看做其对应显变量的抽象和概括，显变量则可视为特定潜变量的反应指标
+  - **加载 MNIST 数据集** 将每个像素点转化为 0 / 1
+    ```py
+    tf.enable_eager_execution()
+
+    (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
+
+    # Binarization
+    train_images = (train_images >= 0.5 * 255).astype(np.float32).reshape(-1, 28, 28, 1)
+    test_images = (test_images >= 0.5 * 255).astype(np.float32).reshape(-1, 28, 28, 1)
+
+    TRAIN_BUF = 60000
+    BATCH_SIZE = 100
+    TEST_BUF = 10000
+
+    train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(TRAIN_BUF).batch(BATCH_SIZE)
+    test_dataset = tf.data.Dataset.from_tensor_slices(test_images).shuffle(TEST_BUF).batch(BATCH_SIZE)
+    ```
+  - **tf.keras.Sequential 组合 generative 与 inference 网络**
+    - 使用两个卷积网络模型作为 generative 与 inference，分别使用 `tf.keras.Sequential` 创建，模型的输入包括 **潜变量 latent variable** `z` 与 **显变量 observation variable** `x`
+    - **Generative 网络** 使用一组潜变量 `z` 作为输入，输出显变量 `x` 的条件分布 `p(x|z)` 的参数，其中潜变量分布 `p(z)` 采用 **单位高斯先验 unit Gaussian prior**
+    - **Inference 网络** 定义一个 **近似后验分布 approximate posterior distribution**，输入一组显变量 `x`，输出一组潜变量 `z` 条件分布 `q(z|x)` 的参数
+    - 可以使用 **对角高斯分布 diagonal Gaussian** 简化 Inference 网络，输出一组 **因式分解高斯 factorized Gaussian** 参数的 **平均值 mean** 与 **log 值 log-variance**，输出 log 值可以提高数据值的稳定
+    - **重新参数化 Reparameterization** 在参数优化时，首先按照一个 **单位高斯分布** 从 `q(z|x)` 中采样，然后将采样值乘以 **标准差 standard deviation**，再加上 **平均值 mean**，保证在经过采样后梯度可以传递到 Inference 的参数
+    - **网络结构 Network architecture** Inference 网络使用两个卷积层与一个全连接层，Generative 网络映射该结构，使用一个全连接层与三个 **卷积转置层 convolution transpose layers**
+    - 在训练 VAE 网络时，应避免使用 **批处理归一化 batch normalization**，因为附加的随机性会使随机采样的稳定性下降
+    ```py
+    class CVAE(tf.keras.Model):
+        def __init__(self, latent_dim):
+            super(CVAE, self).__init__()
+            self.latent_dim = latent_dim
+            self.inference_net = tf.keras.Sequential([
+                  tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
+                  tf.keras.layers.Conv2D(filters=32, kernel_size=3, strides=(2, 2), activation=tf.nn.relu),
+                  tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=(2, 2), activation=tf.nn.relu),
+                  tf.keras.layers.Flatten(),
+                  # No activation
+                  tf.keras.layers.Dense(latent_dim + latent_dim)])
+
+            self.generative_net = tf.keras.Sequential([
+                  tf.keras.layers.InputLayer(input_shape=(latent_dim,)),
+                  tf.keras.layers.Dense(units=7*7*32, activation=tf.nn.relu),
+                  tf.keras.layers.Reshape(target_shape=(7, 7, 32)),
+                  tf.keras.layers.Conv2DTranspose(filters=64, kernel_size=3, strides=(2, 2), padding="SAME", activation=tf.nn.relu),
+                  tf.keras.layers.Conv2DTranspose(filters=32, kernel_size=3, strides=(2, 2), padding="SAME", activation=tf.nn.relu),
+                  # No activation
+                  tf.keras.layers.Conv2DTranspose(filters=1, kernel_size=3, strides=(1, 1), padding="SAME")])
+
+        def sample(self, eps=None):
+            if eps is None:
+                eps = tf.random_normal(shape=(100, self.latent_dim))
+            return self.decode(eps, apply_sigmoid=True)
+
+        def encode(self, x):
+            mean, logvar = tf.split(self.inference_net(x), num_or_size_splits=2, axis=1)
+            return mean, logvar
+
+        def reparameterize(self, mean, logvar):
+            eps = tf.random_normal(shape=mean.shape)
+            return eps * tf.exp(logvar * .5) + mean
+
+        def decode(self, z, apply_sigmoid=False):
+            logits = self.generative_net(z)
+            if apply_sigmoid:
+                probs = tf.sigmoid(logits)
+                return probs
+
+            return logits
+    ```
+    **测试**
+    ```py
+    zz = tf.random_normal(shape=[16, 50])
+    model = CVAE(50)
+
+    aa = model.sample(zz).numpy()
+    print(aa.shape)
+    # (16, 28, 28, 1)
+
+    fig = plt.figure(figsize=(4, 4))
+    for ii, pp in enumerate(aa):
+        fig.add_subplot(4, 4, ii + 1)
+        plt.imshow(pp.reshape(28, 28), cmap='gray')
+        plt.axis('off')
+    ```
+    ![](images/tensorflow_VAE_model_sample_test.png)
+  - **定义损失函数与优化器**
+    - VAE 网络的训练过程，将 **ELBO 边际似然函数下界 evidence lower bound** 最大化
+
+      ![](images/tensorflow_VAE_ELBO_1.png)
+    - 在实际使用时，优化期望值的单样本 **蒙特卡洛估计 Monte Carlo estimate**
+
+      ![](images/tensorflow_VAE_ELBO_2.png)
+
+      其中 `z` 使用的是按照 **重新参数化 Reparameterization** 从 `q(z|x)` 中的采样值
+    ```py
+    def log_normal_pdf(sample, mean, logvar, raxis=1):
+        log2pi = tf.log(2. * np.pi)
+        return tf.reduce_sum(
+            -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi),
+            axis=raxis)
+
+    def compute_loss(model, x):
+        mean, logvar = model.encode(x)
+        z = model.reparameterize(mean, logvar)
+        x_logit = model.decode(z)
+
+        cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
+        logpx_z = -tf.reduce_sum(cross_ent, axis=[1, 2, 3])
+        logpz = log_normal_pdf(z, 0., 0.)
+        logqz_x = log_normal_pdf(z, mean, logvar)
+        return -tf.reduce_mean(logpx_z + logpz - logqz_x)
+
+    def compute_gradients(model, x):
+        with tf.GradientTape() as tape:
+            loss = compute_loss(model, x)
+        return tape.gradient(loss, model.trainable_variables), loss
+
+    optimizer = tf.train.AdamOptimizer(1e-4)
+    def apply_gradients(optimizer, gradients, variables, global_step=None):
+        optimizer.apply_gradients(zip(gradients, variables), global_step=global_step)
+    ```
+  - **模型训练与生成图片**
+    - 遍历 dataset，每次使用一个 batch
+    - 每次遍历过程中，`compute_loss` 函数首先使用 `encode` 调用模型的 `Inference` 将输入图片转化成一组 `q(z|x)` 的平均值与 log 参数值
+    - 使用 `reparameterize` 从 `q(z|x)` 生成 `显变量 z`
+    - 最后使用 `decode` 调用模型的 `Generative` 模型的预测值分布 `p(x|z)`
+    - 在模型训练完成生成图片时，首先使用一组 **单位高斯分布 unit Gaussian prior** 采样的潜变量作为输入，`Generative` 将其转化为模型预测值，即生成图片
+    ```py
+    import tensorflow.contrib.eager as tfe
+
+    epochs = 100
+    latent_dim = 50
+    num_examples_to_generate = 16
+
+    # keeping the random vector constant for generation (prediction) so
+    # it will be easier to see the improvement.
+    random_vector_for_generation = tf.random_normal(shape=[num_examples_to_generate, latent_dim])
+    vae_model = CVAE(latent_dim)
+
+    IMAGE_SAVE_PATH = './images_gen_epoch_VAE'
+    def generate_and_save_images(model, epoch, test_input):
+        predictions = model.sample(test_input)
+        fig = plt.figure(figsize=(4,4))
+
+        for i in range(predictions.shape[0]):
+            plt.subplot(4, 4, i+1)
+            plt.imshow(predictions[i, :, :, 0], cmap='gray')
+            plt.axis('off')
+
+        # tight_layout minimizes the overlap between 2 sub-plots
+        plt.savefig(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch)))
+        plt.close()
+        # plt.show()
+
+    generate_and_save_images(vae_model, 0, random_vector_for_generation)
+
+    for epoch in range(1, epochs + 1):
+        start_time = time.time()
+        for train_x in train_dataset:
+            gradients, loss = compute_gradients(vae_model, train_x)
+            apply_gradients(optimizer, gradients, vae_model.trainable_variables)
+        end_time = time.time()
+
+        if epoch % 1 == 0:
+            loss = tfe.metrics.Mean()
+            for test_x in test_dataset.make_one_shot_iterator():
+                loss(compute_loss(vae_model, test_x))
+            elbo = -loss.result()
+            print('Epoch: {}, Test set ELBO: {}, ' 'time elapse for current epoch {}'.format(epoch, elbo, end_time - start_time))
+            generate_and_save_images(vae_model, epoch, random_vector_for_generation)
+
+    # Epoch: 100, Test set ELBO: -78.0380078125, time elapse for current epoch 26.878722190856934
+    ```
+    **运行结果**
+    ```py
+    aa = vae_model.sample(random_vector_for_generation)
+    fig = plt.figure(figsize=(4, 4))
+    for ii, pp in enumerate(aa.numpy()):
+        fig.add_subplot(4, 4, ii + 1)
+        plt.imshow(pp.reshape(28, 28), cmap='gray')
+        plt.axis('off')
+
+    loss = tfe.metrics.Mean()
+    for test_x in test_dataset.make_one_shot_iterator():
+        loss(compute_loss(vae_model, test_x))
+    elbo = -loss.result()
+    print('Test set ELBO: {}'.format(elbo))
+    # Test set ELBO: -78.02953224182129
+
+    ''' 使用 train_images, train_labels 训练分类器 '''
+    dataset_train = tf.data.Dataset.from_tensor_slices((train_images, train_labels.astype(np.int64)))
+    dataset_train = dataset_train.shuffle(60000).repeat(4).batch(32)
+
+    ... MNIST train progress ...
+
+    print(tf.argmax(model(aa), axis=1).numpy())
+    # [3 0 0 6 4 4 6 8 6 4 1 2 8 1 8 0]
+    ```
+    ![](images/tensorflow_vae_epoch_0100.png)
+  - **GIF 图片显示生成结果**
+    ```py
+    ''' Display an image using the epoch number '''
+    IMAGE_SAVE_PATH = './images_gen_epoch_VAE'
+    def display_image(epoch_no):
+        return plt.imread(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch_no)))
+
+    plt.imshow(display_image(3))
+
+    ''' matplotlib.animation '''
+    from matplotlib import animation
+    import glob
+
+    fig = plt.figure()
+    data = display_image(1)
+    im = plt.imshow(data)
+    plt.axis('off')
+
+    # animation function.  This is called sequentially
+    IMAGES_NUM = len(glob.glob(os.path.join(IMAGE_SAVE_PATH, 'image*.png')))
+    SAMPLE_RATE = 2
+    def animate(i):
+        im_num = (i * SAMPLE_RATE % IMAGES_NUM) + 1
+        data = display_image(im_num)
+        im.set_array(data)
+        return [im]
+
+    anim = animation.FuncAnimation(fig, animate, frames=int(IMAGES_NUM / SAMPLE_RATE), interval=60, blit=True)
+    plt.show()
+    anim.save(os.path.join(IMAGE_SAVE_PATH, 'vae.gif'), writer='imagemagick', dpi=100)
+    ```
+    ![](images/tensorflow_vae.gif)
 ***
 
-# FOO
+# Images
+- [Pix2Pix: An example with tf.keras and eager](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/pix2pix/pix2pix_eager.ipynb)
+- [Neural Style Transfer with tf.keras](https://github.com/tensorflow/models/blob/master/research/nst_blogpost/4_Neural_Style_Transfer_with_Eager_Execution.ipynb)
+- [Image Segmentation with tf.keras](https://github.com/tensorflow/models/blob/master/samples/outreach/blogs/segmentation_blogpost/image_segmentation.ipynb)
+***
+
 ## GOO
   - [TensorFlow Hub](https://www.tensorflow.org/hub/)
   - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
   - [基于字符的LSTM+CRF中文实体抽取](https://github.com/jakeywu/chinese_ner)
+  - [Matplotlib tutorial](http://www.labri.fr/perso/nrougier/teaching/matplotlib/)
   class MModel(tensorflow.python.keras.engine.training.Model)
    |  `Model` groups layers into an object with training and inference features.
    |  
@@ -3038,7 +3940,108 @@
    |  
    |  model = MyModel()
    |  ```
+  ```py
+  from threading import Thread
+  from urllib.request import urlretrieve
 
+  class Downloader(Thread):
+      def __init__(self, file_url, save_path):
+          super(Downloader, self).__init__()
+          self.file_url = file_url
+          self.save_path = save_path
+
+      def run(self):
+          urlretrieve(self.file_url, self.save_path)
+
+
+  Downloader('http://example.com/test1.zip', "C:\Test\test1.zip").start()
+  Downloader('http://example.com/test2.zip', "C:\Test\test2.zip").start()
+
+  from multiprocessing import Pool
+
+  def addd(args):
+      x = args[0]
+      y = args[1]
+      return np.add(x, y)
+
+  p = Pool(5)
+  print(p.map(addd, [(1, 2), (2, 3), (3, 4)]))
+  # [3, 5, 7]
+
+  from multiprocessing import Process, Value, Array
+
+  def f(n, a):
+      n.value = 3.1415927
+      for i in range(len(a)):
+          a[i] = -a[i]
+
+  if __name__ == '__main__':
+      num = Value('d', 0.0)
+      arr = Array('i', range(10))
+
+      p = Process(target=f, args=(num, arr))
+      p.start()
+      p.join()
+
+      print num.value
+      print arr[:]
+
+  def image_downloader(aa):
+      return urlretrieve(aa[1], aa[0])
+
+  def multi_download(download_dict, thread_num=50):
+      import time
+      import threading
+      from urllib.request import urlretrieve
+      from multiprocessing import Pool
+
+      dd = list(download_dict.items())
+      pp = Pool(thread_num)
+      for ii in range(0, len(dd), thread_num):
+          start = time.time()
+          print('Downloading images {} - {}'.format(ii, ii + thread_num))
+          tt = dd[ii: ii + thread_num]
+          pp.map(image_downloader, tt)
+          print ('Time taken for downloading {} images: {:.2f} sec\n'.format(thread_num, time.time() - start))
+
+  def multi_download(download_dict, thread_num=50):
+      import time
+      import threading
+      from urllib.request import urlretrieve
+      import tensorflow as tf
+
+      dd = list(download_dict.items())
+      coord = tf.train.Coordinator()
+      for ii in range(0, len(dd), thread_num):
+          start = time.time()
+          print('Downloading images {} - {}'.format(ii, ii + thread_num))
+          tt = dd[ii: ii + thread_num]
+          threads = [threading.Thread(target=urlretrieve, args=(iuu, imm)) for imm, iuu in tt]
+          for itt in threads:
+              itt.start()
+
+          coord.join(threads)
+          print ('Time taken for downloading {} images: {:.2f} sec\n'.format(thread_num, time.time() - start))
+  ```
+  ```py
+  import numpy as np
+  from matplotlib import pyplot as plt
+  from matplotlib import animation
+
+  fig = plt.figure()
+  data = np.random.random((255, 255))
+  im = plt.imshow(data, cmap='gray')
+
+  # animation function.  This is called sequentially
+  def animate(i):
+      data = np.random.random((255, 255))
+      im.set_array(data)
+      return [im]
+
+  anim = animation.FuncAnimation(fig, animate, frames=200, interval=60, blit=True)
+  plt.show()
+  anim.save('rain.gif', writer='imagemagick', fps=30, dpi=40)
+  ```
   ```py
   import inspect
   print(inspect.getsource(inspect.getsource))

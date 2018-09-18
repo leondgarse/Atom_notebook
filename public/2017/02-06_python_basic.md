@@ -2276,6 +2276,8 @@
   In [38]: parser.parse_args("--foo 32 --goo 0.2 --joo 1 2 3 --koo a b cd".split())
   Out[38]: Namespace(foo=32, goo=0.2, joo=[1, 2, 3], koo=['a', 'b', 'cd'])
   ```
+## 根据文件大小合并多个文件夹
+  - [merge_folder_by_size.py](merge_folder_by_size.py)
 ***
 
 # logging

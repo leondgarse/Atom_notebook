@@ -141,7 +141,7 @@
     - Eager 环境下不能使用 Estimator
     - tf.contrib.learn.Estimator is deprecated
     - Estimators 提供更安全的模型训练过程，包括构建计算图 / 变量初始化 / 启动队列 / 异常处理 / 创建 checkpoint / TensorBoard 报告
-## Checkin code for tensorflow
+## Check-in code for tensorflow
   - [Forking Projects](https://guides.github.com/activities/forking/)
   - Fork repository on github
   - git clone
