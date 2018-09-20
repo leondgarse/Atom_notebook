@@ -1062,15 +1062,15 @@
     tfe = tf.contrib.eager
 
     def my_py_func(x):
-      x = tf.matmul(x, x)  # You can use tf ops
-      print(x)  # but it's eager!
-      return x
+        x = tf.matmul(x, x)  # You can use tf ops
+        print(x)  # but it's eager!
+        return x
 
     with tf.Session() as sess:
-      x = tf.placeholder(dtype=tf.float32)
-      # Call eager function in graph!
-      pf = tfe.py_func(my_py_func, [x], tf.float32)
-      sess.run(pf, feed_dict={x: [[2.0]]})  # [[4.0]]
+        x = tf.placeholder(dtype=tf.float32)
+        # Call eager function in graph!
+        pf = tfe.py_func(my_py_func, [x], tf.float32)
+        sess.run(pf, feed_dict={x: [[2.0]]})  # [[4.0]]
     ```
 ***
 
@@ -1400,10 +1400,10 @@
     # Transforms a scalar string `example_proto` into a pair of a scalar string and
     # a scalar integer, representing an image and its label, respectively.
     def _parse_function(example_proto):
-      features = {"image": tf.FixedLenFeature((), tf.string, default_value=""),
-                  "label": tf.FixedLenFeature((), tf.int32, default_value=0)}
-      parsed_features = tf.parse_single_example(example_proto, features)
-      return parsed_features["image"], parsed_features["label"]
+        features = {"image": tf.FixedLenFeature((), tf.string, default_value=""),
+                    "label": tf.FixedLenFeature((), tf.int32, default_value=0)}
+        parsed_features = tf.parse_single_example(example_proto, features)
+        return parsed_features["image"], parsed_features["label"]
 
     # Creates a dataset that reads all of the examples from two files, and extracts
     # the image and label features.
@@ -1416,10 +1416,10 @@
     # Reads an image from a file, decodes it into a dense tensor, and resizes it
     # to a fixed shape.
     def _parse_function(filename, label):
-      image_string = tf.read_file(filename)
-      image_decoded = tf.image.decode_jpeg(image_string)
-      image_resized = tf.image.resize_images(image_decoded, [28, 28])
-      return image_resized, label
+        image_string = tf.read_file(filename)
+        image_decoded = tf.image.decode_jpeg(image_string)
+        image_resized = tf.image.resize_images(image_decoded, [28, 28])
+        return image_resized, label
 
     # A vector of filenames.
     filenames = tf.constant(["/var/data/image1.jpg", "/var/data/image2.jpg", ...])
@@ -1431,20 +1431,45 @@
     dataset = dataset.map(_parse_function)
     ```
   - **tf.py_func** 调用任意的 python 函数转化数据
+    ```py
+    py_func(func, inp, Tout, stateful=True, name=None)
+    ```
+    - `map` 调用的函数，参数是 `tf.Tensor`，其中使用的方法必须是支持直接使用 `tf.Tensor` 的，如 `tf.read_file`
+    - 但是在 `map` 函数中要使用其他方法如 `tf.gfile.Exists` / `np.exp`等，必须使用 `tf.py_func` 将 `tf.Tensor` 参数转化
+    ```py
+    aa = [1, 2, 3, 4, 5]
+    dd = tf.data.Dataset.from_tensor_slices(aa)
+
+    # AttributeError: 'Tensor' object has no attribute 'exp'
+    dd.map(lambda a: np.exp(a))
+
+    # TypeError: cannot create weak reference to 'numpy.ufunc' object
+    dd.map(lambda ii: tf.py_func(np.exp, [ii], [tf.double]))
+
+    # Right one
+    tt = dd.map(lambda ii: tf.py_func(lambda a: np.exp(a), [ii], tf.double))
+    print(tt.make_one_shot_iterator().next().numpy())
+    # 2.718281828459045
+
+    # TypeError: must be real number, not Tensor
+    dd.map(np.arange)
+    # Right one
+    tt = dd.map(lambda ii: tf.py_func(np.arange, [ii], [tf.int64]))
+    ```
     ```python
     import cv2
 
     # Use a custom OpenCV function to read the image, instead of the standard
     # TensorFlow `tf.read_file()` operation.
     def _read_py_function(filename, label):
-      image_decoded = cv2.imread(filename.decode(), cv2.IMREAD_GRAYSCALE)
-      return image_decoded, label
+        image_decoded = cv2.imread(filename.decode(), cv2.IMREAD_GRAYSCALE)
+        return image_decoded, label
 
     # Use standard TensorFlow operations to resize the image to a fixed shape.
     def _resize_function(image_decoded, label):
-      image_decoded.set_shape([None, None, None])
-      image_resized = tf.image.resize_images(image_decoded, [28, 28])
-      return image_resized, label
+        image_decoded.set_shape([None, None, None])
+        image_resized = tf.image.resize_images(image_decoded, [28, 28])
+        return image_resized, label
 
     filenames = ["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
     labels = [0, 37, 29, 1, ...]
