@@ -863,7 +863,11 @@
 ## IBus 中文输入法
   - Install IBus
     ```shell
+    # 中文
     sudo apt-get install ibus ibus-pinyin
+
+    # 日本語
+    sudo apt-get install ibus-anthy
     ```
   - language Support -> Keyboard input method system -> IBus
   - Setting -> Region & Language -> Add -> Chinese -> Chinese (Intelligent Pinyin)
