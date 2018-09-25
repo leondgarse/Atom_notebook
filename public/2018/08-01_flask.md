@@ -719,7 +719,7 @@
 ## 模板标签
   - **Jinja 模板** 和其他语言和框架的模板类似，通过某种语法将 HTML 文件中的特定元素替换为实际的值
   - **{\% %\}** 代码块
-    ```js
+    ```html
     {\% extends 'layout.html' %\}
     {\% block title %\}主页{\% endblock %\}
     {\% block body %\}
@@ -783,11 +783,11 @@
   - **条件判断** 类似于 JSP 标签中的 Java 代码，`{\% %\}` 中也可以写 Python 代码
     ```html
     <div class=metanav>
-    {% if not session.logged_in %}
+    {\% if not session.logged_in %\}
       <a href="{{ url_for('login') }}">log in</a>
-    {% else %}
+    {\% else %\}
       <a href="{{ url_for('logout') }}">log out</a>
-    {% endif %}
+    {\% endif %\}
     </div>
     ```
   - **循环** 类似 Python 中遍历
