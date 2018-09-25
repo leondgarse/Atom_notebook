@@ -251,11 +251,11 @@
     ```html
     <!doctype html>
     <title>Hello from Flask</title>
-    \{% if name %\}
+    {% if name %}
       <h1>Hello {{ name }}!</h1>
-    \{% else %\}
+    {% else %}
       <h1>Hello, World!</h1>
-    \{% endif %\}
+    {% endif %}
     ```
     **测试运行**
     ```shell
@@ -780,25 +780,25 @@
     \{% endblock %\}
     ```
 ## 控制流
-  - **条件判断** 类似于 JSP 标签中的 Java 代码，`\{% %\}` 中也可以写 Python 代码
+  - **条件判断** 类似于 JSP 标签中的 Java 代码，`{% %}` 中也可以写 Python 代码
     ```html
     <div class=metanav>
-    \{% if not session.logged_in %\}
+    {% if not session.logged_in %}
       <a href="{{ url_for('login') }}">log in</a>
-    \{% else %\}
+    {% else %}
       <a href="{{ url_for('logout') }}">log out</a>
-    \{% endif %\}
+    {% endif %}
     </div>
     ```
   - **循环** 类似 Python 中遍历
     ```html
     <tbody>
-    \{% for key,value in data.items() %\}
+    {% for key,value in data.items() %}
         <tr>
             <td>{{ key }}</td>
             <td>{{ value }}</td>
         </tr>
-    \{% endfor %\}
+    {% endfor %}
     <tr>
         <td>文件</td>
         <td></td>
