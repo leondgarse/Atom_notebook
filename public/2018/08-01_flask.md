@@ -718,17 +718,17 @@
 # Jinja 模板简介
 ## 模板标签
   - **Jinja 模板** 和其他语言和框架的模板类似，通过某种语法将 HTML 文件中的特定元素替换为实际的值
-  - **\{% %\}** 代码块
+  - **{\% %\}** 代码块
     ```js
-    \{% extends 'layout.html' %\}
-    \{% block title %\}主页\{% endblock %\}
-    \{% block body %\}
+    {\% extends 'layout.html' %\}
+    {\% block title %\}主页{\% endblock %\}
+    {\% block body %\}
 
         <div class="jumbotron">
             <h1>主页</h1>
         </div>
 
-    \{% endblock %\}
+    {\% endblock %\}
     ```
   - **`{{ }}`** 中的内容不会被转义，所有内容都会原样输出，常常和其他辅助函数一起使用
     ```html
@@ -744,7 +744,7 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>\{% block title %\}\{% endblock %\}</title>
+        <title>{\% block title %\}{\% endblock %\}</title>
         <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap.css') }}"/>
         <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap-theme.css') }}"/>
 
@@ -752,7 +752,7 @@
     <body>
 
     <div class="container body-content">
-        \{% block body %\}\{% endblock %\}
+        {\% block body %\}{\% endblock %\}
     </div>
 
     <div class="container footer">
@@ -768,16 +768,16 @@
     ```
   - 其他模板继承 layout.html 模板
     ```html
-    \{% extends 'layout.html' %\}
-    \{% block title %\}主页\{% endblock %\}
-    \{% block body %\}
+    {\% extends 'layout.html' %\}
+    {\% block title %\}主页{\% endblock %\}
+    {\% block body %\}
 
         <div class="jumbotron">
             <h1>主页</h1>
             <p>本项目演示了Flask的简单使用方法，点击导航栏上的菜单条查看具体功能。</p>
         </div>
 
-    \{% endblock %\}
+    {\% endblock %\}
     ```
 ## 控制流
   - **条件判断** 类似于 JSP 标签中的 Java 代码，`{% %}` 中也可以写 Python 代码
