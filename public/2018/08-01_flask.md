@@ -793,12 +793,12 @@
   - **循环** 类似 Python 中遍历
     ```html
     <tbody>
-    {% for key,value in data.items() %}
+    {\% for key,value in data.items() %\}
         <tr>
             <td>{{ key }}</td>
             <td>{{ value }}</td>
         </tr>
-    {% endfor %}
+    {\% endfor %\}
     <tr>
         <td>文件</td>
         <td></td>
