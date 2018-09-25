@@ -718,8 +718,20 @@
 # Jinja 模板简介
 ## 模板标签
   - **Jinja 模板** 和其他语言和框架的模板类似，通过某种语法将 HTML 文件中的特定元素替换为实际的值
+  - **{\% \%}** 代码块
+    ```js
+    {% extends 'layout.html' %}
+    {% block title %}主页{% endblock %}
+    {% block body %}
+
+        <div class="jumbotron">
+            <h1>主页</h1>
+        </div>
+
+    {% endblock %}
+    ```
   - **`{{ }}`** 中的内容不会被转义，所有内容都会原样输出，常常和其他辅助函数一起使用
-    ```html
+    ```js
     <a class="navbar-brand" href={{ url_for('index') }}>Flask小例子</a>
     ```
 ## 继承
