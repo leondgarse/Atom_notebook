@@ -780,7 +780,7 @@
     {\% endblock %\}
     ```
 ## 控制流
-  - **条件判断** 类似于 JSP 标签中的 Java 代码，`{% %}` 中也可以写 Python 代码
+  - **条件判断** 类似于 JSP 标签中的 Java 代码，`{\% %\}` 中也可以写 Python 代码
     ```html
     <div class=metanav>
     {% if not session.logged_in %}
