@@ -719,7 +719,7 @@
 ## 模板标签
   - **Jinja 模板** 和其他语言和框架的模板类似，通过某种语法将 HTML 文件中的特定元素替换为实际的值
   - **{\% \%}** 代码块
-    ```js
+    ```shell
     {% extends 'layout.html' %}
     {% block title %}主页{% endblock %}
     {% block body %}
