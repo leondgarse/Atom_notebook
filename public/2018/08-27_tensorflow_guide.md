@@ -99,7 +99,6 @@
 # 介绍
 ## 链接
   - [Programmer's Guide](https://www.tensorflow.org/guide/)
-  - [Google Colaboratory](https://colab.research.google.com/)
   - [Save and Restore](https://github.com/tensorflow/docs/blob/master/site/en/guide/saved_model.md)
   - [TensorFlow Debugger](https://github.com/tensorflow/docs/blob/master/site/en/guide/debugger.md)
   - [TensorBoard](https://github.com/tensorflow/docs/blob/master/site/en/guide/index.md#tensorboard)

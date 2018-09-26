@@ -1395,3 +1395,12 @@ cv2.destroyAllWindows()
 
   I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape.
   ```
+# Image.resize
+在这里，我们使用resize函数。
+
+与大多数脚本库一样，resize函数也支持链式调用。先通过resize((size, size), Image.ANTIALIAS)指定大小与质量，其中对于参数二：
+参数值  	含义
+Image.NEAREST 	低质量
+Image.BILINEAR 	双线性
+Image.BICUBIC  	三次样条插值
+Image.ANTIALIAS 	高质量

@@ -2927,10 +2927,10 @@
     plt.imshow(resized.eval())
     ```
     - **method 参数** 取值与相对应的图像大小调整算法
-      - **0** 双线性插值法 Bilinear interpolation
-      - **1** 最近邻居法 Nearest neighbor interpolation
-      - **2** 双三次插值法 Bicubic interpolation
-      - **3** 面积插值法 Area interpolation
+      - **0** `tf.image.ResizeMethod.BILINEAR` 双线性插值法 Bilinear interpolation
+      - **1** `tf.image.ResizeMethod.NEAREST_NEIGHBOR` 最近邻居法 Nearest neighbor interpolation
+      - **2** `tf.image.ResizeMethod.BICUBIC` 双三次插值法 Bicubic interpolation
+      - **3** `tf.image.ResizeMethod.AREA` 面积插值法 Area interpolation
   - **tf.image.resize_image_with_crop_or_pad** 裁剪与填充
     ```python
     # 裁剪到目标大小
