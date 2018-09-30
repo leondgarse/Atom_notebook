@@ -91,7 +91,8 @@
     print(device_lib.list_local_devices())
     ```
   - **管理 Session** 创建 colab 后 -> `Runtime` -> `Manage sessions`
-  - **上传本地文件到 colab** `files.upload` 返回一个上传过文件的字典，`key` 是文件名，`value` 是文件内容
+  - **下载训练过程中保存的文件** `打开侧边栏` -> `Files` -> `选择文件下载`
+  - **上传本地文件到 colab** 通过 `Browse` 打开本地文件并上传到 colba，`files.upload` 返回一个上传过文件的字典，`key` 是文件名，`value` 是文件内容
     ```py
     from google.colab import files
 
@@ -123,6 +124,53 @@
     with open('/gdrive/My Drive/foo.txt', 'w') as f:
         f.write('Hello Google Drive!')
     ```
+  - **上传 Kaggle API Token 到 colab** 上传本地的 `~/.kaggle/kaggle.json` 到 colab 的 `~/.kaggle/kaggle.json`
+    ```py
+    import os
+
+    # Upload the API token.
+    def get_kaggle_credentials():
+        token_dir = os.path.join(os.path.expanduser("~"),".kaggle")
+        token_file = os.path.join(token_dir, "kaggle.json")
+        if not os.path.isdir(token_dir):
+            os.mkdir(token_dir)
+        try:
+            with open(token_file,'r') as f:
+                pass
+        except IOError as no_file:
+            try:
+                from google.colab import files
+            except ImportError:
+                raise no_file
+
+            uploaded = files.upload()
+
+            if "kaggle.json" not in uploaded:
+                raise ValueError("You need an API key! see: "
+                               "https://github.com/Kaggle/kaggle-api#api-credentials")
+            with open(token_file, "wb") as f:
+                f.write(uploaded["kaggle.json"])
+            os.chmod(token_file, 600)
+
+    get_kaggle_credentials()
+    # Browse file...
+    # kaggle.json(application/json) - 66 bytes, last modified: n/a - 100% done
+    # Saving kaggle.json to kaggle.json
+
+    !ls -l ~/.kaggle
+    # ---x-wx--T 1 root root 66 Sep 28 05:23 kaggle.json
+    ```
+## Tensorflow 脚本文件典型结构
+  ```py
+  def main(_):
+      run_inference_on_image(FLAGS....)
+
+  if __name__ == '__main__':
+      parser = argparse.ArgumentParser()
+      parser.add_argument( ... )
+      FLAGS, unparsed = parser.parse_known_args()
+      tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  ```
 ***
 
 # 学习与使用机器学习 Learn and use ML
@@ -2896,11 +2944,6 @@
     ```
 ## Eager 执行环境与 Keras 定义 RNN 模型使用注意力机制为图片命名标题
   - [Image Captioning with Attention](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/generative_examples/image_captioning_with_attention.ipynb)
-    If you run it, it will download the MS-COCO dataset, preprocess and cache a subset of the images using Inception V3, train an encoder-decoder model, and use it to generate captions on new images.
-
-    The code requires TensorFlow version >=1.9. If you're running this in Colab
-
-    In this example, we're training on a relatively small amount of data as an example. On a single P100 GPU, this example will take about ~2 hours to train. We train on the first 30,000 captions (corresponding to about ~20,000 images depending on shuffling, as there are multiple captions per image in the dataset)
   - **加载 MS-COCO 数据集** 包含了 `>82,000` 张图片，每一张图片有 `5` 个不同的标题
     ```py
     annotation_zip = tf.keras.utils.get_file('captions.zip',
@@ -3725,7 +3768,7 @@
     - 可以使用 **对角高斯分布 diagonal Gaussian** 简化 Inference 网络，输出一组 **因式分解高斯 factorized Gaussian** 参数的 **平均值 mean** 与 **log 值 log-variance**，输出 log 值可以提高数据值的稳定
     - **重新参数化 Reparameterization** 在参数优化时，首先按照一个 **单位高斯分布** 从 `q(z|x)` 中采样，然后将采样值乘以 **标准差 standard deviation**，再加上 **平均值 mean**，保证在经过采样后梯度可以传递到 Inference 的参数
     - **网络结构 Network architecture** Inference 网络使用两个卷积层与一个全连接层，Generative 网络映射该结构，使用一个全连接层与三个 **卷积转置层 convolution transpose layers**
-    - 在训练 VAE 网络时，应避免使用 **批处理归一化 batch normalization**，因为附加的随机性会使随机采样的稳定性下降
+    - 在训练 VAE 网络时，应避免使用 **批归一化 batch normalization**，因为附加的随机性会使随机采样的稳定性下降
     ```py
     class CVAE(tf.keras.Model):
         def __init__(self, latent_dim):
@@ -3936,8 +3979,10 @@
 ***
 
 # Images
-## Pix2Pix: An example with tf.keras and eager
+## Pix2Pix 建筑物表面图片上色
   - [Pix2Pix: An example with tf.keras and eager](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/pix2pix/pix2pix_eager.ipynb)
+  - [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004)
+  - [Colab pix2pix_eager.ipynb](https://colab.research.google.com/drive/1VzhyuRq287z34YBKxZwyyK3WkCcVLXa5)
   - **跳跃式传递 skip connections**
     - 在目标检测算法中，为了兼顾大目标和小目标，目前主流方法是用 **skip connections** 综合利用更多的卷积特征图信息
     - **极深网络 ResNet / DenseNet** 通过引入 **residual network 残差网络结构** 到 `CNN` 网络结构中，从输入源直接向输出源多连接了一条传递线，用来进行残差计算，是一种 **恒等映射 identity mapping**，这就是 **shortcut connection**，也叫 **skip connection**
@@ -3945,7 +3990,6 @@
 
     ![](images/tensorflow_pix2pix_skip_connection.png)
   - **加载 CMP Facade 数据集** 每张图片左边是建筑物的真实图片，右边是表面轮廓图片，训练 `conditional GAN` 模型为图片上色，将表面轮廓图片转化为真实建筑物图片
-    - [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004)
     - [Index of /~tinghuiz/projects/pix2pix/datasets](https://people.eecs.berkeley.edu/~tinghuiz/projects/pix2pix/datasets/)
     ```py
     tf.enable_eager_execution()
@@ -4297,6 +4341,7 @@
     - 在每个 epoch 结束后，使用一张测试图片生成图像，检测模型效果，voila！
     ```py
     import time
+    from IPython.display import clear_output
     # The call function of Generator and Discriminator have been decorated
     # with tf.contrib.eager.defun()
     # We get a performance speedup if defun is used (~25 seconds per epoch)
@@ -4321,7 +4366,7 @@
         # the accumulated statistics learned from the training dataset
         # (which we don't want)
         prediction = model(test_input, training=True)
-        plt.figure(figsize=(15,15))
+        plt.figure(figsize=(15, 5))
 
         display_list = [test_input[0], tar[0], prediction[0]]
         title = ['Input Image', 'Ground Truth', 'Predicted Image']
@@ -4332,7 +4377,7 @@
             # getting the pixel values between [0, 1] to plot it.
             plt.imshow(display_list[i] * 0.5 + 0.5)
             plt.axis('off')
-        plt.savefig(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch)))
+        plt.savefig(os.path.join(IMAGE_SAVE_PATH, 'image_at_epoch_{:04d}.png'.format(epoch)), dpi=150, bbox_inches='tight')
         # plt.close()
         # plt.show()
 
@@ -4366,25 +4411,47 @@
 
             print ('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time.time()-start))
 
+    # Pick one for visualization while training
     test_input, test_target = test_dataset.make_one_shot_iterator().next()
+    aa = np.concatenate([test_input, test_target], axis=-1)
+    plt.imshow(aa[0] * 0.5 + 0.5)
+
     EPOCHS = 200
     train(train_dataset, EPOCHS, test_input, test_target)
     # Time taken for epoch 1 is 126.98980689048767 sec
     ```
+    ![](images/tensorflow_pix2pix_train.png)
   - **重新加载模型测试**
     ```py
     # restoring the latest checkpoint in checkpoint_dir
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
     # Run the trained model on the entire test dataset
-    for ii, (inp, tar) in enumerate(test_dataset):
+    for ii, (inp, tar) in enumerate(test_sample):
+        # clear_output(wait=True)
         generate_images(generator, ii, inp, tar)
+
+    # Display a sample
+    import glob
+    SAMPE_NUM = 3
+    aa = glob.glob(os.path.join(IMAGE_SAVE_PATH, '*.png'))
+    ss = np.random.choice(aa, SAMPE_NUM)
+    fig = plt.figure()
+    for ii, tt in enumerate(ss):
+        fig.add_subplot(SAMPE_NUM, 1, ii + 1)
+        plt.imshow(plt.imread(tt))
+        plt.axis('off')
+
+    rr = [plt.imread(tt) for tt in ss]
+    rr = np.concatenate(rr, axis=0)
+    plt.imsave(fname='./tt.png', arr=rr, format='png', dpi=100)
     ```
+    ![](images/tensorflow_pix2pix_test.png)
 ## Neural Style Transfer 转化图片内容与风格
   - [Neural Style Transfer with tf.keras](https://github.com/tensorflow/models/blob/master/research/nst_blogpost/4_Neural_Style_Transfer_with_Eager_Execution.ipynb)
-  - **概述 Overview**
-    - [A Neural Algorithm of Artistic Style](https://arxiv.org/pdf/1508.06576)
-    - [Neural_Style_Transfer_with_Eager_Execution.ipynb](https://colab.research.google.com/drive/1ha5EmbF1E7ULsR5v3-aXMakNK4bOSyX4)
+  - [A Neural Algorithm of Artistic Style](https://arxiv.org/pdf/1508.06576)
+  - [Colab Neural_Style_Transfer_with_Eager_Execution.ipynb](https://colab.research.google.com/drive/1ha5EmbF1E7ULsR5v3-aXMakNK4bOSyX4)
+  - **Neural style transfer**
     - **Neural style transfer** 通过输入的两张图片，**内容图片 content image** 与 **风格图片 style image**，模仿风格图片的画风，将内容图片转化成一张新的图片
     - **Neural style transfer 的转化过程** 初始定义生成图片为 **内容图片**，通过优化器迭代，使生成图片的内容向量与 **内容图片** 接近，风格向量与 **风格图片** 接近
   - **格拉姆矩阵 gram matrix** 在表示图像的风格时，通常采用的是 `Gram Matrix`
@@ -4807,631 +4874,509 @@
     show_best_results(best_kandinsky_tubingen, content_path_2, style_path_2)
     ```
     ![](images/tensorflow_content_style_best_kt.jpg)
-## Image Segmentation with tf.keras
+## Image Segmentation 图片分割目标像素与背景像素
   - [Image Segmentation with tf.keras](https://github.com/tensorflow/models/blob/master/samples/outreach/blogs/segmentation_blogpost/image_segmentation.ipynb)
-  In this tutorial we will learn how to segment images. Segmentation is the process of generating pixel-wise segmentations giving the class of the object visible at each pixel. For example, we could be identifying the location and boundaries of people within an image or identifying cell nuclei from an image. Formally, image segmentation refers to the process of partitioning an image into a set of pixels that we desire to identify (our target) and the background.
-
-  Specifically, in this tutorial we will be using the Kaggle Carvana Image Masking Challenge Dataset.
-
-  This dataset contains a large number of car images, with each car taken from different angles. In addition, for each car image, we have an associated manually cutout mask; our task will be to automatically create these cutout masks for unseen data.
-  Specific concepts that will be covered:
-
-  In the process, we will build practical experience and develop intuition around the following concepts:
-
-      Functional API - we will be implementing UNet, a convolutional network model classically used for biomedical image segmentation with the Functional API.
-          This model has layers that require multiple input/outputs. This requires the use of the functional API
-          Check out the original paper, U-Net: Convolutional Networks for Biomedical Image Segmentation by Olaf Ronneberger!
-      Custom Loss Functions and Metrics - We'll implement a custom loss function using binary cross entropy and dice loss. We'll also implement dice coefficient (which is used for our loss) and mean intersection over union, that will help us monitor our training process and judge how well we are performing.
-      Saving and loading keras models - We'll save our best model to disk. When we want to perform inference/evaluate our model, we'll load in the model from disk.
-
-  We will follow the general workflow:
-
-      Visualize data/perform some exploratory data analysis
-      Set up data pipeline and preprocessing
-      Build model
-      Train model
-      Evaluate model
-      Repeat
-
-  Audience: This post is geared towards intermediate users who are comfortable with basic machine learning concepts. Note that if you wish to run this notebook, it is highly recommended that you do so with a GPU.
-
-  Time Estimated: 60 min
-
-  By: Raymond Yuan, Software Engineering Intern
-  In [0]:
-
-  !pip install kaggle
-
-  In [0]:
-
-  import os
-  import glob
-  import zipfile
-  import functools
-
-  import numpy as np
-  import matplotlib.pyplot as plt
-  import matplotlib as mpl
-  mpl.rcParams['axes.grid'] = False
-  mpl.rcParams['figure.figsize'] = (12,12)
-
-  from sklearn.model_selection import train_test_split
-  import matplotlib.image as mpimg
-  import pandas as pd
-  from PIL import Image
-
-  In [0]:
-
-  import tensorflow as tf
-  import tensorflow.contrib as tfcontrib
-  from tensorflow.python.keras import layers
-  from tensorflow.python.keras import losses
-  from tensorflow.python.keras import models
-  from tensorflow.python.keras import backend as K
-
-  Get all the files
-
-  Since this tutorial will be using a dataset from Kaggle, it requires creating an API Token for your Kaggle account, and uploading it.
-  In [0]:
-
-  import os
-
-  # Upload the API token.
-  def get_kaggle_credentials():
-    token_dir = os.path.join(os.path.expanduser("~"),".kaggle")
-    token_file = os.path.join(token_dir, "kaggle.json")
-    if not os.path.isdir(token_dir):
-      os.mkdir(token_dir)
-    try:
-      with open(token_file,'r') as f:
-        pass
-    except IOError as no_file:
-      try:
-        from google.colab import files
-      except ImportError:
-        raise no_file
-
-      uploaded = files.upload()
-
-      if "kaggle.json" not in uploaded:
-        raise ValueError("You need an API key! see: "
-                         "https://github.com/Kaggle/kaggle-api#api-credentials")
-      with open(token_file, "wb") as f:
-        f.write(uploaded["kaggle.json"])
-      os.chmod(token_file, 600)
-
-  get_kaggle_credentials()
-
-  Only import kaggle after adding the credentials.
-  In [0]:
-
-  import kaggle
-
-  We'll download the data from Kaggle
-
-  Caution, large download ahead - downloading all files will require 14GB of diskspace.
-  In [0]:
-
-  competition_name = 'carvana-image-masking-challenge'
-
-  In [0]:
-
-  # Download data from Kaggle and unzip the files of interest.
-  def load_data_from_zip(competition, file):
-    with zipfile.ZipFile(os.path.join(competition, file), "r") as zip_ref:
-      unzipped_file = zip_ref.namelist()[0]
-      zip_ref.extractall(competition)
-
-  def get_data(competition):
-      kaggle.api.competition_download_files(competition, competition)
-      load_data_from_zip(competition, 'train.zip')
-      load_data_from_zip(competition, 'train_masks.zip')
-      load_data_from_zip(competition, 'train_masks.csv.zip')
-
-  You must accept the competition rules before downloading the data.
-  In [0]:
-
-  get_data(competition_name)
-
-  In [0]:
-
-  img_dir = os.path.join(competition_name, "train")
-  label_dir = os.path.join(competition_name, "train_masks")
-
-  In [0]:
-
-  df_train = pd.read_csv(os.path.join(competition_name, 'train_masks.csv'))
-  ids_train = df_train['img'].map(lambda s: s.split('.')[0])
-
-  In [0]:
-
-  x_train_filenames = []
-  y_train_filenames = []
-  for img_id in ids_train:
-    x_train_filenames.append(os.path.join(img_dir, "{}.jpg".format(img_id)))
-    y_train_filenames.append(os.path.join(label_dir, "{}_mask.gif".format(img_id)))
-
-  In [0]:
-
-  x_train_filenames, x_val_filenames, y_train_filenames, y_val_filenames = \
-                      train_test_split(x_train_filenames, y_train_filenames, test_size=0.2, random_state=42)
-
-  In [0]:
-
-  num_train_examples = len(x_train_filenames)
-  num_val_examples = len(x_val_filenames)
-
-  print("Number of training examples: {}".format(num_train_examples))
-  print("Number of validation examples: {}".format(num_val_examples))
-
-  Here's what the paths look like
-  In [0]:
-
-  x_train_filenames[:10]
-
-  In [0]:
-
-  y_train_filenames[:10]
-
-  Visualize
-
-  Let's take a look at some of the examples of different images in our dataset.
-  In [0]:
-
-  display_num = 5
-
-  r_choices = np.random.choice(num_train_examples, display_num)
-
-  plt.figure(figsize=(10, 15))
-  for i in range(0, display_num * 2, 2):
-    img_num = r_choices[i // 2]
-    x_pathname = x_train_filenames[img_num]
-    y_pathname = y_train_filenames[img_num]
-
-    plt.subplot(display_num, 2, i + 1)
-    plt.imshow(mpimg.imread(x_pathname))
-    plt.title("Original Image")
-
-    example_labels = Image.open(y_pathname)
-    label_vals = np.unique(example_labels)
-
-    plt.subplot(display_num, 2, i + 2)
-    plt.imshow(example_labels)
-    plt.title("Masked Image")  
-
-  plt.suptitle("Examples of Images and their Masks")
-  plt.show()
-
-  Set up
-
-  Let’s begin by setting up some parameters. We’ll standardize and resize all the shapes of the images. We’ll also set up some training parameters:
-  In [0]:
-
-  img_shape = (256, 256, 3)
-  batch_size = 3
-  epochs = 5
-
-  Using these exact same parameters may be too computationally intensive for your hardware, so tweak the parameters accordingly. Also, it is important to note that due to the architecture of our UNet version, the size of the image must be evenly divisible by a factor of 32, as we down sample the spatial resolution by a factor of 2 with each MaxPooling2Dlayer.
-
-  If your machine can support it, you will achieve better performance using a higher resolution input image (e.g. 512 by 512) as this will allow more precise localization and less loss of information during encoding. In addition, you can also make the model deeper.
-
-  Alternatively, if your machine cannot support it, lower the image resolution and/or batch size. Note that lowering the image resolution will decrease performance and lowering batch size will increase training time.
-  Build our input pipeline with tf.data
-
-  Since we begin with filenames, we will need to build a robust and scalable data pipeline that will play nicely with our model. If you are unfamiliar with tf.data you should check out my other tutorial introducing the concept!
-  Our input pipeline will consist of the following steps:
-
-      Read the bytes of the file in from the filename - for both the image and the label. Recall that our labels are actually images with each pixel annotated as car or background (1, 0).
-      Decode the bytes into an image format
-      Apply image transformations: (optional, according to input parameters)
-          resize - Resize our images to a standard size (as determined by eda or computation/memory restrictions)
-              The reason why this is optional is that U-Net is a fully convolutional network (e.g. with no fully connected units) and is thus not dependent on the input size. However, if you choose to not resize the images, you must use a batch size of 1, since you cannot batch variable image size together
-              Alternatively, you could also bucket your images together and resize them per mini-batch to avoid resizing images as much, as resizing may affect your performance through interpolation, etc.
-          hue_delta - Adjusts the hue of an RGB image by a random factor. This is only applied to the actual image (not our label image). The hue_delta must be in the interval [0, 0.5]
-          horizontal_flip - flip the image horizontally along the central axis with a 0.5 probability. This transformation must be applied to both the label and the actual image.
-          width_shift_range and height_shift_range are ranges (as a fraction of total width or height) within which to randomly translate the image either horizontally or vertically. This transformation must be applied to both the label and the actual image.
-          rescale - rescale the image by a certain factor, e.g. 1/ 255.
-      Shuffle the data, repeat the data (so we can iterate over it multiple times across epochs), batch the data, then prefetch a batch (for efficiency).
-
-  It is important to note that these transformations that occur in your data pipeline must be symbolic transformations.
-  Why do we do these image transformations?
-
-  This is known as data augmentation. Data augmentation "increases" the amount of training data by augmenting them via a number of random transformations. During training time, our model would never see twice the exact same picture. This helps prevent overfitting and helps the model generalize better to unseen data.
-  Processing each pathname
-  In [0]:
-  ```py
-  def _process_pathnames(fname, label_path):
-    # We map this function onto each pathname pair  
-    img_str = tf.read_file(fname)
-    img = tf.image.decode_jpeg(img_str, channels=3)
-
-    label_img_str = tf.read_file(label_path)
-    # These are gif images so they return as (num_frames, h, w, c)
-    label_img = tf.image.decode_gif(label_img_str)[0]
-    # The label image should only have values of 1 or 0, indicating pixel wise
-    # object (car) or not (background). We take the first channel only.
-    label_img = label_img[:, :, 0]
-    label_img = tf.expand_dims(label_img, axis=-1)
-    return img, label_img
-
-  Shifting the image
-  In [0]:
-
-  def shift_img(output_img, label_img, width_shift_range, height_shift_range):
-    """This fn will perform the horizontal or vertical shift"""
-    if width_shift_range or height_shift_range:
-        if width_shift_range:
-          width_shift_range = tf.random_uniform([],
-                                                -width_shift_range * img_shape[1],
-                                                width_shift_range * img_shape[1])
-        if height_shift_range:
-          height_shift_range = tf.random_uniform([],
-                                                 -height_shift_range * img_shape[0],
-                                                 height_shift_range * img_shape[0])
-        # Translate both
-        output_img = tfcontrib.image.translate(output_img,
-                                               [width_shift_range, height_shift_range])
-        label_img = tfcontrib.image.translate(label_img,
-                                               [width_shift_range, height_shift_range])
-    return output_img, label_img
-
-  Flipping the image randomly
-  In [0]:
-
-  def flip_img(horizontal_flip, tr_img, label_img):
-    if horizontal_flip:
-      flip_prob = tf.random_uniform([], 0.0, 1.0)
-      tr_img, label_img = tf.cond(tf.less(flip_prob, 0.5),
-                                  lambda: (tf.image.flip_left_right(tr_img), tf.image.flip_left_right(label_img)),
-                                  lambda: (tr_img, label_img))
-    return tr_img, label_img
-
-  Assembling our transformations into our augment function
-  In [0]:
-
-  def _augment(img,
-               label_img,
-               resize=None,  # Resize the image to some size e.g. [256, 256]
-               scale=1,  # Scale image e.g. 1 / 255.
-               hue_delta=0,  # Adjust the hue of an RGB image by random factor
-               horizontal_flip=False,  # Random left right flip,
-               width_shift_range=0,  # Randomly translate the image horizontally
-               height_shift_range=0):  # Randomly translate the image vertically
-    if resize is not None:
-      # Resize both images
-      label_img = tf.image.resize_images(label_img, resize)
-      img = tf.image.resize_images(img, resize)
-
-    if hue_delta:
-      img = tf.image.random_hue(img, hue_delta)
-
-    img, label_img = flip_img(horizontal_flip, img, label_img)
-    img, label_img = shift_img(img, label_img, width_shift_range, height_shift_range)
-    label_img = tf.to_float(label_img) * scale
-    img = tf.to_float(img) * scale
-    return img, label_img
-
-  In [0]:
-
-  def get_baseline_dataset(filenames,
-                           labels,
-                           preproc_fn=functools.partial(_augment),
-                           threads=5,
-                           batch_size=batch_size,
-                           shuffle=True):           
-    num_x = len(filenames)
-    # Create a dataset from the filenames and labels
-    dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
-    # Map our preprocessing function to every element in our dataset, taking
-    # advantage of multithreading
-    dataset = dataset.map(_process_pathnames, num_parallel_calls=threads)
-    if preproc_fn.keywords is not None and 'resize' not in preproc_fn.keywords:
-      assert batch_size == 1, "Batching images must be of the same size"
-
-    dataset = dataset.map(preproc_fn, num_parallel_calls=threads)
-
-    if shuffle:
-      dataset = dataset.shuffle(num_x)
-
-
-    # It's necessary to repeat our data for all epochs
-    dataset = dataset.repeat().batch(batch_size)
-    return dataset
-
-  Set up train and validation datasets
-
-  Note that we apply image augmentation to our training dataset but not our validation dataset.
-  In [0]:
-
-  tr_cfg = {
-      'resize': [img_shape[0], img_shape[1]],
-      'scale': 1 / 255.,
-      'hue_delta': 0.1,
-      'horizontal_flip': True,
-      'width_shift_range': 0.1,
-      'height_shift_range': 0.1
-  }
-  tr_preprocessing_fn = functools.partial(_augment, **tr_cfg)
-
-  In [0]:
-
-  val_cfg = {
-      'resize': [img_shape[0], img_shape[1]],
-      'scale': 1 / 255.,
-  }
-  val_preprocessing_fn = functools.partial(_augment, **val_cfg)
-
-  In [0]:
-
-  train_ds = get_baseline_dataset(x_train_filenames,
-                                  y_train_filenames,
-                                  preproc_fn=tr_preprocessing_fn,
-                                  batch_size=batch_size)
-  val_ds = get_baseline_dataset(x_val_filenames,
-                                y_val_filenames,
-                                preproc_fn=val_preprocessing_fn,
-                                batch_size=batch_size)
-
-  Let's see if our image augmentor data pipeline is producing expected results
-  In [0]:
-
-  temp_ds = get_baseline_dataset(x_train_filenames,
-                                 y_train_filenames,
-                                 preproc_fn=tr_preprocessing_fn,
-                                 batch_size=1,
-                                 shuffle=False)
-  # Let's examine some of these augmented images
-  data_aug_iter = temp_ds.make_one_shot_iterator()
-  next_element = data_aug_iter.get_next()
-  with tf.Session() as sess:
-    batch_of_imgs, label = sess.run(next_element)
-
-    # Running next element in our graph will produce a batch of images
-    plt.figure(figsize=(10, 10))
-    img = batch_of_imgs[0]
-
+  - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/pdf/1505.04597)
+  - [Colab image_segmentation.ipynb](https://colab.research.google.com/drive/10o748t9O9u4NFfJfMLROaQB9MQ6unNTD)
+  - **图像分割 image segmentation** 将图片分割成一组要识别的 **目标像素** 与 **背景像素**
+  - **Dice 相似系数 Dice Coefficient**
+    - [V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation](http://campar.in.tum.de/pub/milletari2016Vnet/milletari2016Vnet.pdf)
+    - 度量两个集合 / 向量 / 字符串 / 图片的相似程度 overlap
+
+    ![](images/tensorflow_carvana_dice_loss.png)
+  - **Kaggle Carvana Image Masking Challenge**
+    - [Accept Kaggle Carvana Image Masking Challenge Competition Rules](https://www.kaggle.com/c/carvana-image-masking-challenge/rules)
+    - 该数据集 **训练样本 train** 包含大量 **jpg 格式** 的汽车图片，维度 `(1280, 1918, 3)`，每辆车都有 **16** 张不同角度的图片，图片命名每辆车有单独的 ID，命名从 **01-16** 编号
+    - **metadata.csv** 包含每辆车的多个详细信息字段，包括年代 / 生产商 / 型号等
+    - **训练样本的目标特征 train_masks** 是 **gif 格式** 的图片，维度 `(1280, 1918, 4)`，是人工将训练样本中的汽车部分裁剪出来的蒙板
+    - **训练任务** 是将 **测试样本 test** 中的汽车图片自动裁剪出来，`train_masks.csv` 包含了图形蒙板的编码格式 encoded version of the training set masks
+  - **下载 Kaggle Carvana Image Masking Challenge Competition 数据集**
+    - 需要在本地 / colab 上有 Kaggle API Token `~/.kaggle/kaggle.json`
+    ```py
+    !ls -l ~/.kaggle
+    # ---x-wx--T 1 root root 66 Sep 28 05:23 kaggle.json
+
+    import kaggle
+    competition_name = 'carvana-image-masking-challenge'
+
+    # Download data from Kaggle and unzip the files of interest.
+    def load_data_from_zip(competition, file):
+        with zipfile.ZipFile(os.path.join(competition, file), "r") as zip_ref:
+            unzipped_file = zip_ref.namelist()[0]
+            zip_ref.extractall(competition)
+
+    def get_data(competition):
+        kaggle.api.competition_download_files(competition, competition)
+        load_data_from_zip(competition, 'train.zip')
+        load_data_from_zip(competition, 'train_masks.zip')
+        load_data_from_zip(competition, 'train_masks.csv.zip')
+
+    get_data(competition_name)
+    ```
+    **测试**
+    ```py
+    !du -hd0 {competition_name}
+    # 26G	carvana-image-masking-challenge
+
+    ppath = os.path.expanduser('~/.keras/datasets/carvana-image-masking-challenge/')
+    dtt = pd.read_csv(os.path.join(ppath, 'train_masks.csv'))
+    dtt.head(3)
+    #                    img                                           rle_mask
+    # 0  00087a6bd4dc_01.jpg  879386 40 881253 141 883140 205 885009 17 8850...
+    # 1  00087a6bd4dc_02.jpg  873779 4 875695 7 877612 9 879528 12 881267 15...
+    # 2  00087a6bd4dc_03.jpg  864300 9 866217 13 868134 15 870051 16 871969 ...
+    print(dtt['img'].map(lambda ss: ss.split('.')[0]).head(3).values)
+    # ['00087a6bd4dc_01' '00087a6bd4dc_02' '00087a6bd4dc_03']
+
+    dmm = pd.read_csv(os.path.join(ppath, 'metadata.csv'))
+    dmm.head(3)
+    #              id    year   make   model   trim1    trim2
+    # 0  0004d4463b50  2014.0  Acura      TL      TL     w/SE
+    # 1  00087a6bd4dc  2014.0  Acura     RLX     RLX   w/Tech
+    # 2  000aa097d423  2012.0  Mazda  MAZDA6  MAZDA6  i Sport
+
+    dmm[dmm.model.fillna('').str.startswith('Golf')]
+    dmm[dmm.model.fillna('').str.find('Golf') != -1]
+
+    # Let's take a look at some of the examples of different images in our dataset.
+    xx_train = tf.gfile.Glob(os.path.join(ppath, 'train/*.jpg'))
+    mask_file_name = lambda xx: os.path.join(ppath, 'train_masks/' + xx.split('/')[-1].split('.')[0] + '_mask.gif')
+    yy_train = [mask_file_name(xx) for xx in xx_train]
+    print(plt.imread(xx_tain[0]).shape, plt.imread(yy_train[0]).shape)
+    # (1280, 1918, 3) (1280, 1918, 4)
+
+    display_num = 5
+    r_choices = np.random.choice(len(xx_train), display_num)
+
+    fig = plt.figure(figsize=(8, 15))
+    for ii, cc in enumerate(r_choices):
+        plt.subplot(display_num, 2, ii * 2 + 1)
+        plt.imshow(plt.imread(xx_train[cc]))
+        plt.title("Original Image")
+        plt.axis('off')
+
+        plt.subplot(display_num, 2, ii * 2 + 2)
+        plt.imshow(plt.imread(yy_train[cc]))
+        plt.title("Masked Image")
+        plt.axis('off')
+
+    plt.suptitle("Examples of Images and their Masks")
+    plt.show()
+    ```
+    ![](images/tensorflow_carvana_show.png)
+  - **分割训练验证数据集 train_test_split**
+    ```py
+    from sklearn.model_selection import train_test_split
+
+    df_train = pd.read_csv(os.path.join(competition_name, 'train_masks.csv'))
+    img_dir = os.path.join(competition_name, "train")
+    label_dir = os.path.join(competition_name, "train_masks")
+    x_train_filenames = df_train['img'].map(lambda iid: os.path.join(img_dir, iid)).values
+    y_train_filenames = df_train['img'].map(lambda iid: os.path.join(label_dir, iid.split('.')[0] + "_mask.gif")).values
+
+    x_train_filenames, x_val_filenames, y_train_filenames, y_val_filenames = \
+                train_test_split(x_train_filenames, y_train_filenames, test_size=0.2, random_state=42)
+
+    num_train_examples = x_train_filenames.shape[0]
+    num_val_examples = x_val_filenames.shape[0]
+
+    print("training examples: {}, validation examples: {}".format(num_train_examples, num_val_examples))
+    # training examples: 4070, validation examples: 1018
+    print(x_train_filenames[:3], y_train_filenames[:3])
+    # ['/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train/69915dab0755_16.jpg'
+    #  '/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train/695f39dfac16_04.jpg'
+    #  '/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train/2267f4aa0d2c_13.jpg']
+    # ['/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train_masks/69915dab0755_16_mask.gif'
+    #  '/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train_masks/695f39dfac16_04_mask.gif'
+    #  '/home/leondgarse/.keras/datasets/carvana-image-masking-challenge/train_masks/2267f4aa0d2c_13_mask.gif']
+    ```
+  - **数据增强 data augmentation，图片预处理**
+    - **数据增强 data augmentation** 随机调整训练数据，使训练中不会使用完全相同的数据，增加训练数据量，降低过拟合
+    - 在 `UNet` 模型中，因为要使用 `MaxPooling2Dlayer` 采样，图片的宽高维度需要是 `32` 的整数倍
+    - 根据文件名读取图片文件，加载训练数据集与目标蒙板图片，其中蒙板图片维度为 `(1280, 1918, 4)`，像素值只有两个，将其转化为黑白图片
+    - **Resize** 统一图片大小，`UNet` 是完全使用卷积的神经网络，不包含全连接层，因此对输入维度大小没有要求，但因为要使用 `MaxPooling2Dlayer` 采样，图片的宽高维度需要是 `32` 的整数倍
+    - **hue_delta** 随机调整 RGB 图片色相，只处理训练图片，hue_delta 取值 `[0, 0.5]`
+    - **horizontal_flip** 随机水平翻转图片，同时处理训练图片与蒙板图片
+    - **width_shift_range** / **height_shift_range** 随机在水平 / 垂直方向平移图片，同时处理训练图片与蒙板图片
+    - **rescale** 调整图片像素值大小，如乘以 `1 / 255`
+    ```py
+    img_shape = (256, 256, 3)
+
+    # Processing each pathname
+    def _process_pathnames(fname, label_path):
+        # We map this function onto each pathname pair  
+        img_str = tf.read_file(fname)
+        img = tf.image.decode_jpeg(img_str, channels=3)
+
+        label_img_str = tf.read_file(label_path)
+        # These are gif images so they return as (num_frames, h, w, c)
+        label_img = tf.image.decode_gif(label_img_str)[0]
+        # The label image should only have values of 1 or 0, indicating pixel wise
+        # object (car) or not (background). We take the first channel only.
+        label_img = label_img[:, :, 0]
+        label_img = tf.expand_dims(label_img, axis=-1)
+        return img, label_img
+
+    # Shifting the image
+    def shift_img(output_img, label_img, width_shift_range, height_shift_range):
+        """This fn will perform the horizontal or vertical shift"""
+        if width_shift_range or height_shift_range:
+            if width_shift_range:
+                width_shift_range = tf.random_uniform([], -width_shift_range * img_shape[1], width_shift_range * img_shape[1])
+            if height_shift_range:
+                height_shift_range = tf.random_uniform([], -height_shift_range * img_shape[0], height_shift_range * img_shape[0])
+            # Translate both
+            output_img = tf.contrib.image.translate(output_img, [width_shift_range, height_shift_range])
+            label_img = tf.contrib.image.translate(label_img, [width_shift_range, height_shift_range])
+        return output_img, label_img
+
+    # Flipping the image randomly
+    def flip_img(horizontal_flip, tr_img, label_img):
+        if horizontal_flip:
+            flip_prob = tf.random_uniform([], 0.0, 1.0)
+            tr_img, label_img = tf.cond(tf.less(flip_prob, 0.5),
+                          lambda: (tf.image.flip_left_right(tr_img), tf.image.flip_left_right(label_img)),
+                          lambda: (tr_img, label_img))
+        return tr_img, label_img
+
+    # Assembling our transformations into our augment function
+    def _augment(img, label_img,
+                 resize=None,  # Resize the image to some size e.g. [256, 256]
+                 scale=1,  # Scale image e.g. 1 / 255.
+                 hue_delta=0,  # Adjust the hue of an RGB image by random factor
+                 horizontal_flip=False,  # Random left right flip,
+                 width_shift_range=0,  # Randomly translate the image horizontally
+                 height_shift_range=0):  # Randomly translate the image vertically
+        if resize is not None:
+            # Resize both images
+            label_img = tf.image.resize_images(label_img, resize)
+            img = tf.image.resize_images(img, resize)
+
+        if hue_delta:
+            img = tf.image.random_hue(img, hue_delta)
+
+        img, label_img = flip_img(horizontal_flip, img, label_img)
+        img, label_img = shift_img(img, label_img, width_shift_range, height_shift_range)
+        label_img = tf.to_float(label_img) * scale
+        img = tf.to_float(img) * scale
+
+        return img, label_img
+    ```
+  - **tf.data 创建输入 pipeline** 随机打乱训练数据 `shuffle`，设置 `repeat` 与 `batch`
+    ```py
+    import functools
+    batch_size = 3
+
+    def get_baseline_dataset(filenames,
+                             labels,
+                             preproc_fn=functools.partial(_augment),
+                             threads=5,
+                             batch_size=batch_size,
+                             shuffle=True):           
+        num_x = len(filenames)
+        # Create a dataset from the filenames and labels
+        dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+        # Map our preprocessing function to every element in our dataset, taking
+        # advantage of multithreading
+        dataset = dataset.map(_process_pathnames, num_parallel_calls=threads)
+        if preproc_fn.keywords is not None and 'resize' not in preproc_fn.keywords:
+            assert batch_size == 1, "Batching images must be of the same size"
+
+        dataset = dataset.map(preproc_fn, num_parallel_calls=threads)
+
+        if shuffle:
+          dataset = dataset.shuffle(num_x)
+
+        # It's necessary to repeat our data for all epochs
+        dataset = dataset.repeat().batch(batch_size)
+        return dataset
+
+    # Set up train and validation datasets
+    # Note that we apply image augmentation to our training dataset but not our validation dataset.
+    tr_cfg = {
+        'resize': [img_shape[0], img_shape[1]],
+        'scale': 1 / 255.,
+        'hue_delta': 0.1,
+        'horizontal_flip': True,
+        'width_shift_range': 0.1,
+        'height_shift_range': 0.1
+    }
+    tr_preprocessing_fn = functools.partial(_augment, **tr_cfg)
+
+    val_cfg = {
+        'resize': [img_shape[0], img_shape[1]],
+        'scale': 1 / 255.,
+    }
+    val_preprocessing_fn = functools.partial(_augment, **val_cfg)
+
+    train_ds = get_baseline_dataset(x_train_filenames, y_train_filenames, preproc_fn=tr_preprocessing_fn, batch_size=batch_size)
+    val_ds = get_baseline_dataset(x_val_filenames, y_val_filenames, preproc_fn=val_preprocessing_fn, batch_size=batch_size)
+    ```
+    **测试**
+    ```py
+    # Let's see if our image augmentor data pipeline is producing expected results
+    temp_ds = get_baseline_dataset(xx_train, yy_train, preproc_fn=tr_preprocessing_fn, batch_size=1, shuffle=False)
+    # Let's examine some of these augmented images
+    next_element = temp_ds.make_one_shot_iterator().get_next()
+    with tf.Session() as sess:
+        batch_of_imgs, label = sess.run(next_element)
+
+        # Running next element in our graph will produce a batch of images
+        plt.figure(figsize=(10, 5))
+        img = batch_of_imgs[0]
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(img)
+        plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(label[0, :, :, 0])
+        plt.axis('off')
+        plt.show()
+    ```
+    ![](images/tensorflow_carvana_dataset_show.png)
+  - **tf.keras 定义 U-Net 模型**
+    - **U-Net 模型** 在图片分割任务上有很好的效果，同时在小数据集上可以很好地避免过拟合，因为图片像素块的数量可以远大于图片数量
+    - 在原始的 U-Net 模型基础上，每个模块添加 **批归一化 batch normalization**
+    - **Unet encoder 模块** 包含一系列 `Conv -> BatchNorm -> Relu` 的线性组合，最后使用一个 `MaxPooling2D`，多个 `encoder` 组合后，每个 `MaxPooling2D` 将输入的空降维度降低 `2`
+    - **Unet decoder 模块** 包含一系列 `UpSampling2D -> Conv -> BatchNorm -> Relu` 的组合，其中 `UpSampling2D` 使用 `Conv2DTranspose` 的输出与 `encoder` 池化层之前的向量组合作为下一层的输入
+    - **Conv 输出层** 在每个单独像素的所有通道上做卷积运算，输出最终的灰度图像结果
+    - **Keras functional API** 将多个输入 / 输出组合成一个模型，同时使层和模型都可以通过张量调用
+    ```py
+    from tensorflow.python.keras import layers
+
+    def conv_block(input_tensor, num_filters):
+        encoder = layers.Conv2D(num_filters, (3, 3), padding='same')(input_tensor)
+        encoder = layers.BatchNormalization()(encoder)
+        encoder = layers.Activation('relu')(encoder)
+        encoder = layers.Conv2D(num_filters, (3, 3), padding='same')(encoder)
+        encoder = layers.BatchNormalization()(encoder)
+        encoder = layers.Activation('relu')(encoder)
+        return encoder
+
+    def encoder_block(input_tensor, num_filters):
+        encoder = conv_block(input_tensor, num_filters)
+        encoder_pool = layers.MaxPooling2D((2, 2), strides=(2, 2))(encoder)
+
+        return encoder_pool, encoder
+
+    def decoder_block(input_tensor, concat_tensor, num_filters):
+        decoder = layers.Conv2DTranspose(num_filters, (2, 2), strides=(2, 2), padding='same')(input_tensor)
+        decoder = layers.concatenate([concat_tensor, decoder], axis=-1)
+        decoder = layers.BatchNormalization()(decoder)
+        decoder = layers.Activation('relu')(decoder)
+        decoder = layers.Conv2D(num_filters, (3, 3), padding='same')(decoder)
+        decoder = layers.BatchNormalization()(decoder)
+        decoder = layers.Activation('relu')(decoder)
+        decoder = layers.Conv2D(num_filters, (3, 3), padding='same')(decoder)
+        decoder = layers.BatchNormalization()(decoder)
+        decoder = layers.Activation('relu')(decoder)
+        return decoder
+
+    inputs = layers.Input(shape=img_shape) # 256
+    encoder0_pool, encoder0 = encoder_block(inputs, 32) # 128
+    encoder1_pool, encoder1 = encoder_block(encoder0_pool, 64) # 64
+    encoder2_pool, encoder2 = encoder_block(encoder1_pool, 128) # 32
+    encoder3_pool, encoder3 = encoder_block(encoder2_pool, 256) # 16
+    encoder4_pool, encoder4 = encoder_block(encoder3_pool, 512) # 8
+    center = conv_block(encoder4_pool, 1024) # center
+    decoder4 = decoder_block(center, encoder4, 512) # 16
+    decoder3 = decoder_block(decoder4, encoder3, 256) # 32
+    decoder2 = decoder_block(decoder3, encoder2, 128) # 64
+    decoder1 = decoder_block(decoder2, encoder1, 64) # 128
+    decoder0 = decoder_block(decoder1, encoder0, 32) # 256
+    outputs = layers.Conv2D(1, (1, 1), activation='sigmoid')(decoder0)
+
+    # Define your model
+    model = tf.keras.models.Model(inputs=[inputs], outputs=[outputs])
+    ```
+  - **定义模型损失函数** `binary cross entropy` + `dice loss`
+    - **Dice loss** 使用 **Dice 相似系数 Dice Coefficient** 度量图标与预测值的相似程度，同时在不平衡分类问题 class imbalanced problems 中有比较好的效果
+    - 模型训练的目标是最大化 **Dice 相似系数**，竞赛中比较好的模型使用的是 `binary cross entropy` + `dice loss`
+    - 也可以尝试其他损失函数组合，如 `bce + log(dice_loss)` / `only bce`
+    ```py
+    def dice_coeff(y_true, y_pred):
+        smooth = 1.
+        # Flatten
+        y_true_f = tf.reshape(y_true, [-1])
+        y_pred_f = tf.reshape(y_pred, [-1])
+        intersection = tf.reduce_sum(y_true_f * y_pred_f)
+        score = (2. * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
+        return score
+
+    def dice_loss(y_true, y_pred):
+        loss = 1 - dice_coeff(y_true, y_pred)
+        return loss
+
+    def bce_dice_loss(y_true, y_pred):
+        loss = tf.keras.losses.binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
+        return loss
+    ```
+  - **模型训练**
+    - **metrics** 定义使用 **dice_loss** 作为输出，衡量训练过程中的模型表现
+    - **fit** 指定训练数据集与验证数据集
+    - **callbacks** 指定模型每个 epoch 保存 checkpoints，只保存效果最好的模型
+    ```py
+    epochs = 5
+    # Compile your model
+    model.compile(optimizer='adam', loss=bce_dice_loss, metrics=[dice_loss])
+    print(len(model.layers)) # 93
+    model.summary()
+
+    SAVE_PATH = './training_checkpoints'
+    if not tf.gfile.Exists(SAVE_PATH): tf.gfile.MakeDirs(SAVE_PATH)
+    save_model_path = os.path.join(SAVE_PATH, 'weights.hdf5')
+    checkpoints = tf.keras.callbacks.ModelCheckpoint(filepath=save_model_path, monitor='val_dice_loss', save_best_only=True, verbose=1)
+
+    history = model.fit(train_ds,
+                       steps_per_epoch=int(np.ceil(num_train_examples / float(batch_size))),
+                       epochs=epochs,
+                       validation_data=val_ds,
+                       validation_steps=int(np.ceil(num_val_examples / float(batch_size))),
+                       callbacks=[checkpoints])
+
+    # Epoch 1/5
+    # 1356/1357 [============================>.] - ETA: 0s - loss: 0.2447 - dice_loss: 0.0443
+    # ...
+    # Epoch 5/5
+    # 1356/1357 [============================>.] - ETA: 0s - loss: 0.0815 - dice_loss: 0.0133
+    # Epoch 00005: val_dice_loss improved from 0.02311 to 0.00955, saving model to ./training_checkpoints/weights.hdf5
+    # 1357/1357 [==============================] - 773s 570ms/step - loss: 0.0815 - dice_loss: 0.0133 - val_loss: 0.0558 - val_dice_loss: 0.0095
+    ```
+  - **使用 history 数据图形化显示训练过程**
+    ```py
+    dice = history.history['dice_loss']
+    val_dice = history.history['val_dice_loss']
+
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs_range = range(epochs)
+
+    fig = plt.figure(figsize=(16, 8))
     plt.subplot(1, 2, 1)
-    plt.imshow(img)
+    plt.plot(epochs_range, dice, label='Training Dice Loss')
+    plt.plot(epochs_range, val_dice, label='Validation Dice Loss')
+    plt.legend(loc='upper right')
+    plt.title('Training and Validation Dice Loss')
 
     plt.subplot(1, 2, 2)
-    plt.imshow(label[0, :, :, 0])
+    plt.plot(epochs_range, loss, label='Training Loss')
+    plt.plot(epochs_range, val_loss, label='Validation Loss')
+    plt.legend(loc='upper right')
+    plt.title('Training and Validation Loss')
+
     plt.show()
-
-  Build the model
-
-  We'll build the U-Net model. U-Net is especially good with segmentation tasks because it can localize well to provide high resolution segmentation masks. In addition, it works well with small datasets and is relatively robust against overfitting as the training data is in terms of the number of patches within an image, which is much larger than the number of training images itself. Unlike the original model, we will add batch normalization to each of our blocks.
-
-  The Unet is built with an encoder portion and a decoder portion. The encoder portion is composed of a linear stack of Conv, BatchNorm, and Relu operations followed by a MaxPool. Each MaxPool will reduce the spatial resolution of our feature map by a factor of 2. We keep track of the outputs of each block as we feed these high resolution feature maps with the decoder portion. The Decoder portion is comprised of UpSampling2D, Conv, BatchNorm, and Relus. Note that we concatenate the feature map of the same size on the decoder side. Finally, we add a final Conv operation that performs a convolution along the channels for each individual pixel (kernel size of (1, 1)) that outputs our final segmentation mask in grayscale.
-  The Keras Functional API
-
-  The Keras functional API is used when you have multi-input/output models, shared layers, etc. It's a powerful API that allows you to manipulate tensors and build complex graphs with intertwined datastreams easily. In addition it makes layers and models both callable on tensors.
-
-      To see more examples check out the get started guide.
-
-  We'll build these helper functions that will allow us to ensemble our model block operations easily and simply.
-  In [0]:
-
-  def conv_block(input_tensor, num_filters):
-    encoder = layers.Conv2D(num_filters, (3, 3), padding='same')(input_tensor)
-    encoder = layers.BatchNormalization()(encoder)
-    encoder = layers.Activation('relu')(encoder)
-    encoder = layers.Conv2D(num_filters, (3, 3), padding='same')(encoder)
-    encoder = layers.BatchNormalization()(encoder)
-    encoder = layers.Activation('relu')(encoder)
-    return encoder
-
-  def encoder_block(input_tensor, num_filters):
-    encoder = conv_block(input_tensor, num_filters)
-    encoder_pool = layers.MaxPooling2D((2, 2), strides=(2, 2))(encoder)
-
-    return encoder_pool, encoder
-
-  def decoder_block(input_tensor, concat_tensor, num_filters):
-    decoder = layers.Conv2DTranspose(num_filters, (2, 2), strides=(2, 2), padding='same')(input_tensor)
-    decoder = layers.concatenate([concat_tensor, decoder], axis=-1)
-    decoder = layers.BatchNormalization()(decoder)
-    decoder = layers.Activation('relu')(decoder)
-    decoder = layers.Conv2D(num_filters, (3, 3), padding='same')(decoder)
-    decoder = layers.BatchNormalization()(decoder)
-    decoder = layers.Activation('relu')(decoder)
-    decoder = layers.Conv2D(num_filters, (3, 3), padding='same')(decoder)
-    decoder = layers.BatchNormalization()(decoder)
-    decoder = layers.Activation('relu')(decoder)
-    return decoder
-
-  In [0]:
-
-  inputs = layers.Input(shape=img_shape)
-  # 256
-
-  encoder0_pool, encoder0 = encoder_block(inputs, 32)
-  # 128
-
-  encoder1_pool, encoder1 = encoder_block(encoder0_pool, 64)
-  # 64
-
-  encoder2_pool, encoder2 = encoder_block(encoder1_pool, 128)
-  # 32
-
-  encoder3_pool, encoder3 = encoder_block(encoder2_pool, 256)
-  # 16
-
-  encoder4_pool, encoder4 = encoder_block(encoder3_pool, 512)
-  # 8
-
-  center = conv_block(encoder4_pool, 1024)
-  # center
-
-  decoder4 = decoder_block(center, encoder4, 512)
-  # 16
-
-  decoder3 = decoder_block(decoder4, encoder3, 256)
-  # 32
-
-  decoder2 = decoder_block(decoder3, encoder2, 128)
-  # 64
-
-  decoder1 = decoder_block(decoder2, encoder1, 64)
-  # 128
-
-  decoder0 = decoder_block(decoder1, encoder0, 32)
-  # 256
-
-  outputs = layers.Conv2D(1, (1, 1), activation='sigmoid')(decoder0)
-
-  Define your model
-
-  Using functional API, you must define your model by specifying the inputs and outputs associated with the model.
-  In [0]:
-
-  model = models.Model(inputs=[inputs], outputs=[outputs])
-
-  Defining custom metrics and loss functions
-
-  Defining loss and metric functions are simple with Keras. Simply define a function that takes both the True labels for a given example and the Predicted labels for the same given example.
-
-  Dice loss is a metric that measures overlap. More info on optimizing for Dice coefficient (our dice loss) can be found in the paper, where it was introduced.
-
-  We use dice loss here because it performs better at class imbalanced problems by design. In addition, maximizing the dice coefficient and IoU metrics are the actual objectives and goals of our segmentation task. Using cross entropy is more of a proxy which is easier to maximize. Instead, we maximize our objective directly.
-  In [0]:
-
-  def dice_coeff(y_true, y_pred):
-      smooth = 1.
-      # Flatten
-      y_true_f = tf.reshape(y_true, [-1])
-      y_pred_f = tf.reshape(y_pred, [-1])
-      intersection = tf.reduce_sum(y_true_f * y_pred_f)
-      score = (2. * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
-      return score
-
-  In [0]:
-
-  def dice_loss(y_true, y_pred):
-      loss = 1 - dice_coeff(y_true, y_pred)
-      return loss
-
-  Here, we'll use a specialized loss function that combines binary cross entropy and our dice loss. This is based on individuals who competed within this competition obtaining better results empirically. Try out your own custom losses to measure performance (e.g. bce + log(dice_loss), only bce, etc.)!
-  In [0]:
-
-  def bce_dice_loss(y_true, y_pred):
-      loss = losses.binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
-      return loss
-
-  Compile your model
-
-  We use our custom loss function to minimize. In addition, we specify what metrics we want to keep track of as we train. Note that metrics are not actually used during the training process to tune the parameters, but are instead used to measure performance of the training process.
-  In [0]:
-
-  model.compile(optimizer='adam', loss=bce_dice_loss, metrics=[dice_loss])
-
-  model.summary()
-
-  Train your model
-
-  Training your model with tf.data involves simply providing the model's fit function with your training/validation dataset, the number of steps, and epochs.
-
-  We also include a Model callback, ModelCheckpoint that will save the model to disk after each epoch. We configure it such that it only saves our highest performing model. Note that saving the model capture more than just the weights of the model: by default, it saves the model architecture, weights, as well as information about the training process such as the state of the optimizer, etc.
-  In [0]:
-
-  save_model_path = '/tmp/weights.hdf5'
-  cp = tf.keras.callbacks.ModelCheckpoint(filepath=save_model_path, monitor='val_dice_loss', save_best_only=True, verbose=1)
-
-  Don't forget to specify our model callback in the fit function call.
-  In [0]:
-
-  history = model.fit(train_ds,
-                     steps_per_epoch=int(np.ceil(num_train_examples / float(batch_size))),
-                     epochs=epochs,
-                     validation_data=val_ds,
-                     validation_steps=int(np.ceil(num_val_examples / float(batch_size))),
-                     callbacks=[cp])
-
-  Visualize training process
-  In [0]:
-
-  dice = history.history['dice_loss']
-  val_dice = history.history['val_dice_loss']
-
-  loss = history.history['loss']
-  val_loss = history.history['val_loss']
-
-  epochs_range = range(epochs)
-
-  plt.figure(figsize=(16, 8))
-  plt.subplot(1, 2, 1)
-  plt.plot(epochs_range, dice, label='Training Dice Loss')
-  plt.plot(epochs_range, val_dice, label='Validation Dice Loss')
-  plt.legend(loc='upper right')
-  plt.title('Training and Validation Dice Loss')
-
-  plt.subplot(1, 2, 2)
-  plt.plot(epochs_range, loss, label='Training Loss')
-  plt.plot(epochs_range, val_loss, label='Validation Loss')
-  plt.legend(loc='upper right')
-  plt.title('Training and Validation Loss')
-
-  plt.show()
-
-  Even with only 5 epochs, we see strong performance.
-  Visualize actual performance
-
-  We'll visualize our performance on the validation set.
-
-  Note that in an actual setting (competition, deployment, etc.) we'd evaluate on the test set with the full image resolution.
-
-  To load our model we have two options:
-
-      Since our model architecture is already in memory, we can simply call load_weights(save_model_path)
-      If you wanted to load the model from scratch (in a different setting without already having the model architecture in memory) we simply call
-
-  model = models.load_model(save_model_path, custom_objects={'bce_dice_loss': bce_dice_loss, 'dice_loss': dice_loss}), specificing the necessary custom objects, loss and metrics, that we used to train our model.
-
-  If you want to see more examples, check our the keras guide!
-  In [0]:
-
-  # Alternatively, load the weights directly: model.load_weights(save_model_path)
-  model = models.load_model(save_model_path, custom_objects={'bce_dice_loss': bce_dice_loss,
-                                                             'dice_loss': dice_loss})
-
-  In [0]:
-
-  # Let's visualize some of the outputs
-  data_aug_iter = val_ds.make_one_shot_iterator()
-  next_element = data_aug_iter.get_next()
-
-  # Running next element in our graph will produce a batch of images
-  plt.figure(figsize=(10, 20))
-  for i in range(5):
-    batch_of_imgs, label = tf.keras.backend.get_session().run(next_element)
-    img = batch_of_imgs[0]
-    predicted_label = model.predict(batch_of_imgs)[0]
-
-    plt.subplot(5, 3, 3 * i + 1)
-    plt.imshow(img)
-    plt.title("Input image")
-
-    plt.subplot(5, 3, 3 * i + 2)
-    plt.imshow(label[0, :, :, 0])
-    plt.title("Actual Mask")
-    plt.subplot(5, 3, 3 * i + 3)
-    plt.imshow(predicted_label[:, :, 0])
-    plt.title("Predicted Mask")
-  plt.suptitle("Examples of Input Image, Label, and Prediction")
-  plt.show()
-
-  Key Takeaways
-
-  In this tutorial we learned how to train a network to automatically detect and create cutouts of cars from images!
-  Specific concepts that will we covered:
-
-  In the process, we hopefully built some practical experience and developed intuition around the following concepts
-
-      Functional API - we implemented UNet with the Functional API. Functional API gives a lego-like API that allows us to build pretty much any network.
-      Custom Losses and Metrics - We implemented custom metrics that allow us to see exactly what we need during training time. In addition, we wrote a custom loss function that is specifically suited to our task.
-      Save and load our model - We saved our best model that we encountered according to our specified metric. When we wanted to perform inference with out best model, we loaded it from disk. Note that saving the model capture more than just the weights of the model: by default, it saves the model architecture, weights, as well as information about the training process such as the state of the optimizer, etc.
-
-  ```
+    ```
+    ![](images/tensorflow_carvana_train_dice_loss.png)
+  - **模型加载，图形化显示模型在验证数据集上的效果**
+    - 在竞赛 / 部署中会在测试数据集上使用图片的全部像素验证模型效果
+    - 如果已经定义了完整的模型架构，在加载模型可以使用 `load_weights` 只加载模型权重
+      ```py
+      load_weights(save_model_path)
+      ```
+    - 如果没有定义模型架构，可以使用 `keras.models.load_model` 加载模型，同时定义必要的损失函数等
+      ```py
+      model = tf.keras.models.load_model(save_model_path, custom_objects={'bce_dice_loss': bce_dice_loss, 'dice_loss': dice_loss})
+      ```
+    ```py
+    # Alternatively, load the weights directly: model.load_weights(save_model_path)
+    model = tf.keras.models.load_model(save_model_path, custom_objects={'bce_dice_loss': bce_dice_loss, 'dice_loss': dice_loss})
+
+    # Let's visualize some of the outputs
+    data_aug_iter = val_ds.make_one_shot_iterator()
+    next_element = data_aug_iter.get_next()
+
+    # Running next element in our graph will produce a batch of images
+    fig = plt.figure(figsize=(10, 20))
+    for i in range(5):
+        batch_of_imgs, label = tf.keras.backend.get_session().run(next_element)
+        img = batch_of_imgs[0]
+        predicted_label = model.predict(batch_of_imgs)[0]
+
+        plt.subplot(5, 3, 3 * i + 1)
+        plt.imshow(img)
+        plt.title("Input image")
+
+        plt.subplot(5, 3, 3 * i + 2)
+        plt.imshow(label[0, :, :, 0])
+        plt.title("Actual Mask")
+        plt.subplot(5, 3, 3 * i + 3)
+        plt.imshow(predicted_label[:, :, 0])
+        plt.title("Predicted Mask")
+    plt.suptitle("Examples of Input Image, Label, and Prediction")
+    plt.show()
+    ```
+    ![](images/tensorflow_carvana_val_predict.png)
 ## Image Recognition
+https://arxiv.org/pdf/1512.00567
+```py
+def maybe_download_and_extract_tar(url, dest_path='~/.keras/models'):
+    """ Download and extract model tar file """
+    from urllib.request import urlretrieve
+    import tarfile
+
+    dest_path = os.path.expanduser(dest_path)
+    if not os.path.exists(dest_path):
+        os.makedirs(dest_path)
+
+    file_name = url.split('/')[-1]
+    file_path = os.path.join(dest_path, file_name)
+    if not os.path.exists(file_path):
+        def _progress(count, block_size, total_size):
+            sys.stdout.write('\r>>>> Downloading %s %1.f%%' % (
+                file_name, count * block_size / total_size * 100.0
+            ))
+            sys.stdout.flush()
+        file_path, _ = urlretrieve(url, file_path, _progress)
+        stat_info = os.stat(file_path)
+        print('\nSuccessfully downloaded', file_path, stat_info.st_size, 'bytes.')
+
+    tarfile.open(file_path, 'r:gz').extractall(dest_path)
+
+data_url = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
+dest_path = os.path.expanduser('~/.keras/models/imagenet')
+maybe_download_and_extract_tar(data_url, dest_path)
+
+def create_graph(pb_file_path):
+    ''' Creates a graph from saved GraphDef pb file '''
+    with tf.gfile.FastGFile(pb_file_path, 'rb') as ff:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(ff.read())
+        _ = tf.import_graph_def(graph_def, name='')
+
+create_graph(os.path.join(dest_path, 'classify_image_graph_def.pb'))
+summary_write = tf.summary.FileWriter("/tmp/logdir", tf.get_default_graph())
+# tensorboard --logdir /tmp/logdir/
+
+image_file = os.path.join(dest_path, 'cropped_panda.jpg')
+image_data = tf.gfile.FastGFile(image_file, 'rb').read()
+
+# Some useful tensors:
+# 'softmax:0': A tensor containing the normalized prediction across 1000 labels.
+# 'pool_3:0': A tensor containing the next-to-last layer containing 2048 float description of the image.
+# 'DecodeJpeg/contents:0': A tensor containing a string providing JPEG encoding of the image.
+# Runs the softmax tensor by feeding the image_data as input to the graph.
+# cc, ss = tf.import_graph_def(graph_def, return_elements=['DecodeJpeg/contents:0', 'softmax:0'])
+softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
+sess = tf.InteractiveSession()
+predictions = sess.run(softmax_tensor, {'DecodeJpeg/contents:0': image_data})
+print(predictions.shape)  # (1, 1008)
+
+predictions = np.squeeze(predictions)
+top_5 = predictions.argsort()[-5:][::-1]
+print(top_5, predictions[top_5])
+# [169  75   7 325 878] [0.8910729  0.00779061 0.00295913 0.00146577 0.00117424]
+
+  # Creates node ID --> English string lookup.
+  node_lookup = NodeLookup()
+
+  top_k = predictions.argsort()[-FLAGS.num_top_predictions:][::-1]
+  for node_id in top_k:
+    human_string = node_lookup.id_to_string(node_id)
+    score = predictions[node_id]
+    print('%s (score = %.5f)' % (human_string, score))
+```
 ## How to Retrain an Image Classifier for New Categories
 ## Advanced Convolutional Neural Networks
 ***
@@ -5448,6 +5393,7 @@
   - [TensorFlow 实战电影个性化推荐](https://blog.csdn.net/chengcheng1394/article/details/78820529)
   - [TensorRec](https://github.com/jfkirk/tensorrec)
   - [Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course/ml-intro)
+  - [Getting started with the Keras functional API](https://keras.io/getting-started/functional-api-guide/)
   class MModel(tensorflow.python.keras.engine.training.Model)
    |  `Model` groups layers into an object with training and inference features.
    |  

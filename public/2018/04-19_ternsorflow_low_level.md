@@ -1798,7 +1798,7 @@
     '''
     result = tf.import_graph_def(graph_def, return_elements=['add:0'])
     sess.run(result)
-    Out[5]: [array([3.], dtype=float32)]
+    # Out[5]: [array([3.], dtype=float32)]
     ```
 ## meta 文件 与 元图 MetaGraph
   - **元图 MetaGraph** 是由 MetaGraphDef Protocol Buffer 定义的，记录计算图中节点的信息以及运行计算图中节点所需要的元数据，**.meta** 文件保存的就是元图的数据

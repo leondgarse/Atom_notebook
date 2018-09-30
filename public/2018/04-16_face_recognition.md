@@ -1386,6 +1386,13 @@ cv2.destroyAllWindows()
 
   imm = open('/home/leondgarse/Pictures/imagination_into_reality_by_angelleila-d39jvu5.jpg', 'rb').read()
   im = imread(io.BytesIO(imm), format='jpg')
+
+  ''' pil image 转化为 array '''
+  img = Image.open('/home/leondgarse/Pictures/deviantart/imagination_into_reality_by_angelleila-d39jvu5.jpg')
+  np.array(img).shape # (1600, 2560, 3)
+
+  from tensorflow.keras.preprocessing import image as kp_image
+  kp_image.img_to_array(img).shape # (1600, 2560, 3)
   ```
   ```python
   import matplotlib.pyplot as plt
@@ -1394,6 +1401,30 @@ cv2.destroyAllWindows()
   fig.savefig('myimage.svg', format='svg', dpi=1200)
 
   I used 1200 dpi because a lot of scientific journals require images in 1200 / 600 / 300 dpi depending on what the image is of. Convert to desired dpi and format in GiMP or Inkscape.
+  ```
+  ```py
+  ''' 裁剪图片四周的空白像素 '''
+  imm = plt.imread('an_image_path.png')
+  def image_cut_blank(imm, BLANK_VALUE=1, MARGIN=[0, 0]):
+      none_blank_lines = lambda itt: [ii for ii, ll in enumerate(itt) if not np.alltrue(ll == BLANK_VALUE)]
+      hmm = none_blank_lines(imm)
+      wmm = none_blank_lines(imm.transpose(1, 0, 2))
+
+      hss = np.max([0, hmm[0] - MARGIN[0]])
+      wss = np.max([0, wmm[0] - MARGIN[0]])
+
+      return imm[hss: hmm[-1] + MARGIN[0], wss: wmm[-1] + MARGIN[1]]
+
+  plt.imshow(image_cut_blank(imm))
+
+  iaa = plt.imread(os.path.expanduser('/home/leondgarse/Pictures/aa.png'))
+  ibb = plt.imread(os.path.expanduser('/home/leondgarse/Pictures/bb.png'))
+  icc = plt.imread(os.path.expanduser('/home/leondgarse/Pictures/cc.png'))
+  iaab = image_cut_blank(iaa)
+  ibbb = image_cut_blank(ibb)
+  iccb = image_cut_blank(icc)
+  print(iaa.shape, iaab.shape, ibb.shape, ibbb.shape, icc.shape, iccb.shape)
+  # (323, 916, 3) (301, 869, 3) (319, 927, 3) (301, 869, 3)
   ```
 # Image.resize
 在这里，我们使用resize函数。

@@ -449,18 +449,49 @@
     -36
     ```
 ## global
-  - 外部定义的变量可以在函数内部访问，若要修改，则会自动创建同名局部变量，可使用global / nonlocal 关键字声明为全局变量
-  - global 表明变量是在外面的块定义的
+  - python 中的变量默认都是全局变量，可以在函数中直接使用外部变量
+    ```py
+    def func():
+        print(a)
+
+    a = 5
+    func()  # 5
+    ```
+  - 但如果要修改全局变量，则会自动创建同名局部变量，如果此时没有初始化而直接，则会报错
+    ```py
+    ''' 修改时自动创建局部变量 '''
+    def func():
+        a = 4
+        print(a)
+
+    a = 5
+    func()  # 4
+    print(a)  # 5
+    ```
+    使用没有初始化的局部变量会报错 `UnboundLocalError: local variable 'a' referenced before assignment`
+    ```py
+    def func():
+        a += 1
+        print(a)
+
+    a = 5
+    # UnboundLocalError
+    func()
+    ```
+  - **global** / **nonlocal** 关键字表明变量是在外面的块定义的
     ```python
     def func():
-      global x
-      print('x is', x)
-      x = 2
-      print('Changed local x to', x)
+        global a
+        print('func a is', a)
+        a += 2
+        print('func changes local a to', a)
 
-    x = 50
+    a = 5
     func()
-    print('Value of x is', x)
+    print('global a is', a)
+    # func a is 5
+    # func changes local a to 7
+    # global a is 7
     ```
 ## 默认参数值
   - 有默认值的形参只能位于参数列表后面
@@ -2049,39 +2080,69 @@
 ***
 
 # argparse 解析参数
-## 脚本中 argparse 典型格式
-  ```python
-  import argparse
-  import sys
+## argparse 典型格式
+  - **parse_arguments 在脚本中典型格式**
+    ```python
+    import argparse
 
-  def foo(arg1, arg2):
-      print("arg1 = %s, arg2 = %s" % (arg1, arg2))
+    def foo(arg1, arg2):
+        print("arg1 = %s, arg2 = %s" % (arg1, arg2))
 
-  def parse_arguments(args):
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument("arg1")
+        parser.add_argument("arg2")
+
+        return parser.parse_args()
+
+    if __name__ == "__main__":
+        args = parse_arguments()
+        foo(args.arg1, args.arg2)
+    ```
+    **运行结果**
+    ```shell
+    $ python arg_parse.py -h
+    usage: arg_parse.py [-h] arg1 arg2
+
+    positional arguments:
+      arg1
+      arg2
+
+    optional arguments:
+      -h, --help  show this help message and exit
+
+    $ python arg_parse.py foo goo
+    arg1 = foo, arg2 = goo
+    ```
+  - **指定解析其他参数列表** 默认使用 `sys.argv[1:]` 用于解析，也可以指定其他参数列表用于解析
+    ```py
+    import argparse
+    import sys
     parser = argparse.ArgumentParser()
-    parser.add_argument("arg1")
-    parser.add_argument("arg2")
 
-    return parser.parse_args(args)
+    parser.add_argument("--pylab", action='store_true')
+    parser.add_argument("--foo")
 
-  if __name__ == "__main__":
-      args = parse_arguments(sys.argv[1:])
-      foo(args.arg1, args.arg2)
-  ```
-  ```shell
-  $ python arg_parse.py -h
-  usage: arg_parse.py [-h] arg1 arg2
+    print(sys.argv[1:])
+    # ['--pylab']
+    print(parser.parse_args(sys.argv[1:]))
+    # Namespace(foo=None, pylab=True)
 
-  positional arguments:
-    arg1
-    arg2
-
-  optional arguments:
-    -h, --help  show this help message and exit
-
-  $ python arg_parse.py foo goo
-  arg1 = foo, arg2 = goo
-  ```
+    print(parser.parse_args('--foo goo'.split(' ')))
+    # Namespace(foo='goo', pylab=False)
+    ```
+## parse_known_args 跳过不能识别的参数
+  - **parse_arguments** 解析参数列表时，如果列表包含没有添加的参数会报错 `unrecognized arguments`
+    ```py
+    # error: unrecognized arguments: --goo
+    parser.parse_args(['--goo'])
+    ```
+  - **parse_known_args** 同时返回成功解析的参数与未识别的参数，而不是报错
+    ```py
+    FLAGS, unparsed = parser.parse_known_args(['--goo'])
+    print(FLAGS, unparsed)
+    # Namespace(foo=None, pylab=False) ['--goo']
+    ```
 ## ArgumentParser 初始化参数
   - **prog / usage / description / epilog** ArgumentParser 初始化参数
     ```python
@@ -2276,6 +2337,23 @@
   In [38]: parser.parse_args("--foo 32 --goo 0.2 --joo 1 2 3 --koo a b cd".split())
   Out[38]: Namespace(foo=32, goo=0.2, joo=[1, 2, 3], koo=['a', 'b', 'cd'])
   ```
+## register 注册参数解析方法
+  - 默认的 `bool` 类型参数只要有值就会是 `True`
+    ```py
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--foo", type=bool)
+    print(parser.parse_args('--foo False'.split(' ')))
+    # Namespace(foo=True)
+    print(parser.parse_args('--foo '.split(' ')))
+    # Namespace(foo=False)
+    ```
+    可以使用 `parser.register` 注册新的 `"bool"` 类型参数解析方法
+    ```py
+    parser.register("type", "bool", lambda v: v.lower() == "true")
+    parser.add_argument("--goo", type="bool")
+    print(parser.parse_args('--foo False --goo False'.split(' ')))
+    # Namespace(foo=True, goo=False)
+    ```
 ## 根据文件大小合并多个文件夹
   - [merge_folder_by_size.py](merge_folder_by_size.py)
 ***
