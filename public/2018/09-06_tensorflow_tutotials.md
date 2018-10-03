@@ -5308,76 +5308,250 @@
     plt.show()
     ```
     ![](images/tensorflow_carvana_val_predict.png)
-## Image Recognition
-https://arxiv.org/pdf/1512.00567
-```py
-def maybe_download_and_extract_tar(url, dest_path='~/.keras/models'):
-    """ Download and extract model tar file """
-    from urllib.request import urlretrieve
-    import tarfile
+## GraphDef 加载 InceptionV3 模型用于图片识别 Image Recognition
+  - [Rethinking the Inception Architecture for Computer Vision](https://arxiv.org/pdf/1512.00567)
+  - **Inception-v3** 是在 `ImageNet Large Visual Recognition Challenge` 数据集上训练用来进行图片分类的模型，按照 `ImageNet` 数据集将图片分为 1000 个类别，`top-5 错误率` 能达到 3.46%
+  - **Bottlenecks** 模型最后一层输出层的前一层通常成为 `Bottlenecks`，在图片分类任务中，通常是图片特征向量 `image feature vector`
+  - **迁移学习 Transfer learning** 一种使用 `Inception-v3` 模型的方法是在迁移学习中，移除模型的最后一层输出层，使用模型最后一层 CNN 的输出结果作为特征用于其他图片识别任务，该层输出维度为 `2048`
+  - **下载 `inceptionv3` 模型**
+    ```py
+    def maybe_download_and_extract_tar(url, dest_path='~/.keras/models'):
+        """ Download and extract model tar file """
+        from urllib.request import urlretrieve
+        import tarfile
 
-    dest_path = os.path.expanduser(dest_path)
-    if not os.path.exists(dest_path):
-        os.makedirs(dest_path)
+        dest_path = os.path.expanduser(dest_path)
+        if not os.path.exists(dest_path):
+            os.makedirs(dest_path)
 
-    file_name = url.split('/')[-1]
-    file_path = os.path.join(dest_path, file_name)
-    if not os.path.exists(file_path):
-        def _progress(count, block_size, total_size):
-            sys.stdout.write('\r>>>> Downloading %s %1.f%%' % (
-                file_name, count * block_size / total_size * 100.0
-            ))
-            sys.stdout.flush()
-        file_path, _ = urlretrieve(url, file_path, _progress)
-        stat_info = os.stat(file_path)
-        print('\nSuccessfully downloaded', file_path, stat_info.st_size, 'bytes.')
+        file_name = url.split('/')[-1]
+        file_path = os.path.join(dest_path, file_name)
+        if not os.path.exists(file_path):
+            def _progress(count, block_size, total_size):
+                sys.stdout.write('\r>>>> Downloading %s %1.f%%' % (
+                    file_name, count * block_size / total_size * 100.0
+                ))
+                sys.stdout.flush()
+            file_path, _ = urlretrieve(url, file_path, _progress)
+            stat_info = os.stat(file_path)
+            print('\nSuccessfully downloaded', file_path, stat_info.st_size, 'bytes.')
 
-    tarfile.open(file_path, 'r:gz').extractall(dest_path)
+        tarfile.open(file_path, 'r:gz').extractall(dest_path)
 
-data_url = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
-dest_path = os.path.expanduser('~/.keras/models/imagenet')
-maybe_download_and_extract_tar(data_url, dest_path)
+    data_url = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
+    dest_path = os.path.expanduser('~/.keras/models/imagenet')
+    maybe_download_and_extract_tar(data_url, dest_path)
+    ```
+  - **加载模型 GraphDef pb 文件，创建 graph**
+    ```py
+    def create_graph(pb_file_path):
+        ''' Creates a graph from saved GraphDef pb file '''
+        with tf.gfile.FastGFile(pb_file_path, 'rb') as ff:
+            graph_def = tf.GraphDef()
+            graph_def.ParseFromString(ff.read())
+            _ = tf.import_graph_def(graph_def, name='')
 
-def create_graph(pb_file_path):
-    ''' Creates a graph from saved GraphDef pb file '''
-    with tf.gfile.FastGFile(pb_file_path, 'rb') as ff:
-        graph_def = tf.GraphDef()
-        graph_def.ParseFromString(ff.read())
-        _ = tf.import_graph_def(graph_def, name='')
+    create_graph(os.path.join(dest_path, 'classify_image_graph_def.pb'))
+    summary_write = tf.summary.FileWriter("/tmp/logdir", tf.get_default_graph())
+    # tensorboard --logdir /tmp/logdir/
+    ```
+  - **模型输入图片，输出预测值**
+    ```py
+    def get_top_k_prediction_on_image(image_data, kk=5):
+        # Some useful tensors:
+        # 'softmax:0': A tensor containing the normalized prediction across 1000 labels.
+        # 'pool_3:0': A tensor containing the next-to-last layer containing 2048 float description of the image.
+        # 'DecodeJpeg/contents:0': A tensor containing a string providing JPEG encoding of the image.
+        # Runs the softmax tensor by feeding the image_data as input to the graph.
+        # cc, ss = tf.import_graph_def(graph_def, return_elements=['DecodeJpeg/contents:0', 'softmax:0'])
+        with tf.Session() as sess:
+            softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
+            predictions = sess.run(softmax_tensor, {'DecodeJpeg/contents:0': image_data})
 
-create_graph(os.path.join(dest_path, 'classify_image_graph_def.pb'))
-summary_write = tf.summary.FileWriter("/tmp/logdir", tf.get_default_graph())
-# tensorboard --logdir /tmp/logdir/
+        print(predictions.shape)  # (1, 1008)
+        predictions = np.squeeze(predictions)
+        top_k = predictions.argsort()[-kk:][::-1]
 
-image_file = os.path.join(dest_path, 'cropped_panda.jpg')
-image_data = tf.gfile.FastGFile(image_file, 'rb').read()
+        return top_k, predictions
 
-# Some useful tensors:
-# 'softmax:0': A tensor containing the normalized prediction across 1000 labels.
-# 'pool_3:0': A tensor containing the next-to-last layer containing 2048 float description of the image.
-# 'DecodeJpeg/contents:0': A tensor containing a string providing JPEG encoding of the image.
-# Runs the softmax tensor by feeding the image_data as input to the graph.
-# cc, ss = tf.import_graph_def(graph_def, return_elements=['DecodeJpeg/contents:0', 'softmax:0'])
-softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
-sess = tf.InteractiveSession()
-predictions = sess.run(softmax_tensor, {'DecodeJpeg/contents:0': image_data})
-print(predictions.shape)  # (1, 1008)
+    image_file = os.path.join(dest_path, 'cropped_panda.jpg')
+    image_data = tf.gfile.FastGFile(image_file, 'rb').read()
+    top_5, predictions = get_top_k_prediction_on_image(image_data, 5)
+    print(top_5, predictions[top_5])
+    # [169  75   7 325 878] [0.8910729  0.00779061 0.00295913 0.00146577 0.00117424]
+    ```
+  - **将模型输出的 node id 转化为字符串**
+    ```py
+    def NodeLookup(dest_path):
+        # imagenet_2012_challenge_label_map_proto.pbtxt, node id to uid file
+        # entry {
+        #   target_class: 449
+        #   target_class_string: "n01440764"
+        # }
+        label_lookup_path = os.path.join(dest_path, 'imagenet_2012_challenge_label_map_proto.pbtxt')
+        tt = tf.gfile.GFile(label_lookup_path, 'r').read().split('entry ')
+        pp = lambda ll, ii: ll.split('\n')[ii].split(': ')[1]
+        node_id_to_uid = {int(pp(ll, 1)): pp(ll, 2)[1:-1] for ll in tt[1:]}
 
-predictions = np.squeeze(predictions)
-top_5 = predictions.argsort()[-5:][::-1]
-print(top_5, predictions[top_5])
-# [169  75   7 325 878] [0.8910729  0.00779061 0.00295913 0.00146577 0.00117424]
+        # imagenet_synset_to_human_label_map.txt, uid to string file
+        uid_lookup_path = os.path.join(dest_path, 'imagenet_synset_to_human_label_map.txt')
+        uid_to_human = pd.read_csv(uid_lookup_path, sep='\t', header=None).set_index(0)
+        uid_to_human = uid_to_human[1]
 
-  # Creates node ID --> English string lookup.
-  node_lookup = NodeLookup()
+        # Combine a node id to string dict
+        node_id_to_name = pd.Series({kk: uid_to_human.get(vv) for kk, vv in node_id_to_uid.items()})
 
-  top_k = predictions.argsort()[-FLAGS.num_top_predictions:][::-1]
-  for node_id in top_k:
-    human_string = node_lookup.id_to_string(node_id)
-    score = predictions[node_id]
-    print('%s (score = %.5f)' % (human_string, score))
-```
+        return node_id_to_name
+
+    node_id_to_name = NodeLookup(dest_path)
+    print('\n'.join(['{} (score = {:.5f})'.format(node_id_to_name[ii], predictions[ii]) for ii in top_5]))
+    # giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca (score = 0.89107)
+    # indri, indris, Indri indri, Indri brevicaudatus (score = 0.00779)
+    # lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens (score = 0.00296)
+    # custard apple (score = 0.00147)
+    # earthstar (score = 0.00117)
+    ```
+  - **组合**
+    ```py
+    def classify_image(image_file, kk=5, SHOW=True):
+        image_data = tf.gfile.FastGFile(image_file, 'rb').read()
+        top_k, predictions = get_top_k_prediction_on_image(image_data, kk)
+        rr = ['{} (score = {:.5f})'.format(node_id_to_name[ii], predictions[ii]) for ii in top_k]
+        if SHOW:
+            fig = plt.figure()
+            plt.imshow(plt.imread(image_file))
+            plt.title('\n'.join(rr), loc='left')
+            plt.axis('off')
+            fig.tight_layout()
+        else:
+            print('\n'.join(rr))
+        return rr
+
+    classify_image(os.path.join(dest_path, 'cropped_panda.jpg'))
+    ```
+    ![](images/tensorflow_imagenet_recognise.png)
 ## How to Retrain an Image Classifier for New Categories
+  https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/
+  https://www.tensorflow.org/hub/tutorials/image_retraining
+  ```py
+  import tensorflow_hub as hub
+
+  hub_module = 'https://tfhub.dev/google/imagenet/inception_v3/feature_vector/1'
+  module = hub.Module(hub_module)
+  ```
+  **测试**
+  ```py
+  height, width = hub.get_expected_image_size(module)
+
+  image_file = './datasets/flower_photos/daisy/100080576_f52e8ee070_n.jpg'
+  images = tf.gfile.FastGFile(image_file, 'rb').read()
+  images = tf.image.decode_jpeg(images)
+
+  sess = tf.InteractiveSession()
+  images.eval().shape
+
+  imm = tf.image.resize_images(images, (height, width))
+  imm = tf.expand_dims(imm, 0)  # A batch of images with shape [batch_size, height, width, 3].
+  plt.imshow(imm[0].eval().astype('int'))
+
+  tf.global_variables_initializer().run()
+  features = module(imm).eval()  # Features with shape [batch_size, num_features].
+  print(features.shape)
+  # (1, 2048)
+  ```
+  ```py
+  def jpeg_decoder_layer(module_spec):
+      height, width = hub.get_expected_image_size(module_spec)
+      input_depth = hub.get_num_image_channels(module_spec)
+      jpeg_data = tf.placeholder(tf.string, name='DecodeJPGInput')
+      imm = tf.image.decode_jpeg(jpeg_data, channels=input_depth)
+
+      imm = tf.image.convert_image_dtype(imm, dtype=tf.float32)
+      imm = tf.expand_dims(imm, 0)
+      imm = tf.image.resize_images(images, (height, width))
+
+      return jpeg_data, imm
+  ```
+  **测试**
+  ```py
+  jj, ii = jpeg_decoder_layer(module)
+  tt = sess.run(ii, {jj: tf.gfile.FastGFile(image_file, 'rb').read()})
+  print(tt.shape)
+  # (299, 299, 3)
+  ```
+  ```py
+  CLASS_COUNT = 5
+  def add_classifier_op(class_count, bottleneck_module, is_training, learning_rate=0.01):
+      height, width = hub.get_expected_image_size(bottleneck_module)
+      resized_input_tensor = tf.placeholder(tf.float32, [None, height, width, 3])
+      bottleneck_tensor = bottleneck_module(resized_input_tensor)
+      batch_size, bottleneck_out = bottleneck_tensor.get_shape().as_list()  # None, 2048
+
+      # Add a fully connected layer and a softmax layer
+      with tf.name_scope('input'):
+          bottleneck_input = tf.placeholder_with_default(bottleneck_tensor, shape=[batch_size, bottleneck_out], name='BottleneckInputPlaceholder')
+          target_label = tf.placeholder(tf.int64, [batch_size], name='GroundTruthInput')
+
+      with tf.name_scope('final_retrain_ops'):
+          with tf.name_scope('weights'):
+              init_value = tf.truncated_normal([bottleneck_out, class_count], stddev=0.001)
+              weights = tf.Variable(init_value, name='final_weights')
+          with tf.name_scope('biases'):
+              biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
+          with tf.name_scope('dense'):
+              logits = tf.matmul(bottleneck_input, weights) + biases
+
+      final_tensor = tf.nn.softmax(logits, name='final_result')
+
+      # The tf.contrib.quantize functions rewrite the graph in place for
+      # quantization. The imported model graph has already been rewritten, so upon
+      # calling these rewrites, only the newly added final layer will be
+      # transformed.
+      if is_training:
+          tf.contrib.quantize.create_training_graph()
+      else:
+          tf.contrib.quantize.create_eval_graph()
+
+      # If this is an eval graph, we don't need to add loss ops or an optimizer.
+      if not is_training:
+          return None, None, bottleneck_input, target_label, final_tensor
+
+      with tf.name_scope('cross_entropy'):
+          cross_entropy_mean = tf.losses.sparse_softmax_cross_entropy(labels=target_label, logits=logits)
+
+      with tf.name_scope('train'):
+          optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+          train_step = optimizer.minimize(cross_entropy_mean)
+
+      return (train_step, cross_entropy_mean, bottleneck_input, target_label, final_tensor)
+  ```
+  ```py
+  flower_url = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
+  train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(flower_url), origin=flower_url)
+
+  def load_image_train_test(data_path, test_rate=10):
+      rr = {}
+      for sub_dir_name in tf.gfile.ListDirectory(data_path):
+          sub_dir = os.path.join(data_path, sub_dir_name)
+          print(sub_dir)
+          if not tf.gfile.IsDirectory(sub_dir):
+              continue
+
+          item_num = len(tf.gfile.ListDirectory(sub_dir))
+
+          train_dd = []
+          test_dd = []
+          for item_name in tf.gfile.ListDirectory(sub_dir):
+              hash_name_hashed = hashlib.sha1(tf.compat.as_bytes(item_name)).hexdigest()
+              percentage_hash = int(hash_name_hashed, 16) % (item_num + 1) * (100 / item_num)
+              if percentage_hash < 10:
+                  test_dd.append(os.path.join(sub_dir, item_name))
+              else:
+                  train_dd.append(os.path.join(sub_dir, item_name))
+          rr[sub_dir_name] = {'train': train_dd, 'test': test_dd}
+
+      return rr
+  ```
 ## Advanced Convolutional Neural Networks
 ***
 
