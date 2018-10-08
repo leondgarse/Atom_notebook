@@ -3978,7 +3978,7 @@
     ![](images/tensorflow_vae.gif)
 ***
 
-# Images
+# 图像处理应用
 ## Pix2Pix 建筑物表面图片上色
   - [Pix2Pix: An example with tf.keras and eager](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/eager/python/examples/pix2pix/pix2pix_eager.ipynb)
   - [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004)
@@ -5431,8 +5431,8 @@
     ```
     ![](images/tensorflow_imagenet_recognise.png)
 ## How to Retrain an Image Classifier for New Categories
-  https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/
-  https://www.tensorflow.org/hub/tutorials/image_retraining
+  - [How to Retrain an Image Classifier for New Categories](https://www.tensorflow.org/hub/tutorials/image_retraining)
+  - https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/
   ```py
   import tensorflow_hub as hub
 
@@ -5553,9 +5553,34 @@
       return rr
   ```
 ## Advanced Convolutional Neural Networks
+  - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
+  - [tensorflow/models/tutorials/image/cifar10/](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10/)
+  - [tensorflow/models/tutorials/image/cifar10_estimator/](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10_estimator)
 ***
 
 # Sequences
+## Recurrent Neural Networks
+  - [Recurrent Neural Networks](https://www.tensorflow.org/tutorials/sequences/recurrent)
+  - [tensorflow/models/tutorials/rnn/ptb/](https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb)
+## Recurrent Neural Networks for Drawing Classification
+  - [Recurrent Neural Networks for Drawing Classification](https://www.tensorflow.org/tutorials/sequences/recurrent_quickdraw)
+  - [tensorflow/models/tutorials/rnn/quickdraw/](https://github.com/tensorflow/models/tree/master/tutorials/rnn/quickdraw)
+## Simple Audio Recognition
+  - [Simple Audio Recognition](https://www.tensorflow.org/tutorials/sequences/audio_recognition)
+  - [tensorflow/tensorflow/examples/speech_commands/](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/speech_commands)
+## Neural Machine Translation seq2seq Tutorial
+  - [tensorflow/nmt](https://github.com/tensorflow/nmt)
+***
+
+# 数据表示 data representation
+## Vector Representations of Words
+## Improving Linear Models Using Explicit Kernel Methods
+## Large-scale Linear Models with TensorFlow
+***
+
+# Non ML
+## Mandelbrot set
+## Partial differential equations
 ***
 
 # FOO
