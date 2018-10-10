@@ -2195,6 +2195,131 @@
     sess.run(pool, feed_dict={input: tt}).shape
     Out[30]: (1, 2, 2, 16)
     ```
+## MNIST CNN 分类模型
+  - **keras 加载 MNIST 数据集**
+    ```py
+    mnist = tf.keras.datasets.mnist
+    (train_x, train_y), (test_x, test_y) = mnist.load_data()
+    # To one-hot
+    train_y = pd.get_dummies(train_y).values
+    test_y = pd.get_dummies(test_y).values
+    print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)
+    # (60000, 28, 28) (60000, 10) (10000, 28, 28) (10000, 10)
+
+    x = tf.placeholder(tf.float32, shape=[None, 28, 28])
+    y_ = tf.placeholder(tf.float32, shape=[None, 10])
+    ```
+  - **定义权重与偏差初始化函数**
+    - **权重初始化 Weight Initialization** 初始化时加入少量的噪声，以 **打破对称性 Symmetry Breaking** 以及避免倒数为 0
+    - **偏差初始化 Bias Initialization** 使用 **ReLU 神经元 neurons** 时，应将 bias 初始化成一组很小的正值，以避免神经元节点输出恒为0 dead neurons
+    ```python
+    # Weight Initialization
+    def weight_variable(shape):
+        initial = tf.truncated_normal(shape, stddev=0.1)
+        return tf.Variable(initial)
+
+    # bias Initialization
+    def bias_variable(shape):
+        initial = tf.constant(0.1, shape=shape)
+        return tf.Variable(initial)
+    ```
+  - **卷积和池化层 Convolution and Pooling** TensorFlow 在卷积和池化上有很强的灵活性，包括确定 **边界 boundaries** / **步长 stride size**
+    ```python
+    # 卷积 Convolution 使用步长 stride = 1, 边距 padded = 0，保证输出的大小与输入相同
+    def conv2d(x, W):
+        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+    # 池化 Pooling 使用传统的 2x2 大小的模板做 max pooling
+    def max_pool_2x2(x):
+        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    ```
+  - **Deep cnn 模型定义**
+    - **第一层卷积与池化** 将每个灰度图像映射成 32 个特征
+      - **卷积层** 由  **x_image** 与 **权重向量 weight** 进行卷积，加上 **偏置项 bias**
+      - **权重形状** 是 `[5, 5, 1, 32]`，在每个 5x5 的 patch 中算出 **32 个特征**
+      - **ReLU 激活函数** 去线性化
+      - **最大池化层**，步长为 2，将图片大小缩减到 `14x14`
+    - **第二层卷积与池化** 将 32 个特征映射成 64 个特征
+      - **卷积层权重形状** 是 `[5, 5, 32, 64]`，在深度上将 32 个特征映射成 64 个特征
+      - **池化层** 将图片大小缩减到 `7x7`
+    - **全连接层** 包含 1024 个神经元，并添加 relu 激活函数
+    - **Dropout 层** 控制模型复杂度，减小过拟合
+      - 使用一个 placeholder 来表示 **在 dropout 层一个神经元的输出保持不变的概率**，这样可以 **在训练过程中启用dropout，在测试过程中关闭dropout**
+      - TensorFlow的 **tf.nn.dropout方法** 除了可以屏蔽神经元的输出，还可以自动处理神经元输出值的 **定比 scale**，因此 dropout 不需要额外的 scaling
+    - **输出层** 从 1024 个特征计算出所属类别
+    ```python
+    def deepnn(x):
+        # Expand to [None, 28, 28, 1]
+        x_image = tf.expand_dims(x, -1)
+
+        # First convolutional and pooling layer
+        W_conv1 = weight_variable([5, 5, 1, 32])
+        b_conv1 = bias_variable([32])
+        h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)  # [None, 28, 28, 32]
+        h_pool1 = max_pool_2x2(h_conv1) # [None, 14, 14, 32]
+
+        # Second convolutional and pooling layer
+        W_conv2 = weight_variable([5, 5, 32, 64])
+        b_conv2 = bias_variable([64])
+        h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)  # [None, 14, 14, 64]
+        h_pool2 = max_pool_2x2(h_conv2) # [None, 7, 7, 64]
+
+        # Fully connected layer 1
+        h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])  # [None, 3136]
+        W_fc1 = weight_variable([7 * 7 * 64, 1024])
+        b_fc1 = bias_variable([1024])
+        h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)  # [None, 1024]
+
+        # Dropout - controls the complexity of the model, prevents co-adaptation of features.
+        keep_prob = tf.placeholder(tf.float32)
+        h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+
+        # Map the 1024 features to 10 classes, one for each digit
+        W_fc2 = weight_variable([1024, 10])
+        b_fc2 = bias_variable([10])
+        y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+
+        return y_conv, keep_prob
+    ```
+  - **定义损失函数与训练步骤**
+    ```py
+    y_conv, keep_prob = deepnn(x)
+
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_, logits=y_conv)
+    cross_entropy = tf.reduce_mean(cross_entropy)
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
+    correct_prediction = tf.cast(correct_prediction, tf.float32)
+    accuracy = tf.reduce_mean(correct_prediction)
+    ```
+  - **训练和评估模型 Train and Evaluate the Model**
+    - 使用 **ADAM 优化器**
+    - 在 feed_dict 中加入参数 **keep_prob** 控制 dropout 比例
+    - 每 100 次迭代输出一次验证结果
+    ```python
+    # Train and Evaluate the Model
+    batch_size = 100
+    batch_num = int(train_x.shape[0] / batch_size)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        for i in range(5000):
+            batch = (i % batch_num) * batch_size
+            x_sampe = train_x[batch: batch + batch_size]
+            y_sample = train_y[batch: batch + batch_size]
+            if i % 100 == 0:
+                train_accuracy = accuracy.eval(feed_dict={x: x_sampe, y_: y_sample, keep_prob: 1.0})
+                print('step %d, training accuracy %g' % (i, train_accuracy))
+            train_step.run(feed_dict={x: x_sampe, y_: y_sample, keep_prob: 0.5})
+
+        print('test accuracy %g' % accuracy.eval(feed_dict={x: test_x, y_: test_y, keep_prob: 1.0}))
+    ```
+    **运行结果**
+    ```python
+    step 4900, training accuracy 1
+    test accuracy 0.9922
+    ```
+    最终测试集上的准确率大概是 99.2%
 ## TensorFlow-Slim 工具
   - **TensorFlow-Slim** 工具可以更加简洁地实现一个卷积神经网络
     ```python

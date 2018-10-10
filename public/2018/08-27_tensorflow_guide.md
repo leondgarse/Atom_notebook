@@ -118,11 +118,11 @@
     - Use the trained model to make predictions
   - **TensorFlow Core / High-level API**
     - **TensorFlow Core** 最底层API，提供对程序运行的完全控制，其他上层接口基于 TensorFlow Core
-    - 上层接口的调用更易用且一致，如 **tf.estimator** 用于管理数据集 / 模型 / 训练以及评估
+    - 上层接口更易用且调用一致，如 **tf.estimator** 用于管理数据集 / 模型 / 训练以及评估
 
     ![](images/tensorflow_programming_environment.png)
   - **high-level TensorFlow concepts**
-    - **eager** 执行环境，直接返回操作结果 [Eager Execution](https://www.tensorflow.org/programmers_guide/eager)
+    - **Eager** 执行环境，直接返回操作结果 [Eager Execution](https://www.tensorflow.org/programmers_guide/eager)
     - **Datasets API** 导入数据 input pipelines [datasets Importing Data](https://www.tensorflow.org/programmers_guide/datasets)
     - **Keras API** 构建模型与层级结构 [Estimators](https://www.tensorflow.org/programmers_guide/estimators)
     - **Estimators** 模型训练 / 评估 / 预测 / 导入导出 的高层封装 [Getting started with the Keras Sequential model](https://keras.io/getting-started/sequential-model-guide/)
@@ -168,7 +168,7 @@
     git commit -m 'commit' file
     git push
     ```
-  - Making a Pull Request on github `New pull request` -> `Create pull request` -> `Add comments` ->
+  - Making a Pull Request on github `New pull request` -> `Create pull request` -> `Add comments` -> `Complete`
 ## Q / A
   - Q: Eager 执行环境中提示 `InternalError: Could not find valid device for node name: "xxx"`
     ```py
@@ -306,11 +306,15 @@
     model.predict(dataset, steps=30)
     ```
 ## 建立复杂模型
-  - **Keras functional API** 建立任意组合的模型
+  - **Keras functional API** 建立任意组合的模型 [Getting started with the Keras functional API](https://keras.io/getting-started/functional-api-guide/)
     - **Multi-input models** 多个输入层的模型
     - **Multi-output models** 多个输出层的模型
     - **Models with shared layers** 同一层重复调用多次的模型
     - **Models with non-sequential data flows (e.g. residual connections)** 非顺序数据流模型，如残差网络连接 residual connections
+    ```py
+    # `Model` groups layers into an object with training and inference features.
+    class MModel(tensorflow.python.keras.engine.training.Model)
+    ```
   - **建立过程**
     - keras 的 layer 可以调用，并返回一个 tensor
     - 输入 / 输出 tensor 用于定义 `tf.keras.Model`
@@ -342,27 +346,26 @@
     - **call 方法** 中定义前向传播过程
     ```python
     class MyModel(keras.Model):
+       def __init__(self, num_classes=10):
+           super(MyModel, self).__init__(name='my_model')
+           self.num_classes = num_classes
+           # Define your layers here.
+           self.dense_1 = keras.layers.Dense(32, activation='relu')
+           self.dense_2 = keras.layers.Dense(num_classes, activation='sigmoid')
 
-     def __init__(self, num_classes=10):
-       super(MyModel, self).__init__(name='my_model')
-       self.num_classes = num_classes
-       # Define your layers here.
-       self.dense_1 = keras.layers.Dense(32, activation='relu')
-       self.dense_2 = keras.layers.Dense(num_classes, activation='sigmoid')
+       def call(self, inputs):
+           # Define your forward pass here,
+           # using layers you previously defined (in `__init__`).
+           x = self.dense_1(inputs)
+           return self.dense_2(x)
 
-     def call(self, inputs):
-       # Define your forward pass here,
-       # using layers you previously defined (in `__init__`).
-       x = self.dense_1(inputs)
-       return self.dense_2(x)
-
-     def compute_output_shape(self, input_shape):
-       # You need to override this function if you want to use the subclassed model
-       # as part of a functional-style model.
-       # Otherwise, this method is optional.
-       shape = tf.TensorShape(input_shape).as_list()
-       shape[-1] = self.num_classes
-       return tf.TensorShape(shape)
+       def compute_output_shape(self, input_shape):
+           # You need to override this function if you want to use the subclassed model
+           # as part of a functional-style model.
+           # Otherwise, this method is optional.
+           shape = tf.TensorShape(input_shape).as_list()
+           shape[-1] = self.num_classes
+           return tf.TensorShape(shape)
 
 
     # Instantiates the subclassed model.
@@ -383,41 +386,38 @@
     - **get_config** / **from_config**，可选的方法，实现这两个方法可以用于 serialized
     ```python
     class MyLayer(keras.layers.Layer):
+        def __init__(self, output_dim, **kwargs):
+            self.(MyLayer, self).__init__(**kwargs)
 
-     def __init__(self, output_dim, **kwargs):
-       self.output_dim = output_dim
-       super(MyLayer, self).__init__(**kwargs)
+        def build(self, input_shape):
+            shape = tf.TensorShape((input_shape[1], self.output_dim))
+            # Create a trainable weight variable for this layer.
+            self.kernel = self.add_weight(name='kernel',
+                                       shape=shape,
+                                       initializer='uniform',
+                                       trainable=True)
+            # Be sure to call this at the end
+            super(MyLayer, self).build(input_shape)
 
-     def build(self, input_shape):
-       shape = tf.TensorShape((input_shape[1], self.output_dim))
-       # Create a trainable weight variable for this layer.
-       self.kernel = self.add_weight(name='kernel',
-                                     shape=shape,
-                                     initializer='uniform',
-                                     trainable=True)
-       # Be sure to call this at the end
-       super(MyLayer, self).build(input_shape)
+        def call(self, inputs):
+            return tf.matmul(inputs, self.kernel)
 
-     def call(self, inputs):
-       return tf.matmul(inputs, self.kernel)
+        def compute_output_shape(self, input_shape):
+            shape = tf.TensorShape(input_shape).as_list()
+            shape[-1] = self.output_dim
+            return tf.TensorShape(shape)
 
-     def compute_output_shape(self, input_shape):
-       shape = tf.TensorShape(input_shape).as_list()
-       shape[-1] = self.output_dim
-       return tf.TensorShape(shape)
+        def get_config(self):
+            base_config = super(MyLayer, self).get_config()
+            base_config['output_dim'] = self.output_dim
 
-     def get_config(self):
-       base_config = super(MyLayer, self).get_config()
-       base_config['output_dim'] = self.output_dim
-
-     @classmethod
-     def from_config(cls, config):
-       return cls(**config)
+        @classmethod
+        def from_config(cls, config):
+            return cls(**config)
 
 
     # Create a model using the custom layer
-    model = keras.Sequential([MyLayer(10),
-                             keras.layers.Activation('softmax')])
+    model = keras.Sequential([MyLayer(10), keras.layers.Activation('softmax')])
 
     # The compile step specifies the training configuration
     model.compile(optimizer=tf.train.RMSPropOptimizer(0.001),
@@ -1706,152 +1706,6 @@
   estimator.evaluate(input_fn=eval_input_fn)
   # Out[20]: {'average_loss': 0.0025362344, 'global_step': 1000, 'loss': 0.010144938}
   ```
-## Estimator pre-made DNN model
-  - **tf.keras.utils.get_file** / **pd.read_csv** 加载数据集
-    ```python
-    TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
-    TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
-
-    CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
-                        'PetalLength', 'PetalWidth', 'Species']
-
-    def load_data(label_name='Species'):
-        """Parses the csv file in TRAIN_URL and TEST_URL."""
-        # Create a local copy of the training set.
-        train_path = tf.keras.utils.get_file(fname=TRAIN_URL.split('/')[-1], origin=TRAIN_URL)
-        # Parse the local CSV file.
-        train = pd.read_csv(filepath_or_buffer=train_path,
-                            names=CSV_COLUMN_NAMES,  # list of column names
-                            header=0  # ignore the first row of the CSV file.
-                           )
-
-        # 1. Assign the DataFrame's labels (the right-most column) to train_label.
-        # 2. Delete (pop) the labels from the DataFrame.
-        # 3. Assign the remainder of the DataFrame to train_features
-        train_features, train_label = train, train.pop(label_name)
-
-        # Apply the preceding logic to the test set.
-        test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
-        test = pd.read_csv(test_path, names=CSV_COLUMN_NAMES, header=0)
-        test_features, test_label = test, test.pop(label_name)
-
-        # Return four DataFrames.
-        return (train_features, train_label), (test_features, test_label)
-
-    (train_x, train_y), (test_x, test_y) = load_data()
-
-    train_x.columns
-    # Out[17]: Index(['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth'], dtype='object')
-    train_y.name
-    # Out[19]: 'Species'
-    ```
-  - **tf.feature_column.numeric_column** 创建数字类型特征列表，模型的输入功能
-    ```python
-    # Feature columns describe how to use the input.
-    my_feature_columns = []
-    for key in train_x.keys():
-        my_feature_columns.append(tf.feature_column.numeric_column(key=key))
-    ```
-  - **tf.estimator.DNNClassifier** 预定义的 DNN 神经网络模型
-    - 增加隐藏层与神经元数量通常可以提高模型效果，同时需要更多的训练数据
-    - tf.Estimator.DNNClassifier 可以指定可选参数 optimizer，控制模型训练过程
-    ```python
-    # Build 2 hidden layer DNN with 10, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(
-        feature_columns=my_feature_columns,
-        # Two hidden layers of 10 nodes each.
-        hidden_units=[10, 10],
-        # The model must choose between 3 classes.
-        n_classes=3)
-    ```
-  - **Estimator.train** 模型训练
-    ```python
-    def train_input_fn(features, labels, batch_size):
-        """An input function for training"""
-        # Convert the inputs to a Dataset.
-        dataset = tf.data.Dataset.from_tensor_slices((dict(features), labels))
-
-        # Shuffle, repeat, and batch the examples.
-        dataset = dataset.shuffle(1000).repeat().batch(batch_size)
-
-        # Return the dataset.
-        return dataset
-
-    classifier.train(
-        input_fn=lambda:train_input_fn(train_x, train_y, 100),
-        steps=1000)
-    # [Out]
-    # INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpqfn_6jut/model.ckpt.
-    # INFO:tensorflow:loss = 225.84201, step = 0
-    # INFO:tensorflow:loss = 13.055806, step = 100 (0.272 sec)
-    # INFO:tensorflow:global_step/sec: 363.078
-    # ...
-    # INFO:tensorflow:loss = 5.2205944, step = 900 (0.260 sec)
-    # INFO:tensorflow:Saving checkpoints for 1000 into /tmp/tmpqfn_6jut/model.ckpt.
-    # INFO:tensorflow:Loss for final step: 7.6925917.
-    ```
-  - **Estimator.evaluate** 模型评估
-    ```python
-    def eval_input_fn(features, labels, batch_size):
-        """An input function for evaluation or prediction"""
-        features=dict(features)
-        if labels is None:
-            # No labels, use only features.
-            inputs = features
-        else:
-            inputs = (features, labels)
-
-        # Convert the inputs to a Dataset.
-        dataset = tf.data.Dataset.from_tensor_slices(inputs)
-
-        # Batch the examples
-        assert batch_size is not None, "batch_size must not be None"
-        dataset = dataset.batch(batch_size)
-
-        # Return the dataset.
-        return dataset
-
-    # Evaluate the model.
-    eval_result = classifier.evaluate(
-        input_fn=lambda:eval_input_fn(test_x, test_y, 100))
-    # [Out]
-    # INFO:tensorflow:Restoring parameters from /tmp/tmpqfn_6jut/model.ckpt-1000
-    # INFO:tensorflow:Saving dict for global step 1000: accuracy = 0.96666664, average_loss = 0.059205256, global_step = 1000, loss = 1.7761577
-
-    print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
-    # Test set accuracy: 0.967
-    ```
-  - **Estimator.predict** 模型预测
-    ```python
-    predict_x = {
-            'SepalLength': [5.1, 5.9, 6.9],
-            'SepalWidth': [3.3, 3.0, 3.1],
-            'PetalLength': [1.7, 4.2, 5.4],
-            'PetalWidth': [0.5, 1.5, 2.1],
-        }
-
-    # When doing predictions, we're not passing labels to eval_input_fn
-    predictions = classifier.predict(
-        input_fn=lambda:eval_input_fn(predict_x,
-                                      labels=None,
-                                      batch_size=100))
-
-    SPECIES = ['Setosa', 'Versicolor', 'Virginica']
-    expected = ['Setosa', 'Versicolor', 'Virginica']
-    template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
-
-    for pred_dict, expec in zip(predictions, expected):
-        class_id = pred_dict['class_ids'][0]
-        probability = pred_dict['probabilities'][class_id]
-
-        print(template.format(SPECIES[class_id], 100 * probability, expec))
-    ```
-    Out
-    ```python
-    Prediction is "Setosa" (99.8%), expected "Setosa"
-    Prediction is "Versicolor" (99.8%), expected "Versicolor"
-    Prediction is "Virginica" (96.0%), expected "Virginica"
-    ```
 ## Estimator 的输入功能 Input Function
   - **input_fn** 用于向 Estimator 中训练 train / 评估 evaluate / 预测 predict 方法传递特征 / 目标数据，包括数据预处理，如清除异常值
   - Input functions 的返回值中必须包含最终的特征 / 目标值
@@ -1898,7 +1752,186 @@
            [ 0. ,  0. ,  0. ,  0. ,  0. ],
            [ 0. ,  0. ,  0. ,  0. ,  0.5]], dtype=float32)
     ```
-## 模型使用 input_fn 的数据 ???
+## Estimator pre-made DNN model
+  - **tf.keras.utils.get_file** / **pd.read_csv** 加载数据集
+    ```python
+    TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
+    TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
+
+    CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
+                        'PetalLength', 'PetalWidth', 'Species']
+
+    def load_data(label_name='Species'):
+        """Parses the csv file in TRAIN_URL and TEST_URL."""
+        # Create a local copy of the training set.
+        train_path = tf.keras.utils.get_file(fname=TRAIN_URL.split('/')[-1], origin=TRAIN_URL)
+        # Parse the local CSV file.
+        train = pd.read_csv(filepath_or_buffer=train_path,
+                            names=CSV_COLUMN_NAMES,  # list of column names
+                            header=0  # ignore the first row of the CSV file.
+                           )
+
+        # 1. Assign the DataFrame's labels (the right-most column) to train_label.
+        # 2. Delete (pop) the labels from the DataFrame.
+        # 3. Assign the remainder of the DataFrame to train_features
+        train_features, train_label = train, train.pop(label_name)
+
+        # Apply the preceding logic to the test set.
+        test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
+        test = pd.read_csv(test_path, names=CSV_COLUMN_NAMES, header=0)
+        test_features, test_label = test, test.pop(label_name)
+
+        # Return four DataFrames.
+        return (train_features, train_label), (test_features, test_label)
+
+    (train_x, train_y), (test_x, test_y) = load_data()
+
+    train_x.columns
+    # Out[17]: Index(['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth'], dtype='object')
+    train_y.name
+    # Out[19]: 'Species'
+    ```
+  - **tf.feature_column.numeric_column** 创建数字类型特征列表，模型的输入功能，每一项数据有 4 个特征
+    ```python
+    # Feature columns describe how to use the input.
+    my_feature_columns = []
+    for key in train_x.keys():
+        my_feature_columns.append(tf.feature_column.numeric_column(key=key))
+    ```
+  - **tf.estimator.DNNClassifier** 预定义的 DNN 神经网络模型
+    - 增加隐藏层与神经元数量通常可以提高模型效果，同时需要更多的训练数据
+    - tf.Estimator.DNNClassifier 可以指定可选参数 optimizer，控制模型训练过程
+    ```python
+    # Build 2 hidden layer DNN with 10, 10 units respectively.
+    classifier = tf.estimator.DNNClassifier(
+        feature_columns=my_feature_columns,
+        # Two hidden layers of 10 nodes each.
+        hidden_units=[10, 10],
+        # The model must choose between 3 classes.
+        n_classes=3)
+    ```
+  - **Estimator.train** 模型训练
+    ```python
+    def train_input_fn(features, labels, batch_size):
+        """An input function for training"""
+        # Convert the inputs to a Dataset.
+        dataset = tf.data.Dataset.from_tensor_slices((dict(features), labels))
+
+        # Shuffle, repeat, and batch the examples.
+        dataset = dataset.shuffle(1000).repeat().batch(batch_size)
+
+        # Return the dataset.
+        return dataset
+
+    classifier.train(
+        input_fn=lambda:train_input_fn(train_x, train_y, 100),
+        steps=1000)
+    # [Out]
+    # INFO:tensorflow:Saving checkpoints for 1 into /tmp/tmpqfn_6jut/model.ckpt.
+    # INFO:tensorflow:loss = 225.84201, step = 0
+    # INFO:tensorflow:loss = 13.055806, step = 100 (0.272 sec)
+    # INFO:tensorflow:global_step/sec: 363.078
+    # ...
+    # INFO:tensorflow:loss = 5.2205944, step = 900 (0.260 sec)
+    # INFO:tensorflow:Saving checkpoints for 1000 into /tmp/tmpqfn_6jut/model.ckpt.
+    # INFO:tensorflow:Loss for final step: 7.6925917.
+    ```
+    也可以使用 `tf.estimator.inputs.numpy_input_fn` / `pandas_input_fn` 定义
+    ```py
+    # Define the training inputs
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x=train_x.to_dict(orient='series'),
+        y=train_y.values,
+        batch_size=128,
+        num_epochs=None,
+        shuffle=True)
+
+    train_input_fn = tf.estimator.inputs.pandas_input_fn(
+        x=train_x,
+        y=train_y,
+        batch_size=128,
+        num_epochs=None,
+        shuffle=True
+    )
+    classifier.train(input_fn=train_input_fn, steps=1000)
+    ```
+  - **Estimator.evaluate** 模型评估
+    ```python
+    def eval_input_fn(features, labels, batch_size):
+        """An input function for evaluation or prediction"""
+        features=dict(features)
+        if labels is None:
+            # No labels, use only features.
+            inputs = features
+        else:
+            inputs = (features, labels)
+
+        # Convert the inputs to a Dataset.
+        dataset = tf.data.Dataset.from_tensor_slices(inputs)
+
+        # Batch the examples
+        assert batch_size is not None, "batch_size must not be None"
+        dataset = dataset.batch(batch_size)
+
+        # Return the dataset.
+        return dataset
+
+    # Evaluate the model.
+    eval_result = classifier.evaluate(
+        input_fn=lambda:eval_input_fn(test_x, test_y, 100))
+    # [Out]
+    # INFO:tensorflow:Restoring parameters from /tmp/tmpqfn_6jut/model.ckpt-1000
+    # INFO:tensorflow:Saving dict for global step 1000: accuracy = 0.96666664, average_loss = 0.059205256, global_step = 1000, loss = 1.7761577
+
+    print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+    # Test set accuracy: 0.967
+    ```
+    使用  `tf.estimator.inputs.numpy_input_fn` 定义
+    ```py
+    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x=test_x.to_dict(orient='series'),
+        y=test_y.values,
+        batch_size=128,
+        num_epochs=1,
+        shuffle=False
+    )
+    eval_result = classifier.evaluate(input_fn=eval_input_fn)
+    ```
+  - **Estimator.predict** 模型预测
+    ```python
+    predict_x = {
+            'SepalLength': [5.1, 5.9, 6.9],
+            'SepalWidth': [3.3, 3.0, 3.1],
+            'PetalLength': [1.7, 4.2, 5.4],
+            'PetalWidth': [0.5, 1.5, 2.1],
+        }
+
+    # When doing predictions, we're not passing labels to eval_input_fn
+    predictions = classifier.predict(
+        input_fn=lambda:eval_input_fn(predict_x,
+                                      labels=None,
+                                      batch_size=100))
+
+    # pandas_input_fn 定义
+    predictions = classifier.predict(input_fn=tf.estimator.inputs.pandas_input_fn(x=pd.DataFrame(predict_x), shuffle=False, num_epochs=1))
+
+    SPECIES = ['Setosa', 'Versicolor', 'Virginica']
+    expected = ['Setosa', 'Versicolor', 'Virginica']
+    template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
+
+    for pred_dict, expec in zip(predictions, expected):
+        class_id = pred_dict['class_ids'][0]
+        probability = pred_dict['probabilities'][class_id]
+
+        print(template.format(SPECIES[class_id], 100 * probability, expec))
+    ```
+    Out
+    ```python
+    Prediction is "Setosa" (99.8%), expected "Setosa"
+    Prediction is "Versicolor" (99.8%), expected "Versicolor"
+    Prediction is "Virginica" (96.0%), expected "Virginica"
+    ```
+## 模型使用 input_fn 的数据
   - 模型 train / evaluate / predict 方法的 input_fn 参数用于传递用户自定义的 input function
     ```python
     classifier.train(input_fn=my_input_fn, steps=2000)
@@ -1959,6 +1992,85 @@
           y=np.array(...),
           num_epochs=num_epochs,
           shuffle=shuffle)
+    ```
+## DNNRegressor 预测 Boston 房价
+  - **特征**
+
+    | Feature | Description                                                     |
+    | ------- | --------------------------------------------------------------- |
+    | CRIM    | Crime rate per capita                                           |
+    | ZN      | Fraction of residential land zoned to permit 25,000+ sq ft lots |
+    | INDUS   | Fraction of land that is non-retail business                    |
+    | NOX     | Concentration of nitric oxides in parts per 10 million          |
+    | RM      | Average Rooms per dwelling                                      |
+    | AGE     | Fraction of owner-occupied residences built before 1940         |
+    | DIS     | Distance to Boston-area employment centers                      |
+    | TAX     | Property tax rate per $10,000                                   |
+    | PTRATIO | Student-teacher ratio                                           |
+
+  - **预测的目标值** median value MEDV
+  - **加载数据集**，并将 log 等级设置为 INFO
+    ```python
+    tf.logging.set_verbosity(tf.logging.INFO)
+
+    COLUMNS = ["crim", "zn", "indus", "nox", "rm", "age",
+               "dis", "tax", "ptratio", "medv"]
+    FEATURES = ["crim", "zn", "indus", "nox", "rm",
+                "age", "dis", "tax", "ptratio"]
+    LABEL = "medv"
+
+    training_set = pd.read_csv("boston_train.csv", skipinitialspace=True,
+                               skiprows=1, names=COLUMNS)
+    test_set = pd.read_csv("boston_test.csv", skipinitialspace=True,
+                           skiprows=1, names=COLUMNS)
+    prediction_set = pd.read_csv("boston_predict.csv", skipinitialspace=True,
+                                 skiprows=1, names=COLUMNS)
+    ```
+  - **定义 FeatureColumns，创建回归模型 Regressor**
+    ```python
+    feature_cols = [tf.feature_column.numeric_column(k) for k in FEATURES]
+    regressor = tf.estimator.DNNRegressor(feature_columns=feature_cols,
+                                        hidden_units=[10, 10],
+                                        model_dir="/tmp/boston_model")
+    ```
+  - **定义输入功能 input_fn**
+    - 参数 data_set，可以用于training_set / test_set / prediction_set
+    - 参数 num_epochs，控制数据集迭代的次数，用于训练时置为 None，表示不限迭代次数，评估与预测时，置为1
+    - 参数 shuffle，是否进行数据混洗，用于训练时置为 True，评估与预测时置为 False
+    ```python
+    def get_input_fn(data_set, num_epochs=None, shuffle=True):
+      tf.estimator.inputs.pandas_input_fn(
+        x=pd.DataFrame({k: data_set[k].values for k in FEATURES}),
+        y = pd.Series(data_set[LABEL].values),
+        num_epochs=num_epochs,
+        shuffle=shuffle)
+    ```
+  - **模型训练**
+    ```python
+    regressor.train(input_fn=get_input_fn(training_set), steps=5000)
+    ```
+  - **模型评估**
+    ```python
+    ev = regressor.evaluate(
+      input_fn=get_input_fn(test_set, num_epochs=1, shuffle=False))
+    loss_score = ev["loss"]
+    print("Loss: {0:f}".format(loss_score))
+    # Loss: 1608.965698
+    ```
+  - **预测**
+    ```python
+    import itertools
+
+    y = regressor.predict(
+        input_fn=get_input_fn(prediction_set, num_epochs=1, shuffle=False))
+    # .predict() returns an iterator of dicts; convert to a list and print
+    # predictions
+    predictions = list(p["predictions"][0] for p in itertools.islice(y, 6))
+    print("Predictions: {}".format(str(predictions)))
+    ```
+    运行结果
+    ```python
+    Predictions: [35.306267, 18.697575, 24.233162, 35.991249, 16.141064, 20.229273]
     ```
 ***
 

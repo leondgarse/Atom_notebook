@@ -1,12 +1,13 @@
 # ___2018 - 09 - 06 Tensorflow Tutorials___
 ***
-- [Tensorflow Tutorials](https://www.tensorflow.org/tutorials/)
+
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
   - [___2018 - 09 - 06 Tensorflow Tutorials___](#2018-09-06-tensorflow-tutorials)
   - [目录](#目录)
   - [Basic](#basic)
+  	- [链接](#链接)
   	- [TensorFlow Official Models](#tensorflow-official-models)
   	- [Import](#import)
   	- [Google colab](#google-colab)
@@ -20,7 +21,7 @@
   	- [Keras 模型保存与加载](#keras-模型保存与加载)
   - [生产环境中的机器学习 ML at production scale](#生产环境中的机器学习-ml-at-production-scale)
   	- [Estimators 使用 LinearClassifier 线性模型用于 Census 数据集](#estimators-使用-linearclassifier-线性模型用于-census-数据集)
-  	- [Boosted trees](#boosted-trees)
+  	- [Estimators 使用 Boosted trees 分类 Higgs 数据集](#estimators-使用-boosted-trees-分类-higgs-数据集)
   	- [Estimators DNNClassifier 与 TF Hub module embedding 进行文本分类](#estimators-dnnclassifier-与-tf-hub-module-embedding-进行文本分类)
   	- [Estimators DNNClassifier 下载 Kaggle 的数据集进行文本分类](#estimators-dnnclassifier-下载-kaggle-的数据集进行文本分类)
   	- [Estimators 自定义 CNN 多层卷积神经网络用于 MNIST 数据集](#estimators-自定义-cnn-多层卷积神经网络用于-mnist-数据集)
@@ -36,30 +37,13 @@
   	- [Neural Style Transfer 转化图片内容与风格](#neural-style-transfer-转化图片内容与风格)
   	- [Image Segmentation 图片分割目标像素与背景像素](#image-segmentation-图片分割目标像素与背景像素)
   	- [GraphDef 加载 InceptionV3 模型用于图片识别 Image Recognition](#graphdef-加载-inceptionv3-模型用于图片识别-image-recognition)
-  	- [How to Retrain an Image Classifier for New Categories](#how-to-retrain-an-image-classifier-for-new-categories)
-  	- [Advanced Convolutional Neural Networks](#advanced-convolutional-neural-networks)
-  - [Sequences](#sequences)
-  	- [Recurrent Neural Networks](#recurrent-neural-networks)
-  	- [Recurrent Neural Networks for Drawing Classification](#recurrent-neural-networks-for-drawing-classification)
-  	- [Simple Audio Recognition](#simple-audio-recognition)
-  	- [Neural Machine Translation seq2seq Tutorial](#neural-machine-translation-seq2seq-tutorial)
-  - [数据表示 data representation](#数据表示-data-representation)
-  	- [Vector Representations of Words](#vector-representations-of-words)
-  	- [Improving Linear Models Using Explicit Kernel Methods](#improving-linear-models-using-explicit-kernel-methods)
-  	- [Large-scale Linear Models with TensorFlow](#large-scale-linear-models-with-tensorflow)
-  - [Non ML](#non-ml)
-  	- [Mandelbrot set](#mandelbrot-set)
-  	- [Partial differential equations](#partial-differential-equations)
-  - [FOO](#foo)
-  	- [GOO](#goo)
-  	- [MNIST CNN classification model without estimators using lower-level TensorFlow operations](#mnist-cnn-classification-model-without-estimators-using-lower-level-tensorflow-operations)
-  	- [tf.estimator DNNClassifier 用于 Iris 数据集](#tfestimator-dnnclassifier-用于-iris-数据集)
-  	- [预测 Boston 房价的神经网络模型](#预测-boston-房价的神经网络模型)
 
   <!-- /TOC -->
 ***
 
 # Basic
+## 链接
+  - [Tensorflow Tutorials](https://www.tensorflow.org/tutorials/)
 ## TensorFlow Official Models
   - [TensorFlow Official Models](https://github.com/tensorflow/models/tree/master/official#tensorflow-official-models)
   - **依赖 Requirements**
@@ -211,6 +195,8 @@
   model.fit(x_train, y_train, epochs=5)
   model.evaluate(x_test, y_test)
   # [0.0712303157694405, 0.9791]
+
+  np.argmax(model.predict(x_test[:1])) # 7
   ```
 ## Keras 基本分类模型 Fasion MNIST 数据集
   - **Fashion MNIST dataset** 类似 MNIST 的数据集，包含 10 中类别的流行物品图片，每个样本包含一个 `28 * 28` 的图片
@@ -1167,11 +1153,16 @@
     print({ii: result[ii] for ii in ['accuracy', 'loss', 'precision', 'global_step']})
     # {'accuracy': 0.8543087, 'loss': 20.270975, 'precision': 0.738203, 'global_step': 20351}
     ```
-## Boosted trees
+## Estimators 使用 Boosted trees 分类 Higgs 数据集
   - [Classifying Higgs boson processes in the HIGGS Data Set](https://github.com/tensorflow/models/tree/master/official/boosted_trees)
   - [train_higgs_test.py using tf.test.TestCase](https://github.com/tensorflow/models/blob/master/official/boosted_trees/train_higgs_test.py)
-  -  Higgs boson processes 希格斯玻色子过程
-  - **tensorflow.contrib.estimator.boosted_trees_classifier_train_in_memory** Trains a boosted tree classifier with in memory dataset
+  - **Boosted Tree 算法**
+    - 通过不断添加一棵新的树作为 **弱分类器**，拟合上次预测的残差
+    - 每次添加树的节点，挑选一个最佳的特征分裂点，进行特征分裂
+    - 训练后得到的模型是多棵树，每棵树有若干叶子节点，每个叶子节点对一个分数
+    - 预测新样本时，根据这个样本的特征，在每棵树上会落到对应一个叶子节点，将得到的分数加起来作为预测值
+  - Higgs boson processes 希格斯玻色子过程
+  - **tf.contrib.estimator.boosted_trees_classifier_train_in_memory** Estimator 封装的 boosted tree 分类器，使用类似 `np.array` 的完全可以加载到内存的数据集
     ```py
     boosted_trees_classifier_train_in_memory(
         train_input_fn, feature_columns, model_dir=None, n_classes=<object object at 0x7fbf2a72c260>,
@@ -1180,19 +1171,17 @@
         min_node_weight=0.0, config=None, train_hooks=None, center_bias=False)
     ```
     ```python
-    bucketized_feature_1 = bucketized_column(
-      numeric_column('feature_1'), BUCKET_BOUNDARIES_1)
-    bucketized_feature_2 = bucketized_column(
-      numeric_column('feature_2'), BUCKET_BOUNDARIES_2)
+    bucketized_feature_1 = bucketized_column(numeric_column('feature_1'), BUCKET_BOUNDARIES_1)
+    bucketized_feature_2 = bucketized_column(numeric_column('feature_2'), BUCKET_BOUNDARIES_2)
 
     def train_input_fn():
-      dataset = create-dataset-from-training-data
-      # This is tf.data.Dataset of a tuple of feature dict and label.
-      #   e.g. Dataset.zip((Dataset.from_tensors({'f1': f1_array, ...}),
-      #                     Dataset.from_tensors(label_array)))
-      # The returned Dataset shouldn't be batched.
-      # If Dataset repeats, only the first repetition would be used for training.
-      return dataset
+        dataset = create-dataset-from-training-data
+        # This is tf.data.Dataset of a tuple of feature dict and label.
+        #   e.g. Dataset.zip((Dataset.from_tensors({'f1': f1_array, ...}),
+        #                     Dataset.from_tensors(label_array)))
+        # The returned Dataset shouldn't be batched.
+        # If Dataset repeats, only the first repetition would be used for training.
+        return dataset
 
     classifier = boosted_trees_classifier_train_in_memory(
         train_input_fn,
@@ -1202,184 +1191,186 @@
     )
 
     def input_fn_eval():
-      ...
-      return dataset
+        ...
+        return dataset
 
     metrics = classifier.evaluate(input_fn=input_fn_eval, steps=10)
     ```
-  ```py
-  URL_ROOT = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280"
-  INPUT_FILE = "HIGGS.csv.gz"
-  NPZ_FILE = "HIGGS.csv.gz.npz"  # numpy compressed file to contain "data" array.
+  - **下载希格斯玻色子 HIGGS 数据集**
+    - [UCI Machine Learning Repository: HIGGS Data Set](https://archive.ics.uci.edu/ml/datasets/HIGGS)
+    - 包含 11,000,000 个样本，每个样本 28 个特征，训练模型区分 **产生希格斯玻色子的信号过程** 与 **不产生希格斯玻色子的背景过程**
+    - 训练使用 **Gradient Boosted Trees** 算法作为分类器
+    ```py
+    import gzip
 
-  def download_higgs_data_and_save_npz(data_dir):
-      """Download higgs data and store as a numpy compressed file."""
-      input_url = os.path.join(URL_ROOT, INPUT_FILE)
-      np_filename = os.path.join(data_dir, NPZ_FILE)
-      if tf.gfile.Exists(np_filename):
-          print('Data already downloaded: {}'.format(np_filename))
-          return
+    URL_ROOT = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280"
+    INPUT_FILE = "HIGGS.csv.gz"
+    NPZ_FILE = "HIGGS.csv.gz.npz"  # numpy compressed file to contain "data" array.
 
-      tf.gfile.MkDir(data_dir)
-      try:
-          # 2.8 GB to download.
-          temp_filename, _ = urllib.request.urlretrieve(input_url)
-          # Reading and parsing 11 million csv lines takes 2~3 minutes.
-          with gzip.open(temp_filename, 'rb') as csv_file:
-              data = pd.read_csv(
-                  csv_file, dtype=np.fload32,
-                  name=['c%02d' % ii for ii in range(29)] # label + 28 features.
-              ).as_matrix()
-      finally:
-          tf.gfile.Remove(temp_filename)
+    def download_higgs_data_and_save_npz(data_dir):
+        """Download higgs data and store as a numpy compressed file."""
+        input_url = os.path.join(URL_ROOT, INPUT_FILE)
+        np_filename = os.path.join(data_dir, NPZ_FILE)
+        if tf.gfile.Exists(np_filename):
+            print('Data already downloaded: {}'.format(np_filename))
+            return
 
-      # Writing to temporary location then copy to the data_dir (0.8 GB).
-      f = tempfile.NamedTemporaryFile()
-      np.savez_compressed(f, data=data)
-      tf.gfile.Copy(f.name, np_filename)
-      print('Data saved to: {}'.format(np_filename))
-  ```
-  ```py
-  train_start = 0
-  train_count = 1000000
-  eval_start = 10000000
-  eval_count = 1000000
-  n_trees = 100
-  max_depth = 6
-  learning_rate = 0.1
-  data_dir = '/home/leondgarse/workspace/datasets'
+        tf.gfile.MkDir(data_dir)
+        try:
+            # 2.8 GB to download.
+            temp_filename, _ = urllib.request.urlretrieve(input_url)
+            # Reading and parsing 11 million csv lines takes 2~3 minutes.
+            with gzip.open(temp_filename, 'rb') as csv_file:
+                data = pd.read_csv(
+                    csv_file, dtype=np.fload32,
+                    name=['c%02d' % ii for ii in range(29)] # label + 28 features.
+                ).as_matrix()
+        finally:
+            tf.gfile.Remove(temp_filename)
 
-  def read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count):
-      npz_filename = os.path.join(data_dir, NPZ_FILE)
-      # gfile allows numpy to read data from network data sources as well.
-      with tf.gfile.Open(npz_filename, "rb") as npz_file:
-          with np.load(npz_file) as npz:
-              data = npz["data"]
-      return (data[train_start:train_start+train_count], data[eval_start:eval_start+eval_count])
+        # Writing to temporary location then copy to the data_dir (0.8 GB).
+        f = tempfile.NamedTemporaryFile()
+        np.savez_compressed(f, data=data)
+        tf.gfile.Copy(f.name, np_filename)
+        print('Data saved to: {}'.format(np_filename))
 
-  # This showcases how to make input_fn when the input data is available in the form of numpy arrays.
-  def make_inputs_from_np_arrays(features_np, label_np):
-    """Makes and returns input_fn and feature_columns from numpy arrays.
-    The generated input_fn will return tf.data.Dataset of feature dictionary and a
-    label, and feature_columns will consist of the list of
-    tf.feature_column.BucketizedColumn.
-    Note, for in-memory training, tf.data.Dataset should contain the whole data
-    as a single tensor. Don't use batch.
-    Args:
-      features_np: A numpy ndarray (shape=[batch_size, num_features]) for
-          float32 features.
-      label_np: A numpy ndarray (shape=[batch_size, 1]) for labels.
-    Returns:
-      input_fn: A function returning a Dataset of feature dict and label.
-      feature_names: A list of feature names.
-      feature_column: A list of tf.feature_column.BucketizedColumn.
-    """
-    num_features = features_np.shape[1]
-    features_np_list = np.split(features_np, num_features, axis=1)
-    # 1-based feature names.
-    feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
+    data_dir = os.path.expanduser('~/.keras/datasets')
+    download_higgs_data_and_save_npz(data_dir)
+    ```
+  - **定义训练 / 验证数据集**
+    - 训练使用数据集的前 1,000,000 个样本
+    - 验证使用数据集的后 1,000,000 个样本
+    ```py
+    train_start = 0
+    train_count = 1000000
+    eval_start = 10000000
+    eval_count = 1000000
 
-    # Create source feature_columns and bucketized_columns.
-    def get_bucket_boundaries(feature):
-      """Returns bucket boundaries for feature by percentiles."""
-      return np.unique(np.percentile(feature, range(0, 100))).tolist()
-    source_columns = [
-        tf.feature_column.numeric_column(
-            feature_name, dtype=tf.float32,
-            # Although higgs data have no missing values, in general, default
-            # could be set as 0 or some reasonable value for missing values.
-            default_value=0.0)
-        for feature_name in feature_names
-    ]
-    bucketized_columns = [
-        tf.feature_column.bucketized_column(
-            source_columns[i],
-            boundaries=get_bucket_boundaries(features_np_list[i]))
-        for i in range(num_features)
-    ]
+    def read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count):
+        npz_filename = os.path.join(data_dir, NPZ_FILE)
+        # gfile allows numpy to read data from network data sources as well.
+        with tf.gfile.Open(npz_filename, "rb") as npz_file:
+            with np.load(npz_file) as npz:
+                data = npz["data"]
+        return (data[train_start:train_start+train_count], data[eval_start:eval_start+eval_count])
 
-    # Make an input_fn that extracts source features.
-    def input_fn():
-      """Returns features as a dictionary of numpy arrays, and a label."""
-      features = {
-          feature_name: tf.constant(features_np_list[i])
-          for i, feature_name in enumerate(feature_names)
-      }
-      return tf.data.Dataset.zip((tf.data.Dataset.from_tensors(features),
-                                  tf.data.Dataset.from_tensors(label_np),))
+    train_data, eval_data = read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count)
+    ```
+  - **定义训练 input function 与 feature columns**
+    - `boosted_trees_classifier_train_in_memory` 使用整个数据集作为一个 batch
+    - `Dataset.from_tensors` 将 numpy arrays 转化为结构化的 tensors
+    - `Dataset.zip` 组合特征与标签
+    - 函数输入特征 `features_np` 维度为 `[batch_size, num_features]`，标签 `label_np` 维度为 `batch_size, 1]`
+    - 返回的 `input_fn` 包含字典格式的特征以及标签组成的 `tf.data.Dataset`
+    - 返回的 `feature_columns` 是 `tf.feature_column.BucketizedColumn` 的列表
+    ```py
+    # This showcases how to make input_fn when the input data is available in the form of numpy arrays.
+    def make_inputs_from_np_arrays(features_np, label_np):
+        num_features = features_np.shape[1]
+        features_np_list = np.split(features_np, num_features, axis=1)
+        # 1-based feature names.
+        feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
 
-  return input_fn, feature_names, bucketized_columns
-  def make_eval_inputs_from_np_arrays(features_np, label_np):
-    """Makes eval input as streaming batches."""
-    num_features = features_np.shape[1]
-    features_np_list = np.split(features_np, num_features, axis=1)
-    # 1-based feature names.
-    feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
+        # Create source feature_columns and bucketized_columns.
+        def get_bucket_boundaries(feature):
+            """Returns bucket boundaries for feature by percentiles."""
+            return np.unique(np.percentile(feature, range(0, 100))).tolist()
 
-    def input_fn():
-      features = {
-          feature_name: tf.constant(features_np_list[i])
-          for i, feature_name in enumerate(feature_names)
-      }
-      return tf.data.Dataset.zip((
-          tf.data.Dataset.from_tensor_slices(features),
-          tf.data.Dataset.from_tensor_slices(label_np),)).batch(1000)
+        source_columns = [
+            tf.feature_column.numeric_column(
+                feature_name, dtype=tf.float32,
+                # Although higgs data have no missing values, in general, default
+                # could be set as 0 or some reasonable value for missing values.
+                default_value=0.0)
+            for feature_name in feature_names
+        ]
+        bucketized_columns = [
+            tf.feature_column.bucketized_column(source_columns[i], boundaries=get_bucket_boundaries(features_np_list[i]))
+            for i in range(num_features)
+        ]
 
-    return input_fn
+        # Make an input_fn that extracts source features.
+        def input_fn():
+            """Returns features as a dictionary of numpy arrays, and a label."""
+            features = {feature_name: tf.constant(features_np_list[i]) for i, feature_name in enumerate(feature_names)}
+            return tf.data.Dataset.zip((tf.data.Dataset.from_tensors(features), tf.data.Dataset.from_tensors(label_np)))
 
+        return input_fn, feature_names, bucketized_columns
 
-  def _make_csv_serving_input_receiver_fn(column_names, column_defaults):
-    """Returns serving_input_receiver_fn for csv.
-    The input arguments are relevant to `tf.decode_csv()`.
-    Args:
-      column_names: a list of column names in the order within input csv.
-      column_defaults: a list of default values with the same size of
-          column_names. Each entity must be either a list of one scalar, or an
-          empty list to denote the corresponding column is required.
-          e.g. [[""], [2.5], []] indicates the third column is required while
-              the first column must be string and the second must be float/double.
-    Returns:
-      a serving_input_receiver_fn that handles csv for serving.
-    """
-    def serving_input_receiver_fn():
-      csv = tf.placeholder(dtype=tf.string, shape=[None], name="csv")
-      features = dict(zip(column_names, tf.decode_csv(csv, column_defaults)))
-      receiver_tensors = {"inputs": csv}
-      return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+    # Data consists of one label column followed by 28 feature columns.
+    train_input_fn, feature_names, feature_columns = make_inputs_from_np_arrays(
+            features_np=train_data[:, 1:], label_np=train_data[:, 0:1])
+    ```
+  - **定义验证 input function**
+    ```py
+    def make_eval_inputs_from_np_arrays(features_np, label_np):
+        """Makes eval input as streaming batches."""
+        num_features = features_np.shape[1]
+        features_np_list = np.split(features_np, num_features, axis=1)
+        # 1-based feature names.
+        feature_names = ["feature_%02d" % (i + 1) for i in range(num_features)]
 
-    return serving_input_receiver_fn
+        def input_fn():
+            features = {feature_name: tf.constant(features_np_list[i]) for i, feature_name in enumerate(feature_names)}
+            return tf.data.Dataset.zip((
+                        tf.data.Dataset.from_tensor_slices(features),
+                        tf.data.Dataset.from_tensor_slices(label_np),)).batch(1000)
 
-  train_data, eval_data = read_higgs_data(data_dir, train_start, train_count, eval_start, eval_count)
+        return input_fn
 
-  # Data consists of one label column followed by 28 feature columns.
-  train_input_fn, feature_names, feature_columns = make_inputs_from_np_arrays(
-      features_np=train_data[:, 1:], label_np=train_data[:, 0:1])
-  eval_input_fn = make_eval_inputs_from_np_arrays(
-  features_np=eval_data[:, 1:], label_np=eval_data[:, 0:1])
-  # Though BoostedTreesClassifier is under tf.estimator, faster in-memory
-  # training is yet provided as a contrib library.
-  classifier = tf.contrib.estimator.boosted_trees_classifier_train_in_memory(
-      train_input_fn,
-      feature_columns,
-      model_dir=flags_obj.model_dir or None,
-      n_trees=flags_obj.n_trees,
-      max_depth=flags_obj.max_depth,
-      learning_rate=flags_obj.learning_rate)
+    eval_input_fn = make_eval_inputs_from_np_arrays(
+            features_np=eval_data[:, 1:], label_np=eval_data[:, 0:1])
+    ```
+  - **模型定义与训练验证**
+    ```py
+    n_trees = 100
+    max_depth = 6
+    learning_rate = 0.1
 
-  # Evaluation.
-  eval_results = classifier.evaluate(eval_input_fn)
-  # Benchmark the evaluation results
-  benchmark_logger.log_evaluation_result(eval_results)
+    # Though BoostedTreesClassifier is under tf.estimator, faster in-memory
+    # training is yet provided as a contrib library.
+    classifier = tf.contrib.estimator.boosted_trees_classifier_train_in_memory(
+        train_input_fn,
+        feature_columns,
+        model_dir='/tmp/higgs_model',
+        n_trees=n_trees,
+        max_depth=max_depth,
+        learning_rate=learning_rate)
+    ```
+  - **模型导出**
+    ```py
+    def make_csv_serving_input_receiver_fn(column_names, column_defaults):
+        """Returns serving_input_receiver_fn for csv.
+        The input arguments are relevant to `tf.decode_csv()`.
+        Args:
+          column_names: a list of column names in the order within input csv.
+          column_defaults: a list of default values with the same size of
+              column_names. Each entity must be either a list of one scalar, or an
+              empty list to denote the corresponding column is required.
+              e.g. [[""], [2.5], []] indicates the third column is required while
+                  the first column must be string and the second must be float/double.
+        Returns:
+          a serving_input_receiver_fn that handles csv for serving.
+        """
+        def serving_input_receiver_fn():
+            csv = tf.placeholder(dtype=tf.string, shape=[None], name="csv")
+            features = dict(zip(column_names, tf.decode_csv(csv, column_defaults)))
+            receiver_tensors = {"inputs": csv}
+            return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
-  # Exporting the savedmodel with csv parsing.
-  if flags_obj.export_dir is not None:
+        return serving_input_receiver_fn
+
+    # Evaluation.
+    eval_results = classifier.evaluate(eval_input_fn)
+
+    # Exporting the savedmodel with csv parsing.
     classifier.export_savedmodel(
-        flags_obj.export_dir,
-        _make_csv_serving_input_receiver_fn(
-            column_names=feature_names,
-            # columns are all floats.
-            column_defaults=[[0.0]] * len(feature_names)))
-  ```
+          '/tmp/higgs_boosted_trees_saved_model',
+          make_csv_serving_input_receiver_fn(
+              column_names=feature_names,
+              # columns are all floats.
+              column_defaults=[[0.0]] * len(feature_names)))
+    ```
 ## Estimators DNNClassifier 与 TF Hub module embedding 进行文本分类
   - **[TensorFlow Hub](https://www.tensorflow.org/hub/)**
     - Google 提供的机器学习分享平台，将 TensorFlow 的训练模型发布成模组
@@ -5446,857 +5437,4 @@
     classify_image(os.path.join(dest_path, 'cropped_panda.jpg'))
     ```
     ![](images/tensorflow_imagenet_recognise.png)
-## How to Retrain an Image Classifier for New Categories
-  - [How to Retrain an Image Classifier for New Categories](https://www.tensorflow.org/hub/tutorials/image_retraining)
-  - https://codelabs.developers.google.com/codelabs/tensorflow-for-poets/
-  ```py
-  import tensorflow_hub as hub
-
-  hub_module = 'https://tfhub.dev/google/imagenet/inception_v3/feature_vector/1'
-  module = hub.Module(hub_module)
-  ```
-  **测试**
-  ```py
-  height, width = hub.get_expected_image_size(module)
-
-  image_file = './datasets/flower_photos/daisy/100080576_f52e8ee070_n.jpg'
-  images = tf.gfile.FastGFile(image_file, 'rb').read()
-  images = tf.image.decode_jpeg(images)
-
-  sess = tf.InteractiveSession()
-  images.eval().shape
-
-  imm = tf.image.resize_images(images, (height, width))
-  imm = tf.expand_dims(imm, 0)  # A batch of images with shape [batch_size, height, width, 3].
-  plt.imshow(imm[0].eval().astype('int'))
-
-  tf.global_variables_initializer().run()
-  features = module(imm).eval()  # Features with shape [batch_size, num_features].
-  print(features.shape)
-  # (1, 2048)
-  ```
-  ```py
-  def jpeg_decoder_layer(module_spec):
-      height, width = hub.get_expected_image_size(module_spec)
-      input_depth = hub.get_num_image_channels(module_spec)
-      jpeg_data = tf.placeholder(tf.string, name='DecodeJPGInput')
-      imm = tf.image.decode_jpeg(jpeg_data, channels=input_depth)
-
-      imm = tf.image.convert_image_dtype(imm, dtype=tf.float32)
-      imm = tf.expand_dims(imm, 0)
-      imm = tf.image.resize_images(images, (height, width))
-
-      return jpeg_data, imm
-  ```
-  **测试**
-  ```py
-  jj, ii = jpeg_decoder_layer(module)
-  tt = sess.run(ii, {jj: tf.gfile.FastGFile(image_file, 'rb').read()})
-  print(tt.shape)
-  # (299, 299, 3)
-  ```
-  ```py
-  CLASS_COUNT = 5
-  def add_classifier_op(class_count, bottleneck_module, is_training, learning_rate=0.01):
-      height, width = hub.get_expected_image_size(bottleneck_module)
-      resized_input_tensor = tf.placeholder(tf.float32, [None, height, width, 3])
-      bottleneck_tensor = bottleneck_module(resized_input_tensor)
-      batch_size, bottleneck_out = bottleneck_tensor.get_shape().as_list()  # None, 2048
-
-      # Add a fully connected layer and a softmax layer
-      with tf.name_scope('input'):
-          bottleneck_input = tf.placeholder_with_default(bottleneck_tensor, shape=[batch_size, bottleneck_out], name='BottleneckInputPlaceholder')
-          target_label = tf.placeholder(tf.int64, [batch_size], name='GroundTruthInput')
-
-      with tf.name_scope('final_retrain_ops'):
-          with tf.name_scope('weights'):
-              init_value = tf.truncated_normal([bottleneck_out, class_count], stddev=0.001)
-              weights = tf.Variable(init_value, name='final_weights')
-          with tf.name_scope('biases'):
-              biases = tf.Variable(tf.zeros([class_count]), name='final_biases')
-          with tf.name_scope('dense'):
-              logits = tf.matmul(bottleneck_input, weights) + biases
-
-      final_tensor = tf.nn.softmax(logits, name='final_result')
-
-      # The tf.contrib.quantize functions rewrite the graph in place for
-      # quantization. The imported model graph has already been rewritten, so upon
-      # calling these rewrites, only the newly added final layer will be
-      # transformed.
-      if is_training:
-          tf.contrib.quantize.create_training_graph()
-      else:
-          tf.contrib.quantize.create_eval_graph()
-
-      # If this is an eval graph, we don't need to add loss ops or an optimizer.
-      if not is_training:
-          return None, None, bottleneck_input, target_label, final_tensor
-
-      with tf.name_scope('cross_entropy'):
-          cross_entropy_mean = tf.losses.sparse_softmax_cross_entropy(labels=target_label, logits=logits)
-
-      with tf.name_scope('train'):
-          optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-          train_step = optimizer.minimize(cross_entropy_mean)
-
-      return (train_step, cross_entropy_mean, bottleneck_input, target_label, final_tensor)
-  ```
-  ```py
-  flower_url = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
-  train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(flower_url), origin=flower_url)
-
-  def load_image_train_test(data_path, test_rate=10):
-      rr = {}
-      for sub_dir_name in tf.gfile.ListDirectory(data_path):
-          sub_dir = os.path.join(data_path, sub_dir_name)
-          print(sub_dir)
-          if not tf.gfile.IsDirectory(sub_dir):
-              continue
-
-          item_num = len(tf.gfile.ListDirectory(sub_dir))
-
-          train_dd = []
-          test_dd = []
-          for item_name in tf.gfile.ListDirectory(sub_dir):
-              hash_name_hashed = hashlib.sha1(tf.compat.as_bytes(item_name)).hexdigest()
-              percentage_hash = int(hash_name_hashed, 16) % (item_num + 1) * (100 / item_num)
-              if percentage_hash < 10:
-                  test_dd.append(os.path.join(sub_dir, item_name))
-              else:
-                  train_dd.append(os.path.join(sub_dir, item_name))
-          rr[sub_dir_name] = {'train': train_dd, 'test': test_dd}
-
-      return rr
-  ```
-## Advanced Convolutional Neural Networks
-  - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
-  - [tensorflow/models/tutorials/image/cifar10/](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10/)
-  - [tensorflow/models/tutorials/image/cifar10_estimator/](https://github.com/tensorflow/models/tree/master/tutorials/image/cifar10_estimator)
-***
-
-# Sequences
-## Recurrent Neural Networks
-  - [Recurrent Neural Networks](https://www.tensorflow.org/tutorials/sequences/recurrent)
-  - [tensorflow/models/tutorials/rnn/ptb/](https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb)
-## Recurrent Neural Networks for Drawing Classification
-  - [Recurrent Neural Networks for Drawing Classification](https://www.tensorflow.org/tutorials/sequences/recurrent_quickdraw)
-  - [tensorflow/models/tutorials/rnn/quickdraw/](https://github.com/tensorflow/models/tree/master/tutorials/rnn/quickdraw)
-## Simple Audio Recognition
-  - [Simple Audio Recognition](https://www.tensorflow.org/tutorials/sequences/audio_recognition)
-  - [tensorflow/tensorflow/examples/speech_commands/](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/speech_commands)
-## Neural Machine Translation seq2seq Tutorial
-  - [tensorflow/nmt](https://github.com/tensorflow/nmt)
-***
-
-# 数据表示 data representation
-## Vector Representations of Words
-## Improving Linear Models Using Explicit Kernel Methods
-## Large-scale Linear Models with TensorFlow
-***
-
-# Non ML
-## Mandelbrot set
-## Partial differential equations
-***
-
-# FOO
-## GOO
-  - [TensorFlow Hub](https://www.tensorflow.org/hub/)
-  - [Advanced Convolutional Neural Networks](https://www.tensorflow.org/tutorials/images/deep_cnn)
-  - [基于字符的LSTM+CRF中文实体抽取](https://github.com/jakeywu/chinese_ner)
-  - [Matplotlib tutorial](http://www.labri.fr/perso/nrougier/teaching/matplotlib/)
-  - [TensorFlow 实战电影个性化推荐](https://blog.csdn.net/chengcheng1394/article/details/78820529)
-  - [TensorRec](https://github.com/jfkirk/tensorrec)
-  - [Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course/ml-intro)
-  - [Getting started with the Keras functional API](https://keras.io/getting-started/functional-api-guide/)
-  class MModel(tensorflow.python.keras.engine.training.Model)
-   |  `Model` groups layers into an object with training and inference features.
-   |  
-   |  There are two ways to instantiate a `Model`:
-   |  
-   |  1 - With the "functional API", where you start from `Input`,
-   |  you chain layer calls to specify the model's forward pass,
-   |  and finally you create your model from inputs and outputs:
-   |  
-   |  ```python
-   |  import tensorflow as tf
-   |  
-   |  inputs = tf.keras.Input(shape=(3,))
-   |  x = tf.keras.layers.Dense(4, activation=tf.nn.relu)(inputs)
-   |  outputs = tf.keras.layers.Dense(5, activation=tf.nn.softmax)(x)
-   |  model = tf.keras.Model(inputs=inputs, outputs=outputs)
-   |  ```
-   |  
-   |  2 - By subclassing the `Model` class: in that case, you should define your
-   |  layers in `__init__` and you should implement the model's forward pass
-   |  in `call`.
-   |  
-   |  ```python
-   |  import tensorflow as tf
-   |  
-   |  class MyModel(tf.keras.Model):
-   |  
-   |    def __init__(self):
-   |      self.dense1 = tf.keras.layers.Dense(4, activation=tf.nn.relu)
-   |      self.dense2 = tf.keras.layers.Dense(5, activation=tf.nn.softmax)
-   |  
-   |    def call(self, inputs):
-   |      x = self.dense1(inputs)
-   |      return self.dense2(x)
-   |  
-   |  model = MyModel()
-   |  ```
-   |  If you subclass `Model`, you can optionally have
-   |  a `training` argument (boolean) in `call`, which you can use to specify
-   |  a different behavior in training and inference:
-   |  
-   |  ```python
-   |  import tensorflow as tf
-   |  
-   |  class MyModel(tf.keras.Model):
-   |  
-   |    def __init__(self):
-   |      self.dense1 = tf.keras.layers.Dense(4, activation=tf.nn.relu)
-   |      self.dense2 = tf.keras.layers.Dense(5, activation=tf.nn.softmax)
-   |      self.dropout = tf.keras.layers.Dropout(0.5)
-   |  
-   |    def call(self, inputs, training=False):
-   |      x = self.dense1(inputs)
-   |      if training:
-   |        x = self.dropout(x, training=training)
-   |      return self.dense2(x)
-   |  
-   |  model = MyModel()
-   |  ```
-  ```py
-  from threading import Thread
-  from urllib.request import urlretrieve
-
-  class Downloader(Thread):
-      def __init__(self, file_url, save_path):
-          super(Downloader, self).__init__()
-          self.file_url = file_url
-          self.save_path = save_path
-
-      def run(self):
-          urlretrieve(self.file_url, self.save_path)
-
-
-  Downloader('http://example.com/test1.zip', "C:\Test\test1.zip").start()
-  Downloader('http://example.com/test2.zip', "C:\Test\test2.zip").start()
-
-  from multiprocessing import Pool
-
-  def addd(args):
-      x = args[0]
-      y = args[1]
-      return np.add(x, y)
-
-  p = Pool(5)
-  print(p.map(addd, [(1, 2), (2, 3), (3, 4)]))
-  # [3, 5, 7]
-
-  from multiprocessing import Process, Value, Array
-
-  def f(n, a):
-      n.value = 3.1415927
-      for i in range(len(a)):
-          a[i] = -a[i]
-
-  if __name__ == '__main__':
-      num = Value('d', 0.0)
-      arr = Array('i', range(10))
-
-      p = Process(target=f, args=(num, arr))
-      p.start()
-      p.join()
-
-      print num.value
-      print arr[:]
-
-  def image_downloader(aa):
-      return urlretrieve(aa[1], aa[0])
-
-  def multi_download(download_dict, thread_num=50):
-      import time
-      import threading
-      from urllib.request import urlretrieve
-      from multiprocessing import Pool
-
-      dd = list(download_dict.items())
-      pp = Pool(thread_num)
-      for ii in range(0, len(dd), thread_num):
-          start = time.time()
-          print('Downloading images {} - {}'.format(ii, ii + thread_num))
-          tt = dd[ii: ii + thread_num]
-          pp.map(image_downloader, tt)
-          print ('Time taken for downloading {} images: {:.2f} sec\n'.format(thread_num, time.time() - start))
-
-  def multi_download(download_dict, thread_num=50):
-      import time
-      import threading
-      from urllib.request import urlretrieve
-      import tensorflow as tf
-
-      dd = list(download_dict.items())
-      coord = tf.train.Coordinator()
-      for ii in range(0, len(dd), thread_num):
-          start = time.time()
-          print('Downloading images {} - {}'.format(ii, ii + thread_num))
-          tt = dd[ii: ii + thread_num]
-          threads = [threading.Thread(target=urlretrieve, args=(iuu, imm)) for imm, iuu in tt]
-          for itt in threads:
-              itt.start()
-
-          coord.join(threads)
-          print ('Time taken for downloading {} images: {:.2f} sec\n'.format(thread_num, time.time() - start))
-  ```
-  ```py
-  import numpy as np
-  from matplotlib import pyplot as plt
-  from matplotlib import animation
-
-  fig = plt.figure()
-  data = np.random.random((255, 255))
-  im = plt.imshow(data, cmap='gray')
-
-  # animation function.  This is called sequentially
-  def animate(i):
-      data = np.random.random((255, 255))
-      im.set_array(data)
-      return [im]
-
-  anim = animation.FuncAnimation(fig, animate, frames=200, interval=60, blit=True)
-  plt.show()
-  anim.save('rain.gif', writer='imagemagick', fps=30, dpi=40)
-  ```
-  ```py
-  import inspect
-  print(inspect.getsource(inspect.getsource))
-  ```
-  ```py
-  print(os.path.expanduser("~"))
-  # /home/leondgarse
-
-  print(os.environ['HOME'])
-  # /home/leondgarse
-  ```
-  ```py
-  def get_zip_file(fname, origin, extract=True):
-      import requests
-      import zipfile
-      import io
-      import os
-
-      fname = os.path.join(os.environ['HOME'], '.keras/datasets', filename)
-      if not tf.gfile.Exists(fn):
-          resp = requests.get(origin)
-          # ff = zipfile.ZipFile(io.BytesIO(resp.content), 'r')
-          open(fn, 'wb').write(resp.content)
-
-      if extract:
-          ff = zipfile.ZipFile(fn, 'r')
-          ff.extractall(fname[0:-4])
-
-      return os.path.abspath(fname)
-
-  path_to_zip = get_zip_file('spa-eng.zip', 'http://www.manythings.org/anki/spa-eng.zip')
-  ```
-  ![](images/opt1.gif)
-## MNIST CNN classification model without estimators using lower-level TensorFlow operations
-  - **权重初始化 Weight Initialization** 初始化时加入少量的噪声，以 **打破对称性 Symmetry Breaking** 以及避免倒数为 0
-    ```python
-    def weight_variable(shape):
-        initial = tf.truncated_normal(shape, stddev=0.1)
-        return tf.Variable(initial)
-    ```
-  - **偏差初始化 Bias Initialization** 使用 **ReLU 神经元 neurons** 时，应将 bias 初始化成一组很小的正值，以避免神经元节点输出恒为0 dead neurons
-    ```python
-    def bias_variable(shape):
-        initial = tf.constant(0.1, shape=shape)
-        return tf.Variable(initial)
-    ```
-  - **卷积和池化 Convolution and Pooling** TensorFlow 在卷积和池化上有很强的灵活性，包括确定 **边界 boundaries** / **步长 stride size**
-    ```python
-    # 卷积 Convolution 使用步长 stride = 1, 边距 padded = 0，保证输出的大小与输入相同
-    def conv2d(x, W):
-        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-    # 池化 Pooling 使用传统的 2x2 大小的模板做 max pooling
-    def max_pool_2x2(x):
-        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME')
-    ```
-  - **第一层卷积 First Convolutional Layer** 由一个卷积接一个 max pooling 完成
-    - 卷积在每个 5x5 的 patch 中算出 **32 个特征**
-    - 卷积的权重形状是 [5, 5, 1, 32]，前两个维度是patch的大小，后两个维度是 [输入的通道数目, 输出的通道数目]
-    - 对于每一个输出通道都有一个对应的偏置量 bias
-    ```python
-    W_conv1 = weight_variable([5, 5, 1, 32])
-    b_conv1 = bias_variable([32])
-    ```
-  - 为了应用这一层，将 x 转换为一个 **4维tensor** 其中 2 / 3 维对应图片的宽 / 高，最后一维代表图片的颜色通道数，灰度图通道数为1，rgb彩色图为3
-    ```python
-    x_image = tf.reshape(x, [-1,28,28,1])
-    ```
-    将 **x_image** 与 **权重向量 weight** 进行卷积，加上 **偏置项 bias**，然后应用 **ReLU 激活函数**，最后进行 **max pooling**
-    ```python
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-    # max_pool_2x2 将图片大小缩减到 14x14
-    h_pool1 = max_pool_2x2(h_conv1)
-    ```
-  - **第二层卷积 Second Convolutional Layer** 几个类似的层堆叠起来，构建一个更深的网络，第二层中每个 5x5 的 patch 计算出 **64 个特征**
-    ```python
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
-
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-    # 图片大小缩减到 7x7
-    h_pool2 = max_pool_2x2(h_conv2)
-    ```
-  - **密集连接层 Densely Connected Layer** 现在图片尺寸减小到 7x7，加入一个有1024个神经元的全连接层，用于处理整个图片
-    ```python
-    # 将第二层池化的结果向量转置 reshape
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
-
-    # 乘上权重矩阵，加上偏置，然后对其使用ReLU
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
-    b_fc1 = bias_variable([1024])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
-    ```
-  - **Dropout 减小过拟合 overfitting** 输出层 readout layer 之前加入 dropout
-    - 使用一个 placeholder 来表示 **在 dropout 层一个神经元的输出保持不变的概率**，这样可以 **在训练过程中启用dropout，在测试过程中关闭dropout**
-    - TensorFlow的 **tf.nn.dropout方法** 除了可以屏蔽神经元的输出，还可以自动处理神经元输出值的 **定比 scale**，因此 dropout 不需要额外的 scaling
-    ```python
-    keep_prob = tf.placeholder(tf.float32)
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-    ```
-  - **输出层 Readout Layer** 类似于 softmax regression 的输出层
-    ```python
-    W_fc2 = weight_variable([1024, 10])
-    b_fc2 = bias_variable([10])
-
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
-    ```
-  - **训练和评估模型 Train and Evaluate the Model** 类似于单层 SoftMax 的测试 / 评估方法，区别在于
-    - 使用更复杂的 **ADAM 优化器** 代替梯度最速下降 steepest gradient descent optimizer
-    - 在 feed_dict 中加入额外的 **参数 keep_prob 控制 dropout 比例**
-    - 每 100 次迭代输出一次日志
-    ```python
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        for i in range(20000):
-            batch = mnist.train.next_batch(50)
-            if i % 100 == 0:
-                train_accuracy = accuracy.eval(feed_dict={
-                    x: batch[0], y_: batch[1], keep_prob: 1.0})
-                print('step %d, training accuracy %g' % (i, train_accuracy))
-            train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
-        print('test accuracy %g' % accuracy.eval(feed_dict={
-            x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
-    ```
-  - **完整代码**
-    - [mnist_deep.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/mnist/mnist_deep.py)
-    ```python
-    # Weight Initialization
-    def weight_variable(shape):
-        initial = tf.truncated_normal(shape, stddev=0.1)
-        return tf.Variable(initial)
-    # bias Initialization
-    def bias_variable(shape):
-        initial = tf.constant(0.1, shape=shape)
-        return tf.Variable(initial)
-
-    # 卷积 Convolution 使用步长 stride = 1, 边距 padded = 0，保证输出的大小与输入相同
-    def conv2d(x, W):
-        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-    # 池化 Pooling 使用传统的 2x2 大小的模板做 max pooling
-    def max_pool_2x2(x):
-        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME')
-    # Dataset
-    from tensorflow.examples.tutorials.mnist import input_data
-    mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
-    x = tf.placeholder(tf.float32, shape=[None, 784])
-    y_ = tf.placeholder(tf.float32, shape=[None, 10])
-
-    # First Convolutional Layer
-    W_conv1 = weight_variable([5, 5, 1, 32])
-    b_conv1 = bias_variable([32])
-    x_image = tf.reshape(x, [-1,28,28,1])
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-    # max_pool_2x2 将图片大小缩减到 14x14
-    h_pool1 = max_pool_2x2(h_conv1)
-
-    # Second Convolutional Layer
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-    # 图片大小缩减到 7x7
-    h_pool2 = max_pool_2x2(h_conv2)
-
-    # Densely Connected Layer
-    # 将第二层池化的结果向量转置 reshape
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
-    # 乘上权重矩阵，加上偏置，然后对其使用ReLU
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
-    b_fc1 = bias_variable([1024])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
-
-    # Dropout
-    keep_prob = tf.placeholder(tf.float32)
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
-    # Readout Layer
-    W_fc2 = weight_variable([1024, 10])
-    b_fc2 = bias_variable([10])
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
-
-    # Train and Evaluate the Model
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)
-    cross_entropy = tf.reduce_mean(cross_entropy)
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-    correct_prediction = tf.cast(correct_prediction, tf.float32)
-    accuracy = tf.reduce_mean(correct_prediction)
-
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        for i in range(20000):
-            batch = mnist.train.next_batch(50)
-            if i % 100 == 0:
-                train_accuracy = accuracy.eval(feed_dict={
-                    x: batch[0], y_: batch[1], keep_prob: 1.0})
-                print('step %d, training accuracy %g' % (i, train_accuracy))
-            train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-
-        print('test accuracy %g' % accuracy.eval(feed_dict={
-            x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
-    ```
-    运行结果
-    ```python
-    step 19900, training accuracy 1
-    test accuracy 0.9922
-    ```
-    最终测试集上的准确率大概是 99.2%
-## tf.estimator DNNClassifier 用于 Iris 数据集
-  - 使用 Iris 数据集，该数据集随机分割成两个 csv 文件
-    - 训练数据集，120 个样本
-    - 测试数据集，30 个样本
-  - **导入模块 / 数据集**
-    ```python
-    from __future__ import absolute_import
-    from __future__ import division
-    from __future__ import print_function
-
-    import os
-    import urllib
-
-    import tensorflow as tf
-    import numpy as np
-
-    IRIS_TRAINING = "iris_training.csv"
-    IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
-
-    IRIS_TEST = "iris_test.csv"
-    IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
-
-    if not os.path.exists(IRIS_TRAINING):
-        raw = urllib.request.urlopen(IRIS_TRAINING_URL).read()
-        raw = raw.decode()
-        with open(IRIS_TRAINING,'w') as f:
-            f.write(raw)
-
-    if not os.path.exists(IRIS_TEST):
-        raw = urllib.request.urlopen(IRIS_TEST_URL).read()
-        raw = raw.decode()
-        with open(IRIS_TEST,'w') as f:
-            f.write(raw)
-    ```
-  - **learn.datasets.base.load_csv_with_header 方法加载csv文件**，需要三个参数
-    - **文件名 filename** 指向 CSV 文件
-    - **目标值类型 target_dtype** 数据集中目标值 target 的类型
-    - **特征值类型 features_dtype** 数据集中特征值 feature 的类型
-    ```python
-    # Load datasets.
-    training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TRAINING,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-    test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TEST,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-    ```
-  - **tf.contrib.learn** 中的数据集是 **命名元组 named tuples**，通过 **data** 与 **target** 域可以访问数据集的特征值与目标值
-    ```python
-    training_set.data.shape
-    Out[3]: (120, 4)
-
-    training_set.target.shape
-    Out[4]: (120,)
-
-    training_set.data[:3]
-    Out[6]:
-    array([[ 6.4000001 ,  2.79999995,  5.5999999 ,  2.20000005],
-           [ 5.        ,  2.29999995,  3.29999995,  1.        ],
-           [ 4.9000001 ,  2.5       ,  4.5       ,  1.70000005]], dtype=float32)
-
-    training_set.target[:3]
-    Out[7]: array([2, 1, 2])
-    ```
-  - **构造深度神经网络分类模型 Deep Neural Network Classifier** tf.estimator 提供多种预定义的模型用于训练 / 评估，称为 **Estimators**
-    - **tf.feature_column.numeric_column** 定义特征列为数字类型，每一项数据有 4 个特征
-    - 使用 **tf.estimator.DNNClassifier** Deep Neural Network Classifier model
-      - **feature_columns** 特征列
-      - **hidden_units** 隐含层，分别定义每一层的神经元数量
-      - **n_classes** 目标值数量
-      - **model_dir** 模型训练中的数据以及 TensorBoard 的结果目录
-    ```python
-    # Specify that all features have real-value data
-    feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
-
-    # Build 3 layer DNN with 10, 20, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                            hidden_units=[10, 20, 10],
-                                            n_classes=3,
-                                            model_dir="/tmp/iris_model")
-    ```
-  - **定义输入的 pipeline** tf.estimator API 使用 **输入功能 input function** 为模型提供数据，**tf.estimator.inputs.numpy_input_fn** 用于定义输入的 pipeline
-    ```python
-    # Define the training inputs
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(training_set.data)},
-        y=np.array(training_set.target),
-        num_epochs=None,
-        shuffle=True)
-    ```
-  - **DNNClassifier 模型训练 fit** 使用模型的 train 方法，train_input_fn 作为 input_fn
-    ```python
-    # Train model.
-    classifier.train(input_fn=train_input_fn, steps=2000)
-    # The state of the model is preserved in the classifier
-    # which means you can train iteratively if you like
-    # For example, the above is equivalent to the following
-    # classifier.train(input_fn=train_input_fn, steps=1000)
-    # classifier.train(input_fn=train_input_fn, steps=1000)
-    ```
-  - **评估模型准确率 Evaluate Model Accuracy** 使用 **evaluate 方法** 在测试数据集上验证模型准确率
-    ```python
-    # Define the test inputs
-    test_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(test_set.data)},
-        y=np.array(test_set.target),
-        num_epochs=1,
-        shuffle=False)
-
-    # Evaluate accuracy.
-    accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
-
-    print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
-    ```
-    运行结果
-    ```python
-    Test Accuracy: 0.966667
-    ```
-    其中参数中的 **num_epochs=1** 指定 test_input_fn 遍历数据一次，然后抛出异常 **OutOfRangeError**，该异常通知分类器停止评估
-  - **分类新数据 Classify New Samples** 模型的 **predict 方法** 用于分类新数据
-    ```python
-    # Classify two new flower samples.
-    new_samples = np.array(
-        [[6.4, 3.2, 4.5, 1.5],
-         [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
-    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": new_samples},
-        num_epochs=1,
-        shuffle=False)
-
-    predictions = list(classifier.predict(input_fn=predict_input_fn))
-    predicted_classes = [p["classes"] for p in predictions]
-
-    print(
-        "New Samples, Class Predictions:    {}\n"
-        .format(predicted_classes))
-    ```
-    运行结果
-    ```python
-    New Samples, Class Predictions:    [array([b'1'], dtype=object), array([b'2'], dtype=object)]
-    ```
-  - **完整代码**
-    ```python
-    from __future__ import absolute_import
-    from __future__ import division
-    from __future__ import print_function
-
-    import os
-    import urllib
-
-    import tensorflow as tf
-    import numpy as np
-
-    IRIS_TRAINING = "iris_training.csv"
-    IRIS_TRAINING_URL = "http://download.tensorflow.org/data/iris_training.csv"
-
-    IRIS_TEST = "iris_test.csv"
-    IRIS_TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
-
-    if not os.path.exists(IRIS_TRAINING):
-        raw = urllib.request.urlopen(IRIS_TRAINING_URL).read()
-        raw = raw.decode()
-        with open(IRIS_TRAINING,'w') as f:
-            f.write(raw)
-
-    if not os.path.exists(IRIS_TEST):
-        raw = urllib.request.urlopen(IRIS_TEST_URL).read()
-        raw = raw.decode()
-        with open(IRIS_TEST,'w') as f:
-            f.write(raw)
-
-    # Load datasets.
-    training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TRAINING,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-    test_set = tf.contrib.learn.datasets.base.load_csv_with_header(
-        filename=IRIS_TEST,
-        target_dtype=np.int,
-        features_dtype=np.float32)
-
-    # Specify that all features have real-value data
-    feature_columns = [tf.feature_column.numeric_column("x", shape=[4])]
-
-    # Build 3 layer DNN with 10, 20, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                              hidden_units=[10, 20, 10],
-                              n_classes=3,
-                              model_dir="/tmp/iris_model")
-
-    # Define the training inputs
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(training_set.data)},
-        y=np.array(training_set.target),
-        num_epochs=None,
-        shuffle=True)
-
-    # Train model.
-    classifier.train(input_fn=train_input_fn, steps=2000)
-
-    # Define the test inputs
-    test_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": np.array(test_set.data)},
-        y=np.array(test_set.target),
-        num_epochs=1,
-        shuffle=False)
-
-    # Evaluate accuracy.
-    accuracy_score = classifier.evaluate(input_fn=test_input_fn)["accuracy"]
-
-    print("\nTest Accuracy: {0:f}\n".format(accuracy_score))
-
-    # Classify two new flower samples.
-    new_samples = np.array(
-        [[6.4, 3.2, 4.5, 1.5],
-         [5.8, 3.1, 5.0, 1.7]], dtype=np.float32)
-    predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": new_samples},
-        num_epochs=1,
-        shuffle=False)
-
-    predictions = list(classifier.predict(input_fn=predict_input_fn))
-    predicted_classes = [p["classes"] for p in predictions]
-
-    print(
-        "New Samples, Class Predictions:    {}\n"
-        .format(predicted_classes))
-    ```
-## 预测 Boston 房价的神经网络模型
-  - [boston.py](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/input_fn/boston.py)
-  - [boston_train.csv](download.tensorflow.org/data/boston_train.csv)
-  - [boston_test.csv](download.tensorflow.org/data/boston_test.csv)
-  - [boston_predict.csv](download.tensorflow.org/data/boston_predict.csv)
-  - 特征
-    ```markdown
-    | Feature | Description                                                     |
-    | ------- | --------------------------------------------------------------- |
-    | CRIM    | Crime rate per capita                                           |
-    | ZN      | Fraction of residential land zoned to permit 25,000+ sq ft lots |
-    | INDUS   | Fraction of land that is non-retail business                    |
-    | NOX     | Concentration of nitric oxides in parts per 10 million          |
-    | RM      | Average Rooms per dwelling                                      |
-    | AGE     | Fraction of owner-occupied residences built before 1940         |
-    | DIS     | Distance to Boston-area employment centers                      |
-    | TAX     | Property tax rate per $10,000                                   |
-    | PTRATIO | Student-teacher ratio                                           |
-    ```
-  - 预测的目标值 median value MEDV
-  - 加载数据集，并将 log 等级设置为 INFO
-    ```python
-    from __future__ import absolute_import
-    from __future__ import division
-    from __future__ import print_function
-
-    import itertools
-    import pandas as pd
-    import tensorflow as tf
-
-    tf.logging.set_verbosity(tf.logging.INFO)
-
-    COLUMNS = ["crim", "zn", "indus", "nox", "rm", "age",
-               "dis", "tax", "ptratio", "medv"]
-    FEATURES = ["crim", "zn", "indus", "nox", "rm",
-                "age", "dis", "tax", "ptratio"]
-    LABEL = "medv"
-
-    training_set = pd.read_csv("boston_train.csv", skipinitialspace=True,
-                               skiprows=1, names=COLUMNS)
-    test_set = pd.read_csv("boston_test.csv", skipinitialspace=True,
-                           skiprows=1, names=COLUMNS)
-    prediction_set = pd.read_csv("boston_predict.csv", skipinitialspace=True,
-                                 skiprows=1, names=COLUMNS)
-    ```
-  - 定义 FeatureColumns，创建回归模型 Regressor
-    ```python
-    feature_cols = [tf.feature_column.numeric_column(k) for k in FEATURES]
-    regressor = tf.estimator.DNNRegressor(feature_columns=feature_cols,
-                                        hidden_units=[10, 10],
-                                        model_dir="/tmp/boston_model")
-    ```
-  - 定义输入功能 input_fn
-    - 参数 data_set，可以用于training_set / test_set / prediction_set
-    - 参数 num_epochs，控制数据集迭代的次数，用于训练时置为 None，表示不限迭代次数，评估与预测时，置为1
-    - 参数 shuffle，是否进行数据混洗，用于训练时置为 True，评估与预测时置为 False
-    ```python
-    def get_input_fn(data_set, num_epochs=None, shuffle=True):
-      tf.estimator.inputs.pandas_input_fn(
-        x=pd.DataFrame({k: data_set[k].values for k in FEATURES}),
-        y = pd.Series(data_set[LABEL].values),
-        num_epochs=num_epochs,
-        shuffle=shuffle)
-    ```
-  - 模型训练
-    ```python
-    regressor.train(input_fn=get_input_fn(training_set), steps=5000)
-    ```
-  - 模型评估
-    ```python
-    ev = regressor.evaluate(
-      input_fn=get_input_fn(test_set, num_epochs=1, shuffle=False))
-    loss_score = ev["loss"]
-    print("Loss: {0:f}".format(loss_score))
-    # Loss: 1608.965698
-    ```
-  - 预测
-    ```python
-    y = regressor.predict(
-        input_fn=get_input_fn(prediction_set, num_epochs=1, shuffle=False))
-    # .predict() returns an iterator of dicts; convert to a list and print
-    # predictions
-    predictions = list(p["predictions"][0] for p in itertools.islice(y, 6))
-    print("Predictions: {}".format(str(predictions)))
-    ```
-    运行结果
-    ```python
-    Predictions: [35.306267, 18.697575, 24.233162, 35.991249, 16.141064, 20.229273]
-    ```
 ***
