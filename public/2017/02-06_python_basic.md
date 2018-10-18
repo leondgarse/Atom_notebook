@@ -8,33 +8,33 @@
   - [目录](#目录)
   - [Q / A](#q-a)
   - [Python2 to Python3](#python2-to-python3)
-  - [python程序的执行方式](#python程序的执行方式)
-  - [print格式化输出](#print格式化输出)
-  - [数据类型 / 运算符](#数据类型-运算符)
+  - [python 程序的执行方式](#python-程序的执行方式)
+  - [print 格式化输出](#print-格式化输出)
+  - [数据类型与运算符](#数据类型与运算符)
   	- [数字常量](#数字常量)
-  	- [布尔常量 True / False](#布尔常量-true-false)
+  	- [布尔常量 True False](#布尔常量-true-false)
   	- [字符串常量](#字符串常量)
   	- [算数运算符](#算数运算符)
-  	- [比较运算符 / 逻辑运算符](#比较运算符-逻辑运算符)
-  - [if / for / while](#if-for-while)
+  	- [比较运算符与逻辑运算符](#比较运算符与逻辑运算符)
+  - [if for while](#if-for-while)
   - [函数](#函数)
   	- [定义](#定义)
-  	- [Python中函数的参数形式](#python中函数的参数形式)
-  	- [python内建函数](#python内建函数)
+  	- [python 中函数的参数形式](#python-中函数的参数形式)
+  	- [python 内建函数](#python-内建函数)
   	- [global](#global)
   	- [默认参数值](#默认参数值)
   	- [指定关键参数](#指定关键参数)
   	- [docstrings 文档字符串](#docstrings-文档字符串)
   	- [在函数中接收元组和列表](#在函数中接收元组和列表)
   	- [在函数中接收字典参数](#在函数中接收字典参数)
-  	- [函数返回多个参数 (元组 / 字典)](#函数返回多个参数-元组-字典)
-  	- [传递函数 （函数作为参数传递）](#传递函数-函数作为参数传递)
+  	- [函数使用元组与字典返回多个参数](#函数使用元组与字典返回多个参数)
+  	- [传递函数](#传递函数)
   	- [内嵌函数](#内嵌函数)
   - [模块](#模块)
-  	- [sys模块](#sys模块)
-  	- [字节编译的.pyc文件](#字节编译的pyc文件)
-  	- [from ... import ...](#from-import-)
-  	- [模块名称 \_\_name\_\_](#模块名称-name)
+  	- [sys 模块](#sys-模块)
+  	- [字节编译的 .pyc 文件](#字节编译的-pyc-文件)
+  	- [from MODULE import SUBMODULE](#from-module-import-submodule)
+  	- [模块名称](#模块名称)
   	- [dir](#dir)
   - [数据结构](#数据结构)
   	- [序列 (切片 / 索引 / in / not in / 转换工厂函数 / 内建函数)](#序列-切片-索引-in-not-in-转换工厂函数-内建函数)
@@ -42,15 +42,15 @@
   		- [列表方法](#列表方法)
   		- [示例](#示例)
   		- [列表复制](#列表复制)
-  		- [列表解析 / 列表生成器](#列表解析-列表生成器)
-  		- [map / filter](#map-filter)
-  	- [sorted / min的key参数](#sorted-min的key参数)
+  		- [列表解析与列表生成器](#列表解析与列表生成器)
+  		- [map 与 filter](#map-与-filter)
+  	- [sorted 与 min 的 key 参数](#sorted-与-min-的-key-参数)
   	- [元组 tuple](#元组-tuple)
   		- [元组操作](#元组操作)
   		- [元组的作用](#元组的作用)
   	- [字典 dict](#字典-dict)
   		- [创建字典](#创建字典)
-  		- [索引 / 删除 / 遍历](#索引-删除-遍历)
+  		- [索引删除遍历](#索引删除遍历)
   		- [字典的格式化字符串](#字典的格式化字符串)
   		- [字典的方法](#字典的方法)
   	- [字典值排序](#字典值排序)
@@ -60,42 +60,55 @@
   		- [集合的方法](#集合的方法)
   - [字符串](#字符串)
   	- [字符串对象方法](#字符串对象方法)
-  	- [字符串方法 （图片）](#字符串方法-图片)
+  	- [字符串方法](#字符串方法)
   	- [示例](#示例)
-  	- [模块 / 字符串示例程序](#模块-字符串示例程序)
-  - [正则表达式 re模块](#正则表达式-re模块)
+  	- [二进制与常规字符串转化](#二进制与常规字符串转化)
+  	- [模块与字符串示例程序](#模块与字符串示例程序)
+  - [正则表达式 re 模块](#正则表达式-re-模块)
   - [面向对象的编程](#面向对象的编程)
   	- [类](#类)
   	- [继承](#继承)
   - [文件](#文件)
-  	- [open() / close()](#open-close)
+  	- [open 与 close](#open-与-close)
   	- [读文件](#读文件)
   	- [写文件](#写文件)
   - [二进制储存器](#二进制储存器)
   - [异常](#异常)
-  - [Python标准库 (sys / os)](#python标准库-sys-os)
-  	- [sys模块](#sys模块)
-  	- [os模块](#os模块)
-  - [其他语句 lambda / exec / eval / assert / repr / enumerate / format](#其他语句-lambda-exec-eval-assert-repr-enumerate-format)
-  	- [lambda形式，匿名函数](#lambda形式匿名函数)
-  	- [exec和eval语句，执行语句 / 表达式](#exec和eval语句执行语句-表达式)
-  	- [assert语句，断言](#assert语句断言)
-  	- [repr函数，规范字符串表示](#repr函数规范字符串表示)
-  	- [range 函数，列表生成器](#range-函数列表生成器)
+  - [Python 标准库](#python-标准库)
+  	- [sys](#sys)
+  	- [os](#os)
+  	- [inspect](#inspect)
+  - [其他语句](#其他语句)
+  	- [lambda 匿名函数](#lambda-匿名函数)
+  	- [exec 和 eval 执行语句或表达式](#exec-和-eval-执行语句或表达式)
+  	- [assert 断言](#assert-断言)
+  	- [repr 规范字符串表示](#repr-规范字符串表示)
+  	- [range 列表生成器](#range-列表生成器)
   	- [enumerate 带指数的列表](#enumerate-带指数的列表)
   	- [format 格式化](#format-格式化)
-  	- [Iterables / Generators / Yield](#iterables-generators-yield)
+  	- [Iterables 与 Generators 与 Yield](#iterables-与-generators-与-yield)
   - [python 执行 shell 命令](#python-执行-shell-命令)
   	- [os 模块](#os-模块)
   	- [subprocess 模块](#subprocess-模块)
   - [argparse 解析参数](#argparse-解析参数)
-  	- [脚本中 argparse 典型格式](#脚本中-argparse-典型格式)
+  	- [argparse 典型格式](#argparse-典型格式)
+  	- [parse known args 跳过不能识别的参数](#parse-known-args-跳过不能识别的参数)
   	- [ArgumentParser 初始化参数](#argumentparser-初始化参数)
-  	- [add_argument 位置参数与可选参数](#addargument-位置参数与可选参数)
-  	- [add_argument 参数行为 action](#addargument-参数行为-action)
-  	- [add_argument 参数类型 type](#addargument-参数类型-type)
-  	- [add_argument 参数个数 nargs](#addargument-参数个数-nargs)
-  	- [add_argument_group 参数组](#addargumentgroup-参数组)
+  	- [add argument 位置参数与可选参数](#add-argument-位置参数与可选参数)
+  	- [add argument 参数行为 action](#add-argument-参数行为-action)
+  	- [add argument 参数类型 type](#add-argument-参数类型-type)
+  	- [add argument 参数个数 nargs](#add-argument-参数个数-nargs)
+  	- [add argument group 参数组](#add-argument-group-参数组)
+  	- [register 注册参数解析方法](#register-注册参数解析方法)
+  	- [根据文件大小合并多个文件夹](#根据文件大小合并多个文件夹)
+  - [logging](#logging)
+  - [zipfile](#zipfile)
+  	- [解压缩](#解压缩)
+  	- [下载 zip 文件并解压到指定目录](#下载-zip-文件并解压到指定目录)
+  - [多线程 multiprocessing threading](#多线程-multiprocessing-threading)
+  	- [multiprocessing](#multiprocessing)
+  	- [threading](#threading)
+  	- [多线程下载](#多线程下载)
 
   <!-- /TOC -->
 ***
@@ -186,7 +199,7 @@
     xrange() was renamed to **range()** in Python 3
 ***
 
-# python程序的执行方式
+# python 程序的执行方式
   - python能够轻松的集成C,C++,Fortran代码（Cython项目），可以同时用于研究和原型的构建以及生产系统的构建
   - 因为python是一种解释型语言，运行速度比编译型数据慢
   - 由于python有一个全局解释器锁（GIL）,防止解释器同时执行多条python字节码，所以python不适用于高并发、多线程的应用程序
@@ -219,7 +232,7 @@
     ```
 ***
 
-# print格式化输出
+# print 格式化输出
   - print 原型 print(* objects, sep=' ', end='\n', file=sys.stdout, flush=False)
     ```python
     sys.stdout.write('Hello World')        # 直接使用sys.stdout.write输出
@@ -263,7 +276,7 @@
     ```
 ***
 
-# 数据类型 / 运算符
+# 数据类型与运算符
   - del 删除 一个变量/名称
   - i = 5 # 不需要声明或定义数据类型
   - print(i+1)
@@ -290,7 +303,7 @@
     x.conjugate()
     (2.4-5.6j)
     ```
-## 布尔常量 True / False
+## 布尔常量 True False
   - 仅有2个值:True、False
     ```python
     type(True)
@@ -328,7 +341,7 @@
     幂运算优先级高于负号-， -3 ** 2 = -9，应使用(-3) ** 2
     ```
     // 商的整数部分： 4 // 3.0 = 1.0
-## 比较运算符 / 逻辑运算符
+## 比较运算符与逻辑运算符
   - 比较运算符可以连接
     ```python
     3 < 4 < 7 # same as (2 < 4) &amp;&amp; (4 < 7)
@@ -347,7 +360,7 @@
     ```
 ***
 
-# if / for / while
+# if for while
   - if示例：
     ```python
     #!/usr/bin/python
@@ -421,13 +434,13 @@
 
     print maximum(2, 3)
     ```
-## Python中函数的参数形式
+## python 中函数的参数形式
   - 位置或关键字参数
   - 仅位置的参数
   - 可变长位置参数：列表list / 元组tuple，形参中使用*
   - 可变长关键字参数：字典dict，形参中使用**
   - (参数可以设定默认值)
-## python内建函数
+## python 内建函数
   - 如abs / min / sum，不需要import：
     ```python
     dir(__builtins__) # 查看支持的内建函数
@@ -556,7 +569,7 @@
     ('Wangdachui', 'Niuyun', 'Linling')
     {'a1': 1, 'a2': 2, 'a3': 3}
     ```
-## 函数返回多个参数 (元组 / 字典)
+## 函数使用元组与字典返回多个参数
   - 返回元组
     ```python
     def func():
@@ -583,8 +596,8 @@
     fb = lambda a, b : a + b
     fb(* fa())
     ```
-## 传递函数 （函数作为参数传递）
-  - 传递函数
+## 传递函数
+  - 传递函数，即函数作为参数传递
     ```python
     def addMe2Me(x):
       return (x+x)
@@ -621,7 +634,7 @@
     import 1 as p
     # import 2 as p
     ```
-## sys模块
+## sys 模块
   - sys模块包含了与Python解释器和它的环境有关的函数
   - 当Python执行import sys语句的时候会在sys.path变量中所列目录中寻找sys.py模块，随后执行这个模块主块中的语句，然后这个模块将能够使用
   - 初始化过程仅在第一次 输入模块的时候进行
@@ -632,10 +645,10 @@
       print(i)
     print('\n\nPYTHONPATH = ', sys.path, '\n')
     ```
-## 字节编译的.pyc文件
+## 字节编译的 .pyc 文件
   - 导入模块时，pyc文件会快得多，因为一部分输入模块所需的处理已经完成了
   - 字节编译的文件是与平台无关的
-## from ... import ...
+## from MODULE import SUBMODULE
   - from sys import argv 直接输入argv变量到程序中(使用时可省略sys.)
   - from sys import * 输入所有sys模块使用的名字
   - 如使用了 import pandas as pd，再导入pandas.DataFrame时，应使用：
@@ -645,9 +658,9 @@
     from pd imprt DataFrame
     ```
   - 应该避免使用from..import而使用import语句，因为这样可以使程序更加易读，也可以避免名称的冲突
-## 模块名称 \_\_name\_\_
-  - 每个Python模块都有它的__name__
-  - 被用户单独运行的模块是'__main__'
+## 模块名称
+  - 每个Python模块都有它的 `__name__`
+  - 被用户单独运行的模块是 `__main__`
     ```python
     $ cat using_name.py
     #!/usr/bin/python
@@ -657,7 +670,9 @@
       print('This program is running by itself, __name__ =', __name__)
     else:
       print('This program is imported from other module, __name__ =', __name__)
-
+    ```
+    执行结果
+    ```py
     $ python3 using_name.py
     This program is running by itself, __name__ = __main__
 
@@ -875,7 +890,7 @@
     mylist
     ['mango', 'carrot', 'banana']
     ```
-### 列表解析 / 列表生成器
+### 列表解析与列表生成器
   - 动态创建列表，从一个已有的列表导出一个新的列表
   - 列表生成器只能遍历一次
     ```python
@@ -909,7 +924,7 @@
     # [Out]
     1 2 5 6 9 10
     ```
-### map / filter
+### map 与 filter
   - map: 根据功能函数一一代入列表中参数
     ```python
     list(map(lambda x : x % 2, range(10)))
@@ -920,7 +935,7 @@
     list(filter(lambda x : x % 2, range(10)))
     [1, 3, 5, 7, 9]
     ```
-## sorted / min的key参数
+## sorted 与 min 的 key 参数
   - 用于指定比较的依据
   ```python
   l = [[2, 1], [1, 3], [3, 2]]
@@ -1102,7 +1117,7 @@
     d
     # {'AXP': '86.40', 'BA': '122.64'}
     ```
-### 索引 / 删除 / 遍历
+### 索引删除遍历
   - 示例：
     ```python
     #!/usr/bin/python
@@ -1383,8 +1398,7 @@
     val.count(',')
     Out[474]: 2
     ```
-## 字符串方法 （图片）
-
+## 字符串方法
   ![](images/Selection_017.png)
 ## 示例
   - startswith / in / find / join / split
@@ -1435,7 +1449,7 @@
     str(bb)[2:-1]
     Out[36]: 'hello'
     ```
-## 模块 / 字符串示例程序
+## 模块与字符串示例程序
   - 将指定的文件备份到指定目录下，创建日期为名的文件夹，文件以时间+注释命名
     ```python
     #!/usr/bin/python
@@ -1478,7 +1492,7 @@
     ```
 ***
 
-# 正则表达式 re模块
+# 正则表达式 re 模块
   - Python内置的re模块负责对字符串应用正则表达式
     ```python
     import re
@@ -1682,7 +1696,7 @@
 
   - f.read() / f.write() / f.readline() / f.readlines() / f.writelines()        # readline()返回一行字符串，readlines()返回包含所有行的字符串列表
   - f.seek() / f.tell()        # seek(offset, whence=0)指定文件指针偏移
-## open() / close()
+## open 与 close
   - file_obj = open(filename, mode='r', buffering=-1)
     ```python
     mode为可选参数,默认值为r
@@ -1877,8 +1891,8 @@
     ```
 ***
 
-# Python标准库 (sys / os)
-## sys模块
+# Python 标准库
+## sys
   - sys模块包含系统对应的功能，如sys.argv列表包含命令行参数
     ```python
     import sys
@@ -1887,32 +1901,65 @@
     sys.version_info
     # sys.version_info(major=3, minor=5, micro=2, releaselevel='final', serial=0)
     ```
-## os模块
-  - 包含普遍的操作系统功能，用于编写与平台无关的代码，如使用os.sep可以取代操作系统特定的路径分割符
-    ```python
-    os.name字符串指示你正在使用的平台。比如对于Windows,它是'nt',而对于Linux/Unix用户,它是'posix'
-    os.getcwd()函数得到当前工作目录,即当前Python脚本工作的目录路径
-    os.getenv()和os.putenv()函数分别用来读取和设置环境变量
-    os.listdir()返回指定目录下的所有文件和目录名
-    os.remove()函数用来删除一个文件
-    os.system()函数用来运行shell命令
-    os.linesep字符串给出当前平台使用的行终止符。例如,Windows使用'\r\n',Linux使用'\n'而Mac使用'\r'。
-    os.path.split()函数返回一个路径的目录名和文件名
-            os.path.split('/home/swaroop/byte/code/poem.txt')
-            ('/home/swaroop/byte/code', 'poem.txt')
-    os.path.isfile()和os.path.isdir()函数分别检验给出的路径是一个文件还是目录。类似地,os.path.exists()函数用来检验给出的路径是否真地存在
-
-    os.rename(current_file_name, new_file_name) #文件重命名
-    os.remove(file_name) #删除文件
-    os.mkdir(newdir) #创建目录
-    os.chdir(newdir) #改变目录
-    os.getcwd() #获得当前路径
-    os.rmdir(dirname) #删除目录
+## os
+  - 包含普遍的操作系统功能，用于编写与平台无关的代码，如使用 `os.sep` 可以取代操作系统特定的路径分割符
+  - **os.path.expanduser** 将用户路径解析成绝对路径
+    ```py
+    print(os.path.expanduser("~"))
+    # /home/leondgarse
     ```
+  - **os.environ** 查找系统环境变量
+    ```py
+    print(os.environ['HOME'])
+    # /home/leondgarse
+    print(os.getenv('HOME'))
+    # /home/leondgarse
+    ```
+  - **os.path.split()** 返回一个路径的目录名和文件名
+    ```py
+    os.path.split('/home/leondgarse/workspace/foo.goo')
+    ('/home/leondgarse/workspace', 'foo.goo')
+    ```
+  - **os.getcwd()** 得到当前工作目录，即当前 Python 脚本工作的目录路径
+    ```py
+    print(os.getcwd())
+    # /home/leondgarse/workspace
+    ```
+    在脚本中执行时，如果是被导入的脚本，获取到的是执行脚本的目录，可以使用 `__file__` 或 `sys.argv[0]`
+    ```py
+    print('__file__ = %s' % os.path.abspath(__file__))
+    # __file__ = /home/leondgarse/practice_code/python_basic/using_sys.py
+
+    print(os.curdir, os.path.abspath('.'), os.getcwd(), sys.argv[0])
+    # . /home/leondgarse/workspace /home/leondgarse/workspace /opt/anaconda3/bin/ipython
+    ```
+  - **os.name** 字符串，指示正在使用的平台，Windows 对应 'nt'，Linux / Unix 对应 'posix'
+  - **os.linesep** 字符串，给出当前平台使用的行终止符，Windows 使用 '\r\n'，Linux 使用 '\n'，Mac 使用 '\r'
+  - **os.getenv() / os.putenv()** 分别用来读取和设置环境变量
+  - **os.listdir()** 返回指定目录下的所有文件和目录名
+  - **os.path.isfile() / os.path.isdir()** 分别检验给出的路径是一个文件还是目录
+  - **os.path.exists()** 检验给出的路径是否存在
+  - **os.path.join()** 使用当前系统的分隔符，将两个字符串合并成一个路径
+  - **os.path.abspath()** 返回参数的绝对路径，可以使用类似 './' / '../'
+  - **os.rename(current_file_name, new_file_name)** 文件重命名，移动文件
+  - **os.mkdir() / os.makedirs()** 创建目录
+  - **os.chdir()** 改变目录
+  - **os.remove()** 删除一个文件
+  - **os.rmdir()** 删除目录
+  - **os.system()** 运行 shell 命令
+## inspect
+  - 查看指定模块的源码文件等
+  ```py
+  import inspect
+  print(inspect.getsourcefile(inspect.getsourcefile))
+  # /opt/anaconda3/lib/python3.6/inspect.py
+
+  print(inspect.getsource(inspect.getsource))
+  ```
 ***
 
-# 其他语句 lambda / exec / eval / assert / repr / enumerate / format
-## lambda形式，匿名函数
+# 其他语句
+## lambda 匿名函数
   - lambda语句被用来创建新的函数对象，并且在运行时返回它们
   - lambda需要一个参数，后面仅跟单个表达式作为函数体，而表达式的值被这个新建的函数返回
     ```python
@@ -1937,7 +1984,7 @@
     wordword
     10
     ```
-## exec和eval语句，执行语句 / 表达式
+## exec 和 eval 执行语句或表达式
   - exec语句用来执行储存在字符串或文件中的Python语句
     ```python
     exec 'print "Hello World"'
@@ -1947,7 +1994,7 @@
     ```python
     eval('2*3')
     ```
-## assert语句，断言
+## assert 断言
   - assert语句用来声明某个条件是真的，并且在它非真的时候引发一个错误AssertionError
     ```python
     $ python3
@@ -1963,7 +2010,7 @@
      File "<stdin>", line 1, in <module>
     AssertionError
     ```
-## repr函数，规范字符串表示
+## repr 规范字符串表示
   - repr函数用来取得对象的规范字符串表示，python3去除``，全部改用repr()
   - 在大多数时候有eval(repr(object)) == object
   - 用来获取对象的可打印的表示形式，可以通过定义类的__repr__方法来控制对象在被repr函数调用的时候返回的内容
@@ -1976,7 +2023,7 @@
     repr(i)
     "['item', 'item']"
     ```
-## range 函数，列表生成器
+## range 列表生成器
   - 包含起始，不包含结尾
   - python3中不再使用xrange
   - 返回一个列表生成器
@@ -2023,7 +2070,7 @@
     "{a} {b} love of a {c}".format(a="for", b="the", c="princess")
     'for the love of a princess'
     ```
-## Iterables / Generators / Yield
+## Iterables 与 Generators 与 Yield
   - yield is a keyword that is used like return, except the function will return a generator.
   [What does the “yield” keyword do in Python](https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python/231855#231855)
 ***
@@ -2131,7 +2178,7 @@
     print(parser.parse_args('--foo goo'.split(' ')))
     # Namespace(foo='goo', pylab=False)
     ```
-## parse_known_args 跳过不能识别的参数
+## parse known args 跳过不能识别的参数
   - **parse_arguments** 解析参数列表时，如果列表包含没有添加的参数会报错 `unrecognized arguments`
     ```py
     # error: unrecognized arguments: --goo
@@ -2213,7 +2260,7 @@
     # optional arguments:
     #   -h, --help  show this help message and exit
     ```
-## add_argument 位置参数与可选参数
+## add argument 位置参数与可选参数
   - **位置参数 Positional argument** 为必须的参数，按照参数位置指定，不能单独指定
   - **可选参数 Optional argument** 使用 `-` / `--` 指定
   - **required=True** 将可选参数变为必须参数
@@ -2245,7 +2292,7 @@
   parser.parse_args("this --g is -jan --ko=arg".split())
   # Out[159]: Namespace(foo='this', goo='is', j='an', koo='arg')
   ```
-## add_argument 参数行为 action
+## add argument 参数行为 action
   - **store** 默认操作，存储这个参数值
   - **store_const** 存储 const 指定的值
   - **store_false** / **store_true** 分别对应存储 True 和 False 值
@@ -2263,7 +2310,7 @@
   parser.parse_args('--foo --goo --joo --koo 32 --koo 52 --koo 62 --loo --loo --moo'.split())
   # Out[17]: Namespace(foo=42, goo=False, joo=True, koo=['32', '52', '62'], loo=[72, 72], moo=['abc'])
   ```
-## add_argument 参数类型 type
+## add argument 参数类型 type
   - **string** 默认参数类型
   - **FileType** 文件参数，可以指定文件 读写 等
   - **choices** 提供参数范围，如果提供的参数值不在这个范围之内会报错
@@ -2282,7 +2329,7 @@
   parser.parse_args("--out foo --str 8".split())
   # Out[28]: Namespace(out=<_io.TextIOWrapper name='foo' mode='w' encoding='UTF-8'>, str=8)
   ```
-## add_argument 参数个数 nargs
+## add argument 参数个数 nargs
   - **整数 N** N 个从命令行中获取的参数将会组成一个列表
   - **?** 从命令行参数中获取一个值
   - **\*** 支持多个参数值
@@ -2302,7 +2349,7 @@
   #     outfile=<_io.TextIOWrapper name='foo' mode='w' encoding='UTF-8'>,
   #     foo=[1, 2], goo=['a', 'b', 'cd', 'e'], joo=['fgh', 'i'])
   ```
-## add_argument_group 参数组
+## add argument group 参数组
   ```python
   parser = argparse.ArgumentParser(description="Argparse practice")
 
@@ -2429,7 +2476,8 @@
     ```
 ***
 
-# zipfile 解压缩
+# zipfile
+## 解压缩
   ```py
   import zipfile
 
@@ -2439,5 +2487,148 @@
 
   # 解压文件，默认解压到当前文件夹下
   f.extractall(fn[0:-4])
+  ```
+## 下载 zip 文件并解压到指定目录
+  ```py
+  def get_zip_file(origin, file_path=None, extract=True):
+      import requests
+      import zipfile
+      import io
+      import os
+
+      fname = os.path.basename(origin)
+      if file_path:
+          fname = os.path.join(file_path, fname)
+      else:
+          fname = os.path.join(os.environ['HOME'], '.keras/datasets', fname)
+
+      if not os.path.exists(fname):
+          resp = requests.get(origin)
+          # ff = zipfile.ZipFile(io.BytesIO(resp.content), 'r')
+          open(fname, 'wb').write(resp.content)
+
+      if extract:
+          ff = zipfile.ZipFile(fname, 'r')
+          ff.extractall(fname[0:-4])
+
+      return os.path.abspath(fname)
+
+  path_to_zip = get_zip_file('http://www.manythings.org/anki/spa-eng.zip')
+  ```
+***
+
+# 多线程 multiprocessing threading joblib
+## multiprocessing
+  - [multiprocessing — Process-based “threading” interface](https://docs.python.org/2/library/multiprocessing.html)
+  - **multiprocessing.Pool** 进程池
+    ```py
+    from multiprocessing import Pool
+
+    def addd(args):
+        x = args[0]
+        y = args[1]
+        return np.add(x, y)
+
+    p = Pool(5)
+    print(p.map(addd, [(1, 2), (2, 3), (3, 4)]))
+    # [3, 5, 7]
+    ```
+  - **multiprocessing.Process** 进程
+    ```py
+    from multiprocessing import Process, Value, Array
+
+    def f(n, a):
+        n.value = 3.1415927
+        for i in range(len(a)):
+            a[i] = -a[i]
+
+    num = Value('d', 0.0)
+    arr = Array('i', range(10))
+
+    p = Process(target=f, args=(num, arr))
+    p.start()
+    p.join()
+
+    print(num.value, arr[:])
+    # 3.1415927 [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
+    ```
+## threading
+  - **threading**
+    ```py
+    from threading import Thread
+
+    def foo(aa):
+        print('aa = {}'.format(aa))
+
+    Thread(target=foo, args=((1, 2), )).start()
+    # aa = (1, 2)
+    ```
+## 多线程下载
+  - **threading**
+    ```py
+    from threading import Thread
+    from urllib.request import urlretrieve
+
+    class Downloader(Thread):
+        def __init__(self, file_url, save_path):
+            super(Downloader, self).__init__()
+            self.file_url = file_url
+            self.save_path = save_path
+
+        def run(self):
+            urlretrieve(self.file_url, self.save_path)
+
+    Downloader("https://upload.wikimedia.org/wikipedia/commons/d/d7/Green_Sea_Turtle_grazing_seagrass.jpg", './foo.jpg').start()
+    Downloader("https://upload.wikimedia.org/wikipedia/commons/0/0a/The_Great_Wave_off_Kanagawa.jpg", './goo.jpg').start()
+    ```
+  - **multiprocessing.Pool**
+    ```py
+    from urllib.request import urlretrieve
+
+    def image_downloader(aa):
+        return urlretrieve(aa[1], aa[0])
+
+    def multi_download(download_dict, thread_num=50):
+        import time
+        from multiprocessing import Pool
+
+        dd = list(download_dict.items())
+        pp = Pool(thread_num)
+        print("Images need to download: {}".format(len(dd)))
+        for ii in range(0, len(dd), thread_num):
+            start = time.time()
+            print('Downloading images {} - {}'.format(ii, ii + thread_num), end=', ')
+            tt = dd[ii: ii + thread_num]
+            pp.map(image_downloader, tt)
+            print ('Time taken for downloading {} images: {:.2f} sec'.format(thread_num, time.time() - start))
+    ```
+  - **threading 与 tf.train.Coordinator 多线程协同**
+    ```py
+    def multi_download(download_dict, thread_num=50):
+        import time
+        import threading
+        from urllib.request import urlretrieve
+        import tensorflow as tf
+
+        dd = list(download_dict.items())
+        coord = tf.train.Coordinator()
+        for ii in range(0, len(dd), thread_num):
+            start = time.time()
+            print('Downloading images {} - {}'.format(ii, ii + thread_num))
+            tt = dd[ii: ii + thread_num]
+            threads = [threading.Thread(target=urlretrieve, args=(iuu, imm)) for imm, iuu in tt]
+            for itt in threads:
+                itt.start()
+
+            coord.join(threads)
+            print ('Time taken for downloading {} images: {:.2f} sec\n'.format(thread_num, time.time() - start))
+    ```
+## joblib
+  ```py
+  def task(aa):
+      print(aa)
+
+  def joblib_loop():
+      Parallel(n_jobs=4)(delayed(task)(i) for i in range(20))
   ```
 ***

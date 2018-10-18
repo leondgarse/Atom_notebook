@@ -551,7 +551,7 @@
     2  2  7 b o
     3  3  8 b t
     4  4  9 a o
-    
+
     grouped = df.groupby(df.k1)
     grouped.mean()
     Out[157]:
@@ -2052,6 +2052,30 @@
      ALIGNED : True
      UPDATEIFCOPY : False
     ```
+## 数据读取顺序对性能的影响
+  - **prefetching** 处理器从内存获取数据时，一般一次获取临近的一块数据，而不是一个数据
+  - 在处理数据时，每次处理临近的数据，而不是不相邻的，可以提高处理速度
+  ```py
+  def in_order_multiply(arr, scalar):
+      for plane in list(range(arr.shape[0])):
+          arr[plane, :, :] *= scalar
+
+  def out_of_order_multiply(arr, scalar):
+      for plane in list(range(arr.shape[2])):
+          arr[:, :, plane] *= scalar
+
+  import time
+  im3d = np.random.rand(100, 1024, 1024)
+  t0 = time.time(); x = in_order_multiply(im3d, 5); t1 = time.time()
+  print("%.2f seconds" % (t1 - t0))
+  # 0.60 seconds
+
+  s0 = time.time(); x = out_of_order_multiply(im3d, 5); s1 = time.time()
+  print("%.2f seconds" % (s1 - s0))
+  # 2.53 seconds
+  print("Speedup: %.1fx" % ((s1 - s0) / (t1 - t0)))
+  # Speedup: 4.2x
+  ```
 ## broadcasting广播 / np.newaxis属性添加新轴
   - 广播broadcasting 指的是不同形状的数组之间的算术运算的执行方式
     ```python

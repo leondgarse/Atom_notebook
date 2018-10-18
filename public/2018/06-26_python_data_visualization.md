@@ -157,6 +157,49 @@
   plt.show()
   ```
   ![](images/mpl_radar_1.png)
+## 生成 gif 图片
+  - [matplotlib animation](https://matplotlib.org/api/animation_api.html)
+  - **matplotlib.animation.FuncAnimation**
+    ```py
+    import numpy as np
+    from matplotlib import pyplot as plt
+    from matplotlib import animation
+
+    fig = plt.figure()
+    data = np.random.random((255, 255))
+    im = plt.imshow(data, cmap='gray')
+
+    # animation function.  This is called sequentially
+    def animate(i):
+        data = np.random.random((255, 255))
+        im.set_array(data)
+        return [im]
+
+    anim = animation.FuncAnimation(fig, animate, frames=200, interval=60, blit=True)
+    plt.show()
+
+    anim.save('rain.gif', writer='imagemagick', fps=30, dpi=40)
+    ```
+  - **matplotlib.animation.ArtistAnimation**
+    ```python
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    import numpy as np
+
+    # Paste your code here
+    fig, ax = plt.subplots()
+    ims = []
+    N = 500
+    x = np.random.rand(N, 50, 2)
+    fakenp = np.random.rand(N, 50, 2)
+    for i in range(N):
+        im1, = plt.plot(x[i, :, 0], x[i, :, 1], 'b.')
+        im2, = plt.plot(fakenp[i, :, 0], fakenp[i, :, 1], 'rx')
+        ims.append([im1, im2])
+    ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True, repeat_delay=1000)
+
+    ani.save('sample.mp4', writer='ffmpeg')
+    ```
 ***
 
 # pyecharts

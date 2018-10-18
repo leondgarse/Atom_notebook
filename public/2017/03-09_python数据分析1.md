@@ -198,7 +198,7 @@ nonzero / where / choose
     ```
 ***
 
-# python扩展库 numpy / pandas / matplotlib / ipython / scipy / Biopython简介
+# python 扩展库 numpy pandas matplotlib ipython scipy Biopython 简介
   - 基于Python的软件生态圈，开源，主要为数学、科学和工程服务
   - 介绍
     ```python
@@ -218,79 +218,63 @@ nonzero / where / choose
     一般建模分析 / 数据准备 / 训练(参数估计) / 模型检验和比较
     pipeline        将python数据标准化以及训练和模型检验打包成一个流程
     ```
-  - SciPy中的数据结构，Python原有数据结构的变化
+  - SciPy 中的数据结构，Python 原有数据结构的变化
     ```python
     ndarray(N维数组)
     Series(变长字典)
     DataFrame(数据框)
     ```
-  - 命名惯例：
+  - **命名惯例**
     ```python
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
     import pylab as pl
-    import scipy as sp<br />
+    import scipy as sp
     from pandas import Series, DataFrame
     ```
-  - NumPy
-    ```python
-    NumPy（Numerical Python的简称）是Python科学计算的基础包，为Python提供快速的数组处理能力，作为在算法之间传递数据的容器
-            快速高效的多维数组对象ndarray
-            用于对数组执行元素级计算以及直接对数组执行数学运算的ufunc函数
-            用于读写硬盘上基于数组的数据集的工具
-            线性代数运算、傅里叶变换，以及随机数生成
-            用于将C、C++、Fortran代码集成到Python的工具
-    对于数值型数据，NumPy数组在存储和处理数据时要比内置的Python数据结构高效得多
-    由低级语言（比如C和Fortran）编写的库可以直接操作NumPy数组中的数据，无需进行任何数据复制工作
-    ```
-  - pandas
-    ```python
-    基于 SciPy 和 NumPy
-    强大的可扩展数据操作与分析的Python库
-    高效处理大数据集的切片等功能
-    提供优化库功能读写多种文件格式,如CSV、HDF5
+  - **IPython**
+    - 是一个增强的 Python shell，是 Python 科学计算标准工具集的组成部分，它将其他所有的东西联系到了一起
+    - 为交互式和探索式计算提供了一个强健而高效的环境，主要用于交互式数据处理和利用 matplotlib 对数据进行可视化处理
+  - **NumPy** Numerical Python 的简称，是Python科学计算的基础包，为Python提供快速的数组处理能力，作为在算法之间传递数据的容器
+    - 快速高效的多维数组对象ndarray
+    - 用于对数组执行元素级计算以及直接对数组执行数学运算的ufunc函数
+    - 用于读写硬盘上基于数组的数据集的工具
+    - 线性代数运算、傅里叶变换，以及随机数生成
+    - 用于将C、C++、Fortran代码集成到Python的工具
+    - 对于数值型数据，NumPy数组在存储和处理数据时要比内置的Python数据结构高效得多
+    - 由低级语言（比如C和Fortran）编写的库可以直接操作NumPy数组中的数据，无需进行任何数据复制工作
+  - **pandas** 提供能够快速便捷地处理结构化数据的大量数据结构和函数
+    - 基于 SciPy 和 NumPy
+    - 强大的可扩展数据操作与分析的Python库
+    - 高效处理大数据集的切片等功能
+    - 提供优化库功能读写多种文件格式,如CSV、HDF5
+    - 用得最多的pandas对象是DataFrame，它是一个面向列（column-oriented）的二维表结构，且含有行标和列标
+  - **matplotlib** 是最流行的用于绘制数据图表的 Python 库
+    - 基于NumPy
+    - 二维绘图库,简单快速地生成曲线图、直方图和散点图等形式的图
+    - 常用的 pyplot 是一个简单提供类似 MATLAB 接口的模块
 
-    pandas提供能够快速便捷地处理结构化数据的大量数据结构和函数
-    用得最多的pandas对象是DataFrame，它是一个面向列（column-oriented）的二维表结构，且含有行标和列标
-    ```
-  - matplotlib
-    ```python
-    matplotlib是最流行的用于绘制数据图表的Python库
-    基于NumPy
-    二维绘图库,简单快速地生成曲线图、直方图和散点图等形式的图
-    常用的pyplot是一个简单提供类似MATLAB接口的模块
-    ```
-  - IPython
-    ```python
-    IPython是Python科学计算标准工具集的组成部分，它将其他所有的东西联系到了一起
-    是一个增强的Python shell，为交互式和探索式计算提供了一个强健而高效的环境，主要用于交互式数据处理和利用matplotlib对数据进行可视化处理
-    ```
-  - SciPy
-    ```python
-    Python中科学计算程序的核心包
-    有效计算numpy矩阵,让NumPy和SciPy协同工作
-    致力于科学计算中常见问题的各个工具箱,其不同子模块有不同的应用,如插值、积分、优化和图像处理等
-
-    SciPy是一组专门解决科学计算中各种标准问题域的包的集合，主要包括：
-    scipy.integrate：数值积分例程和微分方程求解器
-    scipy.linalg：扩展了由numpy.linalg提供的线性代数例程和矩阵分解功能
-    scipy.optimize：函数优化器（最小化器）以及根查找算法
-    scipy.signal：信号处理工具
-    scipy.sparse：稀疏矩阵和稀疏线性系统求解器
-    scipy.special：SPECFUN（这是一个实现了许多常用数学函数（如伽玛函数）的Fortran库）的包装器
-    scipy.stats：标准连续和离散概率分布（如密度函数、采样器、连续分布函数等）、各种统计检验方法，以及更好的描述统计法
-    scipy.weave：利用内联C++代码加速数组计算的工具
-    NumPy跟SciPy的有机结合完全可以替代MATLAB的计算功能（包括其插件工具箱）
-    ```
-  - 其他包
-    - Biopython计划，一个使用Python开发计算分子生物学工具的国际社团，将生物信息学文件分析成Python可利用的数据结构，处理常用的在线生物信息学数据库代码，提供常用生物信息程序的界面
-    - Beautiful Soup包 查找和解析HTML
-    - Mrjob 用于在Amazon网络服务上启动MapReduce作业
-    - Vote Smart 智能投票项目是一个美国政治数据的数据源，用户能通过REST API获取他们的数据，Sunlight实验室发布了一个资料齐全的Python接口来使用该API
-    - Python-Twitter 是一个提供访问Twitter数据接口的模块
-    - Universal Feed Parser 是Python中最常用的RSS程序库
-    - Yahoo! PlaceFinder API 对给定的地址返回该地址对应的纬度与经度
+  - **SciPy** Python 中科学计算程序的核心包，是一组专门解决科学计算中各种标准问题域的包的集合
+    - 有效计算numpy矩阵,让NumPy和SciPy协同工作
+    - 致力于科学计算中常见问题的各个工具箱,其不同子模块有不同的应用,如插值、积分、优化和图像处理等
+    - scipy.integrate：数值积分例程和微分方程求解器
+    - scipy.linalg：扩展了由numpy.linalg提供的线性代数例程和矩阵分解功能
+    - scipy.optimize：函数优化器（最小化器）以及根查找算法
+    - scipy.signal：信号处理工具
+    - scipy.sparse：稀疏矩阵和稀疏线性系统求解器
+    - scipy.special：SPECFUN（这是一个实现了许多常用数学函数（如伽玛函数）的Fortran库）的包装器
+    - scipy.stats：标准连续和离散概率分布（如密度函数、采样器、连续分布函数等）、各种统计检验方法，以及更好的描述统计法
+    - scipy.weave：利用内联C++代码加速数组计算的工具
+    - NumPy 跟 SciPy 的有机结合完全可以替代 MATLAB 的计算功能（包括其插件工具箱）
+  - **其他包**
+    - **Biopython 计划**，一个使用Python开发计算分子生物学工具的国际社团，将生物信息学文件分析成Python可利用的数据结构，处理常用的在线生物信息学数据库代码，提供常用生物信息程序的界面
+    - **Beautiful Soup** 查找和解析HTML
+    - **Mrjob** 用于在Amazon网络服务上启动MapReduce作业
+    - **Vote Smart** 智能投票项目是一个美国政治数据的数据源，用户能通过REST API获取他们的数据，Sunlight实验室发布了一个资料齐全的Python接口来使用该API
+    - **Python-Twitter** 是一个提供访问Twitter数据接口的模块
+    - **Universal Feed Parser** 是Python中最常用的RSS程序库
+    - **Yahoo! PlaceFinder API** 对给定的地址返回该地址对应的纬度与经度
 ***
 
 # ipython
@@ -310,7 +294,7 @@ nonzero / where / choose
     In [12]: foo = 'test*'
     In [13]: !ls $foo
     ```
-## ? 用于显示信息 / 搜索命名空间
+## ? 用于显示信息 与 搜索命名空间
   - 在变量的前面或后面加上一个问号（?），可以将有关该对象的一些通用信息显示出来
   - 函数或实例方法docstring会显示出来
   - 使用??将显示出该函数的源代码（如果可能的话）
@@ -358,7 +342,7 @@ nonzero / where / choose
             In [15]: cd db
     %doctest_mode : 直接粘贴 python 控制台格式命令，不必去除提示符 >>>
     ```
-## %run命令
+## run命令
   - 执行python脚本，之后该文件中所定义的全部变量（还有各种import、函数和全局变量）就可以在当前IPython shell中访问 In [139]:
     ```python
     %run 4.2.2_plot.py
@@ -461,7 +445,7 @@ nonzero / where / choose
           3     return tmp / z
     ipdb>
     ```
-## %time / %timeit 测试代码的执行时间
+## time 与 timeit 测试代码的执行时间
   - %time一次执行一条语句，然后报告总体执行时间(Wall time)
     ```python
     In [42]: strings = ['foo', 'foobar', 'baz', 'qux', 'python', 'Guido Van Rossum'] * 100000
@@ -481,7 +465,7 @@ nonzero / where / choose
     In [48]: %timeit method2 = [x for x in strings if x[:3] == 'foo']
     10 loops, best of 3: 76.2 ms per loop
     ```
-## 基本性能分析：%prun和%run -p
+## 基本性能分析 prun 与 run -p
   - 主要的Python性能分析工具是cProfile模块，它不是专为IPython设计的，cProfile在执行一个程序或代码块时，会记录各函数所耗费的时间
     ```python
     $ python3 -m cProfile -s cumulative 4.1.7_merge.py        # -s 指定排序方式
@@ -507,7 +491,7 @@ nonzero / where / choose
     %run -p命令执行效果与在命令行中调用类似
     In [57]: %run -p -s cumulative 4.1.7_merge.py
     ```
-## 逐行分析函数性能 %lprun
+## 逐行分析函数性能 lprun
   - 可以使用一个叫做line_profiler的小型库（可以通过PyPI或随便一种包管理工具获取），其中有一个新的魔术函数%lprun，它可以对一个或多个函数进行逐行性能分析
   - 可以修改IPython配置（参考IPython文件）以启用这个扩展，代码如下所示：
     ```python
@@ -656,16 +640,16 @@ nonzero / where / choose
     ```
 ***
 
-# NumPy 基本数据结构 (ndarray / random / 视图 / 索引 / take / put / reshape / ravel / flatten / resize / 轴变换transpose / swapaxes)
-## ndarray：一种多维数组对象 (dtype / shape / array / zeros / ones / eye / diag / empty / arange / astype / linspace)
-  - NumPy最重要的一个特点就是其N维数组对象（即ndarray），该对象是一个快速而灵活的大数据集容器
-  - 其中的所有元素必须是相同类型的
-  - 矢量化（vectorization）：大小相等的数组之间的任何算术运算都会将运算应用到元素级，数组与标量的算术运算也会将那个标量值传播到各个元素
-  - 每个数组都有一个shape（一个表示各维度大小的元组）和一个dtype（一个用于说明数组数据类型的对象）
-  - dtype（数据类型）是一个特殊的对象，它含有ndarray将一块内存解释为特定数据类型所需的信息
-  - dtype是NumPy如此强大和灵活的原因之一，多数情况下，它们直接映射到相应的机器表示，数值型dtype的命名方式相同：一个类型名（如float或int），后面跟一个用于表示各元素位长的数字
-  - shape 用于返回数组的大小
-  - array函数，它接受一切序列型的对象（包括其他数组），然后产生一个新的含有传入数据的NumPy数组
+# NumPy 基本数据结构 ndarray random 视图 索引 take put reshape ravel flatten resize transpose swapaxes
+## ndarray 多维数组对象 dtype shape array zeros ones eye diag empty arange astype linspace
+  - NumPy 最重要的一个特点就是其 **N 维数组对象 ndarray**，该对象是一个快速而灵活的大数据集容器，其中的所有元素必须是相同类型的
+    - **矢量化 vectorization** 大小相等的数组之间的任何算术运算都会将运算应用到元素级，数组与标量的算术运算也会将那个标量值传播到各个元素
+    - 每个数组都有一个 **shape**，表示各维度大小的元组，和一个 **dtype**，用于说明数组数据类型的对象
+    - **dtype 数据类型** 是一个特殊的对象，含有 ndarray 将一块内存解释为特定数据类型所需的信息
+    - **dtype** 是 NumPy 如此强大和灵活的原因之一，多数情况下，它们直接映射到相应的机器表示
+    - **数值型 dtype 的命名方式** 类型名 float / int / uint / bool + 一个用于表示各元素位长的数字
+    - **shape** 用于返回数组的大小
+  - **array** 接受一切序列型的对象（包括其他数组），然后产生一个新的含有传入数据的NumPy数组
     ```python
     a = np.array(range(1, 10)).reshape(3, 3)        # 创建3*3的矩阵
     a.dtype
@@ -674,19 +658,19 @@ nonzero / where / choose
     a.shape
     Out[29]: (3, 3)
     ```
-    zeros和ones分别可以创建指定长度或形状的全0或全1数组
+  - **zeros** / **ones** 分别可以创建指定长度或形状的全 0 或全 1 数组
     ```python
     a = np.ones((3, 4))         # 创建 3x4 的矩阵，值初始化为1，zeros()创建初始值为0的数组
     ```
-    eye / identity创建一个NxN单位矩阵，对角线为1，其余为0
+  - **eye** / **identity** 创建一个 NxN 单位矩阵，对角线为 1，其余为 0
     ```python
     np.eye(3)
     ```
-    empty可以创建一个没有任何具体值的数组
+  - **empty** 可以创建一个没有任何具体值的数组
     ```python
     np.empty((2, 3, 3))
     ```
-    diag 创建一个对角矩阵，可以指定对角线上的值
+  - **diag** 创建一个对角矩阵，可以指定对角线上的值
     ```python
     np.diag((1, 2, 3))
     Out[39]:
@@ -694,11 +678,20 @@ nonzero / where / choose
            [0, 2, 0],
            [0, 0, 3]])
     ```
-    arange是Python内置函数range的数组版
+  - **arange** 是 Python 内置函数 range 的数组版本
     ```python
     np.arange(0, 2*np.pi, 0.1)        # numpy的arange方法支持小数
     ```
-  - astype方法转换dtype：
+  - **linspace** 返回指定范围内平均分布的指定数量个数值，默认是 50 个
+    ```python
+    linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None)
+    ```
+    ```py
+    numpy.linspace(1, 49, 25, dtype=int)
+    array([ 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33,
+        35, 37, 39, 41, 43, 45, 47, 49])
+    ```
+  - **astype** 方法转换 dtype
     ```python
     l = list('12345')
     a = np.array(l)
@@ -711,24 +704,13 @@ nonzero / where / choose
     a.astype(float).dtype
     Out[46]: dtype('float64')
     ```
-    创建时指定使用的dtype：
+  - 创建时指定使用的 **dtype**
     ```python
     b = np.array(l, dtype = np.float64)
     b.dtype
     Out[50]: dtype('float64')
     ```
-  - help(numpy.linspace)
-    ```python
-    linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None)
-    Return evenly spaced numbers over a specified interval.
-
-    Returns `num` evenly spaced samples, calculated over the
-    interval [`start`, `stop`].<br />
-    numpy.linspace(1, 49, 25, dtype=int)
-    array([ 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33,
-        35, 37, 39, 41, 43, 45, 47, 49])
-    ```
-## random模块 （random_sample / rand / randint / uniform / normal / randn / permutation / shuffle / choice)
+## random 模块 random_sample rand randint uniform normal randn permutation shuffle choice
   - 对Python内置的random进行了补充，增加了一些用于高效生成多种概率分布的样本值的函数
   - random_sample / random / rand 返回[0.0, 1.0)区间内的随机数，可以指定形状
     ```
@@ -956,7 +938,7 @@ nonzero / where / choose
         [20, 23, 22],
         [15, 18, 17] ])
     ```
-## take / put 花式索引的等价函数
+## take 与 put 花式索引的等价函数
   - 专门用于获取和设置单个轴向上的选区，直到编写本书时为止，take和put函数的性能通常要比花式索引好得多(已修正？)
     ```python
     arr = np.arange(10) * 100
@@ -991,7 +973,7 @@ nonzero / where / choose
         [ 40, 500, 40, 43] ])
     ```
   - put不接受axis参数，它只会在数组的扁平化版本（一维，C顺序）上进行索引(这一点今后应该是会有所改善的)
-## 重新排列 (reshape / ravel / flatten)
+## 重新排列 reshape ravel flatten
   - reshape重新排列
     ```python
     np.arange(8).reshape((2, 4))
@@ -1047,7 +1029,7 @@ nonzero / where / choose
         [ 5, 6, 7, 8, 9, 0],
         [10, 11, 12, 13, 14, 0] ])
     ```
-## 数组转置和轴对换 (transpose / T / dot计算内积)
+## 数组转置和轴对换 transpose T dot
   - 转置（transpose）是重塑的一种特殊形式，它返回的是源数据的视图（不会进行任何复制操作）
     ```python
     data = np.arange(12).reshape(3, 4)
@@ -1083,7 +1065,7 @@ nonzero / where / choose
         [ 38, 126, 214],
         [ 62, 214, 366] ])
     ```
-## 高维数组轴变换 (swapaxes)
+## 高维数组轴变换 swapaxes
   - 对于高维数组，transpose需要得到一个由轴编号组成的元组才能对这些轴进行转置
     ```python
     In [100]: arr = np.arange(12).reshape(2, 2, 3)
@@ -1130,8 +1112,8 @@ nonzero / where / choose
     ```
 ***
 
-# Numpy 数组方法 (ufunc / meshgrid / where / 数学方法 / any / all / sort / unique / concatention / vstack / split / fromfunction / 文件 / 线性代数 / fft / 随机数)
-## 通用函数 ufunc (一元 sqt / exp / modf / 二元 add / maximum)
+# Numpy 数组方法 ufunc meshgrid where 统计方法 逻辑运算 sort unique concatention vstack split fromfunction 文件 线性代数 fft 随机数
+## ufunc 通用函数 sqt exp modf add maximum
   - ufunc(universal function)是一种能对ndarray中的数据执行元素级运算的函数，可以看作简单函数的矢量化包装器
   - NumPy内置的许多ufunc函数都是在C语言级别实现的,计算速度非常快
   - 矢量化：NumPy数组可以将许多种数据处理任务表述为简洁的数组表达式（否则需要编写循环），用数组表达式代替循环的做法，通常被称为矢量化
@@ -1177,11 +1159,45 @@ nonzero / where / choose
     array([ 0.35735776, 0.40592974, 1.41476104, -0.26213824, -0.22590334,
         0.4549781 , 1.82463044, -0.4841161 ])
     ```
-## np.meshgrid 函数
-  - np.meshgrid函数接受两个一维数组，并产生两个二维矩阵（对应于两个数组中所有的(x,y)对）
-  - 在一组值（网格型）上计算函数sqrt(x^2+y^2)
-    ```python
+## meshgrid mgrid ogrid 函数
+  - **np.meshgrid()** 利用坐标轴上的点画网格，接受一维数组参数，并产生多个相应维度的多维矩阵
+    ```py
+    nx, ny = (3, 2)
+    x = np.linspace(0, 1, nx)
+    y = np.linspace(0, 1, ny)
+    xv, yv = np.meshgrid(x, y)
+    print(x, y)
+    # [0.  0.5 1. ] [0. 1.]
+
+    print(xv)
+    # [[0.  0.5 1. ]
+    # [0.  0.5 1. ]]
+    print(yv)
+    # [[0. 0. 0.]
+    # [1. 1. 1.]]
+    ```
+    参数 **sparse=True** 指定生成稀疏矩阵
+    ```py
+    xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
+    print(xv, xv.shape)
+    # [[0.  0.5 1. ]] (1, 3)
+    print(yv, yv.shape)
+    # [[0.] [1.]] (2, 1)
+    ```
+  - **meshgrid** 可以用于在平面上绘图
+    ```py
     import matplotlib.pyplot as plt
+
+    x = np.arange(-5, 5, 0.1)
+    y = np.arange(-5, 5, 0.1)
+    xx, yy = np.meshgrid(x, y, sparse=True)
+    z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
+    h = plt.contourf(x,y,z)
+    ```
+    ![](images/numpy_meshgrid_circle.png)
+
+    **在一组值（网格型）上计算函数 `sqrt(x^2+y^2)`**
+    ```python
     points = np.arange(-5, 6)
     xs, ys = np.meshgrid(points, points)
     z = np.sqrt(xs ** 2 + ys ** 2)
@@ -1189,7 +1205,34 @@ nonzero / where / choose
     plt.colorbar()
     plt.title('Image plot of $\sqrt{x^2 + y^2}$ for a grid of values')
     ```
-## 将条件逻辑表述为数组运算 (where)
+    ![](images/numpy_meshgrid_square.png)
+  - **np.mgrid** 与 **np.ogrid** 都是类 `np.lib.index_tricks.nd_grid` 的实现
+    ```py
+    # Construct a multi-dimensional "meshgrid"
+    class nd_grid(builtins.object)
+
+    mgrid = nd_grid(sparse=False)
+    ogrid = nd_grid(sparse=True)
+    ```
+  - **np.mgrid**
+    ```py
+    print(np.mgrid[0:3,0:3])
+    # [[[0 0 0] [1 1 1] [2 2 2]]
+    #  [[0 1 2] [0 1 2] [0 1 2]]]
+
+    # 使用复数
+    print(mgrid[-1:1:5j])
+    # [-1.  -0.5  0.   0.5  1. ]
+    ```
+  - **np.ogrid**
+    ```py
+    xx, yy = ogrid[0:5,0:5]
+    print(xx, xx.shape)
+    # [[0] [1] [2] [3] [4]] (5, 1)
+    print(yy, yy.shape)
+    # [[0 1 2 3 4]] (1, 5)
+    ```
+## 将条件逻辑表述为数组运算 where
   - numpy.where函数是三元表达式x if condition else y的矢量化版本
   - 在数据分析工作中，where通常用于根据另一个数组而产生一个新的数组
   - 根据布尔数组 cond 中的值选取两个值数组 xarr 和 yarr 的值，当cond中的值为True时，选取xarr的值，否则从yarr中选取
@@ -1213,7 +1256,7 @@ nonzero / where / choose
           np.where(cond1, 1,        # elif cond1 --> 1
                np.where(cond2, 2, 3)))        # elif cond2 --> 2, else --> 3
     ```
-## 数学和统计方法 (sum / mean / std / var / add / sin / power / sign / cumsum / cumprod / diff)
+## 数学和统计方法 sum mean std var add sin power sign cumsum cumprod diff
   - 可以通过数组上的一组数学函数对整个数组或某个轴向的数据进行统计计算
   - 基本数学计算 + / * / >
     ```python
@@ -1299,43 +1342,102 @@ nonzero / where / choose
     np.diff(x, axis=0)        # 二维指定坐标轴
     array([ [-1, 2, 0, -2] ])
     ```
-## 用于布尔型数组的方法 (any / all / alltrue / allclose)
-  - 布尔值会被强制转换为1（True）和0（False），因此sum可以被用来对布尔型数组中的True值计数
+## 百分位数 percentile
+  - **百分位数** 将一组数据从小到大排序，并计算相应的累计百分位，某一百分位 `p%` 所对应数据的值就称为这一百分位 `p` 的百分位数
+  - 中位数是第 50 百分位数
+  - **np.percentile**
+    ```py
+    percentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False)
+    ```
+    - **参数 a** 是可以转化为 array 的输入数据
+    - **参数 q** 百分位值或序列，取值在 `0-100`
+    - **参数 axis** 指定计算的轴
+    - **参数 interpolation** 取值 `{'linear', 'lower', 'higher', 'midpoint', 'nearest'}`，指定当百分位数位于输入数据的两个数之间时的取值方法
+    ```py
+    np.percentile([1, 1, 5, 100], q=50) # 3.
+    np.percentile([1, 1, 5, 100, 300], q=30)  # 1.7999999999999998
+
+    a = np.array([[10, 7, 4], [3, 2, 1]])
+    np.percentile(a, 50)  # 3.5
+    np.percentile(a, 50, axis=0)  # [6.5 4.5 2.5]
+    np.percentile(a, 50, axis=1)  # [7. 2.]
+    np.percentile(a, 50, axis=1, keepdims=True) # [[7.] [2.]]
+    ```
+    ```py
+    import matplotlib.pyplot as plt
+
+    a = np.arange(4)
+    p = np.linspace(0, 100, 6001)
+    ax = plt.gca()
+    lines = [
+        ('linear', None),
+        ('higher', '--'),
+        ('lower', '--'),
+        ('nearest', '-.'),
+        ('midpoint', '-.'),
+    ]
+    for interpolation, style in lines:
+        ax.plot(
+            p, np.percentile(a, p, interpolation=interpolation),
+            label=interpolation, linestyle=style)
+    ax.set(
+        title='Interpolation methods for list: ' + str(a),
+        xlabel='Percentile',
+        ylabel='List item returned',
+        yticks=a)
+    ax.legend()
+    plt.show()
+    ```
+    ![](images/numpy_percentile_gca.png)
+## 逻辑运算 any all alltrue allclose logical_and logical_or logical_not logical_xor
+  - 布尔值会被强制转换为1（True）和0（False），因此 sum 可以被用来对布尔型数组中的 True 值计数
     ```python
     arr = np.random.randn(100)
     (arr > 0).sum()        # 正值的数量
-    Out[35]: 55
+    # Out[35]: 55
     ```
-  - any用于测试数组中是否存在一个或多个True
-  - all则检查数组中所有值是否都是True
+  - **any** / **all** 用于测试数组中是否存在一个或多个 True / 是否都是 True
     ```python
     bools = np.array([False, False, True, False])
     bools.any()
-    Out[37]: True
+    # Out[37]: True
 
     bools.all()
-    Out[38]: False
+    # Out[38]: False
     ```
-  - alltrue / allclose
+  - **alltrue** 接受一个布尔型数组参数，判断是否全为True
+    ```py
+    np.alltrue(bools)
+    # Out[112]: False
+    ```
+  - **allclose** 接受两个数组参数，判断两个数组在一定容忍度内是否相等
     ```python
-    alltrue 接受一个布尔型数组参数，判断是否全为True
-    allclose 接受两个数组参数，判断两个数组在一定容忍度内是否相等
     np.allclose([1e10,1e-7], [1.00001e10,1e-8])
-    Out[600]: False
+    # Out[600]: False
 
     np.allclose([1e10,1e-8], [1.00001e10,1e-9])
-    Out[601]: True
+    # Out[601]: True
 
     np.allclose([1e10,1e-8], [1.0001e10,1e-9])
-    Out[602]: False
+    # Out[602]: False
 
     np.allclose([1.0, np.nan], [1.0, np.nan])
-    Out[603]: False
+    # Out[603]: False
 
     np.allclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
-    Out[604]: True
+    # Out[604]: True
     ```
-## 排序 (sort / sort_values / sort_index )
+  - **logical_and** / **logical_or** / **logical_not** / **logical_xor** 两个数组的逻辑运算与 / 或 / 非 / 异或
+    ```py
+    aa = [True, True, False, False]
+    bb = [True, False, True, False]
+
+    np.logical_and(aa, bb)  # [ True, False, False, False]
+    np.logical_or(aa, bb) # [ True,  True,  True, False]
+    np.logical_xor(aa, bb)  # [False,  True,  True, False]
+    np.logical_not(aa)  # [False, False,  True,  True]
+    ```
+## 排序 sort sort_values sort_index
   - 顶级方法np.sort返回的是数组的已排序副本，而就地排序则会修改数组本身
   - 跟Python内置的列表类型一样，NumPy数组也可以通过sort方法就地排序
     ```python
@@ -1367,7 +1469,7 @@ nonzero / where / choose
     by 参数指定用于排序的属性名
     sort_index 提供更多的选项，默认使用index排列
     ```
-## 唯一化以及其他的集合逻辑 (unique / in1d)
+## 唯一化以及其他的集合逻辑 unique in1d
   - NumPy提供了一些针对一维ndarray的基本集合运算
   - np.unique 用于找出数组中的唯一值并返回已排序的结果
     ```python
@@ -1387,7 +1489,7 @@ nonzero / where / choose
     np.in1d(values, [2, 3, 6])
     Out[61]: array([ True, False, False, True, True, False, True], dtype=bool)
     ```
-## 数组合并与拆分concatentaion / vstack / row_stack / hstack / column_stack / split / hsplit / vsplit / dsplit
+## 数组合并与拆分 concatentaion vstack row_stack hstack column_stack split hsplit vsplit dsplit
   - numpy.concatenate可以按指定轴将一个由数组组成的序列连接到一起
     ```python
     arr1 = np.arange(1, 7).reshape(2, 3)
@@ -1451,7 +1553,7 @@ nonzero / where / choose
      array([ 5., 6., 7.]),
      array([], dtype=float64)]
     ```
-## fromfunction在每个坐标点上执行function
+## fromfunction 在每个坐标点上执行 function
   - fromfunction(function, shape, ** kwargs)
     ```python
     创建array，通过在每个坐标点上执行function
@@ -1507,7 +1609,7 @@ nonzero / where / choose
         [ 8, 16, 24, 32, 40, 48, 56, 64, 72],
         [ 9, 18, 27, 36, 45, 54, 63, 72, 81] ])
     ```
-## save / load 存取二进制格式文件
+## save 与 load 存取二进制格式文件
   - np.save和np.load是读写磁盘数组数据的两个主要函数
   - 默认情况下，数组是以未压缩的原始二进制格式保存在扩展名为.npy的文件中的
     ```python
@@ -1541,7 +1643,7 @@ nonzero / where / choose
     arch.keys()
     Out[76]: ['a', 'b']
     ```
-## savetxt / loadtxt 存取文本文件
+## savetxt 与 loadtxt 存取文本文件
   - np.loadtxt或更为专门化的np.genfromtxt将数据加载到普通的NumPy数组中
   - 这些函数都有许多选项可供使用：指定各种分隔符、针对特定列的转换器函数、需要跳过的行数等
   - <br />
@@ -1551,7 +1653,7 @@ nonzero / where / choose
     ```
     np.savetxt 将数组写到以某种分隔符隔开的文本文件中
   - genfromtxt跟loadtxt差不多，只不过它面向的是结构化数组和缺失数据处理
-## 线性代数 (dot / linalg / inv / qr / var / det / eig / svd)
+## 线性代数 dot linalg inv qr var det eig svd
   - NumPy提供了一个用于矩阵乘法的dot函数（既是一个数组方法也是numpy命名空间中的一个函数）
     ```python
     x = np.arange(6).reshape(2, 3)
@@ -1654,7 +1756,7 @@ nonzero / where / choose
     f = np.fft.fft(la)        # f = sp.fft(la)
     plt.plot(f)
     ```
-## 示例：随机漫步 (randint / where / cumsum / abs / any / argmax)
+## 示例随机漫步 randint where cumsum abs any argmax
   - 随机漫步：从0开始，步长1和－1出现的概率相等
   - 纯python实现
     ```python

@@ -84,6 +84,7 @@ function generate_exclude_list_base {
 function generate_exclude_list_addition {
     generate_exclude_list_base
     printf "
+/opt
 /home
 " >> $EXCLUDE_FILE
 }
