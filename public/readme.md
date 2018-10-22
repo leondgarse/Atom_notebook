@@ -67,6 +67,8 @@
   - [08-27_tensorflow_guide.md](./2018/08-27_tensorflow_guide.md)
   - [09-06_tensorflow_tutotials.md](./2018/09-06_tensorflow_tutotials.md)
   - [09-20_JP.md](./2018/09-20_JP.md)
+  - [10-10_tensorflow_examples.md](./2018/10-10_tensorflow_examples.md)
+  - [10-11_image_processing.md](./2018/10-11_image_processing.md)
   - [images](./2018/images)
   - [neo4j_movie_graph.cypher](./2018/neo4j_movie_graph.cypher)
   - [persona.md](./2018/persona.md)

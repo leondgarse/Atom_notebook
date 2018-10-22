@@ -1,6 +1,47 @@
 # ___2018 - 10 - 11 Image Processing___
 ***
 
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2018 - 10 - 11 Image Processing___](#2018-10-11-image-processing)
+  - [目录](#目录)
+  - [图片处理常用库](#图片处理常用库)
+  - [图片像素序列处理](#图片像素序列处理)
+  	- [测试图片](#测试图片)
+  	- [将长方形图片转化为圆形](#将长方形图片转化为圆形)
+  	- [裁剪图片四周的空白像素](#裁剪图片四周的空白像素)
+  	- [分割手写数字图片为单独数字并转化为 MNIST 格式](#分割手写数字图片为单独数字并转化为-mnist-格式)
+  	- [图片数据类型转化](#图片数据类型转化)
+  - [图像处理算法](#图像处理算法)
+  	- [Otsu 最佳阈值分割法](#otsu-最佳阈值分割法)
+  	- [Sobel 边缘检测算子](#sobel-边缘检测算子)
+  	- [Canny 边缘检测算子](#canny-边缘检测算子)
+  	- [Watershed 水线阈值分割算法](#watershed-水线阈值分割算法)
+  	- [Anisotropic diffusion 各项异性扩散算法](#anisotropic-diffusion-各项异性扩散算法)
+  	- [Fourier 傅里叶变换](#fourier-傅里叶变换)
+  	- [Gabor 变换](#gabor-变换)
+  - [skimage](#skimage)
+  	- [简介](#简介)
+  	- [子模块](#子模块)
+  	- [data 测试图片与样本数据](#data-测试图片与样本数据)
+  	- [io 图像的读取显示与保存](#io-图像的读取显示与保存)
+  	- [transform 图像形变与缩放](#transform-图像形变与缩放)
+  	- [color 图像颜色转换](#color-图像颜色转换)
+  	- [exposure 与像素分布直方图 histogram](#exposure-与像素分布直方图-histogram)
+  	- [exposure 调整对比度与亮度](#exposure-调整对比度与亮度)
+  	- [Image Viewer](#image-viewer)
+  	- [draw 图形绘制](#draw-图形绘制)
+  	- [filters 图像自动阈值分割](#filters-图像自动阈值分割)
+  	- [filters 图像过滤](#filters-图像过滤)
+  	- [图像分割 Image Segmentation](#图像分割-image-segmentation)
+  	- [morphology 形态学滤波](#morphology-形态学滤波)
+  	- [filters.rank 高级滤波](#filtersrank-高级滤波)
+  - [处理视频文件](#处理视频文件)
+
+  <!-- /TOC -->
+***
+
 # 图片处理常用库
   - [scikit-image](https://scikit-image.org)
   - [pillow](https://pillow.readthedocs.io/)
@@ -750,7 +791,16 @@
     plt.tight_layout()
     ```
     ![](images/skimage_RAG.png)
-## 像素分布直方图 histogram
+  - **颜色反色** inverted image / complementary image
+    ```py
+    from skimage import util
+    img = data.camera()
+    inverted_img = util.invert(img)
+
+    io.imshow(np.concatenate([img, inverted_img], 1))
+    ```
+    ![](images/skimage_invert.png)
+## exposure 与像素分布直方图 histogram
   - **plt.hist** 可以直接绘制图像的像素分布直方图
     ```py
     hist(x, bins=None, cumulative=False, histtype='bar', color=None, stacked=False, ...)
@@ -799,7 +849,7 @@
     plt.tight_layout()
     ```
     ![](images/skimage_histogram.png)
-  - **函数定义** 绘制图片直方图以及累积分布
+  - **图像显示辅助函数** 绘制图片直方图以及累积分布
     ```py
     from skimage import img_as_float, exposure, data
 
@@ -998,6 +1048,190 @@
     viewer += denoise_plugin
     denoised = viewer.show()[0][0]
     ```
+## draw 图形绘制
+  - **图像显示辅助函数**
+    ```py
+    def image_show_shape(image):
+        plt.imshow(image)
+        plt.xlim(0, image.shape[1]-1)
+        plt.ylim(0, image.shape[0]-1)
+        plt.tight_layout()
+    ```
+  - **line / line_aa** 画线条
+    ```py
+    line(r0, c0, r1, c1)
+    ```
+    - **r0 / c0** / **r1 / c1** 起始 / 结束点的行 / 列坐标
+    - 返回绘制直线上所有的点坐标
+    ```py
+    from skimage.draw import line
+    img = np.zeros((5, 5), dtype=np.uint8)
+    rr, cc = line(1, 1, 3, 3)
+    img[rr, cc] = 1
+    print(img)
+    # [[0 0 0 0 0]
+    #  [0 1 0 0 0]
+    #  [0 0 1 0 0]
+    #  [0 0 0 1 0]
+    #  [0 0 0 0 0]]
+    ```
+  - **line_aa** 画线条，anti-aliased 版本，返回直线坐标与 float 型像素值
+    ```py
+    line_aa(r0, c0, r1, c1)
+    ```
+    ```py
+    from skimage.draw import line_aa, line
+    img = np.zeros((200, 200), dtype=np.uint8)
+    rr, cc, val = line_aa(40, 40, 120, 120)
+    img[rr, cc] = val * 255
+
+    rr, cc = line(80, 40, 160, 120)
+    img[rr, cc] = 255
+
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_line_aa.png)
+  - **set_color** 设置颜色
+    ```py
+    set_color(image, coords, color, alpha=1)
+    ```
+    ```py
+    from skimage.draw import line, set_color
+    img = np.zeros((5, 5), dtype=np.uint8)
+    rr, cc = line(1, 1, 10, 10)
+    set_color(img, (rr, cc), 1)
+    print(img)
+    # [[0 0 0 0 0]
+    #  [0 1 0 0 0]
+    #  [0 0 1 0 0]
+    #  [0 0 0 1 0]
+    #  [0 0 0 0 1]]
+    ```
+  - **circle** 画圆
+    ```py
+    circle(r, c, radius, shape=None)
+    ```
+    **r, c, radius 参数** 圆心坐标与半径，double 类型，如果结果坐标中有负值，则会按照类似 `[-1, -1]` 点的位置，出现在图像的另一侧
+    ```py
+    from skimage.draw import circle
+    img = np.zeros((200, 200), dtype=np.uint8)
+    rr, cc = circle(40, 40, 50)
+    img[rr, cc] = 1
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_circle.png)
+  - **rectangle** 长方形
+    ```py
+    rectangle(start, end=None, extent=None, shape=None)
+    ```
+    - **start 参数** 起始坐标，`([plane,] row, column)`
+    - **end 参数** 终止坐标，`([plane,] row, column)`，可以指定 end 或 extent
+    - **extent 参数** 长方形大小，`([num_planes,] num_rows, num_cols)`，可以指定 end 或 extent
+    ```py
+    from skimage.draw import rectangle
+    img = np.zeros((10, 20), dtype=np.uint8)
+    start = (4, 2)
+    end = (2, 6)
+    rr, cc = rectangle(start, end=end, shape=img.shape)
+    print(rr[-1], cc[-1]) # [2 3 4] [6 6 6]
+    img[rr, cc] = 1
+
+    start = (4, 12)
+    extent = (2, 6)
+    rr, cc = rectangle(start, extent=extent, shape=img.shape)
+    print(rr[-1], cc[-1]) # [4 5] [17 17]
+    img[rr, cc] = 1
+
+    image_show_shape(img)
+    plt.xticks(range(0, 20, 2))
+    plt.grid()
+    ```
+    ![](images/skimage_draw_rectangle.png)
+  - **polygon / polygon_perimeter** 多边形 / 多边形画线
+    ```py
+    polygon(r, c, shape=None)
+    polygon_perimeter(r, c, shape=None, clip=False)
+    ```
+    - **r, c 参数** 各个点的坐标，不要求一定闭合
+    ```py
+    from skimage.draw import polygon
+    img = np.ones((200, 200, 3), dtype=np.float32)
+    rr, cc = polygon([60, 140, 140, 60], [40, 40, 160, 160])
+    img[rr, cc] = (1, 0, 0)
+
+    def polygon_star(xc, yc, radius=1, rotate=0, points=5):
+        angles = np.arange(points) * 2 * np.pi / points * 2 + rotate
+        xx = np.sin(angles) * radius + xc
+        yy = np.cos(angles) * radius + yc
+        return draw.polygon_perimeter(xx, yy)
+
+    rr, cc = polygon_star(100, 100, 20, np.pi / 2, 5)
+    img[rr, cc] = (1, 1, 0)
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_polygon.png)
+  - **ellipse** 椭圆
+    ```py
+    ellipse(r, c, r_radius, c_radius, shape=None, rotation=0.0)
+    ```
+    - **r, c, r_radius, c_radius** 分别指定椭圆的中心点 / 长轴半径 / 短轴半径，对应椭圆形状 ``(r/r_radius)**2 + (c/c_radius)**2 = 1``
+    - **rotation 参数** 逆时针旋转角度，``(-PI, PI)``
+    ```py
+    from skimage.draw import ellipse
+    img = np.zeros((100, 200), dtype=np.uint8)
+    rr, cc = ellipse(50, 100, 40, 20, rotation=np.pi / 6)
+    img[rr, cc] = 1
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_ellipse.png)
+  - **bezier_curve** 贝塞尔曲线，类似矢量曲线，使用三个点绘制的二次方贝塞尔曲线
+    ```py
+    bezier_curve(r0, c0, r1, c1, r2, c2, weight, shape=None)
+    ```
+    - **r0, c0, r1, c1, r2, c2** 分布指定起始 / 中间 / 终止的控制节点坐标
+    - **weight 参数** 中间控制节点的权重，控制曲线的弯曲度，权重越大曲线越向中间节点偏移
+    ```py
+    from skimage.draw import bezier_curve
+    img = np.zeros((100, 200), dtype=np.uint8)
+    rr, cc = bezier_curve(50, 40, 20, 70, 80, 130, 1)
+    img[rr, cc] = 1
+
+    rr, cc = bezier_curve(50, 40, 20, 70, 80, 130, 5)
+    img[rr, cc] = 1
+    img[20, 70] = 1
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_bezier_curve.png)
+  - **circle_perimeter / circle_perimeter_aa** 圆周曲线，即空心圆，`circle_perimeter_aa` 为 anti-aliased 版本
+    ```py
+    circle_perimeter(r, c, radius, method='bresenham', shape=None)
+    circle_perimeter_aa(r, c, radius, shape=None)
+    ```
+    - **method 参数** 取值 ``{'bresenham', 'andres'}``，对应不同方法，`andres` 产生的圆环面更大，当圆圈旋转时失真较小
+    ```py
+    from skimage.draw import circle_perimeter
+    img = np.zeros((10, 20), dtype=np.uint8)
+    rr, cc = circle_perimeter(4, 4, 3)
+    img[rr, cc] = 1
+
+    rr, cc = circle_perimeter(4, 14, 3, method='andres')
+    img[rr, cc] = 1
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_circle_perimeter.png)
+  - **ellipse_perimeter** 空心椭圆
+    ```py
+    ellipse_perimeter(r, c, r_radius, c_radius, orientation=0, shape=None)
+    ```
+    - **orientation 参数** 椭圆逆时针旋转的角度
+    ```py
+    from skimage.draw import ellipse_perimeter
+    img = np.zeros((100, 100), dtype=np.uint8)
+    rr, cc = ellipse_perimeter(50, 50, 30, 40, np.pi / 6)
+    img[rr, cc] = 1
+    image_show_shape(img)
+    ```
+    ![](images/skimage_draw_ellipse_perimeter.png)
 ## filters 图像自动阈值分割
   - **图像阈值分割** 利用图像中 **目标区域** 与 **背景** 在灰度特性上的差异，选取一个比较合理的阈值，将图像分为两部分
   - **threshold_otsu** 计算 Otsu 算法的分割阈值
@@ -1280,7 +1514,173 @@
     img_show(image_label_overlay, title='Labeled image', ax=axes[1])
     ```
     ![](images/skimage_segmentation_label.png)
-## draw 图形绘制
+## morphology 形态学滤波
+  - 对图像进行形态学变换。变换对象一般为灰度图或二值图
+  - **selem** 结构化元素 structuring element，模块 `morphology.selem`，包括圆形 ball / 矩形 rectangle / 方形 square / 八角星形 star / 圆盘形 disk 等
+  - **grey** 灰度图像形态学算法 Grayscale morphological operations，模块 `morphology.grey`，包括 dilation / erosion / opening / closing / white_tophat / black_tophat 等
+  - **binary** 二值图像形态学算法 Binary morphological operations，模块 `morphology.binary`，包括与灰度图算法对应的一些算法，在处理二值图像时速度更快
+  - **图片显示辅助函数**
+    ```py
+    def images_show(images, titles, single_width=3, nrows=1):
+        ncols = int(np.ceil(len(images) / nrows))
+        fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(single_width * ncols, single_width * nrows), sharex=True, sharey=True)
+        for ax, im, tt in zip(axes.flatten(), images, titles):
+            ax.imshow(im)
+            ax.set_title(tt)
+        plt.xlim(left=0)
+        plt.ylim(top=0)
+        fig.tight_layout()
+
+        return fig
+    ```
+  - **dilation / binary_dilation** 膨胀，将点 `(i,j)` 设置为以该点为中心周围像素的 **最大值**，效果扩大亮色区域，缩小暗色区域，可以用来扩充边缘或填充小的孔洞
+    ```py
+    dilation(image, selem=None, out=None, shift_x=False, shift_y=False)
+    binary_dilation(image, selem=None, out=None)
+    ```
+    - **selem 参数** 二维的 `0 / 1` 矩阵，指定邻近区域的形状，默认为十字形
+    ```py
+    # Dilation enlarges bright regions
+    from skimage.morphology import square, dilation
+    imm = np.array(
+        [[0., 0.,   0., 0.,   0.],
+         [0., 0.,   0., 0.25, 0.],
+         [0., 0.,   1., 0.,   0.],
+         [0., 0.75, 0., 0.5,  0.],
+         [0., 0.,   0., 0.,   0.]])
+
+    idd1 = dilation(imm)
+    idd2 = dilation(imm, square(1))
+    idd3 = dilation(imm, square(3))
+    images_show([imm, idd1, idd2, idd3], ['Original', 'Default', 'Square=1', 'Square=3'])
+    ```
+    ![](images/skimage_morphology_dilation.png)
+  - **erosion / binary_erosion** 形态腐蚀，与膨胀相反的操作，将点 `(i,j)` 设置为以该点为中心周围像素的 **最小值**，可用来提取骨干信息 / 去掉毛刺 / 去掉孤立的像素
+    ```py
+    erosion(image, selem=None, out=None, shift_x=False, shift_y=False)
+    binary_erosion(image, selem=None, out=None)
+    ```
+    ```py
+    # Erosion shrinks bright regions
+    imm = data.checkerboard()
+    iee1 = erosion(imm)
+    iee2 = erosion(imm, square(10))
+    iee3 = erosion(imm, square(25))
+    images_show([imm, iee1, iee2, iee3], ['Original', 'Default', 'Square=10', 'Square=25'])
+    ```
+    ![](images/skimage_morphology_erosion.png)
+  - **opening / binary_opening** 形态学开算法，先腐蚀再膨胀，可以消除白色噪点，并连接小的暗色区块，类似在亮色之间扩大暗色的分割
+    The morphological opening on an image is defined as an erosion followed by a dilation. Opening can remove small bright spots (i.e. "salt") and connect small dark cracks. This tends to "open" up (dark) gaps between (bright) features.
+    ```py
+    opening(image, selem=None, out=None)
+    ```
+    ```py
+    # Open up gap between two bright regions (but also shrink regions)
+    from skimage.morphology import square, opening
+    bad_connection = np.array(
+        [[1, 0, 0, 0, 1],
+         [1, 1, 0, 1, 1],
+         [1, 1, 1, 1, 1],
+         [1, 1, 0, 1, 1],
+         [1, 0, 0, 0, 1]])
+
+    ioo = opening(bad_connection, square(3))
+    images_show([bad_connection, ioo], ['Original', 'Square=3'])
+    ```
+    ![](images/skimage_morphology_opening.png)
+  - **closing / binary_closing** 形态学闭运算，先膨胀再腐蚀，可一消除黑色噪点，并链接小的两色区块，可用来填充孔洞
+    ```py
+    closing(image, selem=None, out=None)
+    ```
+    ```py
+    from skimage.morphology import square, closing
+    broken_line = np.array([[0, 0, 1, 0, 0],
+                            [0, 0, 0, 0, 0],
+                            [1, 1, 0, 1, 1],
+                            [0, 0, 0, 0, 0],
+                            [0, 0, 1, 0, 0]], dtype=np.uint8)
+    icc = closing(broken_line, square(3))
+    images_show([broken_line, icc], ['Original', 'Square=3'])
+    ```
+    ![](images/skimage_morphology_closing.png)
+  - **white_tophat** 白帽，将原图像减去它的开运算值，返回比结构化元素 selem 小的白点
+    ```py
+    white_tophat(image, selem=None, out=None)
+    ```
+    ```py
+    # Subtract grey background from bright peak
+    from skimage.morphology import square, disk, white_tophat
+    bright_on_grey = np.array([[2, 3, 3, 3, 2],
+                               [3, 4, 5, 4, 3],
+                               [3, 5, 9, 5, 3],
+                               [3, 4, 5, 4, 3],
+                               [2, 3, 3, 3, 2]], dtype=np.uint8)
+    iww1 = white_tophat(bright_on_grey, square(3))
+    iww2 = white_tophat(bright_on_grey, square(1))
+    iww3 = white_tophat(bright_on_grey, disk(1))
+    images_show([bright_on_grey, iww1, iww2, iww3], ['Original', 'Square=3', 'Square=1', 'Disk=1'])
+    ```
+    ![](images/skimage_morphology_white_tophat.png)
+  - **black_tophat** 黑帽，将图像的闭运算值减去原图像，返回比结构化元素 selem 小的黑点，且将这些黑点反色
+    ```py
+    black_tophat(image, selem=None, out=None)
+    ```
+    ```py
+    # Change dark peak to bright peak and subtract background
+    from skimage.morphology import square, disk, black_tophat
+    dark_on_grey = np.array([[7, 6, 6, 6, 7],
+                             [6, 5, 4, 5, 6],
+                             [6, 4, 0, 4, 6],
+                             [6, 5, 4, 5, 6],
+                             [7, 6, 6, 6, 7]], dtype=np.uint8)
+    ibb1 = black_tophat(dark_on_grey, square(3))
+    ibb2 = black_tophat(dark_on_grey, square(5))
+    ibb3 = black_tophat(dark_on_grey, disk(1))
+    images_show([dark_on_grey, ibb1, ibb2, ibb3], ['Original', 'Square=3', 'Square=5', 'Disk=1'])
+    ```
+    ![](images/skimage_morphology_black_tophat.png)
+## filters.rank 高级滤波
+  - **函数形式** 调用形式基本类似
+    ```py
+    help(skimage.filters.rank)
+    autolevel(image, selem, out=None, mask=None, shift_x=False, shift_y=False)
+    ```
+  - **autolevel** 自动色阶，该滤波器局部地拉伸灰度像素值的直方图，以覆盖整个像素值范围
+  - **bottomhat** 此滤波器先计算图像的形态学闭运算，然后用原图像减去运算的结果值，有点像黑帽操作
+  - **tophat** 此滤波器先计算图像的形态学开运算，然后用原图像减去运算的结果值，有点像白帽操作
+  - **enhance_contrast** 对比度增强，求出局部区域的最大值和最小值，然后看当前点像素值最接近最大值还是最小值，然后替换为最大值或最小值
+  - **entropy** 求局部熵，熵是使用基为 2 的对数运算出来的，该函数将局部区域的灰度值分布进行二进制编码，返回编码的最小值
+  - **equalize** 均衡化滤波，利用局部直方图对图像进行均衡化滤波
+  - **gradient** 返回图像的局部梯度值，用此梯度值代替区域内所有像素值
+  - **maximum** 最大值滤波器，返回图像局部区域的最大值，用此最大值代替该区域内所有像素值
+  - **minimum** 最小值滤波器，返回图像局部区域内的最小值，用此最小值取代该区域内所有像素值
+  - **mean** 均值滤波器，返回图像局部区域内的均值，用此均值取代该区域内所有像素值
+  - **median** 中值滤波器，返回图像局部区域内的中值，用此中值取代该区域内所有像素值
+  - **modal** 莫代尔滤波器，返回图像局部区域内的 modal 值，用此值取代该区域内所有像素值
+  - **otsu** otsu阈值滤波，返回图像局部区域内的 otsu 阈值，用此值取代该区域内所有像素值
+  - **threshold** 阈值滤波，将图像局部区域中的每个像素值与均值比较，大于则赋值为 1，小于赋值为 0，得到一个二值图像
+  - **subtract_mean** 减均值滤波，将局部区域中的每一个像素，减去该区域中的均值
+  - **sum** 求和滤波，求局部区域的像素总和，用此值取代该区域内所有像素值
+  - **使用示例**
+    ```py
+    from skimage import data
+    from skimage.morphology import disk
+    from skimage.filters.rank import autolevel, enhance_contrast, gradient, maximum, otsu, sum, threshold
+    img = data.camera()
+
+    iaa = autolevel(img, disk(5))
+    iee = enhance_contrast(img, disk(5))
+    igg = gradient(img, disk(5))
+    imm = maximum(img, disk(5))
+    ioo = otsu(img, disk(5))
+    iss = sum(img, disk(5))
+    itt = threshold(img, disk(5))
+
+    images = [img, iaa, iee, igg, imm, ioo, iss, itt]
+    titles = ['Original', 'autolevel', 'enhance_contrast', 'gradient', 'maximum', 'otsu', 'sum', 'threshold']
+    images_show(images, titles, nrows=2)
+    ```
+    ![](images/skimage_filters_rank.png)
 ***
 
 # 处理视频文件
@@ -1369,21 +1769,3 @@
     cv2.destroyAllWindows()
     ```
 ***
-- **颜色反色** inverted image / complementary image
-  ```py
-  from skimage import util
-  img = data.camera()
-  inverted_img = util.invert(img)
-
-  io.imshow(np.concatenate([img, inverted_img], 1))
-  ```
-  ![](images/skimage_invert.png)
-# Image.resize
-  在这里，我们使用resize函数。
-
-  与大多数脚本库一样，resize函数也支持链式调用。先通过resize((size, size), Image.ANTIALIAS)指定大小与质量，其中对于参数二：
-  参数值  	含义
-  Image.NEAREST 	低质量
-  Image.BILINEAR 	双线性
-  Image.BICUBIC  	三次样条插值
-  Image.ANTIALIAS 	高质量
