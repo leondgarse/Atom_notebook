@@ -1154,7 +1154,7 @@
     ```
     - **r, c 参数** 各个点的坐标，不要求一定闭合
     ```py
-    from skimage.draw import polygon
+    from skimage.draw import polygon, polygon_perimeter
     img = np.ones((200, 200, 3), dtype=np.float32)
     rr, cc = polygon([60, 140, 140, 60], [40, 40, 160, 160])
     img[rr, cc] = (1, 0, 0)
@@ -1163,7 +1163,7 @@
         angles = np.arange(points) * 2 * np.pi / points * 2 + rotate
         xx = np.sin(angles) * radius + xc
         yy = np.cos(angles) * radius + yc
-        return draw.polygon_perimeter(xx, yy)
+        return polygon_perimeter(xx, yy)
 
     rr, cc = polygon_star(100, 100, 20, np.pi / 2, 5)
     img[rr, cc] = (1, 1, 0)

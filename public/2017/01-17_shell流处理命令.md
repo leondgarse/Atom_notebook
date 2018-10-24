@@ -268,33 +268,35 @@
   awk -F ']' '{if($1 !~ "\\[SSTK") {print $0}}' cvp.log.sstk > foo        # 特殊字符匹配转义使用 \\
   ```
 ## awk 使用 if / for 语句
-  - 打印第四个字段长度大于3的行
-    ```
+  - **if 语句**
+    ```sh
+    # 打印第四个字段长度大于 3 的行
     awk -F: '{if (length($4)>3) print $0}' /etc/passwd
-    ```
-    条件语句，统计某个文件夹下的文件占用的字节数，过滤4096大小的文件(一般都是文件夹)
-    ```
+
+    # 统计某个文件夹下的文件占用的字节数，过滤4096大小的文件(一般都是文件夹)
     ls -l | awk 'BEGIN {size=0;print "[start]size is ", size} {if($5!=4096){size=size+$5;}} END{print "[end]size is ", size/1024/1024,"M"}'
+
+    # 查找当前文件夹下大小为 0 的文件
+    find ./* -type f -exec ls -l {} \;  | awk '{if ($5 == 0) print $0}'
     ```
-    循环语句，显示/etc/passwd的账户
-    ```
-    awk -F ':' 'BEGIN {count=0;} {name[count] = $1;count++;} END{for (i = 0; i < NR; i++) print i, name[i]}' /etc/passwd
-    ```
-  - awk有三种循环:while循环；for循环；special for循环
-    ```
+  - **while 循环 / for 循环 / special for 循环**
+    ```sh
     $ awk '{ i = 1; while ( i <= NF ) { print NF,$i; i++}}' test 变量的初始值为1，若i小于等于NF(域个数),则执行打印语句，且i增加1。直到i的值大于NF.
     $ awk '{for (i = 1; i<NF; i++) print NF,$i}' test 作用同上
     ```
-  - breadkcontinue语句
+    循环语句，显示 /etc/passwd 的账户
+    ```sh
+    awk -F ':' 'BEGIN {count=0;} {name[count] = $1;count++;} END{for (i = 0; i < NR; i++) print i, name[i]}' /etc/passwd
     ```
-    break用于在满足条件的情况下跳出循环；continue用于在满足条件的情况下忽略后面的语句，直接返回循环的顶端。如：
+  - **breadk 与 continue语句** break 用于在满足条件的情况下跳出循环，continue 用于在满足条件的情况下忽略后面的语句，直接返回循环的顶端
+    ```py
     {for ( x=3; x<=NF; x++)
             if ($x<0){print "Bottomed out!"; break}}
     {for ( x=3; x<=NF; x++)
             if ($x==0){print "Get next item"; continue}}
     ```
-  - next语句从输入文件中读取一行，然后从头开始执行awk脚本
-    ```
+  - **next 语句** 从输入文件中读取一行，然后从头开始执行awk脚本
+    ```py
     { if ($1 ~/test/){ next }
             else { print } }
     ```

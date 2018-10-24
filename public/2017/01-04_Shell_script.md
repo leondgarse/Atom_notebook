@@ -6,36 +6,42 @@
 
   - [___2017 - 01 - 04 Shell script___](#2017-01-04-shell-script)
   - [目录](#目录)
+  - [Shell 基础](#shell-基础)
   - [变量](#变量)
   - [命令行参数](#命令行参数)
-  - [计算](#计算)
-  - [字符串 长度 / index / 抽取 / 替换](#字符串-长度-index-抽取-替换)
+  - [计算 expr](#计算-expr)
+  - [字符串的长度 index 抽取 替换](#字符串的长度-index-抽取-替换)
   - [if 判断条件语法](#if-判断条件语法)
   - [case 选择语句](#case-选择语句)
-  - [for / while / until 循环](#for-while-until-循环)
+  - [for while until 循环](#for-while-until-循环)
   - [function 函数](#function-函数)
   - [getopts 命令行参数处理](#getopts-命令行参数处理)
+  - [read 用户输入](#read-用户输入)
+  	- [示例](#示例)
+  	- [expr 计算浮点数除法](#expr-计算浮点数除法)
+  	- [shell 下载迅雷链接](#shell-下载迅雷链接)
 
   <!-- /TOC -->
 ***
 
-- shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
-  ```shell
-  #!/bin/sh
-  #!/usr/bin/env bash
-  ```
-- 当前使用的bash：
-  ```shell
-  $ echo $$ # 30044
-  $ ps | grep $$  # 30044 pts/0    00:00:00 bash
+# Shell 基础
+  - shell 中的注释会注视调用“#”字符以后的所有内容,直到这一行结束
+    ```shell
+    #!/bin/sh
+    #!/usr/bin/env bash
+    ```
+  - 当前使用的bash：
+    ```shell
+    $ echo $$ # 30044
+    $ ps | grep $$  # 30044 pts/0    00:00:00 bash
 
-  $ echo $SHELL
-  $ which bash
-  ```
-- $? - The exit status of the last command executed.
-- $$ - The process ID of the current shell. For shell scripts, this is the process ID under which they are executing.
-- $! - The process number of the last background command.
-- exit(1)表示发生错误后退出程序， exit(0)表示正常退出
+    $ echo $SHELL
+    $ which bash
+    ```
+  - $? - The exit status of the last command executed.
+  - $$ - The process ID of the current shell. For shell scripts, this is the process ID under which they are executing.
+  - $! - The process number of the last background command.
+  - exit(1)表示发生错误后退出程序， exit(0)表示正常退出
 ***
 
 # 变量
@@ -231,7 +237,7 @@
     ```
 ***
 
-# 字符串 长度 / index / 抽取 / 替换
+# 字符串的长度 index 抽取 替换
   - $(#) 字符串长度
     ```shell
     STRING="this is a string"
@@ -421,7 +427,7 @@
     ```
 ***
 
-# for / while / until 循环
+# for while until 循环
   - for 语法：
     ```shell
     # basic construct
@@ -578,70 +584,23 @@
     ```
 ***
 
-## 示例 expr 计算浮点数除法
-  - expr 只可以计算整数值运算，浮点数运算可以使用 `awk` / `bc` / `dc`
-  ```sh
-  function expr_dev_float() {
-      aa=$1
-      bb=$2
-      if [ $# -ge 3 ]; then precision=$3; else precision=2; fi
-
-      if [ $(expr index $aa '.') -eq 0 ]; then aa_float_len=0; else aa_float_len=$(expr $(expr length $aa) - $(expr index $aa '.')); fi
-      if [ $(expr index $bb '.') -eq 0 ]; then bb_float_len=0; else bb_float_len=$(expr $(expr length $bb) - $(expr index $bb '.')); fi
-      if [[ $aa_float_len -ne 0 || $bb_float_len -ne 0 ]]; then
-          if [ $aa_float_len -gt $bb_float_len ]; then magnify=$aa_float_len; else magnify=$bb_float_len; fi
-          aa=${aa[@]/'.'/}
-          for ((i=$aa_float_len; i<$magnify; i=$i+1)); do aa=$aa'0'; done
-          bb=${bb[@]/'.'/}
-          for ((i=$bb_float_len; i<$magnify; i=$i+1)); do bb=$bb'0'; done
-      fi
-
-      pp=1
-      fraction_zero=''
-      for ((i=0; $i<$precision; i=$i+1)); do pp=$(($pp * 10)); fraction_zero=$fraction_zero'0'; done
-
-      integer_p=$(expr $aa / $bb)
-      if [ $integer_p -eq 0 ]; then integer_p_len=0; else integer_p_len=${#integer_p}; fi
-
-      integer_fraction_p=$(expr $aa \* $pp / $bb)
-      fraction_p=${integer_fraction_p:$integer_p_len}
-      fraction_zero_len=$(($precision - ${#fraction_p}))
-
-      echo $integer_p'.'${fraction_zero:0:$fraction_zero_len}$fraction_p
-  }
-
-  expr_dev_float 4 3 3 # 1.333
-  expr_dev_float 1 30 3 # 0.033
-  expr_dev_float 1.5 `expr_float 1 3 4` 2 # 4.50
-  ```
-  ```sh
-  awk -v aa=1 -v bb=30 'BEGIN {printf "%.3f\n", aa / bb}' # 0.033
-  echo 'scale=3; 1 / 30' | bc # .033
-  python -c 'print("%.2f" % (1 / 3))' # 0.33
-
-  expr_dev_float 1.5 `awk -v aa=1 -v bb=30 'BEGIN {printf "%.6f\n", aa / bb}'` 3  # 45.000
-  expr_dev_float 1.5 `echo 'scale=6; 1 / 30' | bc` 3  # 45.000
-
-  calc() { awk "BEGIN {print $*}"; }
-  calc '1 + 2 * 3 / 4'  # 2.5
-  ```
-***
-
 # getopts 命令行参数处理
-  - getopts,它不支持长选项 (--help)
-  - getopts和getopt功能相似但又不完全相同，其中getopt是独立的可执行文件，而getopts是由Bash内置的,支持长选项以及可选参数
-  - getopts options variable
-    - getopts的设计目标是在循环中运行
-    - 每次执行循环，getopts就检查下一个命令行参数，并判断它是否合法,即检查参数是否以-开头，后面跟一个包含在 options 中的字母
-    - 如果是，就把匹配的选项字母存在指定的变量variable中，并返回退出状态0
-    - 如果-后面的字母没有包含在options中，就在variable中存入一个 ？，并返回退出状态0
-    - 如果命令行中已经没有参数，或者下一个参数不以-开头，就返回不为0的退出状态
-  - getopts 允许把选项堆叠在一起（如 -ms）
-  - 如要带参数，须在对应选项后加 :（如h后需加参数 h:ms）。此时选项和参数之间至少有一个空白字符分隔，这样的选项不能堆叠。
-  - 如果在需要参数的选项之后没有找到参数，它就在给定的变量中存入 ? ，并向标准错误中写入错误消息。否则将实际参数写入特殊变量 ：OPTARG
-  - 另外一个特殊变量：OPTIND，反映下一个要处理的参数索引，初值是 1，每次执行 getopts 时都会更新。
-  - Example:
-    ```shell
+  - **getopts** 和 **getopt** 功能相似但又不完全相同
+    - **getopt** 是独立的可执行文件
+    - **getopts** 是由 Bash 内置的，使用语法简单，不支持类似 `--help` 的长选项，不会重排所有参数的顺序
+  - **getopts 格式**
+    ```sh
+    getopts option_string variable
+    ```
+    - **option_string 选项列表** 每个字母代表一个选项，`:` 表示该选项后面需要参数值
+    - **variable 参数列表** 实际获取到的参数
+    - 允许将不带参数值的选项堆叠到一起，如 `-ms`
+  - **getopts 使用** 一般是在循环中使用
+    - 循环开始时，getopts 检查一个命令行参数，判断是否以 `-` 开头的 **options** 中的字母
+    - 配合使用 `case` 处理匹配到的选项，其中 **OPTARG** 保存当前选项的参数值，**OPTIND** 记录当前参数在参数列表中的位置，初始值是 1
+    - 对于 **没有匹配到的选项**，会有警告信息，可以在 `option_string` 前面加上 `:` 不打印，`case` 中可以使用 `?` 进行相应处理
+    - 当参数列表全部解析完，或者解析到不以 `-` 开头的参数，则退出循环
+    ```sh
     #!/bin/bash
     while getopts h:ms option
     do
@@ -666,8 +625,8 @@
 
     echo "*** do something now ***"
     ```
-    Execut:
-    ```shell
+    **运行结果**
+    ```sh
     $ ./getopt.sh -h 100 -msd
     option:h, value 100
     next arg index:3
@@ -680,6 +639,11 @@
     -h means hours
     -m means minutes
     -s means seconds
+    ```
+  - **位置参数** getopts 解析完参数后，如果还有参数，可以使用 `shift` 跳过已经解析的参数，作为位置参数使用
+    ```sh
+    shift $((OPTIND - 1))
+    echo $@
     ```
 ***
 
@@ -726,3 +690,56 @@
     cat /etc/passwd | while read line; do echo $line; done
     while read line; do echo $line; done < /etc/passwd
     ```
+***
+
+## 示例
+## expr 计算浮点数除法
+  - expr 只可以计算整数值运算，浮点数运算可以使用 `awk` / `bc` / `dc`
+  ```sh
+  function expr_dev_float() {
+      aa=$1
+      bb=$2
+      if [ $# -ge 3 ]; then precision=$3; else precision=2; fi
+
+      if [ $(expr index $aa '.') -eq 0 ]; then aa_float_len=0; else aa_float_len=$(expr $(expr length $aa) - $(expr index $aa '.')); fi
+      if [ $(expr index $bb '.') -eq 0 ]; then bb_float_len=0; else bb_float_len=$(expr $(expr length $bb) - $(expr index $bb '.')); fi
+      if [[ $aa_float_len -ne 0 || $bb_float_len -ne 0 ]]; then
+          if [ $aa_float_len -gt $bb_float_len ]; then magnify=$aa_float_len; else magnify=$bb_float_len; fi
+          aa=${aa[@]/'.'/}
+          for ((i=$aa_float_len; i<$magnify; i=$i+1)); do aa=$aa'0'; done
+          bb=${bb[@]/'.'/}
+          for ((i=$bb_float_len; i<$magnify; i=$i+1)); do bb=$bb'0'; done
+      fi
+
+      pp=1
+      fraction_zero=''
+      for ((i=0; $i<$precision; i=$i+1)); do pp=$(($pp * 10)); fraction_zero=$fraction_zero'0'; done
+
+      integer_p=$(expr $aa / $bb)
+      if [ $integer_p -eq 0 ]; then integer_p_len=0; else integer_p_len=${#integer_p}; fi
+
+      integer_fraction_p=$(expr $aa \* $pp / $bb)
+      fraction_p=${integer_fraction_p:$integer_p_len}
+      fraction_zero_len=$(($precision - ${#fraction_p}))
+
+      echo $integer_p'.'${fraction_zero:0:$fraction_zero_len}$fraction_p
+  }
+
+  expr_dev_float 4 3 3 # 1.333
+  expr_dev_float 1 30 3 # 0.033
+  expr_dev_float 1.5 `expr_float 1 3 4` 2 # 4.50
+  ```
+  ```sh
+  awk -v aa=1 -v bb=30 'BEGIN {printf "%.3f\n", aa / bb}' # 0.033
+  echo 'scale=3; 1 / 30' | bc # .033
+  python -c 'print("%.2f" % (1 / 3))' # 0.33
+
+  expr_dev_float 1.5 `awk -v aa=1 -v bb=30 'BEGIN {printf "%.6f\n", aa / bb}'` 3  # 45.000
+  expr_dev_float 1.5 `echo 'scale=6; 1 / 30' | bc` 3  # 45.000
+
+  calc() { awk "BEGIN {print $*}"; }
+  calc '1 + 2 * 3 / 4'  # 2.5
+  ```
+## shell 下载迅雷链接
+  - [thunder_donwload.sh](./thunder_donwload.sh)
+***

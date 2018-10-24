@@ -1414,6 +1414,21 @@
     - 配置 `Sensitivity` 指定是否鼠标接近屏幕顶部时显示顶栏
     - 配置 `Keyboard shortcuts` 指定快捷键
     - 配置 `Intellihide` 指定何时隐藏顶栏
+## 多线程下载 mwget 与 axel
+  ```sh
+  wget http://jaist.dl.sourceforge.net/project/kmphpfm/mwget/0.1/mwget_0.1.0.orig.tar.bz2
+  mv mwget_0.1.0.orig.tar.bz2 ~/local_bin/
+  tar xvf mwget_0.1.0.orig.tar.bz2
+  cd mwget_0.1.0.orig/
+  ./configure
+  make
+  make install
+  mwget -n 10 http://[url]
+  ```
+  ```sh
+  sudo apt install axel
+  axel -an http://[url]
+  ```
 ***
 
 # 系统备份恢复

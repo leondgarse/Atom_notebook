@@ -72,7 +72,7 @@
   	- [open 与 close](#open-与-close)
   	- [读文件](#读文件)
   	- [写文件](#写文件)
-  - [二进制储存器](#二进制储存器)
+    - [二进制储存器](#二进制储存器)
   - [异常](#异常)
   - [Python 标准库](#python-标准库)
   	- [sys](#sys)
@@ -86,7 +86,7 @@
   	- [range 列表生成器](#range-列表生成器)
   	- [enumerate 带指数的列表](#enumerate-带指数的列表)
   	- [format 格式化](#format-格式化)
-  	- [Iterables 与 Generators 与 Yield](#iterables-与-generators-与-yield)
+  	- [Iterator 与 Generators 与 Yield](#iterator-与-generators-与-yield)
   - [python 执行 shell 命令](#python-执行-shell-命令)
   	- [os 模块](#os-模块)
   	- [subprocess 模块](#subprocess-模块)
@@ -1776,9 +1776,7 @@
       print(line, end = '')
     f.close()
     ```
-***
-
-# 二进制储存器
+## 二进制储存器
   - Python提供一个标准的模块，称为pickle，可以在一个文件中储存任何Python对象，之后可以把它完整无缺地取出来，称为持久地储存对象
   - python3不再使用cPickle模块
   - pickle存储方式默认是二进制方式，python3中与文件交互需要指定'wb' / 'rb'
@@ -1893,7 +1891,7 @@
 
 # Python 标准库
 ## sys
-  - sys模块包含系统对应的功能，如sys.argv列表包含命令行参数
+  - **sys** 模块包含系统对应的功能，如 `sys.argv` 列表包含命令行参数
     ```python
     import sys
     sys.version
@@ -1960,68 +1958,60 @@
 
 # 其他语句
 ## lambda 匿名函数
-  - lambda语句被用来创建新的函数对象，并且在运行时返回它们
-  - lambda需要一个参数，后面仅跟单个表达式作为函数体，而表达式的值被这个新建的函数返回
+  - **lambda** 语句被用来创建新的函数对象，并且在运行时返回它们
+  - **lambda** 需要一个参数，后面仅跟单个表达式作为函数体，而表达式的值被这个新建的函数返回
     ```python
     f = lambda x, y: x+y
     f(2, 3)
-    5
+    # 5
     ```
-  - lambda作为函数返回值
+  - lambda 作为函数返回值
     ```python
-    #!/usr/bin/python3
-
     def make_repeater(n):
-      return lambda s: s*n
+        return lambda s: s*n
 
     twice = make_repeater(2)
 
-    print(twice('word'));
+    print(twice('word'))
+    # wordword
     print(twice(5))
-    ```
-    ```shell
-    $ python3 lambda.py
-    wordword
-    10
+    # 10
     ```
 ## exec 和 eval 执行语句或表达式
-  - exec语句用来执行储存在字符串或文件中的Python语句
+  - **exec** 语句用来执行储存在字符串或文件中的 Python 语句
     ```python
     exec 'print "Hello World"'
     Hello World
     ```
-  - eval语句用来计算存储在字符串中的有效Python表达式
+  - **eval** 语句用来计算存储在字符串中的有效 Python 表达式
     ```python
     eval('2*3')
     ```
 ## assert 断言
-  - assert语句用来声明某个条件是真的，并且在它非真的时候引发一个错误AssertionError
+  - **assert** 语句用来声明某个条件是真的，并且在它非真的时候引发一个错误 `AssertionError`
     ```python
-    $ python3
-    Python 3.5.2 (default, Nov 17 2016, 17:05:23)
-    [GCC 5.4.0 20160609] on linux
-    Type "help", "copyright", "credits" or "license" for more information.
     mylist=['item']
     assert len(mylist) >= 1
-    mylist.pop()
-    'item'
+
+    mylist.pop()  # 'item'
     assert len(mylist) >= 1
-    Traceback (most recent call last):
-     File "<stdin>", line 1, in <module>
-    AssertionError
+    # Traceback (most recent call last):
+    #  File "<stdin>", line 1, in <module>
+    # AssertionError
     ```
 ## repr 规范字符串表示
-  - repr函数用来取得对象的规范字符串表示，python3去除``，全部改用repr()
-  - 在大多数时候有eval(repr(object)) == object
-  - 用来获取对象的可打印的表示形式，可以通过定义类的__repr__方法来控制对象在被repr函数调用的时候返回的内容
+  - **repr** 用来取得对象的规范字符串表示，python3 去除使用 `` ` ` ``，全部改用 `repr()`
+  - 在大多数时候有 `eval(repr(object)) == object`
+  - 用来获取对象的可打印的表示形式，可以通过定义类的 `__repr__` 方法来控制对象在被 `repr` 函数调用的时候返回的内容
     ```python
     i = []
     i.append('item')
     repr(i)
-    "['item']"
+    # "['item']"
+
     i.append('item')
     repr(i)
-    "['item', 'item']"
+    # "['item', 'item']"
     ```
 ## range 列表生成器
   - 包含起始，不包含结尾
@@ -2034,45 +2024,138 @@
     ```
     ```python
     for i in range(5, 30, 5):
-    ...   print(i, end=' ')
-    ...
-    5 10 15 20 25
+        print(i, end=' ')
+
+    # 5 10 15 20 25
+
     sum(range(5, 30, 5))
-    75
+    # 75
     ```
 ## enumerate 带指数的列表
-  - enumerate(iterable[, start]) -> iterator for index, value of iterable
-  - 返回一个元组，给参数的每一项加上指数(0, seq[0]), (1, seq[1]), (2, seq[2]), ...
+  - **enumerate** 为列表元素加上序号，返回一个元组，给参数的每一项加上指数 `(0, seq[0]), (1, seq[1]), (2, seq[2]), ...`
+    ```py
+    # iterator for index, value of iterable
+    enumerate(iterable[, start])
+    ```
     ```python
     aList = list('hello')
     for i, v in enumerate(aList):
-      print(i, ' : ', v)
+        print(i, ' : ', v)
 
-    0 : h
-    1 : e
-    2 : l
-    3 : l
-    4 : o
+    # 0 : h
+    # 1 : e
+    # 2 : l
+    # 3 : l
+    # 4 : o
     ```
+  - 生成字典
     ```python
     some_list = ['foo', 'bar', 'baz']
-    mapping = dict((v, i) for i, v in enumerate(some_list))
-    mapping
-    Out[267]: {'bar': 1, 'baz': 2, 'foo': 0}
+    print(dict((v, i) for i, v in enumerate(some_list)))
+    # {'foo': 0, 'bar': 1, 'baz': 2}
+
+    print({v: i for i, v in enumerate(some_list)})
+    # {'foo': 0, 'bar': 1, 'baz': 2}
     ```
 ## format 格式化
   - 生成格式化字符串
     ```python
     format(value, format_spec='', /)
-
-    "{0} {1} love of a {2}".format("for", "the", "princess")
-    'for the love of a princess'
-    "{a} {b} love of a {c}".format(a="for", b="the", c="princess")
-    'for the love of a princess'
     ```
-## Iterables 与 Generators 与 Yield
-  - yield is a keyword that is used like return, except the function will return a generator.
-  [What does the “yield” keyword do in Python](https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python/231855#231855)
+    ```py
+    "{0} {1} love of a {2}".format("for", "the", "princess")
+    # 'for the love of a princess'
+
+    "{a} {b} love of a {c}".format(a="for", b="the", c="princess")
+    # 'for the love of a princess'
+    ```
+  - 格式化输出
+    ```py
+    '{:.2f}'.format(3.1415)
+    ```
+## Iterator 与 Generators 与 Yield
+  - **generator** 保存的是算法，真正需要计算出值的时候才会去往下计算出值，是一种惰性计算 lazy evaluation
+  - **yield** 类似 return，在函数中使用 yield 关键字，函数就变成了一个 generator，执行到 yield 就会停住，当需要再往下算时才会再往下算
+    ```py
+    def foo(aa, loop):
+        for _ in range(loop):
+            aa += 1
+            yield aa
+
+    ff = foo(3, 4)
+    print(next(ff), next(ff), next(ff), next(ff))
+    # 4 5 6 7
+
+    # Exception: StopIteration
+    next(ff)
+
+    print(list(foo(3, 4)))
+    # [4, 5, 6, 7]
+    ```
+  - 列表生成器使用 `()`，返回的是一个 generator
+    ```py
+    g = (x * x for x in range(10))
+    type(g)
+    # Out[3]: generator
+    ```
+  - **Iterable 可迭代对象** 可以直接作用于 for 循环的对象统称为可迭代对象
+    ```py
+    from collections import Iterable
+
+    print(isinstance([], Iterable)) # True
+    print(isinstance({}, Iterable)) # True
+    print(isinstance('abc', Iterable))  # True
+    print(isinstance((x for x in range(10)), Iterable)) # True
+    print(isinstance(100, Iterable))  # False
+    ```
+  - **Iterator 迭代器** 表示的是一个数据流，Iterator 对象可以被 `next()` 函数调用并不断返回下一个数据，直到没有数据时抛出 `StopIteration` 异常
+    - 生成器 generator 都是 Iterator 对象，但 list / dict / str 是 Iterable，不是 Iterator
+    - **iter()** 把 list / dict / str 等 Iterable 变成 Iterator
+    ```py
+    print(isinstance([], Iterator)) # False
+    print(isinstance((ii for ii in range(10)), Iterator)) # True
+    print(isinstance(iter([]), Iterator)) # True
+    ```
+  - for 循环本质上就是通过不断调用 `next()` 函数实现的
+    ```py
+    for x in [1, 2, 3, 4, 5]:
+        pass
+    ```
+    等价于
+    ```py
+    it = iter([1, 2, 3, 4, 5])
+    while True:
+        try:
+            x = next(it)
+        except StopIteration:
+            break
+    ```
+  - **itertools 模块** 提供了用于操作迭代对象的函数
+    ```py
+    # 切片
+    islice(iterable[, start], stop[, step])
+    # 排列组合
+    permutations(iterable[, r])
+    ```
+    ```py
+    import itertools
+
+    def foo(aa):
+        while True:
+            aa += 1
+            yield aa
+
+    ff = foo(3)
+    print(list(itertools.islice(ff, 10)))
+    # [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    print(list(itertools.islice(ff, 10)))
+    # [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    ```
+    ```py
+    tt = itertools.permutations(range(3), 2)
+    print(list(tt))
+    # [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+    ```
 ***
 
 # python 执行 shell 命令
