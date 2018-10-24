@@ -741,5 +741,5 @@
   calc '1 + 2 * 3 / 4'  # 2.5
   ```
 ## shell 下载迅雷链接
-  - [thunder_donwload.sh](./thunder_donwload.sh)
+  - [thunder_download.sh](./thunder_download.sh)
 ***
