@@ -56,7 +56,7 @@
   - [images](./2017/images)
   - [invoiceCalc.py](./2017/invoiceCalc.py)
   - [merge_folder_by_size.py](./2017/merge_folder_by_size.py)
-  - [thunder_donwload.sh](./2017/thunder_donwload.sh)
+  - [thunder_download.sh](./2017/thunder_download.sh)
 - [2018](./2018)
   - [04-16_face_recognition.md](./2018/04-16_face_recognition.md)
   - [04-19_ternsorflow_low_level.md](./2018/04-19_ternsorflow_low_level.md)
