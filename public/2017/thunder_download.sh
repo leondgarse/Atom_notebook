@@ -7,14 +7,11 @@ IS_MWGET=0
 IS_AXEL=0
 
 # Check if we have mwget / axel / wget
-MWGET=$(which mwget)
-AXEL=$(which axel)
-if [ -n $MWGET ]; then
-    IS_MWGET=1
-elif [ -n $AXEL ]; then
-    IS_AXEL=1
-else
-    IS_WGET=1
+DOWNLOADER="wget"
+if [ -n "$(which mwget)" ]; then
+    DOWNLOADER="mwget"
+elif [ -n "$(which axel)" ]; then
+    DOWNLOADER="axel"
 fi
 
 # Usage print function
@@ -42,17 +39,11 @@ do
     u)
       THUNDER_URL=$OPTARG;;
     w)
-      IS_WGET=1
-      IS_MWGET=0
-      IS_AXEL=0;;
+      DOWNLOADER="wget";;
     m)
-      IS_WGET=0
-      IS_MWGET=1
-      IS_AXEL=0;;
+      DOWNLOADER="mwget";;
     a)
-      IS_WGET=0
-      IS_MWGET=0
-      IS_AXEL=1;;
+      DOWNLOADER="axel";;
     h)
       usage;;
   esac
@@ -61,17 +52,21 @@ done
 # Check if url is provided as positional argument
 shift $((OPTIND - 1))
 # echo "Options not pared: $@"
-if [ -n $1 ] && [ -z $THUNDER_URL ]; then
+if [ -n "$1" ] && [ -z "$THUNDER_URL" ]; then
     THUNDER_URL=$1
 fi
 
-if [ -z $THUNDER_URL ]; then
+if [ -z "$THUNDER_URL" ]; then
     echo "Empty url"
     usage
 fi
 
+if [ $DOWNLOADER = "mwget" ] || [ $DOWNLOADER = "axel" ]; then
+    DOWNLOADER="$DOWNLOADER -n $THREADS"
+fi
+
 echo ""
-echo "url = $THUNDER_URL, num threads = $THREADS, use wget = $IS_WGET, use mwget = $IS_MWGET, use axel = $IS_AXEL"
+echo "url = $THUNDER_URL, Downloader = $DOWNLOADER"
 
 # Decode thunder url by base64
 # thunder://{base64}[/] --> {base64}[/] --> base64 --> AA{real url}ZZ --> real url
@@ -107,14 +102,6 @@ if [[ ! $RESULT =~ ^[yY] ]]; then
     echo 'So we exit'
     exit 0
 else
-    if [ $IS_WGET -eq 1 ]; then
-        echo 'Cool wget!'
-        wget $REAL_URL
-    elif [ $IS_AXEL -eq 1 ]; then
-        echo 'Cool axel!'
-        axel -n $THREADS $REAL_URL
-    else
-        echo 'Cool mwget!'
-        mwget -n $THREADS $REAL_URL
-    fi
+    echo "$DOWNLOADER $REAL_URL"
+    # $DOWNLOADER $REAL_URL
 fi

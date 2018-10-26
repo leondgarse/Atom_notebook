@@ -327,7 +327,7 @@
     - **[ ]** 相当于test命令别名，条件语句中不能有 || && 连接多个表达式
     - **[[ ]]** 是 [ ] 的扩展形式，支持更复杂的表达式
     - **test** 使用 -a 表示且， -o 表示或，! 表示非
-    - **""** 可以加也可以不加
+    - **" "** 可以加也可以不加
     ```shell
     if [ "1" -ne "2" ]; then echo 6; fi
     if [ ! "1" -eq "2" ]; then echo 6; fi
@@ -390,6 +390,34 @@
     FF=1ba23
     if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
     # number
+    ```
+  - **`if [ -n $STR ]`** 在 `$STR` 为空时会返回 `True`
+    ```sh
+    aa=""
+    if [ -n $aa ]; then echo 1; else echo 0; fi
+    # 1
+    test -n $aa; echo $?
+    # 0
+    if [ -z $aa ]; then echo 1; else echo 0; fi
+    # 1
+    ```
+    原因在于当判断的字符串为空时，实际的表达式变为 `if [ -n ]`，此时 `-n` 将作为判断的字符串，判断结果为 `True`
+    ```sh
+    if [ -n ]; then echo 1; else echo 0; fi
+    # 1
+
+    if [ -asdfae ]; then echo 1; else echo 0; fi
+    # 1
+    ```
+    解决方法可以在字符串两边加上引号，或使用 `[[  ]]`
+    ```sh
+    if [ -n "$aa" ]; then echo 1; else echo 0; fi
+    # 0
+    test -n "$aa"; echo $?
+    # 1
+
+    if [[ -n $aa ]]; then echo 1; else echo 0; fi
+    # 0
     ```
 ***
 
