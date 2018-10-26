@@ -2,9 +2,6 @@
 
 THUNDER_URL=''
 THREADS=5
-IS_WGET=0
-IS_MWGET=0
-IS_AXEL=0
 
 # Check if we have mwget / axel / wget
 DOWNLOADER="wget"
