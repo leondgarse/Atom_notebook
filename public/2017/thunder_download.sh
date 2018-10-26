@@ -100,5 +100,5 @@ if [[ ! $RESULT =~ ^[yY] ]]; then
     exit 0
 else
     echo "$DOWNLOADER $REAL_URL"
-    # $DOWNLOADER $REAL_URL
+    $DOWNLOADER $REAL_URL
 fi
