@@ -1363,6 +1363,10 @@
     New Keyring Name: [Unprotected] -> Set password as empty
     Right click on the new keyring -> Set as default    
     ```
+    ```sh
+    C:\Users\leondgarse\AppData\Roaming\Macromedia\Flash Player\#SharedObjects\ZF79TSCS\localhost
+    ~/.config/google-chrome/Default/Pepper Data/Shockwave Flash/WritableRoot/#SharedObjects/NPRLVPUK/assets.kongregate.com/gamez/0016/7318/live
+    ```
 ## Numix FlatRemix 主题
   - Set Themes / Cursor / Icons / Shell theme using **gnome-tweak-tool**
   - **Numix**
@@ -1414,21 +1418,97 @@
     - 配置 `Sensitivity` 指定是否鼠标接近屏幕顶部时显示顶栏
     - 配置 `Keyboard shortcuts` 指定快捷键
     - 配置 `Intellihide` 指定何时隐藏顶栏
-## 多线程下载 mwget 与 axel
-  ```sh
-  wget http://jaist.dl.sourceforge.net/project/kmphpfm/mwget/0.1/mwget_0.1.0.orig.tar.bz2
-  mv mwget_0.1.0.orig.tar.bz2 ~/local_bin/
-  tar xvf mwget_0.1.0.orig.tar.bz2
-  cd mwget_0.1.0.orig/
-  ./configure
-  make
-  make install
-  mwget -n 10 http://[url]
-  ```
-  ```sh
-  sudo apt install axel
-  axel -an http://[url]
-  ```
+## 多线程下载 mwget axel aria2
+  - **mwget**
+    ```sh
+    wget http://jaist.dl.sourceforge.net/project/kmphpfm/mwget/0.1/mwget_0.1.0.orig.tar.bz2
+    mv mwget_0.1.0.orig.tar.bz2 ~/local_bin/
+    tar xvf mwget_0.1.0.orig.tar.bz2
+    cd mwget_0.1.0.orig/
+    ./configure
+    make
+    make install
+    mwget -n 10 http://[url]
+    ```
+  - **axel**
+    ```sh
+    sudo apt install axel
+    axel -an http://[url]
+    ```
+  - **aria2** [aria2c doc](https://aria2.github.io/manual/en/html/aria2c.html)
+    ```sh
+    sudo apt install aria2
+    ```
+    **配置文件 ~/local_bin/aria2.conf** [配置Aria2](https://blog.icehoney.me/posts/2015-01-31-Aria2-download)
+    ```sh
+    #允许rpc
+    enable-rpc=true
+    #允许所有来源, web界面跨域权限需要
+    rpc-allow-origin-all=true
+    #允许外部访问，false的话只监听本地端口
+    rpc-listen-all=true
+    #最大同时下载数(任务数), 路由建议值: 3
+    max-concurrent-downloads=20
+    #断点续传
+    continue=true
+    # input-file=/etc/aria2/aria2.session
+    # save-session=/etc/aria2/aria2.session
+    #同服务器连接数
+    max-connection-per-server=5
+    #最小文件分片大小, 下载线程数上限取决于能分出多少片, 对于小文件重要
+    min-split-size=10M
+    #单文件最大线程数, 路由建议值: 5
+    split=10
+    #下载速度限制
+    max-overall-download-limit=0
+    #单文件速度限制
+    max-download-limit=0
+    #上传速度限制
+    max-overall-upload-limit=0
+    #单文件速度限制
+    max-upload-limit=0
+    #文件保存路径, 默认为当前启动位置，不能使用 ~ / $HOME
+    dir=/home/leondgarse/Downloads
+    #文件预分配, 能有效降低文件碎片, 提高磁盘性能. 缺点是预分配时间较长
+    #所需时间 none < falloc ? trunc << prealloc, falloc和trunc需要文件系统和内核支持
+    file-allocation=prealloc
+    ```
+    **RPC 方式启动，`-D` 指定后台运行，启动后监听端口的链接**
+    ```sh
+    aria2c --conf-path=~/local_bin/aria2.conf
+    aria2c --conf-path=~/local_bin/aria2.conf -D
+    ```
+    **其他下载方式**
+    ```sh
+    # Download from WEB
+    $ aria2c http://example.org/mylinux.iso
+
+    # Download from 2 sources
+    $ aria2c http://a/f.iso ftp://b/f.iso
+
+    # Download using 2 connections per host
+    $ aria2c -x2 http://a/f.iso
+
+    # BitTorrent
+    $ aria2c http://example.org/mylinux.torrent
+
+    # BitTorrent Magnet URI
+    $ aria2c 'magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C'
+
+    # Metalink
+    $ aria2c http://example.org/mylinux.metalink
+
+    # Download URIs found in text file
+    $ aria2c -i uris.txt
+    ```
+## Linux 百度云
+  - [Github 百度网盘 Python 客户端](https://github.com/houtianze/bypy.git)
+  - [Gtihub 百度网盘客户端 Go语言编写](https://github.com/iikira/BaiduPCS-Go.git)
+  - [Gtihub BaiduExporter Firfox / Chrome 插件发送下载链接到 aira2](https://github.com/acgotaku/BaiduExporter.git)
+  - **BaiduExporter + aria2 方式下载百度云链接** 需要配置好 `aria2` 并启动，监听端口下载链接
+    - **Firefox** [baidu-pan-exporter 插件](https://addons.mozilla.org/en-US/firefox/addon/baidu-pan-exporter/?src=search)
+    - **Chrome** 可以 clone 源码，通过 Chrome -> `chrome://extensions/` -> `Load unpacked` -> 选择 `chrome/release` 文件夹
+    - 安装插件后在浏览器中选择百度云文件后，会出现 `导出下载` 按钮，可以选择使用 `ARIA2 RPC` / `文本导出` / `设置`
 ***
 
 # 系统备份恢复

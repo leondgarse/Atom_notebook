@@ -22,13 +22,14 @@ Usage: args [-h] [-n num_threads] [-m] [-a] -u thunder_url
   -w, use wget for downloading
   -a, use axel for multi downloading
   -u URL, Thunder url
+  -d DOWNLOADER, specify other downloader like aria2c
 
 "
     exit 0
 }
 
 # parse arguments
-while getopts n:u:wmah option
+while getopts n:u:d:wmah option
 do
   case "$option" in
     n)
@@ -41,6 +42,8 @@ do
       DOWNLOADER="mwget";;
     a)
       DOWNLOADER="axel";;
+    d)
+      DOWNLOADER=$OPTARG;;
     h)
       usage;;
   esac
