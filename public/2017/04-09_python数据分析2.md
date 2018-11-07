@@ -3177,18 +3177,20 @@
 
 # 自然语言工具包NLTK语料库
   - 古腾堡语料库 / 布朗语料库 / 路透社语料库 / 网络和聊天文本 / ...
-  - 需要先执行nltk.download()下载某一个或多个包,若下载失败,可以在官网(http://www.nltk.org/nltk_data/)单独下载后放到本地python目录的nltk_data\corpora下
+  - 需要先执行 `nltk.download()` 下载某一个或多个包,若下载失败,可以在 [NLTK 官网](http://www.nltk.org/nltk_data/) 单独下载后放到本地 python 目录的 `nltk_data\corpora` 下
     ```python
     import nltk
     from nltk.corpus import gutenberg
     nltk.download()
-    showing info https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/index.xml
-    True
+    # showing info https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/index.xml
+    # True
+
     print(gutenberg.fileids())
-    ['austen-emma.txt', 'austen-persuasion.txt', ... ]
+    # ['austen-emma.txt', 'austen-persuasion.txt', ... ]
+
     texts = gutenberg.words('shakespeare-macbeth.txt')
     print(texts)
-    ['[', 'The', 'Tragedie', 'of', 'Macbeth', 'by', ...]
+    # ['[', 'The', 'Tragedie', 'of', 'Macbeth', 'by', ...]
     ```
 ## 计算Hamlet中的单词使用
   ```python

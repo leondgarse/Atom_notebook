@@ -1504,15 +1504,16 @@
   - **从文本数据中提取特征** 将文本内容转化为数字表示的特征向量
     - **Bag of words**
       - 将训练集文本中所有单词编号，如使用字典
-      - 对文本中每个单词的频数存放在数据集 X(i, j) 中，其中 i 是文档编号，j 是单词编号
+      - 对文本中每个单词的频数存放在数据集 `X(i, j)` 中，其中 i 是文档编号，j 是单词编号
       - 当单词数量很多时，存储将占用很大的空间
       - X 中大部分值将是0，因此是一个高维稀疏矩阵 high-dimensional sparse datasets，可以只保存其中的非零值以节省空间
-      - scipy.sparse 矩阵模型可以用于保存这种数据，scikit-learn 提供了对这种数据结构的支持
-    - **标记化与停用词过滤** tokenizing and filtering of stopwords，文本的预处理过程，可以使用scikit-learn的功能完成创建 **特征字典以及将文本转化为特征向量**
+      - `scipy.sparse` 矩阵模型可以用于保存这种数据，scikit-learn 提供了对这种数据结构的支持
+    - **标记化与停用词过滤** tokenizing and filtering of stopwords，文本的预处理过程，可以使用 scikit-learn 的功能完成创建 **特征字典以及将文本转化为特征向量**
     - **sklearn.feature_extraction.text.CountVectorizer** 支持计数N元模型 N-grams of words 或连续的字符，模型完成特征的矢量化，创建一个包含特征索引的字典，其中单词索引与频数相关
     ```python
     from sklearn.feature_extraction.text import CountVectorizer
-    count_vect = CountVectorizer()
+
+    count_vect = CountVectorizer()		
     X_train_counts = count_vect.fit_transform(twenty_train.data)
     type(X_train_counts)
     # Out[44]: scipy.sparse.csr.csr_matrix
@@ -1525,13 +1526,29 @@
     # Out[49]: 4690
     ```
   - **文本数据处理 TF-IDF** 将频数转化为频率 from occurrences to frequencies
-    - **词频 TF Term Frequencies** 某一个给定的词语在该文件中出现的次数，相对于更短的文本，同一个单词在长文本中的 **频数** 更高，因此可以用每个单词的频数除以文本中的单词总数，将其转化为 **频率**，这些新的特征称为 **词频**，能更好地反应单词的重要程度
-    - **词频 - 逆向文件频率 TF-IDF Term Frequency times Inverse Document Frequency**
+    - **词频 TF Term Frequencies** 某一个给定的词语在该文件中出现的次数，相对于更短的文本，同一个单词在长文本中的 **频数** 更高，因此可以用 **每个单词的频数 除以 文本中的单词总数**，将其转化为 **频率**，这些新的特征称为 **词频**，能更好地反应单词的重要程度
+    - **逆文档频率 Inverse Document Frequency** 对于词频的权重调整系数，定义为 `log(总样本数 / (包含有该词的文档数 + 1))`
+    - **词频 - 逆向文件频率 TF-IDF Term Frequency times Inverse Document Frequency** `词频 TF * 逆文档频率 IDF`
       - 一种统计方法，用以评估一字词对于一个文件集或一个语料库中的其中一份文件的重要程度
       - **主要思想**：如果某个词或短语在一篇文章中出现的频率TF高，并且在其他文章中很少出现，则认为此词或者短语具有很好的类别区分能力，适合用来分类
       - 字词的重要性随着它在文件中出现的次数成正比增加，但同时会随着它在语料库中出现的频率成反比下降
       - TF-IDF 加权的各种形式常被 **搜索引擎** 应用，作为文件与用户查询之间相关程度的度量或评级
-      - **sklearn.feature_extraction.text.TfidfTransformer** 用于实现 TF / TF-IDF 转化
+		- **sklearn.feature_extraction.text.TfidfTransformer** 用于实现 TF / TF-IDF 转化
+			```py
+			class TfidfTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin)
+			__init__(self, norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False)
+			```
+		- **sklearn.feature_extraction.text.TfidfVectorizer** 组合 `CountVectorizer` 与 `TfidfTransformer`
+			```py
+			# Convert a collection of raw documents to a matrix of TF-IDF features
+			class TfidfVectorizer(CountVectorizer)
+			__init__(self, input='content', encoding='utf-8', decode_error='strict',
+							strip_accents=None, lowercase=True, preprocessor=None, tokenizer=None,
+							analyzer='word', stop_words=None, token_pattern='(?u)\\b\\w\\w+\\b',
+							ngram_range=(1, 1), max_df=1.0, min_df=1, max_features=None,
+							vocabulary=None, binary=False, dtype=<class 'numpy.int64'>, norm='l2',
+							use_idf=True, smooth_idf=True, sublinear_tf=False)
+			```
     ```python
     from sklearn.feature_extraction.text import TfidfTransformer
     # 模型适配，TF

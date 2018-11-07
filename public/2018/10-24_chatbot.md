@@ -1064,6 +1064,15 @@
 
 # jieba
 ## 简介
+  - 中文分词的模型实现主要分类两大类，**基于规则** 和 **基于统计**
+    - **基于规则** 根据一个已有的词典，采用前向最大匹配 / 后向最大匹配 / 双向最大匹配等人工设定的规则来进行分词，使分出来的词存在于词典中并且尽可能长
+    - **基于统计** 从大量人工标注语料中总结词的概率分布以及词之间的常用搭配，使用有监督学习训练分词模型，如可以对全部可能的分词方案，根据语料统计每种方案出现的概率，然后保留概率最大的一种
+  - **jieba 分词**
+    - 结合了基于规则和基于统计两类方法
+    - 首先基于前缀词典进行词图扫描，前缀词典是指词典中的词按照前缀包含的顺序排列，从而形成一种层级包含结构
+    - 如果将词看作节点，词和词之间的分词符看作边，那么一种分词方案则对应着从第一个字到最后一个字的一条分词路径
+    - 因此，基于前缀词典可以快速构建包含全部可能分词结果的有向无环图，这个图中包含多条分词路径，有向是指全部的路径都始于第一个字、止于最后一个字，无环是指节点之间不构成闭环
+    - 基于标注语料，使用动态规划的方法可以找出最大概率路径，并将其作为最终的分词结果
   - **三种分词模式**
     - **精确模式**，试图将句子最精确地切开，适合文本分析
     - **全模式**，把句子中所有的可以成词的词语都扫描出来, 速度非常快，但是不能解决歧义
@@ -1072,47 +1081,59 @@
     - 基于前缀词典实现高效的词图扫描，生成句子中汉字所有可能成词情况所构成的有向无环图 (DAG)
     - 采用了动态规划查找最大概率路径, 找出基于词频的最大切分组合
     - 对于未登录词，采用了基于汉字成词能力的 HMM 模型，使用了 Viterbi 算法
-  - [默认词库](https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt)
-## 分词
-  - `jieba.cut` 方法接受三个输入参数: 需要分词的字符串；cut_all 参数用来控制是否采用全模式；HMM 参数用来控制是否使用 HMM 模型
-  - `jieba.cut_for_search` 方法接受两个参数：需要分词的字符串；是否使用 HMM 模型。该方法适合用于搜索引擎构建倒排索引的分词，粒度比较细
-  - 待分词的字符串可以是 unicode 或 UTF-8 字符串、GBK 字符串。注意：不建议直接输入 GBK 字符串，可能无法预料地错误解码成 UTF-8
-  - `jieba.cut` 以及 `jieba.cut_for_search` 返回的结构都是一个可迭代的 generator，可以使用 for 循环来获得分词后得到的每一个词语(unicode)
-  - `jieba.lcut` 以及 `jieba.lcut_for_search` 直接返回 list
-  - `jieba.Tokenizer(dictionary=DEFAULT_DICT)` 新建自定义分词器，可用于同时使用不同词典。`jieba.dt` 为默认分词器，所有全局分词相关函数都是该分词器的映射
-  - 分词时首先会按照 **概率连乘最大路径** 来切割，然后对于连续的单字中可能有词典中没有的新词，所以再用 **finalseg** 来切一遍，finalseg 是通过 **HMM** 模型来做的，简单来说就是给单字大上 B / M / E / S 四种标签以使得概率最大
+  - 分词时首先会按照 **概率连乘最大路径** 来切割，然后对于连续的单字中可能有词典中没有的新词，所以再用 **finalseg** 来切一遍，finalseg 是通过 **HMM** 模型来做的，简单来说就是给单字打上 B / M / E / S 四种标签以使得概率最大
     - **B** 开头
     - **E** 结尾
     - **M** 中间
     - **S** 独立成词的单字
     - 对于自定义的新词可以在词典中补充，并给予一个词频，增强歧义纠错能力
+  - [默认词库](https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt)
+## 分词
+  - **jieba.cut / jieba.lcut** 中文分词的主要方法
+    ```py
+    cut(sentence, cut_all=False, HMM=True)
+
+    def lcut(self, *args, **kwargs):
+        return list(self.cut(*args, **kwargs))
+    ```
+    - **sentence** 需要分词的字符串
+    - **cut_all** 控制是否采用全模式
+    - **HMM** 控制是否使用 HMM 模型
+    - **cut** 返回一个可迭代的 generator，**lcut** 返回 list
+  - **jieba.cut_for_search / jieba.lcut_for_search** 搜索引擎模式，提供更好的全模式分词，粒度比较细
+    ```py
+    cut_for_search(sentence, HMM=True)
+
+    def lcut_for_search(self, *args, **kwargs):
+        return list(self.cut_for_search(*args, **kwargs))
+    ```
+    - **sentence** 需要分词的字符串
+    - **HMM** 是否使用 HMM 模型
+    - **cut_for_search** 返回一个可迭代的 generator，**lcut_for_search** 返回 list
+  - **jieba.Tokenizer 类** 新建自定义分词器，可用于同时使用不同词典，`jieba.dt` 为默认分词器，所有全局分词相关函数都是该分词器的映射
+    ```py
+    class Tokenizer(builtins.object)
+    __init__(self, dictionary=None)
+    ```
   - **示例**
     ```python
-    # encoding=utf-8
     import jieba
-
-    seg_list = jieba.cut("我来到北京清华大学", cut_all=True)
-    print("Full Mode: " + "/ ".join(seg_list))  # 全模式
 
     seg_list = jieba.cut("我来到北京清华大学", cut_all=False)
     print("Default Mode: " + "/ ".join(seg_list))  # 精确模式
+    # Default Mode: 我/ 来到/ 北京/ 清华大学
 
-    seg_list = jieba.cut("他来到了网易杭研大厦")  # 默认是精确模式
+    seg_list = jieba.cut("我来到北京清华大学", cut_all=True)
+    print("Full Mode: " + "/ ".join(seg_list))  # 全模式
+    # Full Mode: 我/ 来到/ 北京/ 清华/ 清华大学/ 华大/ 大学
+
+    seg_list = jieba.cut("他来到了网易杭研大厦")  # 新词识别，此处识别出了没有在词典中的 '杭研'
     print(", ".join(seg_list))
+    # 他, 来到, 了, 网易, 杭研, 大厦
 
     seg_list = jieba.cut_for_search("小明硕士毕业于中国科学院计算所，后在日本京都大学深造")  # 搜索引擎模式
     print(", ".join(seg_list))
-    ```
-    **输出**
-    ```py
-    # 全模式
-    Full Mode: 我/ 来到/ 北京/ 清华/ 清华大学/ 华大/ 大学
-    # 精确模式
-    Default Mode: 我/ 来到/ 北京/ 清华大学
-    # 新词识别
-    他, 来到, 了, 网易, 杭研, 大厦 (此处，“杭研”并没有在词典中，但是也被Viterbi算法识别出来了)
-    # 搜索引擎模式
-    小明, 硕士, 毕业, 于, 中国, 科学, 学院, 科学院, 中国科学院, 计算, 计算所, ，, 后, 在, 日本, 京都, 大学, 日本京都大学, 深造
+    # 小明, 硕士, 毕业, 于, 中国, 科学, 学院, 科学院, 中国科学院, 计算, 计算所, ，, 后, 在, 日本, 京都, 大学, 日本京都大学, 深造
     ```
 ## 添加自定义词典
   - **载入词典** 开发者可以指定自己自定义的词典，以便包含 jieba 词库里没有的词，虽然 jieba 有新词识别能力，但是自行添加新词可以保证更高的正确率
@@ -1172,6 +1193,24 @@
     print('/'.join(jieba.cut('「台中」正确应该不会被切开', HMM=False)))
     # 「/台中/」/正确/应该/不会/被/切开
     ```
+  - **常见分词问题**
+    - “台中”总是被切成“台 中”，其原因在于 `P(台中) < P(台) × P(中)`，“台中”词频不够导致其成词概率较低，可以强制调高词频
+      ```py
+      jieba.add_word('台中')
+      # Or
+      jieba.suggest_freq('台中', True)
+      ```
+    - “今天天气 不错” 应该被切成 “今天 天气 不错”，解决方法可以强制调低词频
+      ```py
+      jieba.suggest_freq(('今天', '天气'), True)
+      # Or
+      jieba.del_word('今天天气')
+      ```
+    - 切出了词典中没有的词语，原因在于 HMM 的新词发现机制，解决方法可以关闭新词发现
+      ```py
+      jieba.cut('丰田太省了', HMM=False)
+      jieba.cut('我们中出了一个叛徒', HMM=False)
+      ```
 ## 基于 TF-IDF 算法的关键词抽取
   - **jieba.analyse.TFIDF 类** 新建 TFIDF 实例
     ```py
@@ -1287,26 +1326,21 @@
     # 分析 0.9966849915940917
     # 关键词 0.9929941828082526
     ```
-## FOO
+## 载入停用词表用于分词
+  - 主要思想是分词过后，遍历一下停用词表，去掉停用词
   ```py
+  import jieba
+  from tensorflow import keras
 
-  print('='*40)
-  print('6. Tokenize: 返回词语在原文的起止位置')
-  print('-'*40)
-  print(' 默认模式')
-  print('-'*40)
+  stw_url = 'https://raw.githubusercontent.com/dongxiexidian/Chinese/master/stopwords.dat'
+  stw_path = keras.utils.get_file(os.path.basename(stw_url), stw_url)
 
-  result = jieba.tokenize('永和服装饰品有限公司')
-  for tk in result:
-      print("word %s\t\t start: %d \t\t end:%d" % (tk[0],tk[1],tk[2]))
-
-  print('-'*40)
-  print(' 搜索模式')
-  print('-'*40)
-
-  result = jieba.tokenize('永和服装饰品有限公司', mode='search')
-  for tk in result:
-  print("word %s\t\t start: %d \t\t end:%d" % (tk[0],tk[1],tk[2]))
+  stopwords = [ii.strip() for ii in open(stw_path, 'r').readlines()]
+  test_sent = '随便一句话吧，只是为了用来分析关键词用，just for fun, anything is ok'
+  ss = jieba.cut(test_sent)
+  out = ",".join([ww for ww in ss if ww not in stopwords and ww.strip() != ''])
+  print("out = {}".format(out))
+  # out = 随便,一句,话,分析,关键词,just,for,fun,anything,is,ok
   ```
 ## 词性标注
   - 标注句子分词后每个词的词性，采用和 ictclas 兼容的标记法
@@ -1335,173 +1369,369 @@
     disable_parallel()
     ```
     - 并行分词仅支持默认分词器 `jieba.dt` 和 `jieba.posseg.dt`
-## Tokenize：返回词语在原文的起止位置
-----------------------------------
-* 注意，输入参数只接受 unicode
-* 默认模式
+## Tokenize 序列化
+  - **jiabe.tokenize** 返回词语在原文的起止位置 `(word, start, end)`，输入参数只接受 unicode
+    ```py
+    tokenize(unicode_sentence, mode='default', HMM=True)
+    ```
+    - **mode** 指定模式 `default` / `search`，搜索模式会查找所有可能的分词结果
+    ```python
+    ''' Default mode '''
+    result = jieba.tokenize(u'永和服装饰品有限公司')
+    for tk in result:
+        print("word %-8s start: %-2d end:%-2d" % (tk[0],tk[1],tk[2]))
 
-```python
-result = jieba.tokenize(u'永和服装饰品有限公司')
-for tk in result:
-    print("word %s\t\t start: %d \t\t end:%d" % (tk[0],tk[1],tk[2]))
-```
+    # word 永和       start: 0  end:2
+    # word 服装       start: 2  end:4
+    # word 饰品       start: 4  end:6
+    # word 有限公司     start: 6  end:10
 
-```
-word 永和                start: 0                end:2
-word 服装                start: 2                end:4
-word 饰品                start: 4                end:6
-word 有限公司            start: 6                end:10
+    ''' Search mode '''
+    result = jieba.tokenize(u'永和服装饰品有限公司', mode='search')
+    for tk in result:
+        print("word %-8s start: %-2d end:%-2d" % (tk[0],tk[1],tk[2]))
 
-```
-
-* 搜索模式
-
-```python
-result = jieba.tokenize(u'永和服装饰品有限公司', mode='search')
-for tk in result:
-    print("word %s\t\t start: %d \t\t end:%d" % (tk[0],tk[1],tk[2]))
-```
-
-```
-word 永和                start: 0                end:2
-word 服装                start: 2                end:4
-word 饰品                start: 4                end:6
-word 有限                start: 6                end:8
-word 公司                start: 8                end:10
-word 有限公司            start: 6                end:10
-```
-
-
+    # word 永和       start: 0  end:2
+    # word 服装       start: 2  end:4
+    # word 饰品       start: 4  end:6
+    # word 有限       start: 6  end:8
+    # word 公司       start: 8  end:10
+    # word 有限公司     start: 6  end:10
+    ```
 ## ChineseAnalyzer for Whoosh 搜索引擎
---------------------------------------------
-* 引用： `from jieba.analyse import ChineseAnalyzer`
-* 用法示例：https://github.com/fxsjy/jieba/blob/master/test/test_whoosh.py
+  - **jieba.analyse.ChineseAnalyzer** 中文分析
+    ```py
+    ChineseAnalyzer(stoplist=frozenset(
+        {'if', 'with', 'will', 'a', 'on', 'this', 'tbd', 'can', 'yet', 'for',
+         'from', 'you', 'is', 'we', '了', 'in', 'be', 'when', 'us', 'have',
+         'or', 'an', 'of', 'are', 'and', '的', 'to', '和', 'it', 'at', 'the',
+         'your', 'as', 'may', 'by', 'not', 'that'}),
+        minsize=1, stemfn=<function stem at 0x7f8411f5c620>, cachesize=50000)
+    ```
+    ```py
+    from jieba.analyse.analyzer import ChineseAnalyzer
 
-8. 命令行分词
--------------------
+    analyzer = ChineseAnalyzer()
+    for t in analyzer("我的好朋友是李明;我爱北京天安门;IBM和Microsoft; I have a dream. this is intetesting and interested me a lot"):
+        print(t.text, end=',')
+    # 我,好,朋友,是,李明,我,爱,北京,天安,天安门,ibm,microsoft,dream,intetest,interest,me,lot,
+    ```
+  - **中文搜索示例**
+    ```py
+    from whoosh.index import create_in, open_dir
+    from whoosh.fields import *
+    from whoosh.qparser import QueryParser
+    from jieba.analyse.analyzer import ChineseAnalyzer
 
-使用示例：`python -m jieba news.txt > cut_result.txt`
+    analyzer = ChineseAnalyzer()
+    schema = Schema(title=TEXT(stored=True), path=ID(stored=True), content=TEXT(stored=True, analyzer=analyzer))
+    if not os.path.exists("tmp"):
+        os.mkdir("tmp")
 
-命令行选项（翻译）：
+    ix = create_in("tmp", schema) # for create new index
+    #ix = open_dir("tmp") # for read only
+    writer = ix.writer()
 
-    使用: python -m jieba [options] filename
+    writer.add_document(
+        title="document1",
+        path="/a",
+        content="This is the first document we’ve added!"
+    )
 
-    结巴命令行界面。
+    writer.add_document(
+        title="document2",
+        path="/b",
+        content="The second one 你 中文测试中文 is even more interesting! 吃水果"
+    )
 
-    固定参数:
-      filename              输入文件
+    writer.add_document(
+        title="document3",
+        path="/c",
+        content="买水果然后来世博园。"
+    )
 
-    可选参数:
-      -h, --help            显示此帮助信息并退出
-      -d [DELIM], --delimiter [DELIM]
-                            使用 DELIM 分隔词语，而不是用默认的' / '。
-                            若不指定 DELIM，则使用一个空格分隔。
-      -p [DELIM], --pos [DELIM]
-                            启用词性标注；如果指定 DELIM，词语和词性之间
-                            用它分隔，否则用 _ 分隔
-      -D DICT, --dict DICT  使用 DICT 代替默认词典
-      -u USER_DICT, --user-dict USER_DICT
-                            使用 USER_DICT 作为附加词典，与默认词典或自定义词典配合使用
-      -a, --cut-all         全模式分词（不支持词性标注）
-      -n, --no-hmm          不使用隐含马尔可夫模型
-      -q, --quiet           不输出载入信息到 STDERR
-      -V, --version         显示版本信息并退出
+    writer.commit()
+    searcher = ix.searcher()
+    parser = QueryParser("content", schema=ix.schema)
 
-    如果没有指定文件名，则使用标准输入。
-
-`--help` 选项输出：
-  ```py
-  $> python -m jieba --help
-  Jieba command line interface.
-
-  positional arguments:
-    filename              input file
-
-  optional arguments:
-    -h, --help            show this help message and exit
-    -d [DELIM], --delimiter [DELIM]
-                          use DELIM instead of ' / ' for word delimiter; or a
-                          space if it is used without DELIM
-    -p [DELIM], --pos [DELIM]
-                          enable POS tagging; if DELIM is specified, use DELIM
-                          instead of '_' for POS delimiter
-    -D DICT, --dict DICT  use DICT as dictionary
-    -u USER_DICT, --user-dict USER_DICT
-                          use USER_DICT together with the default dictionary or
-                          DICT (if specified)
-    -a, --cut-all         full pattern cutting (ignored with POS tagging)
-    -n, --no-hmm          don't use the Hidden Markov Model
-    -q, --quiet           don't print loading messages to stderr
-    -V, --version         show program's version number and exit
-
-  If no filename specified, use STDIN instead.
-  ```
-延迟加载机制
-------------
-
-jieba 采用延迟加载，`import jieba` 和 `jieba.Tokenizer()` 不会立即触发词典的加载，一旦有必要才开始加载词典构建前缀字典。如果你想手工初始 jieba，也可以手动初始化。
-
+    for keyword in ("水果世博园", "你", "first", "中文"):
+        print("result of ",keyword)
+        q = parser.parse(keyword)
+        results = searcher.search(q)
+        for hit in results:
+            print(hit.highlights("content"))
+        print("="*10)
+    ```
+    **运行结果**
+    ```html
+    result of  水果世博园
+    买<b class="match term0">水果</b>然后来<b class="match term1">世博园</b>
+    ==========
+    result of  你
+    second one <b class="match term0">你</b> 中文测试中文 is even more interesting
+    ==========
+    result of  first
+    <b class="match term0">first</b> document we’ve added
+    ==========
+    result of  中文
+    second one 你 <b class="match term0">中文</b>测试<b class="match term0">中文</b> is even more interesting
+    ==========
+    ```
+## 命令行分词
+  - **命令行调用**
+    ```sh
+    python -m jieba --help
+    python -m jieba [options] filename
+    python -m jieba news.txt > cut_result.txt
+    ```
+    - **filename** 输入文件，位置参数，如果没有指定文件名，则使用标准输入
+    - **-d / --delimiter [DELIM]** 使用 DELIM 分隔词语，而不是用默认的' / '，若不指定 DELIM，则使用一个空格分隔
+    - **-p / --pos [DELIM]** 启用词性标注；如果指定 DELIM，词语和词性之间用它分隔，否则用 _ 分隔
+    - **-D / --dict DICT**  使用 DICT 代替默认词典
+    - **-u / --user-dict USER_DICT** 使用 USER_DICT 作为附加词典，与默认词典或自定义词典配合使用
+    - **-a / --cut-all** 全模式分词（不支持词性标注）
+    - **-n / --no-hmm** 不使用隐含马尔可夫模型
+    - **-q / --quiet** 不输出载入信息到 STDERR
+    - **-V / --version** 显示版本信息并退出
+## 性能相关
+  - jieba 采用延迟加载，`import jieba` 和 `jieba.Tokenizer()` 不会立即触发词典的加载，一旦有必要才开始加载词典构建前缀字典，也可以通过 `jieba.initialize` 手动初始化
+    ```py
     import jieba
     jieba.initialize()  # 手动初始化（可选）
-
-
-在 0.28 之前的版本是不能指定主词典的路径的，有了延迟加载机制后，你可以改变主词典的路径:
-
+    ```
+    有了延迟加载机制后，可以改变主词典的路径
+    ```py
     jieba.set_dictionary('data/dict.txt.big')
+    ```
+  - **其他词典**，可以下载后覆盖 `jieba/dict.txt`，或使用 `jieba.set_dictionary` 指定新词典路径
+    - [占用内存较小的词典文件](https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.small)
+    - [支持繁体分词更好的词典文件](https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.big)
+  - **分词速度**
+    - 1.5 MB / Second in Full Mode
+    - 400 KB / Second in Default Mode
+    - 测试环境: Intel(R) Core(TM) i7-2600 CPU @ 3.4GHz；《围城》.txt
+***
 
-例子： https://github.com/fxsjy/jieba/blob/master/test/test_change_dictpath.py
+# NLTK
+  - **NLP** Natural Language Processing 自然语言处理，通过 NLP 理解自然与阿也能，可以整理和构建知识，以执行自动摘要 / 翻译 / 命名实体识别 / 关系提取 / 情感分析 / 语音识别 / 主题分割等任务
+  - **NLTK** Natural Language Toolkit，用于处理自然语言的 Python 库，为超过 50 个语料库和词汇资源提供了易于使用的接口，还提供了一套用于分类 / 标记化 / 词干化 / 标记 / 解析 / 语义推理的文本处理库，以及工业级 NLP 库的包装器
+    ```py
+    ! pip install nltk
+    import nltk
 
-其他词典
-========
-1. 占用内存较小的词典文件
-https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.small
+    nltk.download()
+    ```
+  - **NLTK 文本预处理** 文本数据主要是字符串，机器学习一般需要数字特征向量，因此需要进行预处理
+    - 将整个文本转换为大写或小写，以便算法不会将不同情况下的相同单词视为不同
+    - **标记化 Tokenization** 将普通文本字符串经过分词，转换为标记列表 token，即实际需要的单词
+    - **句子标记器 Sentence tokenizer** 用于查找句子列表
+    - **单词标记器 Word tokenizer** 用于查找字符串中的单词列表
+  - **预训练的英语 Punkt 标记器**
+    - **删除噪声** 删除不是标准数字或字母的所有内容
+    - **删除停止词 stop words** 删除一些极为常见的定冠词 / 介词等，在文本匹配时通常没有实际意义
+    - **词干提取 Stemming** 将变形的词语缩减回词干 / 词根的过程，如将 `Stems` / `Stemming` / `Stemmed` / `Stemtization` 转化为 `stem`
+    - **词形还原** 词干提取的一种形式，将语法变形的词还原成单词基本形式，如 `running` / `ran` -> `run`, `better` -> `good`
+  - **词袋 Bag of Words**
+    - 记录已知单词表中的单词在指定文档中是否存在
+    - 如对于单词表 `{Learning，is，the，not，great}`，文本 `Learning is great` 对应的词袋向量 `(1, 1, 0, 0, 1)`
+    - 在单词表变大时，将是一个高维稀疏矩阵，高频率的单词在文档中将占主导地位
+  - **词频-逆文本频率指数 TF-IDF** 通过单词在所有文档中出现的频率来重新调整单词频率，使得在所有文档中频繁出现的单词受到惩罚
+    - **词频 Term Frequency** 是当前文档中单词频率的得分，定义为 `TF = (该词在文本中的频数) / (文本中的单词总数)`
+    - **逆文本频率 Inverse Document Frequency** 是对文档中单词的罕见程度的评分，定义为 `IDF = log10(总文本数 / (包含有该词的文档数 + 1))`
+    - 如总样本数为 10M 个，其中有 1000 个 包含 `phone`，某一个包含 100 个单词的文本，`phone` 出现 5 次，因此该文本中 `phone` 的 TF-IDF 值
+      ```py
+      TF = 5 / 100
+      IDF = log10(10000000 / (1000 + 1))
+      TF_IDF = TF * IDF
+      print('TF = {:.2f}, IDF = {:.2f}, TF-IDF = {:.2f}'.format(TF, IDF, TF_IDF))
+      # TF = 0.05, IDF = 4.00, TF-IDF = 0.20
+      ```
+  - **sklearn.feature_extraction.text.TfidfVectorizer** 用于将字符串文本转化为 TF-IDF 矩阵
+      ```py
+      from sklearn.feature_extraction.text import TfidfVectorizer
 
-2. 支持繁体分词更好的词典文件
-https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.big
+      xx = ['We use python for fun', 'We also use Linux for work']
+      vv = TfidfVectorizer().fit_transform(xx)
+      print(vv.toarray())
+      # [[0.         0.37930349 0.53309782 0.         0.53309782 0.37930349 0.37930349 0.        ]
+      #  [0.47042643 0.33471228 0.         0.47042643 0.         0.33471228 0.33471228 0.47042643]]
+      ```
+  - **余弦相似度**
 
-下载你所需要的词典，然后覆盖 jieba/dict.txt 即可；或者用 `jieba.set_dictionary('data/dict.txt.big')`
+TF-IDF是一种在向量空间中得到两个实值向量的应用于文本的变换。变换后我们可以通过获取它们的点积并将其除以它们范数的乘积来获得任何一对矢量的余弦相似度。得到向量夹角的余弦值。余弦相似度是两个非零向量之间相似性的度量。使用下面公式，我们可以求出任意两个文档d1和d2的相似度。
 
+Cosine Similarity (d1, d2) =  Dot product(d1, d2) / ||d1|| * ||d2||
 
-分词速度
-=========
-* 1.5 MB / Second in Full Mode
-* 400 KB / Second in Default Mode
-* 测试环境: Intel(R) Core(TM) i7-2600 CPU @ 3.4GHz；《围城》.txt
+其中d1，d2是两个非零向量（更多解释可以访问https://janav.wordpress.com/2013/10/27/tf-idf-and-cosine-similarity/）。
 
-常见问题
-=========
+在我们对NLP流程有了一个大致的了解。现在是时候创建Chatbot了。我们将这里的聊天机器人命名为’ ROBO’
+  - **导入必要的库**
 
-## 1. 模型的数据是如何生成的？
+import nltk
 
-详见： https://github.com/fxsjy/jieba/issues/7
+import numpy as np
 
-## 2. “台中”总是被切成“台 中”？（以及类似情况）
+import random
 
-P(台中) ＜ P(台)×P(中)，“台中”词频不够导致其成词概率较低
+import string# to process standard python strings
 
-解决方法：强制调高词频
+语料库
 
-`jieba.add_word('台中')` 或者 `jieba.suggest_freq('台中', True)`
+对于我们的示例，我们将使用维基百科页面chatbot作为我们的语料库（https://en.wikipedia.org/wiki/Chatbot）。复制页面中的内容并将其放在名为“chatbot.txt”的文本文件中。当然，你可以使用你选择的任何语料库。
+阅读数据
 
-## 3. “今天天气 不错”应该被切成“今天 天气 不错”？（以及类似情况）
+我们将读入corpus.txt文件并将整个语料库转换为句子列表和单词列表以供进一步预处理
 
-解决方法：强制调低词频
+f=open('chatbot.txt','r',errors= 'ignore')
 
-`jieba.suggest_freq(('今天', '天气'), True)`
+raw=f.read()
 
-或者直接删除该词 `jieba.del_word('今天天气')`
+raw=raw.lower()# converts to lowercase
 
-## 4. 切出了词典中没有的词语，效果不理想？
+nltk.download('punkt')# first-time use only
 
-解决方法：关闭新词发现
+nltk.download('wordnet')# first-time use only
 
-`jieba.cut('丰田太省了', HMM=False)`
-`jieba.cut('我们中出了一个叛徒', HMM=False)`
+sent_tokens= nltk.sent_tokenize(raw)# converts to list of sentences
 
-**更多问题请点击**：https://github.com/fxsjy/jieba/issues?sort=updated&state=closed
+word_tokens= nltk.word_tokenize(raw)# converts to list of words
 
-修订历史
-==========
-https://github.com/fxsjy/jieba/blob/master/Changelog
+让我们看一下sent_tokens和word_tokens的例子
 
-# sklearn 文本聚类和文本分类
+sent_tokens[:2]
+
+['a chatbot (also known as a talkbot, chatterbot, bot, im bot, interactive agent, or artificial conversational entity) is a computer program or an artificial intelligence which conducts a conversation via auditory or textual methods.',
+
+ 'such programs are often designed to convincingly simulate how a human would behave as a conversational partner, thereby passing the turing test.']
+
+word_tokens[:2]
+
+['a','chatbot','(','also','known']
+
+预处理原始文本
+
+我们现在将定义一个名为LemTokens的函数，它将token作为输入并返回标准化的token。
+
+lemmer= nltk.stem.WordNetLemmatizer()
+
+#WordNet is a semantically-oriented dictionary of English included in NLTK.
+
+def LemTokens(tokens):
+
+    return [lemmer.lemmatize(token)for tokenin tokens]
+
+remove_punct_dict= dict((ord(punct),None)for punctin string.punctuation)
+
+def LemNormalize(text):
+
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+
+关键字匹配
+
+接下来，我们将为机器人定义一个问候函数，即如果用户的输入是问候语，机器人将返回问候语的响应。ELIZA使用简单的关键字匹配问候语。我们这里的实现理念与此相同。
+
+GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
+
+GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
+
+def greeting(sentence):
+
+    for wordin sentence.split():
+
+        if word.lower()in GREETING_INPUTS:
+
+            return random.choice(GREETING_RESPONSES)
+
+生成响应
+
+为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块。
+
+    从scikit learn库中，导入TFidf vectorizer，以将原始文档集合转换为TF-IDF特征矩阵。
+
+from sklearn.feature_extraction.textimport TfidfVectorizer
+
+    另外，从scikit学习库导入cosine_similarity模块
+
+from sklearn.metrics.pairwiseimport cosine_similarity
+
+它会用于查找用户输入的单词与语料库中的单词之间的相似度。这是聊天机器人最简单的实现方式。
+
+我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
+
+def response(user_response):
+
+    robo_response=''
+
+TfidfVec= TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+
+    tfidf= TfidfVec.fit_transform(sent_tokens)
+
+    vals= cosine_similarity(tfidf[-1], tfidf)
+
+    idx=vals.argsort()[0][-2]
+
+    flat= vals.flatten()
+
+    flat.sort()
+
+    req_tfidf= flat[-2]
+
+    if(req_tfidf==0):
+
+        robo_response=robo_response+"I am sorry! I don't understand you"
+
+        return robo_response
+
+    else:
+
+        robo_response= robo_response+sent_tokens[idx]
+
+        return robo_response
+
+最后，我们将根据用户的输入提供我们希望机器人在对话开始和结束时说出的行。
+
+flag=True
+
+print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
+
+while(flag==True):
+
+    user_response= input()
+
+    user_response=user_response.lower()
+
+    if(user_response!='bye'):
+
+        if(user_response=='thanks' or user_response=='thank you' ):
+
+            flag=False
+
+            print("ROBO: You are welcome..")
+
+        else:
+
+            if(greeting(user_response)!=None):
+
+                print("ROBO: "+greeting(user_response))
+
+            else:
+
+                sent_tokens.append(user_response)
+
+                word_tokens=word_tokens+nltk.word_tokenize(user_response)
+
+                final_words=list(set(word_tokens))
+
+                print("ROBO: ",end="")
+
+                print(response(user_response))
+
+                sent_tokens.remove(user_response)
+
+    else:
+
+        flag=False
+
+        print("ROBO: Bye! take care..")
+
+现在，我们用NLTK中编写了我们的第一个聊天机器人。现在，让我们看看它如何与人类互动：
