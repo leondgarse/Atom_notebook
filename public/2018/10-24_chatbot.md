@@ -1,7 +1,63 @@
 # ___2018 - 10 - 24 Chatbot___
 ***
 
-# translate
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2018 - 10 - 24 Chatbot___](#2018-10-24-chatbot)
+  - [目录](#目录)
+  - [翻译 translate](#翻译-translate)
+  - [AIML](#aiml)
+  	- [AIML guide](#aiml-guide)
+  	- [AIML 标签元素](#aiml-标签元素)
+  	- [基本标签元素 aiml category pattern template](#基本标签元素-aiml-category-pattern-template)
+  	- [star](#star)
+  	- [srai](#srai)
+  	- [random](#random)
+  	- [set get](#set-get)
+  	- [that](#that)
+  	- [topic](#topic)
+  	- [think](#think)
+  	- [condition](#condition)
+  	- [其他标签](#其他标签)
+  - [AIML 处理中文](#aiml-处理中文)
+  	- [判断中文字符](#判断中文字符)
+  	- [插入与移除空格](#插入与移除空格)
+  	- [文本方式处理 aiml 文件](#文本方式处理-aiml-文件)
+  	- [xml 解析方式处理 aiml 文件](#xml-解析方式处理-aiml-文件)
+  	- [输入与输出处理](#输入与输出处理)
+  	- [PyAIML 项目](#pyaiml-项目)
+  - [AIML python java topic](#aiml-python-java-topic)
+  	- [初始化启动 AIML xml 文件](#初始化启动-aiml-xml-文件)
+  	- [对话](#对话)
+  	- [组合](#组合)
+  - [中文分词词性对照表](#中文分词词性对照表)
+  - [jieba](#jieba)
+  	- [简介](#简介)
+  	- [分词](#分词)
+  	- [添加自定义词典](#添加自定义词典)
+  	- [调整词典](#调整词典)
+  	- [基于 TF-IDF 算法的关键词抽取](#基于-tf-idf-算法的关键词抽取)
+  	- [基于 TextRank 算法的关键词抽取](#基于-textrank-算法的关键词抽取)
+  	- [载入停用词表用于分词](#载入停用词表用于分词)
+  	- [词性标注](#词性标注)
+  	- [并行分词](#并行分词)
+  	- [Tokenize 序列化](#tokenize-序列化)
+  	- [ChineseAnalyzer for Whoosh 搜索引擎](#chineseanalyzer-for-whoosh-搜索引擎)
+  	- [命令行分词](#命令行分词)
+  	- [性能相关](#性能相关)
+  	- [sklean 与 jieba 训练的简单模型](#sklean-与-jieba-训练的简单模型)
+  - [NLTK](#nltk)
+  	- [NLP 与 NLTK](#nlp-与-nltk)
+  	- [NLTK 文本预处理](#nltk-文本预处理)
+  	- [词袋 与 词频逆文本频率指数](#词袋-与-词频逆文本频率指数)
+  	- [余弦相似度](#余弦相似度)
+  	- [完整示例](#完整示例)
+
+  <!-- /TOC -->
+***
+
+# 翻译 translate
   ```py
   ! pip install translate
 
@@ -9,55 +65,6 @@
   translator = Translator(to_lang='en', from_lang='zh')
   print(translator.translate('你好')) # Hello
   print(translator.translate('今天天气很不错啊')) # It's a nice day today.
-  ```
-***
-
-# Chatbot
-## 链接
-  - [百度中文词法分析 LAC](https://github.com/baidu/lac)
-  - [百度问答系统框架 AnyQ](https://github.com/baidu/AnyQ)
-  - [结巴中文分词](https://github.com/fxsjy/jieba)
-  - [百度情感识别系统](https://github.com/baidu/Senta)
-## sklean 与 jieba 训练的简单模型
-  ```py
-  from sklearn.feature_extraction.text import TfidfVectorizer
-  from sklearn.feature_extraction.text import CountVectorizer
-  from sklearn.svm import SVC
-  import jieba
-
-  def classification(predict_data="PPMessage"):
-      target = []
-      data1 = ["您好", "你多大了", "你是什么呀", "你怎么了", "你男的女的呀"]
-      target.append("我是PPMessage智能客服,我的名字叫PP,我很面,就是一个小PP,所以叫PP,您有什么的问题需要问我?")
-      data2 = ["我想买", "怎么部署PPMESSAGE", "怎么下载PPMessage", "ppmessage是什么意思"]
-      target.append("这个问题涉及到我们的核心利益 ^_^,转人工客服吧?")
-
-      X = []
-      Y = []
-
-      for data in data1:
-          X.append(" ".join(jieba.lcut(data)))
-          Y.append(0)
-
-      for data in data2:
-          X.append(" ".join(jieba.lcut(data)))
-          Y.append(1)
-
-      v = TfidfVectorizer()
-      X = v.fit_transform(X)
-
-      clf = SVC(C=1000000.0, gamma='auto', kernel='rbf')
-      clf.fit(X, Y)
-
-      x = " ".join(jieba.lcut(predict_data))
-      x = v.transform([x])
-      y = clf.predict(x)
-
-      print(target[y[0]])
-      return
-
-  if __name__ == "__main__":
-      classification()
   ```
 ***
 
@@ -1064,6 +1071,10 @@
 
 # jieba
 ## 简介
+  - [百度中文词法分析 LAC](https://github.com/baidu/lac)
+  - [百度问答系统框架 AnyQ](https://github.com/baidu/AnyQ)
+  - [结巴中文分词](https://github.com/fxsjy/jieba)
+  - [百度情感识别系统](https://github.com/baidu/Senta)
   - 中文分词的模型实现主要分类两大类，**基于规则** 和 **基于统计**
     - **基于规则** 根据一个已有的词典，采用前向最大匹配 / 后向最大匹配 / 双向最大匹配等人工设定的规则来进行分词，使分出来的词存在于词典中并且尽可能长
     - **基于统计** 从大量人工标注语料中总结词的概率分布以及词之间的常用搭配，使用有监督学习训练分词模型，如可以对全部可能的分词方案，根据语料统计每种方案出现的概率，然后保留概率最大的一种
@@ -1510,27 +1521,95 @@
     - 1.5 MB / Second in Full Mode
     - 400 KB / Second in Default Mode
     - 测试环境: Intel(R) Core(TM) i7-2600 CPU @ 3.4GHz；《围城》.txt
+## sklean 与 jieba 训练的简单模型
+  ```py
+  from sklearn.feature_extraction.text import TfidfVectorizer
+  from sklearn.feature_extraction.text import CountVectorizer
+  from sklearn.svm import SVC
+  import jieba
+
+  def classification(predict_data="PPMessage"):
+      target = []
+      data1 = ["您好", "你多大了", "你是什么呀", "你怎么了", "你男的女的呀"]
+      target.append("我是PPMessage智能客服,我的名字叫PP,我很面,就是一个小PP,所以叫PP,您有什么的问题需要问我?")
+      data2 = ["我想买", "怎么部署PPMESSAGE", "怎么下载PPMessage", "ppmessage是什么意思"]
+      target.append("这个问题涉及到我们的核心利益 ^_^,转人工客服吧?")
+
+      X = []
+      Y = []
+
+      for data in data1:
+          X.append(" ".join(jieba.lcut(data)))
+          Y.append(0)
+
+      for data in data2:
+          X.append(" ".join(jieba.lcut(data)))
+          Y.append(1)
+
+      v = TfidfVectorizer()
+      X = v.fit_transform(X)
+
+      clf = SVC(C=1000000.0, gamma='auto', kernel='rbf')
+      clf.fit(X, Y)
+
+      x = " ".join(jieba.lcut(predict_data))
+      x = v.transform([x])
+      y = clf.predict(x)
+
+      print(target[y[0]])
+      return
+
+  if __name__ == "__main__":
+      classification()
+  ```
 ***
 
 # NLTK
+## NLP 与 NLTK
   - **NLP** Natural Language Processing 自然语言处理，通过 NLP 理解自然与阿也能，可以整理和构建知识，以执行自动摘要 / 翻译 / 命名实体识别 / 关系提取 / 情感分析 / 语音识别 / 主题分割等任务
   - **NLTK** Natural Language Toolkit，用于处理自然语言的 Python 库，为超过 50 个语料库和词汇资源提供了易于使用的接口，还提供了一套用于分类 / 标记化 / 词干化 / 标记 / 解析 / 语义推理的文本处理库，以及工业级 NLP 库的包装器
     ```py
     ! pip install nltk
     import nltk
 
+    # 打开下载器下载语料库
     nltk.download()
+    # 下载 punkt
+    nltk.download('punkt')  # first-time use only
+    # 下载 wordnet
+    nltk.download('wordnet')  # first-time use only
     ```
+## NLTK 文本预处理
   - **NLTK 文本预处理** 文本数据主要是字符串，机器学习一般需要数字特征向量，因此需要进行预处理
     - 将整个文本转换为大写或小写，以便算法不会将不同情况下的相同单词视为不同
     - **标记化 Tokenization** 将普通文本字符串经过分词，转换为标记列表 token，即实际需要的单词
     - **句子标记器 Sentence tokenizer** 用于查找句子列表
     - **单词标记器 Word tokenizer** 用于查找字符串中的单词列表
+    ```py
+    # 按照 '.' 分割成句子
+    nltk.sent_tokenize(tt, language='english')
+    # Out[75]: ['aaa, bbb.', 'ccc\n ddd.', 'eee']
+
+    # 分割成单词
+    nltk.word_tokenize(tt)
+    # Out[76]: ['aaa', ',', 'bbb', '.', 'ccc', 'ddd', '.', 'eee']
+    ```
   - **预训练的英语 Punkt 标记器**
     - **删除噪声** 删除不是标准数字或字母的所有内容
     - **删除停止词 stop words** 删除一些极为常见的定冠词 / 介词等，在文本匹配时通常没有实际意义
     - **词干提取 Stemming** 将变形的词语缩减回词干 / 词根的过程，如将 `Stems` / `Stemming` / `Stemmed` / `Stemtization` 转化为 `stem`
-    - **词形还原** 词干提取的一种形式，将语法变形的词还原成单词基本形式，如 `running` / `ran` -> `run`, `better` -> `good`
+    - **词性还原 Lemmatisation** 词干提取的一种形式，将语法变形的词还原成单词基本形式，如 `running` / `ran` -> `run`, `better` -> `good`
+    ```py
+    lemmer = nltk.stem.WordNetLemmatizer()
+
+    # 词性还原，需要指定 pos 词性，默认为名词 'n'
+    print(lemmer.lemmatize('cats')) # cat
+
+    # pos 词性 ADJ, ADJ_SAT, ADV, NOUN, VERB = 'a', 's', 'r', 'n', 'v'
+    print(lemmer.lemmatize('stemming', pos='v'))  # stem
+    print(lemmer.lemmatize('better', pos='a'))  # good
+    ```
+## 词袋 与 词频逆文本频率指数
   - **词袋 Bag of Words**
     - 记录已知单词表中的单词在指定文档中是否存在
     - 如对于单词表 `{Learning，is，the，not，great}`，文本 `Learning is great` 对应的词袋向量 `(1, 1, 0, 0, 1)`
@@ -1547,191 +1626,116 @@
       # TF = 0.05, IDF = 4.00, TF-IDF = 0.20
       ```
   - **sklearn.feature_extraction.text.TfidfVectorizer** 用于将字符串文本转化为 TF-IDF 矩阵
-      ```py
-      from sklearn.feature_extraction.text import TfidfVectorizer
-
-      xx = ['We use python for fun', 'We also use Linux for work']
-      vv = TfidfVectorizer().fit_transform(xx)
-      print(vv.toarray())
-      # [[0.         0.37930349 0.53309782 0.         0.53309782 0.37930349 0.37930349 0.        ]
-      #  [0.47042643 0.33471228 0.         0.47042643 0.         0.33471228 0.33471228 0.47042643]]
-      ```
-  - **余弦相似度**
-
-TF-IDF是一种在向量空间中得到两个实值向量的应用于文本的变换。变换后我们可以通过获取它们的点积并将其除以它们范数的乘积来获得任何一对矢量的余弦相似度。得到向量夹角的余弦值。余弦相似度是两个非零向量之间相似性的度量。使用下面公式，我们可以求出任意两个文档d1和d2的相似度。
-
-Cosine Similarity (d1, d2) =  Dot product(d1, d2) / ||d1|| * ||d2||
-
-其中d1，d2是两个非零向量（更多解释可以访问https://janav.wordpress.com/2013/10/27/tf-idf-and-cosine-similarity/）。
-
-在我们对NLP流程有了一个大致的了解。现在是时候创建Chatbot了。我们将这里的聊天机器人命名为’ ROBO’
-  - **导入必要的库**
-
-import nltk
-
-import numpy as np
-
-import random
-
-import string# to process standard python strings
-
-语料库
-
-对于我们的示例，我们将使用维基百科页面chatbot作为我们的语料库（https://en.wikipedia.org/wiki/Chatbot）。复制页面中的内容并将其放在名为“chatbot.txt”的文本文件中。当然，你可以使用你选择的任何语料库。
-阅读数据
-
-我们将读入corpus.txt文件并将整个语料库转换为句子列表和单词列表以供进一步预处理
-
-f=open('chatbot.txt','r',errors= 'ignore')
-
-raw=f.read()
-
-raw=raw.lower()# converts to lowercase
-
-nltk.download('punkt')# first-time use only
-
-nltk.download('wordnet')# first-time use only
-
-sent_tokens= nltk.sent_tokenize(raw)# converts to list of sentences
-
-word_tokens= nltk.word_tokenize(raw)# converts to list of words
-
-让我们看一下sent_tokens和word_tokens的例子
-
-sent_tokens[:2]
-
-['a chatbot (also known as a talkbot, chatterbot, bot, im bot, interactive agent, or artificial conversational entity) is a computer program or an artificial intelligence which conducts a conversation via auditory or textual methods.',
-
- 'such programs are often designed to convincingly simulate how a human would behave as a conversational partner, thereby passing the turing test.']
-
-word_tokens[:2]
-
-['a','chatbot','(','also','known']
-
-预处理原始文本
-
-我们现在将定义一个名为LemTokens的函数，它将token作为输入并返回标准化的token。
-
-lemmer= nltk.stem.WordNetLemmatizer()
-
-#WordNet is a semantically-oriented dictionary of English included in NLTK.
-
-def LemTokens(tokens):
-
-    return [lemmer.lemmatize(token)for tokenin tokens]
-
-remove_punct_dict= dict((ord(punct),None)for punctin string.punctuation)
-
-def LemNormalize(text):
-
-    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
-
-关键字匹配
-
-接下来，我们将为机器人定义一个问候函数，即如果用户的输入是问候语，机器人将返回问候语的响应。ELIZA使用简单的关键字匹配问候语。我们这里的实现理念与此相同。
-
-GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
-
-GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
-
-def greeting(sentence):
-
-    for wordin sentence.split():
-
-        if word.lower()in GREETING_INPUTS:
-
-            return random.choice(GREETING_RESPONSES)
-
-生成响应
-
-为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块。
-
-    从scikit learn库中，导入TFidf vectorizer，以将原始文档集合转换为TF-IDF特征矩阵。
-
-from sklearn.feature_extraction.textimport TfidfVectorizer
-
-    另外，从scikit学习库导入cosine_similarity模块
-
-from sklearn.metrics.pairwiseimport cosine_similarity
-
-它会用于查找用户输入的单词与语料库中的单词之间的相似度。这是聊天机器人最简单的实现方式。
-
-我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
-
-def response(user_response):
-
-    robo_response=''
-
-TfidfVec= TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
-
-    tfidf= TfidfVec.fit_transform(sent_tokens)
-
-    vals= cosine_similarity(tfidf[-1], tfidf)
-
-    idx=vals.argsort()[0][-2]
-
-    flat= vals.flatten()
-
-    flat.sort()
-
-    req_tfidf= flat[-2]
-
-    if(req_tfidf==0):
-
-        robo_response=robo_response+"I am sorry! I don't understand you"
-
-        return robo_response
-
-    else:
-
-        robo_response= robo_response+sent_tokens[idx]
-
-        return robo_response
-
-最后，我们将根据用户的输入提供我们希望机器人在对话开始和结束时说出的行。
-
-flag=True
-
-print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
-
-while(flag==True):
-
-    user_response= input()
-
-    user_response=user_response.lower()
-
-    if(user_response!='bye'):
-
-        if(user_response=='thanks' or user_response=='thank you' ):
-
-            flag=False
-
-            print("ROBO: You are welcome..")
-
+    ```py
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    xx = ['We use python for fun', 'We also use Linux for work']
+    vv = TfidfVectorizer().fit_transform(xx)
+    print(vv.toarray())
+    # [[0.         0.37930349 0.53309782 0.         0.53309782 0.37930349 0.37930349 0.        ]
+    #  [0.47042643 0.33471228 0.         0.47042643 0.         0.33471228 0.33471228 0.47042643]]
+    ```
+## 余弦相似度
+  - **余弦相似度** 是两个非零向量之间相似性的度量，通过计算两个向量的点积，并除以范数的乘积计算
+    ```py
+    Cosine Similarity (d1, d2) =  Dot product(d1, d2) / ||d1|| * ||d2||
+    ```
+  - **sklearn.metrics.pairwise.cosine_similarity** 可以用于计算余弦相似度
+    ```py
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    print(cosine_similarity([[1, 2], [3, 4]], [[2, 3], [4, 5]]))
+    # [[0.99227788 0.97780241] [0.99846035 0.99951208]]
+    ```
+## 完整示例
+  - **预处理原始文本** 使用 [维基百科页面 chatbot](https://en.wikipedia.org/wiki/Chatbot) 作为语料库原始输入，复制页面内容为 `chatbot.txt`
+    ```py
+    import nltk
+
+    raw = open('chatbot.txt','r').read()
+    raw = raw.lower()
+
+    sent_tokens = nltk.sent_tokenize(raw)
+    word_tokens = nltk.word_tokenize(raw)
+
+    import string
+    lemmer = nltk.stem.WordNetLemmatizer()
+    lem_tokenizer = lambda text: [lemmer.lemmatize(tt) for tt in nltk.word_tokenize(text) if tt not in string.punctuation]
+
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    TfidfVec = TfidfVectorizer(tokenizer=lem_tokenizer, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+
+    tt = TfidfVec.transform(['hello there'])
+    print(tt.shape) # (1, 1033)
+    ```
+  - **关键字匹配方式** 匹配用户输入的某些关键字，回复指定的内容
+    ```py
+    GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
+    GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
+    def is_greeting(sentence):
+        for word in sentence.split():
+            if word.lower() in GREETING_INPUTS:
+                return True
+        return False
+
+    greeting = lambda : random.choice(GREETING_RESPONSES)
+
+    if is_greeting('Hello there'): print(greeting())
+    # hi there
+    ```
+  - **生成响应** 为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块
+    ```py
+    from sklearn.metrics.pairwise import cosine_similarity
+    # 我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
+    def response(user_input):
+        uu = TfidfVec.transform([user_input])
+        cos_vals = cosine_similarity(uu, tfidf)
+
+        if np.alltrue(cos_vals == 0):
+            return "I am sorry! I don't understand you"
         else:
+            return sent_tokens[cos_vals.argmax()]
+    ```
+  - **获取用户输入与回复**
+    ```py
+    def start_conversation_loop():
+        print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
+        while True:
+            user_input = input("Enter your message >> ")
+            user_input = user_input.lower().strip()
+            print("ROBO: ", end="")
 
-            if(greeting(user_response)!=None):
+            if user_input == 'bye':
+                print("Bye! take care..")
+                break
 
-                print("ROBO: "+greeting(user_response))
+            if user_input == 'thanks' or user_input == 'thank you':
+                print("You are welcome..")
+                break
 
-            else:
+            if is_greeting(user_input):
+                print(greeting())
+                continue
 
-                sent_tokens.append(user_response)
+            print(response(user_input))
 
-                word_tokens=word_tokens+nltk.word_tokenize(user_response)
+    start_conversation_loop()
+    ```
+    **运行结果**
+    ```py
+    ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!
+    Enter your message >> hello there
+    ROBO: hi there
 
-                final_words=list(set(word_tokens))
+    Enter your message >> chatbot creation
+    ROBO: [37]
+    chatbot creation
 
-                print("ROBO: ",end="")
+    the process of creating a chatbot follows a pattern similar to the development of a web page or a mobile app.
 
-                print(response(user_response))
-
-                sent_tokens.remove(user_response)
-
-    else:
-
-        flag=False
-
-        print("ROBO: Bye! take care..")
-
-现在，我们用NLTK中编写了我们的第一个聊天机器人。现在，让我们看看它如何与人类互动：
+    Enter your message >> what is your name
+    ROBO: I am sorry! I don't understand you
+    ```
+***
