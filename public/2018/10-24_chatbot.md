@@ -31,7 +31,12 @@
   	- [初始化启动 AIML xml 文件](#初始化启动-aiml-xml-文件)
   	- [对话](#对话)
   	- [组合](#组合)
-  - [中文分词词性对照表](#中文分词词性对照表)
+  - [NLTK](#nltk)
+  	- [NLP 与 NLTK](#nlp-与-nltk)
+  	- [NLTK 文本预处理](#nltk-文本预处理)
+  	- [词袋 与 词频逆文本频率指数](#词袋-与-词频逆文本频率指数)
+  	- [余弦相似度](#余弦相似度)
+  	- [完整示例](#完整示例)
   - [jieba](#jieba)
   	- [简介](#简介)
   	- [分词](#分词)
@@ -47,12 +52,7 @@
   	- [命令行分词](#命令行分词)
   	- [性能相关](#性能相关)
   	- [sklean 与 jieba 训练的简单模型](#sklean-与-jieba-训练的简单模型)
-  - [NLTK](#nltk)
-  	- [NLP 与 NLTK](#nlp-与-nltk)
-  	- [NLTK 文本预处理](#nltk-文本预处理)
-  	- [词袋 与 词频逆文本频率指数](#词袋-与-词频逆文本频率指数)
-  	- [余弦相似度](#余弦相似度)
-  	- [完整示例](#完整示例)
+  - [中文分词词性对照表](#中文分词词性对照表)
 
   <!-- /TOC -->
 ***
@@ -68,7 +68,7 @@
   ```
 ***
 
-# AIML
+# 基于模式匹配 AIML
 ## AIML guide
   - [AI Chat Bot in Python with AIML](https://www.devdungeon.com/content/ai-chat-bot-python-aiml)
   - [Github python-aiml](https://github.com/paulovn/python-aiml)
@@ -1024,52 +1024,183 @@
   ```
 ***
 
-# 中文分词词性对照表
-  | 词性编码 | 词性名称 | 注解                                                                               |
-  | -------- | -------- | ---------------------------------------------------------------------------------- |
-  | Ag       | 形语素   | 形容词性语素，形容词代码为 a，语素代码 ｇ 前面置以 A                               |
-  | a        | 形容词   | 取英语形容词 adjective 的第 1 个字母                                               |
-  | ad       | 副形词   | 直接作状语的形容词，形容词代码 a 和副词代码 d 并在一起                             |
-  | an       | 名形词   | 具有名词功能的形容词，形容词代码 a 和名词代码 n 并在一起                           |
-  | b        | 区别词   | 取汉字“别”的声母                                                                   |
-  | c        | 连词     | 取英语连词 conjunction 的第1个字母                                                 |
-  | dg       | 副语素   | 副词性语素，副词代码为 d，语素代码 ｇ 前面置以 D                                   |
-  | d        | 副词     | 取 adverb 的第 2 个字母，因其第 1 个字母已用于形容词                               |
-  | e        | 叹词     | 取英语叹词 exclamation 的第1个字母                                                 |
-  | f        | 方位词   | 取汉字“方”                                                                         |
-  | g        | 语素     | 绝大多数语素都能作为合成词的“词根”，取汉字“根”的声母                               |
-  | h        | 前接成分 | 取英语 head 的第1个字母                                                            |
-  | i        | 成语     | 取英语成语 idiom 的第1个字母                                                       |
-  | j        | 简称略语 | 取汉字“简”的声母                                                                   |
-  | k        | 后接成分 |                                                                                    |
-  | l        | 习用语   | 习用语尚未成为成语，有点“临时性”，取“临”的声母                                     |
-  | m        | 数词     | 取英语 numeral 的第3个字母，n，u 已有他用                                          |
-  | Ng       | 名语素   | 名词性语素，名词代码为 n，语素代码 ｇ 前面置以 N                                   |
-  | n        | 名词     | 取英语名词 noun 的第1个字母                                                        |
-  | nr       | 人名     | 名词代码 n 和“人(ren)”的声母并在一起                                               |
-  | ns       | 地名     | 名词代码 n 和处所词代码 s 并在一起                                                 |
-  | nt       | 机构团体 | “团”的声母为 t，名词代码 n 和 t 并在一起                                           |
-  | nz       | 其他专名 | “专”的声母的第 1 个字母为 z，名词代码 n 和 z 并在一起                              |
-  | o        | 拟声词   | 取英语拟声词 onomatopoeia 的第 1 个字母                                            |
-  | p        | 介词     | 取英语介词 prepositional 的第 1 个字母                                             |
-  | q        | 量词     | 取英语 quantity 的第 1 个字母                                                      |
-  | r        | 代词     | 取英语代词 pronoun的 第 2 个字母，因 p 已用于介词                                  |
-  | s        | 处所词   | 取英语 space 的第 1 个字母                                                         |
-  | tg       | 时语素   | 时间词性语素，时间词代码为 t,在语素的代码 g 前面置以 T                             |
-  | t        | 时间词   | 取英语 time 的第 1 个字母                                                          |
-  | u        | 助词     | 取英语助词 auxiliar                                                                |
-  | vg       | 动语素   | 动词性语素，动词代码为 v，在语素的代码 g 前面置以 V                                |
-  | v        | 动词     | 取英语动词 verb 的第一个字母                                                       |
-  | vd       | 副动词   | 直接作状语的动词，动词和副词的代码并在一起                                         |
-  | vn       | 名动词   | 指具有名词功能的动词，动词和名词的代码并在一起                                     |
-  | w        | 标点符号 |                                                                                    |
-  | x        | 非语素字 | 非语素字只是一个符号，字母 x 通常用于代表未知数、符号                              |
-  | y        | 语气词   | 取汉字“语”的声母                                                                   |
-  | z        | 状态词   | 取汉字“状”的声母的前一个字母                                                       |
-  | un       | 未知词   | 不可识别词及用户自定义词组，取英文 Unkonwn 首两个字母 (非北大标准，CSW 分词中定义) |
+# 基于检索 NLTK
+## NLP 与 NLTK
+  - **NLP** Natural Language Processing 自然语言处理，通过 NLP 理解自然与阿也能，可以整理和构建知识，以执行自动摘要 / 翻译 / 命名实体识别 / 关系提取 / 情感分析 / 语音识别 / 主题分割等任务
+  - **NLTK** Natural Language Toolkit，用于处理自然语言的 Python 库，为超过 50 个语料库和词汇资源提供了易于使用的接口，还提供了一套用于分类 / 标记化 / 词干化 / 标记 / 解析 / 语义推理的文本处理库，以及工业级 NLP 库的包装器
+    ```py
+    ! pip install nltk
+    import nltk
+
+    # 打开下载器下载语料库
+    nltk.download()
+    # 下载 punkt
+    nltk.download('punkt')  # first-time use only
+    # 下载 wordnet
+    nltk.download('wordnet')  # first-time use only
+    ```
+## NLTK 文本预处理
+  - **NLTK 文本预处理** 文本数据主要是字符串，机器学习一般需要数字特征向量，因此需要进行预处理
+    - 将整个文本转换为大写或小写，以便算法不会将不同情况下的相同单词视为不同
+    - **标记化 Tokenization** 将普通文本字符串经过分词，转换为标记列表 token，即实际需要的单词
+    - **句子标记器 Sentence tokenizer** 用于查找句子列表
+    - **单词标记器 Word tokenizer** 用于查找字符串中的单词列表
+    ```py
+    # 按照 '.' 分割成句子
+    nltk.sent_tokenize(tt, language='english')
+    # Out[75]: ['aaa, bbb.', 'ccc\n ddd.', 'eee']
+
+    # 分割成单词
+    nltk.word_tokenize(tt)
+    # Out[76]: ['aaa', ',', 'bbb', '.', 'ccc', 'ddd', '.', 'eee']
+    ```
+  - **预训练的英语 Punkt 标记器**
+    - **删除噪声** 删除不是标准数字或字母的所有内容
+    - **删除停止词 stop words** 删除一些极为常见的定冠词 / 介词等，在文本匹配时通常没有实际意义
+    - **词干提取 Stemming** 将变形的词语缩减回词干 / 词根的过程，如将 `Stems` / `Stemming` / `Stemmed` / `Stemtization` 转化为 `stem`
+    - **词性还原 Lemmatisation** 词干提取的一种形式，将语法变形的词还原成单词基本形式，如 `running` / `ran` -> `run`, `better` -> `good`
+    ```py
+    lemmer = nltk.stem.WordNetLemmatizer()
+
+    # 词性还原，需要指定 pos 词性，默认为名词 'n'
+    print(lemmer.lemmatize('cats')) # cat
+
+    # pos 词性 ADJ, ADJ_SAT, ADV, NOUN, VERB = 'a', 's', 'r', 'n', 'v'
+    print(lemmer.lemmatize('stemming', pos='v'))  # stem
+    print(lemmer.lemmatize('better', pos='a'))  # good
+    ```
+## 词袋 与 词频逆文本频率指数
+  - **词袋 Bag of Words**
+    - 记录已知单词表中的单词在指定文档中是否存在
+    - 如对于单词表 `{Learning，is，the，not，great}`，文本 `Learning is great` 对应的词袋向量 `(1, 1, 0, 0, 1)`
+    - 在单词表变大时，将是一个高维稀疏矩阵，高频率的单词在文档中将占主导地位
+  - **词频-逆文本频率指数 TF-IDF** 通过单词在所有文档中出现的频率来重新调整单词频率，使得在所有文档中频繁出现的单词受到惩罚
+    - **词频 Term Frequency** 是当前文档中单词频率的得分，定义为 `TF = (该词在文本中的频数) / (文本中的单词总数)`
+    - **逆文本频率 Inverse Document Frequency** 是对文档中单词的罕见程度的评分，定义为 `IDF = log10(总文本数 / (包含有该词的文档数 + 1))`
+    - 如总样本数为 10M 个，其中有 1000 个 包含 `phone`，某一个包含 100 个单词的文本，`phone` 出现 5 次，因此该文本中 `phone` 的 TF-IDF 值
+      ```py
+      TF = 5 / 100
+      IDF = log10(10000000 / (1000 + 1))
+      TF_IDF = TF * IDF
+      print('TF = {:.2f}, IDF = {:.2f}, TF-IDF = {:.2f}'.format(TF, IDF, TF_IDF))
+      # TF = 0.05, IDF = 4.00, TF-IDF = 0.20
+      ```
+  - **sklearn.feature_extraction.text.TfidfVectorizer** 用于将字符串文本转化为 TF-IDF 矩阵
+    ```py
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    xx = ['We use python for fun', 'We also use Linux for work']
+    vv = TfidfVectorizer().fit_transform(xx)
+    print(vv.toarray())
+    # [[0.         0.37930349 0.53309782 0.         0.53309782 0.37930349 0.37930349 0.        ]
+    #  [0.47042643 0.33471228 0.         0.47042643 0.         0.33471228 0.33471228 0.47042643]]
+    ```
+## 余弦相似度
+  - **余弦相似度** 是两个非零向量之间相似性的度量，通过计算两个向量的点积，并除以范数的乘积计算
+    ```py
+    Cosine Similarity (d1, d2) =  Dot product(d1, d2) / ||d1|| * ||d2||
+    ```
+  - **sklearn.metrics.pairwise.cosine_similarity** 可以用于计算余弦相似度
+    ```py
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    print(cosine_similarity([[1, 2], [3, 4]], [[2, 3], [4, 5]]))
+    # [[0.99227788 0.97780241] [0.99846035 0.99951208]]
+    ```
+## 完整示例
+  - **预处理原始文本** 使用 [维基百科页面 chatbot](https://en.wikipedia.org/wiki/Chatbot) 作为语料库原始输入，复制页面内容为 `chatbot.txt`
+    ```py
+    import nltk
+
+    raw = open('chatbot.txt','r').read()
+    raw = raw.lower()
+
+    sent_tokens = nltk.sent_tokenize(raw)
+    word_tokens = nltk.word_tokenize(raw)
+
+    import string
+    lemmer = nltk.stem.WordNetLemmatizer()
+    lem_tokenizer = lambda text: [lemmer.lemmatize(tt) for tt in nltk.word_tokenize(text) if tt not in string.punctuation]
+
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    TfidfVec = TfidfVectorizer(tokenizer=lem_tokenizer, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+
+    tt = TfidfVec.transform(['hello there'])
+    print(tt.shape) # (1, 1033)
+    ```
+  - **关键字匹配方式** 匹配用户输入的某些关键字，回复指定的内容
+    ```py
+    GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
+    GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
+    def is_greeting(sentence):
+        for word in sentence.split():
+            if word.lower() in GREETING_INPUTS:
+                return True
+        return False
+
+    greeting = lambda : random.choice(GREETING_RESPONSES)
+
+    if is_greeting('Hello there'): print(greeting())
+    # hi there
+    ```
+  - **生成响应** 为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块
+    ```py
+    from sklearn.metrics.pairwise import cosine_similarity
+    # 我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
+    def response(user_input):
+        uu = TfidfVec.transform([user_input])
+        cos_vals = cosine_similarity(uu, tfidf)
+
+        if np.alltrue(cos_vals == 0):
+            return "I am sorry! I don't understand you"
+        else:
+            return sent_tokens[cos_vals.argmax()]
+    ```
+  - **获取用户输入与回复**
+    ```py
+    def start_conversation_loop():
+        print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
+        while True:
+            user_input = input("Enter your message >> ")
+            user_input = user_input.lower().strip()
+            print("ROBO: ", end="")
+
+            if user_input == 'bye':
+                print("Bye! take care..")
+                break
+
+            if user_input == 'thanks' or user_input == 'thank you':
+                print("You are welcome..")
+                break
+
+            if is_greeting(user_input):
+                print(greeting())
+                continue
+
+            print(response(user_input))
+
+    start_conversation_loop()
+    ```
+    **运行结果**
+    ```py
+    ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!
+    Enter your message >> hello there
+    ROBO: hi there
+
+    Enter your message >> chatbot creation
+    ROBO: [37]
+    chatbot creation
+
+    the process of creating a chatbot follows a pattern similar to the development of a web page or a mobile app.
+
+    Enter your message >> what is your name
+    ROBO: I am sorry! I don't understand you
+    ```
 ***
 
-# jieba
+# 中文分词 jieba
 ## 简介
   - [百度中文词法分析 LAC](https://github.com/baidu/lac)
   - [百度问答系统框架 AnyQ](https://github.com/baidu/AnyQ)
@@ -1564,178 +1695,47 @@
   ```
 ***
 
-# NLTK
-## NLP 与 NLTK
-  - **NLP** Natural Language Processing 自然语言处理，通过 NLP 理解自然与阿也能，可以整理和构建知识，以执行自动摘要 / 翻译 / 命名实体识别 / 关系提取 / 情感分析 / 语音识别 / 主题分割等任务
-  - **NLTK** Natural Language Toolkit，用于处理自然语言的 Python 库，为超过 50 个语料库和词汇资源提供了易于使用的接口，还提供了一套用于分类 / 标记化 / 词干化 / 标记 / 解析 / 语义推理的文本处理库，以及工业级 NLP 库的包装器
-    ```py
-    ! pip install nltk
-    import nltk
-
-    # 打开下载器下载语料库
-    nltk.download()
-    # 下载 punkt
-    nltk.download('punkt')  # first-time use only
-    # 下载 wordnet
-    nltk.download('wordnet')  # first-time use only
-    ```
-## NLTK 文本预处理
-  - **NLTK 文本预处理** 文本数据主要是字符串，机器学习一般需要数字特征向量，因此需要进行预处理
-    - 将整个文本转换为大写或小写，以便算法不会将不同情况下的相同单词视为不同
-    - **标记化 Tokenization** 将普通文本字符串经过分词，转换为标记列表 token，即实际需要的单词
-    - **句子标记器 Sentence tokenizer** 用于查找句子列表
-    - **单词标记器 Word tokenizer** 用于查找字符串中的单词列表
-    ```py
-    # 按照 '.' 分割成句子
-    nltk.sent_tokenize(tt, language='english')
-    # Out[75]: ['aaa, bbb.', 'ccc\n ddd.', 'eee']
-
-    # 分割成单词
-    nltk.word_tokenize(tt)
-    # Out[76]: ['aaa', ',', 'bbb', '.', 'ccc', 'ddd', '.', 'eee']
-    ```
-  - **预训练的英语 Punkt 标记器**
-    - **删除噪声** 删除不是标准数字或字母的所有内容
-    - **删除停止词 stop words** 删除一些极为常见的定冠词 / 介词等，在文本匹配时通常没有实际意义
-    - **词干提取 Stemming** 将变形的词语缩减回词干 / 词根的过程，如将 `Stems` / `Stemming` / `Stemmed` / `Stemtization` 转化为 `stem`
-    - **词性还原 Lemmatisation** 词干提取的一种形式，将语法变形的词还原成单词基本形式，如 `running` / `ran` -> `run`, `better` -> `good`
-    ```py
-    lemmer = nltk.stem.WordNetLemmatizer()
-
-    # 词性还原，需要指定 pos 词性，默认为名词 'n'
-    print(lemmer.lemmatize('cats')) # cat
-
-    # pos 词性 ADJ, ADJ_SAT, ADV, NOUN, VERB = 'a', 's', 'r', 'n', 'v'
-    print(lemmer.lemmatize('stemming', pos='v'))  # stem
-    print(lemmer.lemmatize('better', pos='a'))  # good
-    ```
-## 词袋 与 词频逆文本频率指数
-  - **词袋 Bag of Words**
-    - 记录已知单词表中的单词在指定文档中是否存在
-    - 如对于单词表 `{Learning，is，the，not，great}`，文本 `Learning is great` 对应的词袋向量 `(1, 1, 0, 0, 1)`
-    - 在单词表变大时，将是一个高维稀疏矩阵，高频率的单词在文档中将占主导地位
-  - **词频-逆文本频率指数 TF-IDF** 通过单词在所有文档中出现的频率来重新调整单词频率，使得在所有文档中频繁出现的单词受到惩罚
-    - **词频 Term Frequency** 是当前文档中单词频率的得分，定义为 `TF = (该词在文本中的频数) / (文本中的单词总数)`
-    - **逆文本频率 Inverse Document Frequency** 是对文档中单词的罕见程度的评分，定义为 `IDF = log10(总文本数 / (包含有该词的文档数 + 1))`
-    - 如总样本数为 10M 个，其中有 1000 个 包含 `phone`，某一个包含 100 个单词的文本，`phone` 出现 5 次，因此该文本中 `phone` 的 TF-IDF 值
-      ```py
-      TF = 5 / 100
-      IDF = log10(10000000 / (1000 + 1))
-      TF_IDF = TF * IDF
-      print('TF = {:.2f}, IDF = {:.2f}, TF-IDF = {:.2f}'.format(TF, IDF, TF_IDF))
-      # TF = 0.05, IDF = 4.00, TF-IDF = 0.20
-      ```
-  - **sklearn.feature_extraction.text.TfidfVectorizer** 用于将字符串文本转化为 TF-IDF 矩阵
-    ```py
-    from sklearn.feature_extraction.text import TfidfVectorizer
-
-    xx = ['We use python for fun', 'We also use Linux for work']
-    vv = TfidfVectorizer().fit_transform(xx)
-    print(vv.toarray())
-    # [[0.         0.37930349 0.53309782 0.         0.53309782 0.37930349 0.37930349 0.        ]
-    #  [0.47042643 0.33471228 0.         0.47042643 0.         0.33471228 0.33471228 0.47042643]]
-    ```
-## 余弦相似度
-  - **余弦相似度** 是两个非零向量之间相似性的度量，通过计算两个向量的点积，并除以范数的乘积计算
-    ```py
-    Cosine Similarity (d1, d2) =  Dot product(d1, d2) / ||d1|| * ||d2||
-    ```
-  - **sklearn.metrics.pairwise.cosine_similarity** 可以用于计算余弦相似度
-    ```py
-    from sklearn.metrics.pairwise import cosine_similarity
-
-    print(cosine_similarity([[1, 2], [3, 4]], [[2, 3], [4, 5]]))
-    # [[0.99227788 0.97780241] [0.99846035 0.99951208]]
-    ```
-## 完整示例
-  - **预处理原始文本** 使用 [维基百科页面 chatbot](https://en.wikipedia.org/wiki/Chatbot) 作为语料库原始输入，复制页面内容为 `chatbot.txt`
-    ```py
-    import nltk
-
-    raw = open('chatbot.txt','r').read()
-    raw = raw.lower()
-
-    sent_tokens = nltk.sent_tokenize(raw)
-    word_tokens = nltk.word_tokenize(raw)
-
-    import string
-    lemmer = nltk.stem.WordNetLemmatizer()
-    lem_tokenizer = lambda text: [lemmer.lemmatize(tt) for tt in nltk.word_tokenize(text) if tt not in string.punctuation]
-
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
-    TfidfVec = TfidfVectorizer(tokenizer=lem_tokenizer, stop_words='english')
-    tfidf = TfidfVec.fit_transform(sent_tokens)
-
-    tt = TfidfVec.transform(['hello there'])
-    print(tt.shape) # (1, 1033)
-    ```
-  - **关键字匹配方式** 匹配用户输入的某些关键字，回复指定的内容
-    ```py
-    GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
-    GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
-    def is_greeting(sentence):
-        for word in sentence.split():
-            if word.lower() in GREETING_INPUTS:
-                return True
-        return False
-
-    greeting = lambda : random.choice(GREETING_RESPONSES)
-
-    if is_greeting('Hello there'): print(greeting())
-    # hi there
-    ```
-  - **生成响应** 为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块
-    ```py
-    from sklearn.metrics.pairwise import cosine_similarity
-    # 我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
-    def response(user_input):
-        uu = TfidfVec.transform([user_input])
-        cos_vals = cosine_similarity(uu, tfidf)
-
-        if np.alltrue(cos_vals == 0):
-            return "I am sorry! I don't understand you"
-        else:
-            return sent_tokens[cos_vals.argmax()]
-    ```
-  - **获取用户输入与回复**
-    ```py
-    def start_conversation_loop():
-        print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
-        while True:
-            user_input = input("Enter your message >> ")
-            user_input = user_input.lower().strip()
-            print("ROBO: ", end="")
-
-            if user_input == 'bye':
-                print("Bye! take care..")
-                break
-
-            if user_input == 'thanks' or user_input == 'thank you':
-                print("You are welcome..")
-                break
-
-            if is_greeting(user_input):
-                print(greeting())
-                continue
-
-            print(response(user_input))
-
-    start_conversation_loop()
-    ```
-    **运行结果**
-    ```py
-    ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!
-    Enter your message >> hello there
-    ROBO: hi there
-
-    Enter your message >> chatbot creation
-    ROBO: [37]
-    chatbot creation
-
-    the process of creating a chatbot follows a pattern similar to the development of a web page or a mobile app.
-
-    Enter your message >> what is your name
-    ROBO: I am sorry! I don't understand you
-    ```
+# 中文分词词性对照表
+  | 词性编码 | 词性名称 | 注解                                                                               |
+  | -------- | -------- | ---------------------------------------------------------------------------------- |
+  | Ag       | 形语素   | 形容词性语素，形容词代码为 a，语素代码 ｇ 前面置以 A                               |
+  | a        | 形容词   | 取英语形容词 adjective 的第 1 个字母                                               |
+  | ad       | 副形词   | 直接作状语的形容词，形容词代码 a 和副词代码 d 并在一起                             |
+  | an       | 名形词   | 具有名词功能的形容词，形容词代码 a 和名词代码 n 并在一起                           |
+  | b        | 区别词   | 取汉字“别”的声母                                                                   |
+  | c        | 连词     | 取英语连词 conjunction 的第1个字母                                                 |
+  | dg       | 副语素   | 副词性语素，副词代码为 d，语素代码 ｇ 前面置以 D                                   |
+  | d        | 副词     | 取 adverb 的第 2 个字母，因其第 1 个字母已用于形容词                               |
+  | e        | 叹词     | 取英语叹词 exclamation 的第1个字母                                                 |
+  | f        | 方位词   | 取汉字“方”                                                                         |
+  | g        | 语素     | 绝大多数语素都能作为合成词的“词根”，取汉字“根”的声母                               |
+  | h        | 前接成分 | 取英语 head 的第1个字母                                                            |
+  | i        | 成语     | 取英语成语 idiom 的第1个字母                                                       |
+  | j        | 简称略语 | 取汉字“简”的声母                                                                   |
+  | k        | 后接成分 |                                                                                    |
+  | l        | 习用语   | 习用语尚未成为成语，有点“临时性”，取“临”的声母                                     |
+  | m        | 数词     | 取英语 numeral 的第3个字母，n，u 已有他用                                          |
+  | Ng       | 名语素   | 名词性语素，名词代码为 n，语素代码 ｇ 前面置以 N                                   |
+  | n        | 名词     | 取英语名词 noun 的第1个字母                                                        |
+  | nr       | 人名     | 名词代码 n 和“人(ren)”的声母并在一起                                               |
+  | ns       | 地名     | 名词代码 n 和处所词代码 s 并在一起                                                 |
+  | nt       | 机构团体 | “团”的声母为 t，名词代码 n 和 t 并在一起                                           |
+  | nz       | 其他专名 | “专”的声母的第 1 个字母为 z，名词代码 n 和 z 并在一起                              |
+  | o        | 拟声词   | 取英语拟声词 onomatopoeia 的第 1 个字母                                            |
+  | p        | 介词     | 取英语介词 prepositional 的第 1 个字母                                             |
+  | q        | 量词     | 取英语 quantity 的第 1 个字母                                                      |
+  | r        | 代词     | 取英语代词 pronoun的 第 2 个字母，因 p 已用于介词                                  |
+  | s        | 处所词   | 取英语 space 的第 1 个字母                                                         |
+  | tg       | 时语素   | 时间词性语素，时间词代码为 t,在语素的代码 g 前面置以 T                             |
+  | t        | 时间词   | 取英语 time 的第 1 个字母                                                          |
+  | u        | 助词     | 取英语助词 auxiliar                                                                |
+  | vg       | 动语素   | 动词性语素，动词代码为 v，在语素的代码 g 前面置以 V                                |
+  | v        | 动词     | 取英语动词 verb 的第一个字母                                                       |
+  | vd       | 副动词   | 直接作状语的动词，动词和副词的代码并在一起                                         |
+  | vn       | 名动词   | 指具有名词功能的动词，动词和名词的代码并在一起                                     |
+  | w        | 标点符号 |                                                                                    |
+  | x        | 非语素字 | 非语素字只是一个符号，字母 x 通常用于代表未知数、符号                              |
+  | y        | 语气词   | 取汉字“语”的声母                                                                   |
+  | z        | 状态词   | 取汉字“状”的声母的前一个字母                                                       |
+  | un       | 未知词   | 不可识别词及用户自定义词组，取英文 Unkonwn 首两个字母 (非北大标准，CSW 分词中定义) |
 ***
