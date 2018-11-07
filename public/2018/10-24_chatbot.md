@@ -1046,6 +1046,7 @@
     - **句子标记器 Sentence tokenizer** 用于查找句子列表
     - **单词标记器 Word tokenizer** 用于查找字符串中的单词列表
     ```py
+    tt = 'aaa, bbb. ccc\n ddd. eee'
     # 按照 '.' 分割成句子
     nltk.sent_tokenize(tt, language='english')
     # Out[75]: ['aaa, bbb.', 'ccc\n ddd.', 'eee']
@@ -1132,8 +1133,8 @@
     ```
   - **关键字匹配方式** 匹配用户输入的某些关键字，回复指定的内容
     ```py
-    GREETING_INPUTS= ("hello","hi","greetings","sup","what's up","hey",)
-    GREETING_RESPONSES= ["hi","hey","*nods*","hi there","hello","I am glad! You are talking to me"]
+    GREETING_INPUTS = ("hello", "hi", "greetings", "sup", "what's up", "hey")
+    GREETING_RESPONSES = ["hi", "hey", "*nods*", "hi there", "hello", "I am glad! You are talking to me"]
     def is_greeting(sentence):
         for word in sentence.split():
             if word.lower() in GREETING_INPUTS:
@@ -1145,10 +1146,9 @@
     if is_greeting('Hello there'): print(greeting())
     # hi there
     ```
-  - **生成响应** 为了从我们的机器人生成输入问题的响应，我们使用文档相似度的概念。所以我们首先导入必要的模块
+  - **生成响应** 余弦相似度匹配用户输入，返回相似度最高的文本，如果没有匹配则返回 "I am sorry! I don’t understand you"
     ```py
     from sklearn.metrics.pairwise import cosine_similarity
-    # 我们定义一个函数响应，它搜索用户的语言中的一个或多个已知关键字，并返回可能的响应之一。如果找不到与任何关键字匹配的输入，则返回响应：“I am sorry! I don’t understand you“
     def response(user_input):
         uu = TfidfVec.transform([user_input])
         cos_vals = cosine_similarity(uu, tfidf)
