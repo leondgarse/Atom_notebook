@@ -242,3 +242,24 @@
   # git push -f origin master
   git push
   ```
+***
+
+# Clean all github history
+  - [Steps to clear out the history of a git/github repository](https://gist.github.com/stephenhardy/5470814)
+  ```sh
+  REMOTE_BACKUP=`git remote -v | awk 'NR==1 {print $2}'`
+  echo $BACKUP_REMOTE
+
+  # Remove the history from
+  rm -rf .git
+
+  # recreate the repos from the current content only
+  git init
+  git add .
+  git commit -m "Clear out the history"
+
+  # push to the github remote repos ensuring you overwrite history
+  git remote add origin $REMOTE_BACKUP
+  git push -u --force origin master
+  ```
+***
