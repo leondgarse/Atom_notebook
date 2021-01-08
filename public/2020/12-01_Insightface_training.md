@@ -656,7 +656,7 @@
     ```
 ***
 
-# ResNet and ResNeSt and EfficientNet
+# Emore training backbones
 ## ResNet101V2
   - **Nadam + softmax E25 -> bottleneckOnly E4 -> Arcface -> Triplet**
     ```py
@@ -752,6 +752,54 @@
   | TF resnet34 | SGDW      | 1e-3 | None   | 0.9935, **0.9549**, 0.9458, E35 |
   | TF resnet34 | SGD       | None | 5e-4   | **0.9940**, 0.9466, 0.9415, E31 |
   | TF resnet34 | SGD       | None | 1e-3   | 0.9937, 0.9491, **0.9463**, E31 |
+## Mobilefacenet
+  ```py
+  hist_path = "checkpoints/mobilefacenet/"
+  pp = {}
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "triplet_embedding_loss", "center_embedding_loss"]
+  pp["epochs"] = [15, 10, 4, 35]
+  names = ["Softmax", "Margin Softmax", "Bottleneck Arcface", "Arcface scale=64"]
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobile_facenet_emore_hist.json", fig_label="Mobilefacenet, BS=768, lr_decay0.05", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_hist_all.json", fig_label="Mobilefacenet, BS=160, lr_decay0.1", **pp)
+
+  pp["epochs"] = [10]
+  pre_item = {kk: vv[43] for kk, vv in json.load(open(hist_path + "keras_mobilefacenet_256_hist_all.json", 'r')).items() if len(vv) > 43}
+  pre = {"pre_item": pre_item, "init_epoch": 44}
+  names = ["Arcface scale = 64 or 32"]
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_II_hist.json", names=names, fig_label="scale=32, lr=5e-5", **pre, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_III_hist.json", fig_label="scale=32, lr decay", **pre, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_IV_hist.json", fig_label="sclae=64, lr defcay, SGD", **pre, **pp)
+
+  pp["epochs"] = [50]
+  pre_item = {kk: vv[53] for kk, vv in json.load(open(hist_path + "keras_mobilefacenet_256_hist_all.json", 'r')).items() if len(vv) > 53}
+  pre = {"pre_item": pre_item, "init_epoch": 54}
+  names = ["Arcface nadam or adam"]
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_VIII_hist.json", names=names, fig_label="adam, lr decay", **pre, **pp)
+
+  pp["epochs"] = [4, 15, 4]
+  names = ["Bottleneck Softmax", "Softmax", "Bottleneck Arcface"]
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_X_hist.json", names=names, **pre, **pp, save="mobile_facenet_emore.svg")
+  ```
+  ![](images/mobile_facenet_emore.svg)
+## Mobilefacenet SE
+  ```py
+  hist_path = "checkpoints/mobilefacenet/"
+  pp = {}
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "triplet_embedding_loss", "center_embedding_loss"]
+  pp["epochs"] = [15, 10, 4, 30, 10, 10, 10, 20]
+  names = ["Softmax", "Margin Softmax", "Bottleneck Arcface", "Arcface scale=64"] + ["Triplet alpha=%g" % ii for ii in [0.35, 0.3, 0.25, 0.2]]
+  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_soft_arc_trip_hist.json", fig_label="se, [softmax + cos, E25], [arc + exp, E30], [triplet, E50]", names=names, **pp)
+  pp["axes"] = axes
+
+  pp["epochs"] = [4, 35]
+  pre_item = {kk: vv[24] for kk, vv in json.load(open(hist_path + "keras_se_mobile_facenet_emore_soft_arc_trip_hist.json", 'r')).items() if len(vv) > 24}
+  pre = {"pre_item": pre_item, "init_epoch": 25}
+  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_soft_arc_cos_hist.json", fig_label="se, [softmax + cos, E25], [arc + cos, E12]", **pre, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_II_hist.json", fig_label="se, [softmax + cos, E25], [arc + exp + LS0.1, E12]", **pre, **pp, save="se_mobile_facenet_emore.svg")
+  ```
+  ![](images/se_mobile_facenet_emore.svg)
 ## MXNet record
   ```sh
   $ CUDA_VISIBLE_DEVICES="1" python -u train_softmax.py --data-dir /datasets/faces_casia --network "r34" --loss-type 4 --prefix "./model/mxnet_r34_wdm1_casia" --per-batch-size 512 --lr-steps "19180,28770" --margin-s 64.0 --margin-m 0.5 --ckpt 1 --emb-size 512 --fc7-wd-mult 1.0 --wd 0.0005 --verbose 959 --end-epoch 38400 --ce-loss
@@ -938,17 +986,24 @@
   pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
   # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
   # pp["customs"] = plot.EVALS_NAME + ['lr']
-  pp["epochs"] = [10] * 8
-  # pp["epochs"] = [10] * 8 + [2] + [10] * 1
+  pp["epochs"] = [10] * 8 + [2] + [10] * 4 + [50]
   names = ["Softmax + Center = %d" % ii for ii in [1, 10, 20, 30, 40, 50, 60, 70]] + ["Arcloss Bottleneck Only"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", names=names, **pp)
+  axes, _ = plot.hist_plot_split(["checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_hist.json", "checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", names=names, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_E_emore_adamw_5e5_soft_hist.json", names=names, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_hist.json", names=names, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_prelu_emore_adamw_5e5_soft_new_center_1e2D_arc_tripD_hist.json", names=names, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", names=names, **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_E_emore_adamw_5e5_soft_hist.json", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_hist.json", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_prelu_emore_adamw_5e5_soft_new_center_1e2D_arc_tripD_hist.json", names=names, **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(["checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", "checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_hist.json"], **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_hist.json", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_hist.json", **pp)
+
+  pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
+  axes, _ = plot.hist_plot_split(["checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", "checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_hist.json"], pre_item=pre_item, init_epoch=80, **pp)
   ```
   ```py
   # Plot the previous best of batch_size=256
@@ -973,10 +1028,11 @@
   axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
   pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
   axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", pre_item=pre_item, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json", pre_item=pre_item, init_epoch=80, **pp)
 
   # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l21e3_hist.json", **pp)
   # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l25e1_hist.json", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l21e2_hist.json", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l21e2_hist.json", **pp)
 
   # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_arc_tripD_hist.json", fig_label="SUM/2, diff/count, C0.01, 0.1->0.7, E10x8", **pp)
   # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_prelu_emore_adamw_5e5_soft_new_center_1e2D_arc_tripD_hist.json", fig_label="PReLU, SUM/2, diff/count, C0.01, 0.1, 1, 10, E20x4", **pp)
@@ -1015,54 +1071,6 @@
   axes, pre = plot.hist_plot_split(hist_path + "TT_mobilenet_mobilenet_T4_GDC_arc_trip_bs400_hist.json", init_epoch=8, fig_label="[Arc16 E5, Arc32 E5, Arc64+trip64 alpha 0.35 E20, Arc64+trip64 alpha 0.25 E20]", **pp, save="mobilenet_emore_bs400_sgdw.svg")
   ```
   ![](images/mobilenet_emore_bs400_sgdw.svg)
-## Mobilefacenet
-  ```py
-  hist_path = "checkpoints/mobilefacenet/"
-  pp = {}
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "triplet_embedding_loss", "center_embedding_loss"]
-  pp["epochs"] = [15, 10, 4, 35]
-  names = ["Softmax", "Margin Softmax", "Bottleneck Arcface", "Arcface scale=64"]
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobile_facenet_emore_hist.json", fig_label="Mobilefacenet, BS=768, lr_decay0.05", names=names, **pp)
-  pp["axes"] = axes
-
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_hist_all.json", fig_label="Mobilefacenet, BS=160, lr_decay0.1", **pp)
-
-  pp["epochs"] = [10]
-  pre_item = {kk: vv[43] for kk, vv in json.load(open(hist_path + "keras_mobilefacenet_256_hist_all.json", 'r')).items() if len(vv) > 43}
-  pre = {"pre_item": pre_item, "init_epoch": 44}
-  names = ["Arcface scale = 64 or 32"]
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_II_hist.json", names=names, fig_label="scale=32, lr=5e-5", **pre, **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_III_hist.json", fig_label="scale=32, lr decay", **pre, **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_IV_hist.json", fig_label="sclae=64, lr defcay, SGD", **pre, **pp)
-
-  pp["epochs"] = [50]
-  pre_item = {kk: vv[53] for kk, vv in json.load(open(hist_path + "keras_mobilefacenet_256_hist_all.json", 'r')).items() if len(vv) > 53}
-  pre = {"pre_item": pre_item, "init_epoch": 54}
-  names = ["Arcface nadam or adam"]
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_VIII_hist.json", names=names, fig_label="adam, lr decay", **pre, **pp)
-
-  pp["epochs"] = [4, 15, 4]
-  names = ["Bottleneck Softmax", "Softmax", "Bottleneck Arcface"]
-  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilefacenet_256_X_hist.json", names=names, **pre, **pp, save="mobile_facenet_emore.svg")
-  ```
-  ![](images/mobile_facenet_emore.svg)
-## Mobilefacenet SE
-  ```py
-  hist_path = "checkpoints/mobilefacenet/"
-  pp = {}
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "triplet_embedding_loss", "center_embedding_loss"]
-  pp["epochs"] = [15, 10, 4, 30, 10, 10, 10, 20]
-  names = ["Softmax", "Margin Softmax", "Bottleneck Arcface", "Arcface scale=64"] + ["Triplet alpha=%g" % ii for ii in [0.35, 0.3, 0.25, 0.2]]
-  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_soft_arc_trip_hist.json", fig_label="se, [softmax + cos, E25], [arc + exp, E30], [triplet, E50]", names=names, **pp)
-  pp["axes"] = axes
-
-  pp["epochs"] = [4, 35]
-  pre_item = {kk: vv[24] for kk, vv in json.load(open(hist_path + "keras_se_mobile_facenet_emore_soft_arc_trip_hist.json", 'r')).items() if len(vv) > 24}
-  pre = {"pre_item": pre_item, "init_epoch": 25}
-  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_soft_arc_cos_hist.json", fig_label="se, [softmax + cos, E25], [arc + cos, E12]", **pre, **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "keras_se_mobile_facenet_emore_II_hist.json", fig_label="se, [softmax + cos, E25], [arc + exp + LS0.1, E12]", **pre, **pp, save="se_mobile_facenet_emore.svg")
-  ```
-  ![](images/se_mobile_facenet_emore.svg)
 ***
 
 # Mobilenet on CASIA
@@ -1169,6 +1177,10 @@ axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_emb512_dr0_bs40
 axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json", **pp)
 # axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_euc_tripEuc_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
 axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_10_tripcos_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
+axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_triplet_64_emb512_dr04_arc_bs400_r100_casia_fp16_hist.json", **pp)
+
+axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
+axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
 
 # axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_random3_hist.json", **pp)
 # axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_trip_emb512_dr04_bs400_r100_subcenter_hist.json", **pp)
@@ -1312,35 +1324,41 @@ aa = [
   PYTHONPATH="$PYTHONPATH:/usr/local/cuda-10.1/targets/x86_64-linux/lib" CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m /media/SD/tdtest/partial_fc/mxnet/glint360k_r100FC_0.1_fp16_cosface8GPU/model,0 -d /datasets/IJB_release/ -s IJBB
   PYTHONPATH="$PYTHONPATH:/opt/anaconda3/lib" CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m /media/SD/tdtest/partial_fc/mxnet/glint360k_r100FC_0.1_fp16_cosface8GPU/model,0 -d /datasets/IJB_release/ -s IJBB
   ```
-|                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:-------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| MS1MV2-ResNet100-Arcface_IJBB_N0D1F1                                 |  0.42814 | 0.908179 | 0.948978 | 0.964654 | 0.976728 | 0.986563 |
-| r100-arcface-msfdrop75_IJBB                                          | 0.441772 | 0.905063 | 0.949464 | 0.965823 | 0.978578 | 0.988802 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB                     | 0.460857 | 0.938364 | 0.962317 | 0.970789 |  0.98111 | 0.988023 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB             | 0.464849 | 0.937001 |  0.96222 | 0.970789 | 0.981597 | 0.988023 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB                     | 0.450536 | 0.931938 | 0.961928 | 0.972639 | 0.981986 | 0.989679 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |  0.44742 | 0.932619 | 0.961831 | 0.972833 | 0.982278 | 0.989971 |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  | 0.352678 | 0.881694 | 0.928724 | 0.954041 | 0.972055 | 0.985784 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                           | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
-| keras_ResNest101_emore_triplet_basic_agedb_30_epoch_96_0.973333_IJBB | 0.374294 | 0.762025 | 0.895813 | 0.944012 | 0.974878 | 0.991431 |
+|                                                                      |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |
+|:-------------------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
+| MS1MV2-ResNet100-Arcface_IJBB_N0D1F1                                 |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |
+| r100-arcface-msfdrop75_IJBB                                          |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |
+| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB                     |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |
+| glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB             | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |
+| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB                     |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 |
+| glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |
+| GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |
+| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                           |     0.872066 |     0.961497 |     0.973871 |     0.980672 |     0.987421 |     0.991819 |
+| keras_ResNest101_emore_triplet_basic_agedb_30_epoch_96_0.973333_IJBB |     0.374294 |     0.762025 |     0.895813 |     0.944012 |     0.974878 |     0.991431 |
 
-|                                                                                                                                                        |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
-| mobilenet_adamw_BS256_E80_arc_tripD_basic_agedb_30_epoch_123_0.955333_IJBB                                                                             |     0.342843 |     0.741577 |     0.865141 |     0.932522 |     0.965433 |      0.98481 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956333_IJBB_N0D1F1                         |     0.362804 |     0.719182 |     0.848491 |     0.919182 | **0.964752** | **0.987829** |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956500_IJBB                                | **0.383447** |      0.72444 |      0.85667 |     0.921324 |      0.96592 |     0.987342 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_basic_agedb_30_epoch_104_0.955333_IJBB_N0D1F1                                     |     0.228627 |     0.536319 |     0.738656 |     0.856962 |     0.930769 |     0.974684 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_basic_agedb_30_epoch_108_0.956833_IJBB_N0D1F1                                          |     0.285102 |      0.57517 |     0.735443 |     0.848588 |      0.92259 |     0.972249 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_107_0.957167_IJBB_N0D1F1                                                            |      0.33038 |     0.716456 |     0.857838 |     0.925609 |     0.962999 |     0.984713 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_116_0.958000_IJBB                                                                   |     0.346251 |     0.710808 |     0.860273 |     0.930964 |     0.964167 |     0.984129 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_97_batch_20000_0.955333_IJBB_N0D1F1                       |     0.351022 |     0.746056 |     0.869036 |      0.92814 |     0.962512 |     0.983057 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_117_batch_10000_0.956000_IJBB                             |     0.368452 | **0.781305** | **0.879942** |     0.931159 |     0.961928 |     0.981597 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_basic_agedb_30_epoch_112_0.958167_IJBB                      |     0.340701 |     0.707011 |     0.854138 |     0.930088 |     0.966894 |     0.988023 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_basic_agedb_30_epoch_123_0.952000_IJBB             |     0.346835 |     0.759396 |     0.876534 | **0.932717** |     0.962804 |     0.982278 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_basic_agedb_30_epoch_134_0.959167_IJBB         |      0.29036 |     0.660954 |     0.818793 |      0.91889 |     0.967381 |     0.990944 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_alpha30_basic_agedb_30_epoch_130_0.959000_IJBB |     0.264946 |     0.619182 |     0.774781 |     0.875365 |     0.924635 |     0.948296 |
-| keras_mobilenet_PRELU_emore_adamw_5e5_soft_basic_agedb_30_epoch_58_0.945000_IJBB                                                                       |     0.354528 |       0.6963 |     0.836514 |     0.911003 |     0.963681 |     0.986758 |
-| keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_basic_agedb_30_epoch_100_0.956833_IJBB                                                     |      0.27926 |     0.714508 |     0.860175 |     0.927361 | **0.967965** |     0.986952 |
+|                                                                                                                                                        |        1e-06 |        1e-05 |       0.0001 |       0.001 |         0.01 |          0.1 |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------:| ------------:| ------------:| -----------:| ------------:| ------------:|
+| mobilenet_adamw_BS256_E80_arc_tripD_basic_agedb_30_epoch_123_0.955333_IJBB                                                                             |     0.342843 |     0.741577 |     0.865141 |    0.932522 |     0.965433 |      0.98481 |
+| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956333_IJBB_N0D1F1                         |     0.362804 |     0.719182 |     0.848491 |    0.919182 | **0.964752** | **0.987829** |
+| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956500_IJBB                                |     0.383447 |      0.72444 |      0.85667 |    0.921324 |      0.96592 |     0.987342 |
+| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_basic_agedb_30_epoch_104_0.955333_IJBB_N0D1F1                                     |     0.228627 |     0.536319 |     0.738656 |    0.856962 |     0.930769 |     0.974684 |
+| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_basic_agedb_30_epoch_108_0.956833_IJBB_N0D1F1                                          |     0.285102 |      0.57517 |     0.735443 |    0.848588 |      0.92259 |     0.972249 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_107_0.957167_IJBB_N0D1F1                                                            |      0.33038 |     0.716456 |     0.857838 |    0.925609 |     0.962999 |     0.984713 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_116_0.958000_IJBB                                                                   |     0.346251 |     0.710808 |     0.860273 |    0.930964 |     0.964167 |     0.984129 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_97_batch_20000_0.955333_IJBB_N0D1F1                       |     0.351022 |     0.746056 |     0.869036 |     0.92814 |     0.962512 |     0.983057 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_117_batch_10000_0.956000_IJBB                             |     0.368452 | **0.781305** |     0.879942 |    0.931159 |     0.961928 |     0.981597 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_basic_agedb_30_epoch_127_0.958333_IJBB                                |     0.372444 |      0.78111 | **0.889776** | **0.93739** |     0.966407 |     0.981207 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBB                                    | **0.393184** |     0.765433 |     0.887147 |     0.93593 |     0.964362 |     0.982278 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_basic_agedb_30_epoch_112_0.958167_IJBB                      |     0.340701 |     0.707011 |     0.854138 |    0.930088 |     0.966894 |     0.988023 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_basic_agedb_30_epoch_123_0.952000_IJBB             |     0.346835 |     0.759396 |     0.876534 |    0.932717 |     0.962804 |     0.982278 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_basic_agedb_30_epoch_134_0.959167_IJBB         |      0.29036 |     0.660954 |     0.818793 |     0.91889 |     0.967381 |     0.990944 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_alpha30_basic_agedb_30_epoch_130_0.959000_IJBB |     0.264946 |     0.619182 |     0.774781 |    0.875365 |     0.924635 |     0.948296 |
+| keras_mobilenet_PRELU_emore_adamw_5e5_soft_basic_agedb_30_epoch_58_0.945000_IJBB                                                                       |     0.354528 |       0.6963 |     0.836514 |    0.911003 |     0.963681 |     0.986758 |
+| keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_basic_agedb_30_epoch_100_0.956833_IJBB                                                     |      0.27926 |     0.714508 |     0.860175 |    0.927361 | **0.967965** |     0.986952 |
+| keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_basic_agedb_30_epoch_77_0.951167_IJBB                                                     |     0.341383 |     0.677215 |     0.834859 |    0.921422 |     0.963389 |     0.985979 |
+| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_35_0.968000_IJBB                                                   |      0.36777 |     0.810127 |     0.898734 |    0.938462 |     0.964654 |     0.983155 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.971667_IJBB_11                                      |      0.36962 |     0.820545 |     0.909056 |    0.945862 |     0.967575 |       0.9852 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_49_0.972333_IJBB_11                                      |     0.372931 |     0.817916 |     0.908082 |    0.944304 |     0.968549 |     0.984907 |
 ***
 # Ali Datasets
   ```py
@@ -1545,94 +1563,99 @@ aa = [
 ***
 
 # Match model layers
-```py
-# tt = keras.models.load_model('checkpoints/resnet101/TF_resnet101v2_E_sgdw_5e5_dr4_lr1e1_random0_arc32_E5_arc_BS512_emore_basic_agedb_30_epoch_20_batch_2000_0.973000.h5')
-tt = train.buildin_models('r100')
-ss = train.buildin_models('mobilenet')
+  ```py
+  # tt = keras.models.load_model('checkpoints/resnet101/TF_resnet101v2_E_sgdw_5e5_dr4_lr1e1_random0_arc32_E5_arc_BS512_emore_basic_agedb_30_epoch_20_batch_2000_0.973000.h5')
+  tt = train.buildin_models('r100')
+  ss = train.buildin_models('mobilenet')
 
-aa = [ii.output_shape[1:] for ii in tt.layers[1:]]
-bb = [ii.output_shape[1:] for ii in ss.layers[1:]]
-cc = set(aa).intersection(set(bb))
+  aa = [ii.output_shape[1:] for ii in tt.layers[1:]]
+  bb = [ii.output_shape[1:] for ii in ss.layers[1:]]
+  cc = set(aa).intersection(set(bb))
 
-ppt = {id: (id / len(tt.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(tt.layers[1:]) if ii.output_shape[1:] in cc}
-ddt = {ii: [jj[0] for jj in ppt.values() if ii in jj] for ii in cc}
-{kk: (min(vv), max(vv)) for kk, vv in ddt.items()}
+  ppt = {id: (id / len(tt.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(tt.layers[1:]) if ii.output_shape[1:] in cc}
+  ddt = {ii: [jj[0] for jj in ppt.values() if ii in jj] for ii in cc}
+  {kk: (min(vv), max(vv)) for kk, vv in ddt.items()}
 
-# resnet101 blocks output
-{kk: vv for kk, vv in ppt.items() if 'out' in vv[1] or 'add' in vv[1]}
-# resnet101v2 blocks output
-{kk: vv for kk, vv in ppt.items() if 'out' in vv[1] or 'preact' in vv[1]}
-# resnest101 blocks output
-ppt = {id: (id / len(tt.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(tt.layers[1:]) if not isinstance(ii.output_shape, list) and ii.output_shape[1:] in cc}
-nn = [ii.name for ii in tt.layers if 'activation' in ii.name and 'add' in ii.input.name]
-{kk: vv for kk, vv in ppt.items() if 'add' in vv[1] or vv[1] in nn}
+  # resnet101 blocks output
+  {kk: vv for kk, vv in ppt.items() if 'out' in vv[1] or 'add' in vv[1]}
+  # resnet101v2 blocks output
+  {kk: vv for kk, vv in ppt.items() if 'out' in vv[1] or 'preact' in vv[1]}
+  # resnest101 blocks output
+  ppt = {id: (id / len(tt.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(tt.layers[1:]) if not isinstance(ii.output_shape, list) and ii.output_shape[1:] in cc}
+  nn = [ii.name for ii in tt.layers if 'activation' in ii.name and 'add' in ii.input.name]
+  {kk: vv for kk, vv in ppt.items() if 'add' in vv[1] or vv[1] in nn}
 
-pps = {id: (id / len(ss.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(ss.layers[1:]) if ii.output_shape[1:] in cc}
-dds = {ii: [jj[0] for jj in pps.values() if ii in jj] for ii in cc}
-{kk: (min(vv), max(vv)) for kk, vv in dds.items()}
-```
-```py
-{
-  14: (0.030501089324618737, 'conv2_block1_add', (56, 56, 64)),
-  23: (0.05010893246187364, 'conv2_block2_add', (56, 56, 64)),
-  32: (0.06971677559912855, 'conv2_block3_add', (56, 56, 64)),
+  pps = {id: (id / len(ss.layers), ii.name, ii.output_shape[1:]) for id, ii in enumerate(ss.layers[1:]) if ii.output_shape[1:] in cc}
+  dds = {ii: [jj[0] for jj in pps.values() if ii in jj] for ii in cc}
+  {kk: (min(vv), max(vv)) for kk, vv in dds.items()}
+  ```
+  ```py
+  {
+    14: (0.030501089324618737, 'conv2_block1_add', (56, 56, 64)),
+    23: (0.05010893246187364, 'conv2_block2_add', (56, 56, 64)),
+    32: (0.06971677559912855, 'conv2_block3_add', (56, 56, 64)),
 
-  43: (0.09368191721132897, 'conv3_block1_add', (28, 28, 128)),
-  52: (0.11328976034858387, 'conv3_block2_add', (28, 28, 128)),
-  61: (0.1328976034858388, 'conv3_block3_add', (28, 28, 128)),
-  70: (0.15250544662309368, 'conv3_block4_add', (28, 28, 128)),
-  79: (0.1721132897603486, 'conv3_block5_add', (28, 28, 128)),
-  88: (0.19172113289760348, 'conv3_block6_add', (28, 28, 128)),
-  97: (0.2113289760348584, 'conv3_block7_add', (28, 28, 128)),
-  106: (0.23093681917211328, 'conv3_block8_add', (28, 28, 128)),
-  115: (0.25054466230936817, 'conv3_block9_add', (28, 28, 128)),
-  124: (0.2701525054466231, 'conv3_block10_add', (28, 28, 128)),
-  133: (0.289760348583878, 'conv3_block11_add', (28, 28, 128)),
-  142: (0.3093681917211329, 'conv3_block12_add', (28, 28, 128)),
-  151: (0.3289760348583878, 'conv3_block13_add', (28, 28, 128)),
+    43: (0.09368191721132897, 'conv3_block1_add', (28, 28, 128)),
+    52: (0.11328976034858387, 'conv3_block2_add', (28, 28, 128)),
+    61: (0.1328976034858388, 'conv3_block3_add', (28, 28, 128)),
+    70: (0.15250544662309368, 'conv3_block4_add', (28, 28, 128)),
+    79: (0.1721132897603486, 'conv3_block5_add', (28, 28, 128)),
+    88: (0.19172113289760348, 'conv3_block6_add', (28, 28, 128)),
+    97: (0.2113289760348584, 'conv3_block7_add', (28, 28, 128)),
+    106: (0.23093681917211328, 'conv3_block8_add', (28, 28, 128)),
+    115: (0.25054466230936817, 'conv3_block9_add', (28, 28, 128)),
+    124: (0.2701525054466231, 'conv3_block10_add', (28, 28, 128)),
+    133: (0.289760348583878, 'conv3_block11_add', (28, 28, 128)),
+    142: (0.3093681917211329, 'conv3_block12_add', (28, 28, 128)),
+    151: (0.3289760348583878, 'conv3_block13_add', (28, 28, 128)),
 
-  162: (0.35294117647058826, 'conv4_block1_add', (14, 14, 256)),
-  171: (0.37254901960784315, 'conv4_block2_add', (14, 14, 256)),
-  180: (0.39215686274509803, 'conv4_block3_add', (14, 14, 256)),
-  189: (0.4117647058823529, 'conv4_block4_add', (14, 14, 256)),
-  198: (0.43137254901960786, 'conv4_block5_add', (14, 14, 256)),
-  207: (0.45098039215686275, 'conv4_block6_add', (14, 14, 256))
-}
-{
-  32: (0.06971677559912855, 'conv2_block3_add', (56, 56, 64))
+    162: (0.35294117647058826, 'conv4_block1_add', (14, 14, 256)),
+    171: (0.37254901960784315, 'conv4_block2_add', (14, 14, 256)),
+    180: (0.39215686274509803, 'conv4_block3_add', (14, 14, 256)),
+    189: (0.4117647058823529, 'conv4_block4_add', (14, 14, 256)),
+    198: (0.43137254901960786, 'conv4_block5_add', (14, 14, 256)),
+    207: (0.45098039215686275, 'conv4_block6_add', (14, 14, 256))
+  }
+  {
+    32: (0.06971677559912855, 'conv2_block3_add', (56, 56, 64))
 
-  15: (0.16483516483516483, 'conv_pw_2_relu', (28, 28, 128))
-  18: (0.1978021978021978, 'conv_dw_3_relu', (28, 28, 128))
-  21: (0.23076923076923078, 'conv_pw_3_relu', (28, 28, 128))
+    15: (0.16483516483516483, 'conv_pw_2_relu', (28, 28, 128))
+    18: (0.1978021978021978, 'conv_dw_3_relu', (28, 28, 128))
+    21: (0.23076923076923078, 'conv_pw_3_relu', (28, 28, 128))
 
-  28: (0.3076923076923077, 'conv_pw_4_relu', (14, 14, 256))
-  31: (0.34065934065934067, 'conv_dw_5_relu', (14, 14, 256))
-  34: (0.37362637362637363, 'conv_pw_5_relu', (14, 14, 256))
-}
-```
-head -n 7890641 /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt | tail -n 50001 > goo
-head -n 7890641 /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt | tail -n 50002 > goo
+    28: (0.3076923076923077, 'conv_pw_4_relu', (14, 14, 256))
+    31: (0.34065934065934067, 'conv_dw_5_relu', (14, 14, 256))
+    34: (0.37362637362637363, 'conv_pw_5_relu', (14, 14, 256))
+  }
+  ```
+***
+# EuclideanDense
+  ```py
+  class EuclideanDense(NormDense):
+      def call(self, inputs, **kwargs):
+          # Euclidean Distance
+          # ==> (xx - yy) ** 2 = xx ** 2 + yy ** 2 - 2 * (xx * yy)
+          # xx = np.arange(8).reshape(2, 4).astype('float')
+          # yy = np.arange(1, 17).reshape(4, 4).astype('float')
+          # aa = np.stack([((yy - ii) ** 2).sum(1) for ii in xx])
+          # bb = (xx ** 2).sum(1).reshape(-1, 1) + (yy ** 2).sum(1) - np.dot(xx, yy.T) * 2
+          # print(np.allclose(aa, bb))  # True
+          a2 = tf.reduce_sum(tf.square(inputs), axis=-1, keepdims=True)
+          b2 = tf.reduce_sum(tf.square(self.w), axis=-1)
+          ab = tf.matmul(inputs, tf.transpose(self.w))
+          # output = tf.sqrt(a2 + b2 - 2 * ab) * -1
+          # output = (a2 + b2 - 2 * ab) / 2 * -1
+          output = ab - (a2 + b2) / 2
+          return output
+  ```
+***
 
-head -n 7890646 /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt | tail -n 50006 > goo
-head -n 7890646 /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt | tail -n 50007 > goo
-
-head -n 40000 koo > goo && tail -n 10000 koo >> goo
-
-```py
-class MSEDense(NormDense):
-    def call(self, inputs, **kwargs):
-        # Euclidean Distance
-        # ==> (xx - yy) ** 2 = xx ** 2 + yy ** 2 - 2 * (xx * yy)
-        # xx = np.arange(8).reshape(2, 4).astype('float')
-        # yy = np.arange(1, 17).reshape(4, 4).astype('float')
-        # aa = np.stack([((yy - ii) ** 2).sum(1) for ii in xx])
-        # bb = (xx ** 2).sum(1).reshape(-1, 1) + (yy ** 2).sum(1) - np.dot(xx, yy.T) * 2
-        # print(np.allclose(aa, bb))  # True
-        a2 = tf.reduce_sum(tf.square(inputs), axis=-1, keepdims=True)
-        b2 = tf.reduce_sum(tf.square(self.w), axis=-1)
-        ab = tf.matmul(inputs, tf.transpose(self.w))
-        # output = tf.sqrt(a2 + b2 - 2 * ab) * -1
-        # output = (a2 + b2 - 2 * ab) / 2 * -1
-        output = ab - (a2 + b2) / 2
-        return output
+# Bob
+- [QMUL-SurvFace: Surveillance Face Recognition Challenge](https://qmul-survface.github.io/protocols.html)
+- [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
+- [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
+- [Surveillance Face Recognition Challenge](https://arxiv.org/pdf/1804.09691.pdf)
+```sh
+sudo apt-get install libblitz0-dev
+pip install bob.blitz bob.core bob.io.base bob.math bob.measure
 ```

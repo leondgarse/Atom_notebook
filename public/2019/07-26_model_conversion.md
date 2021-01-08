@@ -1839,7 +1839,7 @@
   resnet.load_state_dict(weight)
   resnet.eval()
 
-  xx = torch.randn(1,3,112,112).cuda()
+  xx = torch.randn(1, 3, 112, 112).cuda()
   traced_cell = torch.jit.trace(resnet, (xx))
   torch.jit.save(traced_cell, 'aa.pth')
   aa = torch.jit.load('aa.pth')
