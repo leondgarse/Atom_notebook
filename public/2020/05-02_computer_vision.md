@@ -1,8 +1,53 @@
 # ___2020 - 05 - 02 Computer Vision___
 ***
 
-- [Github openvino](https://github.com/openvinotoolkit/openvino.git)
-- [Github Go imaging](https://github.com/disintegration/imaging)
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2020 - 05 - 02 Computer Vision___](#2020-05-02-computer-vision)
+  - [目录](#目录)
+  - [Basic](#basic)
+  	- [交互式标注 ginput](#交互式标注-ginput)
+  	- [contour](#contour)
+  	- [直方图均衡化 histeq](#直方图均衡化-histeq)
+  	- [png to jpg](#png-to-jpg)
+  	- [图像的主成分分析 PCA](#图像的主成分分析-pca)
+  	- [图像导数](#图像导数)
+  	- [四点变换](#四点变换)
+  	- [inpaint](#inpaint)
+  	- [Video test function](#video-test-function)
+  - [图像去噪](#图像去噪)
+  	- [基本概念](#基本概念)
+  	- [Skimage 示例](#skimage-示例)
+  	- [Opencv 示例](#opencv-示例)
+  	- [自定义 tv denoise](#自定义-tv-denoise)
+  - [Opencv 移动目标检测](#opencv-移动目标检测)
+  	- [根据第一帧图片检测图像变化](#根据第一帧图片检测图像变化)
+  	- [背景减除进行移动目标检测](#背景减除进行移动目标检测)
+  	- [YOLO 行人检测与社交距离检测](#yolo-行人检测与社交距离检测)
+  	- [目标检测更新背景](#目标检测更新背景)
+  - [Opencv 应用](#opencv-应用)
+  	- [Square](#square)
+  	- [Hough lines](#hough-lines)
+  	- [Optical flow 光流](#optical-flow-光流)
+  	- [Track 物体跟踪](#track-物体跟踪)
+  	- [QR code](#qr-code)
+  	- [FFT blur detection](#fft-blur-detection)
+  - [CUDA 视频解码](#cuda-视频解码)
+  	- [Opencv with CUDA](#opencv-with-cuda)
+  	- [PyNvCodec](#pynvcodec)
+  - [检测上下左右区域内的直线](#检测上下左右区域内的直线)
+  - [RGB IR detect](#rgb-ir-detect)
+  - [FaceTrack by match template](#facetrack-by-match-template)
+  - [FaceTrack by ImageHash](#facetrack-by-imagehash)
+  - [ImageHash](#imagehash)
+  - [图像质量](#图像质量)
+  	- [亮度检测](#亮度检测)
+  	- [色偏检测](#色偏检测)
+  	- [失焦检测](#失焦检测)
+
+  <!-- /TOC -->
+***
 
 # Basic
 ## 交互式标注 ginput
@@ -355,7 +400,7 @@
               cv2.line(frame, (left, up), (right, up), color, 3, cv2.LINE_AA)
               cv2.line(frame, (right, up), (right, down), color, 3, cv2.LINE_AA)
               cv2.line(frame, (right, down), (left, down), color, 3, cv2.LINE_AA)
-              cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
+              # cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
 
       def compute_iou(self, rec1, rec2):
           left_column_max = max(rec1[0], rec2[0])
@@ -1144,234 +1189,6 @@
   ```
 ***
 
-# skimage segmentation
-## Felzenszwalb Quickshift SLIC watershed
-  This example compares four popular low-level image segmentation methods. As it is difficult to obtain good segmentations, and the definition of “good” often depends on the application, these methods are usually used for obtaining an oversegmentation, also known as superpixels. These superpixels then serve as a basis for more sophisticated algorithms such as conditional random fields (CRF).
-
-  Felzenszwalb’s efficient graph based segmentation
-  This fast 2D image segmentation algorithm, proposed in 1 is popular in the computer vision community. The algorithm has a single scale parameter that influences the segment size. The actual size and number of segments can vary greatly, depending on local contrast.
-
-  1
-  Efficient graph-based image segmentation, Felzenszwalb, P.F. and Huttenlocher, D.P. International Journal of Computer Vision, 2004
-
-  Quickshift image segmentation
-  Quickshift is a relatively recent 2D image segmentation algorithm, based on an approximation of kernelized mean-shift. Therefore it belongs to the family of local mode-seeking algorithms and is applied to the 5D space consisting of color information and image location 2.
-
-  One of the benefits of quickshift is that it actually computes a hierarchical segmentation on multiple scales simultaneously.
-
-  Quickshift has two main parameters: sigma controls the scale of the local density approximation, max_dist selects a level in the hierarchical segmentation that is produced. There is also a trade-off between distance in color-space and distance in image-space, given by ratio.
-
-  2
-  Quick shift and kernel methods for mode seeking, Vedaldi, A. and Soatto, S. European Conference on Computer Vision, 2008
-
-  SLIC - K-Means based image segmentation
-  This algorithm simply performs K-means in the 5d space of color information and image location and is therefore closely related to quickshift. As the clustering method is simpler, it is very efficient. It is essential for this algorithm to work in Lab color space to obtain good results. The algorithm quickly gained momentum and is now widely used. See 3 for details. The compactness parameter trades off color-similarity and proximity, as in the case of Quickshift, while n_segments chooses the number of centers for kmeans.
-
-  3
-  Radhakrishna Achanta, Appu Shaji, Kevin Smith, Aurelien Lucchi, Pascal Fua, and Sabine Suesstrunk, SLIC Superpixels Compared to State-of-the-art Superpixel Methods, TPAMI, May 2012.
-
-  Compact watershed segmentation of gradient images
-  Instead of taking a color image as input, watershed requires a grayscale gradient image, where bright pixels denote a boundary between regions. The algorithm views the image as a landscape, with bright pixels forming high peaks. This landscape is then flooded from the given markers, until separate flood basins meet at the peaks. Each distinct basin then forms a different image segment. 4
-
-  As with SLIC, there is an additional compactness argument that makes it harder for markers to flood faraway pixels. This makes the watershed regions more regularly shaped. 5
-  ```py
-  from skimage.color import rgb2gray
-  from skimage.filters import sobel
-  from skimage.segmentation import felzenszwalb, slic, quickshift, watershed
-  from skimage.segmentation import mark_boundaries
-  from skimage.util import img_as_float
-  from skimage.io import imread
-
-  img = img_as_float(imread('./000067.dcm.png'))[:, :, :3]
-  segments_fz = felzenszwalb(img, scale=100, sigma=0.5, min_size=50)
-  segments_slic = slic(img, n_segments=250, compactness=10, sigma=1)
-  segments_quick = quickshift(img, kernel_size=3, max_dist=6, ratio=0.5)
-  gradient = sobel(rgb2gray(img))
-  segments_watershed = watershed(gradient, markers=250, compactness=0.001)
-
-  print(f"Felzenszwalb number of segments: {len(np.unique(segments_fz))}")
-  print(f"SLIC number of segments: {len(np.unique(segments_slic))}")
-  print(f"Quickshift number of segments: {len(np.unique(segments_quick))}")
-
-  fig, ax = plt.subplots(2, 2, figsize=(10, 10), sharex=True, sharey=True)
-
-  ax[0, 0].imshow(mark_boundaries(img, segments_fz))
-  ax[0, 0].set_title("Felzenszwalbs's method")
-  ax[0, 1].imshow(mark_boundaries(img, segments_slic))
-  ax[0, 1].set_title('SLIC')
-  ax[1, 0].imshow(mark_boundaries(img, segments_quick))
-  ax[1, 0].set_title('Quickshift')
-  ax[1, 1].imshow(mark_boundaries(img, segments_watershed))
-  ax[1, 1].set_title('Compact watershed')
-
-  for a in ax.ravel():
-      a.set_axis_off()
-
-  plt.tight_layout()
-  plt.show()
-  ```
-  ![](images/skimage_seg_fsqw.png)
-## Join segmentations
-  When segmenting an image, you may want to combine multiple alternative segmentations. The skimage.segmentation.join_segmentations() function computes the join of two segmentations, in which a pixel is placed in the same segment if and only if it is in the same segment in both segmentations.
-  ```py
-  import numpy as np
-  import matplotlib.pyplot as plt
-
-  from skimage.filters import sobel
-  from skimage.measure import label
-  from skimage.segmentation import slic, join_segmentations
-  from skimage.morphology import watershed
-  from skimage.color import label2rgb, rgb2gray
-  from skimage.io import imread
-
-  img = (rgb2gray(imread('./000067.dcm.png')) * 255).astype(np.uint8)
-
-  # Make segmentation using edge-detection and watershed.
-  edges = sobel(img)
-
-  # Identify some background and foreground pixels from the intensity values.
-  # These pixels are used as seeds for watershed.
-  markers = np.zeros_like(img)
-  foreground, background = 1, 2
-  markers[img < 20] = background
-  markers[img > 30] = foreground
-
-  ws = watershed(edges, markers)
-  seg1 = label(ws == foreground)
-
-  # Make segmentation using SLIC superpixels.
-  seg2 = slic(img, n_segments=117, max_iter=160, sigma=1, compactness=0.75,
-              multichannel=False)
-
-  # Combine the two.
-  segj = join_segmentations(seg1, seg2)
-
-  # Show the segmentations.
-  fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(9, 5),
-                           sharex=True, sharey=True)
-  ax = axes.ravel()
-  ax[0].imshow(img, cmap='gray')
-  ax[0].set_title('Image')
-
-  color1 = label2rgb(seg1, image=img, bg_label=0)
-  ax[1].imshow(color1)
-  ax[1].set_title('Sobel+Watershed')
-
-  color2 = label2rgb(seg2, image=img, image_alpha=0.5)
-  ax[2].imshow(color2)
-  ax[2].set_title('SLIC superpixels')
-
-  color3 = label2rgb(segj, image=img, image_alpha=0.5)
-  ax[3].imshow(color3)
-  ax[3].set_title('Join')
-
-  for a in ax:
-      a.axis('off')
-  fig.tight_layout()
-  plt.show()
-  ```
-  ![](images/skimage_seg_join.png)
-## Morphological Snakes
-  - **活动轮廓分割 snakes** 使用用户定义的轮廓或线进行初始化，然后该轮廓慢慢收缩
-
-  Morphological Snakes 1 are a family of methods for image segmentation. Their behavior is similar to that of active contours (for example, Geodesic Active Contours 2 or Active Contours without Edges 3). However, Morphological Snakes use morphological operators (such as dilation or erosion) over a binary array instead of solving PDEs over a floating point array, which is the standard approach for active contours. This makes Morphological Snakes faster and numerically more stable than their traditional counterpart.
-
-  There are two Morphological Snakes methods available in this implementation: Morphological Geodesic Active Contours (MorphGAC, implemented in the function morphological_geodesic_active_contour) and Morphological Active Contours without Edges (MorphACWE, implemented in the function morphological_chan_vese).
-
-  MorphGAC is suitable for images with visible contours, even when these contours might be noisy, cluttered, or partially unclear. It requires, however, that the image is preprocessed to highlight the contours. This can be done using the function inverse_gaussian_gradient, although the user might want to define their own version. The quality of the MorphGAC segmentation depends greatly on this preprocessing step.
-
-  On the contrary, MorphACWE works well when the pixel values of the inside and the outside regions of the object to segment have different averages. Unlike MorphGAC, MorphACWE does not require that the contours of the object are well defined, and it works over the original image without any preceding processing. This makes MorphACWE easier to use and tune than MorphGAC.
-  ```py
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from skimage import data, img_as_float
-  from skimage.io import imread
-  from skimage.segmentation import (morphological_chan_vese,
-                                    morphological_geodesic_active_contour,
-                                    inverse_gaussian_gradient,
-                                    checkerboard_level_set)
-
-
-  def store_evolution_in(lst):
-      """Returns a callback function to store the evolution of the level sets in
-      the given list.
-      """
-
-      def _store(x):
-          lst.append(np.copy(x))
-
-      return _store
-
-
-  # Morphological ACWE\
-  image = rgb2gray(imread('./000067.dcm.png'))
-
-  # Initial level set
-  init_ls = checkerboard_level_set(image.shape, 6)
-  # List with intermediate results for plotting the evolution
-  evolution = []
-  callback = store_evolution_in(evolution)
-  ls = morphological_chan_vese(image, 35, init_level_set=init_ls, smoothing=3,
-                               iter_callback=callback)
-
-  fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-  ax = axes.flatten()
-
-  ax[0].imshow(image, cmap="gray")
-  ax[0].set_axis_off()
-  ax[0].contour(ls, [0.5], colors='r')
-  ax[0].set_title("Morphological ACWE segmentation", fontsize=12)
-
-  ax[1].imshow(ls, cmap="gray")
-  ax[1].set_axis_off()
-  contour = ax[1].contour(evolution[2], [0.5], colors='g')
-  contour.collections[0].set_label("Iteration 2")
-  contour = ax[1].contour(evolution[7], [0.5], colors='y')
-  contour.collections[0].set_label("Iteration 7")
-  contour = ax[1].contour(evolution[-1], [0.5], colors='r')
-  contour.collections[0].set_label("Iteration 35")
-  ax[1].legend(loc="upper right")
-  title = "Morphological ACWE evolution"
-  ax[1].set_title(title, fontsize=12)
-
-
-  # Morphological GAC
-  gimage = inverse_gaussian_gradient(image)
-
-  # Initial level set
-  init_ls = np.zeros(image.shape, dtype=np.int8)
-  init_ls[10:-10, 10:-10] = 1
-  # List with intermediate results for plotting the evolution
-  evolution = []
-  callback = store_evolution_in(evolution)
-  ls = morphological_geodesic_active_contour(gimage, 230, init_ls,
-                                             smoothing=1, balloon=-1,
-                                             threshold=0.69,
-                                             iter_callback=callback)
-
-  ax[2].imshow(image, cmap="gray")
-  ax[2].set_axis_off()
-  ax[2].contour(ls, [0.5], colors='r')
-  ax[2].set_title("Morphological GAC segmentation", fontsize=12)
-
-  ax[3].imshow(ls, cmap="gray")
-  ax[3].set_axis_off()
-  contour = ax[3].contour(evolution[0], [0.5], colors='g')
-  contour.collections[0].set_label("Iteration 0")
-  contour = ax[3].contour(evolution[100], [0.5], colors='y')
-  contour.collections[0].set_label("Iteration 100")
-  contour = ax[3].contour(evolution[-1], [0.5], colors='r')
-  contour.collections[0].set_label("Iteration 230")
-  ax[3].legend(loc="upper right")
-  title = "Morphological GAC evolution"
-  ax[3].set_title(title, fontsize=12)
-
-  fig.tight_layout()
-  plt.show()
-  ```
-  ![](images/skiamge_seg_morphological_snakes.png)
-***
-
 # CUDA 视频解码
 ## Opencv with CUDA
   - CUDA needs `gcc-8` / `g++-8`
@@ -1979,575 +1796,6 @@
   ```
 ***
 
-# Tests
-## Image rotate
-  ```py
-  @tf.function
-  def image_rotation(imm, degree):
-      if degree == 90:
-          return np.transpose(imm[::-1, :, :], (1, 0, 2))
-      if degree == 180:
-          return imm[::-1, ::-1, :]
-      if degree == 270:
-          return np.transpose(imm[:, ::-1, :], (1, 0, 2))
-      return imm
-
-  plt.imshow(image_rotation(imm, 90))
-  plt.imshow(image_rotation(imm, 180))
-  plt.imshow(image_rotation(imm, 270))
-  ```
-  ```py
-  mm3 = keras.Sequential([
-      keras.layers.Input((None, None, 3)),
-      keras.preprocessing.image.apply_affine_transform,
-      mm,
-      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
-  ])
-
-  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
-  tflite_model = converter.convert()
-  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
-
-  inputs = keras.layers.Input([None, None, 3])
-  nn = keras.preprocessing.image.apply_affine_transform(inputs)
-  mm = keras.models.Model(inputs, nn)
-  ```
-  ```py
-  @tf.function
-  def images_funcs(image, trans, type):
-      ret = image
-      type = type[0]
-      if type == 0:
-          # Resize
-          ret = keras.layers.experimental.preprocessing.Resizing(trans[0], trans[1])
-      elif type == 1:
-          # Rotate
-          angle = trans[0]
-          if angle == 90:
-              ret = image[::-1, :, :].transpose(1, 0, 2)
-          elif angle == 180:
-              ret = imm[::-1, ::-1, :]
-          elif angle == 270:
-              ret = imm[:, ::-1, :].transpose(1, 0, 2)
-      elif type == 2:
-          # Affine
-          ret = keras.preprocessing.image.apply_affine_transform(image, *trans)
-      return ret
-
-  image_input = keras.layers.Input([None, None, 3])
-  trans_input = keras.layers.Input([6])
-  type_input = keras.layers.Input(None)
-  ```
-  ```py
-  def transform_matrix_offset_center(matrix, x, y):
-      o_x = float(x) / 2 + 0.5
-      o_y = float(y) / 2 + 0.5
-      offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]])
-      reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]])
-      transform_matrix = np.dot(np.dot(offset_matrix, matrix), reset_matrix)
-      return transform_matrix
-
-
-  theta = tform.rotation / np.pi * 180
-  _tx, _ty = tform.translation
-  tx = np.cos(theta) * _tx + np.sin(theta) * _ty
-  ty = np.cos(theta) * _ty - np.sin(theta) * _tx
-  # tx, ty = _tx, _ty
-  zx, zy = tform.scale, tform.scale
-  transform_matrix = None
-
-  if theta != 0:
-      theta = np.deg2rad(theta)
-      rotation_matrix = np.array([[np.cos(theta), -np.sin(theta), 0],
-                                  [np.sin(theta), np.cos(theta), 0],
-                                  [0, 0, 1]])
-      transform_matrix = rotation_matrix
-
-  if tx != 0 or ty != 0:
-      # np.cos(theta), -np.sin(theta), np.cos(theta) * tx - np.sin(theta) * ty
-      # np.sin(theta), np.cos(theta), np.sin(theta) * tx + np.cos(theta) * ty
-      # 0, 0, 1
-      shift_matrix = np.array([[1, 0, tx],
-                               [0, 1, ty],
-                               [0, 0, 1]])
-      if transform_matrix is None:
-          transform_matrix = shift_matrix
-      else:
-          transform_matrix = np.dot(transform_matrix, shift_matrix)
-
-  if shear != 0:
-      shear = np.deg2rad(shear)
-      shear_matrix = np.array([[1, -np.sin(shear), 0],
-                               [0, np.cos(shear), 0],
-                               [0, 0, 1]])
-      if transform_matrix is None:
-          transform_matrix = shear_matrix
-      else:
-          transform_matrix = np.dot(transform_matrix, shear_matrix)
-
-  if zx != 1 or zy != 1:
-      # np.cos(theta) * zx, -np.sin(theta) * zy, np.cos(theta) * tx - np.sin(theta) * ty
-      # np.sin(theta) * zx, np.cos(theta) * zy, np.sin(theta) * tx + np.cos(theta) * ty
-      # 0, 0, 1
-      zoom_matrix = np.array([[zx, 0, 0],
-                              [0, zy, 0],
-                              [0, 0, 1]])
-      if transform_matrix is None:
-          transform_matrix = zoom_matrix
-      else:
-          transform_matrix = np.dot(transform_matrix, zoom_matrix)
-
-  if transform_matrix is not None:
-      h, w = x.shape[row_axis], x.shape[col_axis]
-      transform_matrix = transform_matrix_offset_center(
-          transform_matrix, h, w)
-      x = np.rollaxis(x, channel_axis, 0)
-      final_affine_matrix = transform_matrix[:2, :2]
-      final_offset = transform_matrix[:2, 2]
-
-      channel_images = [ndimage.interpolation.affine_transform(
-          x_channel,
-          final_affine_matrix,
-          final_offset,
-          order=order,
-          mode=fill_mode,
-          cval=cval) for x_channel in x]
-      x = np.stack(channel_images, axis=0)
-      x = np.rollaxis(x, 0, channel_axis + 1)
-  return x
-  ```
-## 几何变换 geometric transformations
-## Face align landmarks
-  ```py
-  from skimage.transform import SimilarityTransform
-  import cv2
-
-  def face_align_landmarks(img, landmarks, image_size=(112, 112)):
-      ret = []
-      for landmark in landmarks:
-          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
-          src = np.array(
-              [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]],
-              dtype=np.float32,
-          )
-
-          dst = landmark.astype(np.float32)
-          tform = SimilarityTransform()
-          tform.estimate(dst, src)
-          M = tform.params[0:2, :]
-          ret.append(cv2.warpAffine(img, M, (image_size[1], image_size[0]), borderValue=0.0))
-
-      return np.array(ret)
-  ```
-  ```py
-  from skimage import transform
-  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', show=True):
-      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
-      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
-      ret, nns = [], []
-      for landmark in landmarks:
-          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
-          tform.estimate(landmark, src)
-          ret.append(transform.warp(img, tform.inverse, output_shape=image_size))
-      ret = (np.array(ret) * 255).astype(np.uint8)
-
-      return (np.array(ret) * 255).astype(np.uint8)
-
-  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', order=1, show=True):
-      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
-      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
-      ret, nns = [], []
-      for landmark in landmarks:
-          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
-          tform.estimate(src, landmark)
-          ret.append(transform.warp(img, tform, output_shape=image_size, order=order))
-          if show:
-              nns.append(tform.inverse(landmark))
-
-      ret = (np.array(ret) * 255).astype(np.uint8)
-      if show:
-          plt.figure()
-          plt.imshow(np.hstack(ret))
-          for id, ii in enumerate(nns):
-              plt.scatter(ii[:, 0] + image_size[0] * id, ii[:, 1], c='r', s=8)
-      return ret
-  ```
-  ```py
-  mm3 = keras.Sequential([
-      keras.layers.Input((None, None, 3)),
-      keras.preprocessing.image.apply_affine_transform,
-      mm,
-      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
-  ])
-
-  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
-  tflite_model = converter.convert()
-  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
-
-  inputs = keras.layers.Input([None, None, 3])
-  nn = keras.preprocessing.image.apply_affine_transform(inputs)
-  mm = keras.models.Model(inputs, nn)
-  ```
-## ndimage affine_transform
-  - 对于 `skimage.transform` 生成的转换矩阵，`ndimage.interpolation.affine_transform` 在使用时，需要将横纵坐标上的变幻对调
-  - **变换 tform.parameters**
-    - `rotation` 改为反向旋转
-    - `translation` 对调 `xy` 变换值
-    ```py
-    from scipy import ndimage
-
-    tform = transform.SimilarityTransform()
-    tform.estimate(src, pps[0])
-
-    # tt = transform.SimilarityTransform(rotation=tform.rotation*-1, scale=tform.scale, translation=tform.translation[::-1]).params
-    tt = tform.params.copy()
-    tt[0, -1], tt[1, -1] = tt[1, -1], tt[0, -1]
-    tt[0, 1], tt[1, 0] = -1 * tt[0, 1], -1 * tt[1, 0]
-    channel_images = [ndimage.interpolation.affine_transform(
-        imm[:, :, ii],
-        tt,
-        output_shape=(112, 112),
-        order=1,
-        mode='nearest',
-        cval=0) for ii in range(3)]
-    x = np.stack(channel_images, axis=-1)
-    plt.imshow(x)
-    ```
-  - **变换时图像转置** 使用原值的 `tform.parameters`，转置图像的宽高
-    ```py
-    from scipy import ndimage
-
-    tform = transform.SimilarityTransform()
-    tform.estimate(src, pps[0])
-
-    channel_images = [ndimage.interpolation.affine_transform(
-        imm[:, :, ii].T,
-        tform.params,
-        output_shape=(112, 112),
-        order=1,
-        mode='nearest',
-        cval=0) for ii in range(3)]
-    x = np.stack(channel_images, axis=-1)
-    x = np.transpose(x, (1, 0, 2))
-    plt.imshow(x)
-    ```
-  - **生成转置的变换矩阵** `skimage.transform` `estimate` 的参数值对调 `xy` 坐标值
-    ```py
-    tform.estimate(src[:, ::-1], pps[0][:, ::-1])
-    channel_axis = 2
-    x = np.rollaxis(imm, channel_axis, 0)  # (976, 1920, 3) --> (3, 976, 1920)
-    channel_images = [ndimage.interpolation.affine_transform(
-        x_channel,
-        tform.params,
-        output_shape=(112, 112),
-        order=1,
-        mode='nearest',
-        cval=0) for x_channel in x]
-    x = np.stack(channel_images, axis=0)  # (3, 112, 112)
-    x = np.rollaxis(x, 0, channel_axis + 1) # (112, 112, 3)
-    plt.imshow(x)
-    ```
-## affine_transform 图像缩放
-  ```py
-  scale = 3
-  tt = transform.SimilarityTransform(scale=scale, translation=[0, 0]).params
-  channel_images = [ndimage.interpolation.affine_transform(
-      imm[:, :, ii],
-      tt,
-      output_shape=(imm.shape[0] // scale, imm.shape[1] // scale),
-      order=1,
-      mode='nearest',
-      cval=0) for ii in range(3)]
-  x = np.stack(channel_images, axis=-1)
-  plt.imshow(x)
-  ```
-## affine_transform 图像旋转
-  ```py
-  theta = 90 # [90, 180, 270]
-  rotation = theta / 180 * np.pi
-  # translation=[imm.shape[0] * abs(cos(rotation)), imm.shape[1] * abs(sin(rotation))]
-  if theta == 90:
-      translation=[imm.shape[0], 0]
-      output_shape = imm.shape[:2][::-1]
-  elif theta == 180:
-      translation=imm.shape[:2]
-      output_shape = imm.shape[:2]
-  elif theta == 270:
-      translation=[0, imm.shape[1]]
-      output_shape = imm.shape[:2][::-1]
-
-  tt = transform.SimilarityTransform(rotation=rotation, translation=translation).params
-  channel_images = [ndimage.interpolation.affine_transform(
-      imm[:, :, ii],
-      tt,
-      output_shape=output_shape,
-      order=1,
-      mode='nearest',
-      cval=0) for ii in range(3)]
-  x = np.stack(channel_images, axis=-1)
-  plt.imshow(x)
-  ```
-## TF function
-  ```py
-  class WarpAffine(keras.layers.Layer):
-      def __call__(self, imm, tformP, output_shape):
-          rets = []
-          for xx in imm:
-              x = tf.transpose(xx, (2, 0, 1))
-              channel_images = [ndimage.interpolation.affine_transform(
-                  x_channel,
-                  tformP,
-                  output_shape=output_shape,
-                  order=1,
-                  mode='nearest',
-                  cval=0) for x_channel in x]
-              x = tf.stack(channel_images, axis=0)
-              x = tf.transpose(x, (1, 2, 0))
-              rets.append(x)
-          return rets
-  ```
-## Rotation
-  ```go
-  func (nnInterpolator) transform_RGBA_RGBA_Src(dst *image.RGBA, dr, adr image.Rectangle, d2s *f64.Aff3, src *image.RGBA, sr image.Rectangle, bias image.Point) {
-      for dy := int32(adr.Min.Y); dy < int32(adr.Max.Y); dy++ {
-          dyf := float64(dr.Min.Y+int(dy)) + 0.5
-          d := (dr.Min.Y+int(dy)-dst.Rect.Min.Y)*dst.Stride + (dr.Min.X+adr.Min.X-dst.Rect.Min.X)*4
-          for dx := int32(adr.Min.X); dx < int32(adr.Max.X); dx, d = dx+1, d+4 {
-              dxf := float64(dr.Min.X+int(dx)) + 0.5
-              sx0 := int(d2s[0]*dxf+d2s[1]*dyf+d2s[2]) + bias.X
-              sy0 := int(d2s[3]*dxf+d2s[4]*dyf+d2s[5]) + bias.Y
-              if !(image.Point{sx0, sy0}).In(sr) {
-                  continue
-              }
-              pi := (sy0-src.Rect.Min.Y)*src.Stride + (sx0-src.Rect.Min.X)*4
-              pr := uint32(src.Pix[pi+0]) * 0x101
-              pg := uint32(src.Pix[pi+1]) * 0x101
-              pb := uint32(src.Pix[pi+2]) * 0x101
-              pa := uint32(src.Pix[pi+3]) * 0x101
-              dst.Pix[d+0] = uint8(pr >> 8)
-              dst.Pix[d+1] = uint8(pg >> 8)
-              dst.Pix[d+2] = uint8(pb >> 8)
-              dst.Pix[d+3] = uint8(pa >> 8)
-          }
-      }    
-  }
-  ```
-  ```cpp
-  void RotateDrawWithClip(
-      WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-      WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
-      float fDstCX, float fDstCY, float fSrcCX, float fSrcCY, float fAngle, float fScale) {
-      if (dstW <= 0) { return; }
-      if (dstH <= 0) { return; }
-
-      srcDelta /= sizeof(WDIBPIXEL);
-      dstDelta /= sizeof(WDIBPIXEL);
-
-      float duCol = (float)sin(-fAngle) * (1.0f / fScale);
-      float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
-      float duRow = dvCol;
-      float dvRow = -duCol;
-
-      float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
-      float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
-
-      float rowu = startingu;
-      float rowv = startingv;
-
-      for(int y = 0; y < dstH; y++) {
-          float uu = rowu;
-          float vv = rowv;
-
-          WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
-
-          for(int x = 0; x < dstW ; x++) {
-              int sx = (int)uu;
-              int sy = (int)vv;
-
-              // For non-negative values we have to check u and v (not sx and sy)
-              // since u = -0.25 gives sx=0 after rounsing, so 1 extra pixel line will be drawn
-              // (we assume that u,v >= 0 will lead to sx,sy >= 0)
-
-              if ((uu >= 0) && (vv >= 0) && (sx < srcW) && (sy < srcH)) {
-                  WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
-                  *pDst++ = *pSrc++;
-              } else {
-                  pDst++; // Skip
-                  //*pDst++ = VOID_COLOR; // Fill void (black)
-              }
-
-              uu += duRow;
-              vv += dvRow;
-          }
-
-          rowu += duCol;
-          rowv += dvCol;
-      }
-  }
-  ```
-  ```py
-  def image_rotate(src, dstW, dstH, tf):
-      # convW = cos(rotate) / scale
-      dst = np.zeros([dstW, dstH, 3], dtype=src.dtype)
-      ww, hh = src.shape[:2]
-      ww, hh = ww - 1, hh - 1
-      for ii in range(dstW):
-          tw, th = tf[0] * ii, tf[3] * ii
-          for jj in range(dstH):
-              sw = int(tw + tf[1] * jj + tf[2])
-              sh = int(th + tf[4] * jj + tf[5])
-              if sw > 0 and sw < ww and sh > 0 and sh < hh:
-                  dst[ii, jj] = src[sw, sh]
-              else:
-                  dst[ii, jj] = [0, 0, 0]
-      return dst
-
-  angle = 60 / 180 * np.pi
-  tf = [cos(angle), -sin(angle), 0, sin(angle), cos(angle), 0]
-  ```
-## NV21 to RGB
-  ```py
-  import cv2
-  def YUVtoRGB(byteArray, width, height):
-      e = width * height
-      Y = byteArray[0:e]
-      Y = np.reshape(Y, (height, width))
-
-      s = e
-      V = byteArray[s::2]
-      V = np.repeat(V, 2, 0)
-      V = np.reshape(V, (height // 2, width))
-      V = np.repeat(V, 2, 0)
-
-      U = byteArray[s+1::2]
-      U = np.repeat(U, 2, 0)
-      U = np.reshape(U, (height // 2, width))
-      U = np.repeat(U, 2, 0)
-
-      RGBMatrix = (np.dstack([Y,U,V])).astype(np.uint8)
-      RGBMatrix = cv2.cvtColor(RGBMatrix, cv2.COLOR_YUV2RGB, 3)
-      return RGBMatrix
-
-  with open('nv21.txt', 'r') as ff:
-      aa = ff.read()
-  bb = [byte(ii) for ii in aa[1:-1].split(', ')]
-  with open('nv21.bin', 'wb') as ff:
-      for ii in bb:
-          ff.write(ii)
-
-  with open('nv21.bin', 'rb') as ff:
-      cc = ff.read()
-  plt.imshow(YUVtoRGB([byte(ii) for ii in cc], 1280, 800))
-  ```
-## 曲线拟合
-  ```py
-  import json
-  with open("./checkpoints/keras_resnet101_emore_hist.json", 'r') as ff:
-      jj = json.load(ff)
-  ss = jj['loss'][29:-5]
-  ['%.4f' % ii for ii in jj['loss'][-10:]]
-  # ['8.6066', '8.2645', '7.9587', '7.6866', '7.4418', '7.2208']
-
-  zz = np.polyfit(np.arange(1, len(ss)), ss[1:], 3)
-  yy = np.poly1d(zz)
-  ["%.4f" % ii for ii in yy(np.arange(len(ss) - 5, len(ss) + 10))]
-  # ['8.6065', '8.2710', '7.9557', '7.6401', '7.3035', '6.9252', '6.4847', '5.9613']
-
-  ee = 0.105
-  pp = ss[:len(ss) - 3].copy()
-  for ii in range(len(ss) - 5, len(ss) + 10):
-      pp.append(pp[ii - 1] - (pp[ii - 2] - pp[ii - 1]) * (1 - ee))
-      print("%.4f" % pp[-1], end=', ')
-  # 8.5960, 8.2454, 7.9316, 7.6508, 7.3994, 7.1744, 6.9731, 6.7929
-  # ==> (f(x-1) - f(x)) / (f(x-2) - f(x-1)) = (1 - ee)
-  #     && f(x) = aa * np.exp(-bb * x) + cc
-  # ==> (np.exp(bb) - 1) / (np.exp(2 * bb) - np.exp(bb)) = (1 - ee)
-  # ==> (1 - ee) * np.exp(2 * bb) - (2 - ee) * np.exp(bb) + 1 = 0
-
-  from sympy import solve, symbols, Eq
-  bb = symbols('bb')
-  brr = solve(Eq(np.e ** (2 * bb) * (1 - ee) - (2 - ee) * np.e ** bb + 1, 0), bb)
-  print(brr) # [0.0, 0.110931560707281]
-  ff = lambda xx: np.e ** (-xx * brr[1])
-  ['%.4f' % ((ff(ii - 1) - ff(ii)) / (ff(ii - 2) - ff(ii - 1))) for ii in range(10, 15)]
-  # ['0.8950', '0.8950', '0.8950', '0.8950', '0.8950']
-
-  aa, cc = symbols('aa'), symbols('cc')
-  rr = solve([Eq(aa * ff(len(ss) - 3) + cc, ss[-3]), Eq(aa * ff(len(ss) - 1) + cc, ss[-1])], [aa, cc])
-  func_solve = lambda xx: rr[aa] * ff(xx) + rr[cc]
-  ["%.4f" % ii for ii in func_solve(np.arange(len(ss) - 5, len(ss) + 10))]
-  # ['8.6061', '8.2645', '7.9587', '7.6850', '7.4401', '7.2209', '7.0247', '6.8491']
-
-  from scipy.optimize import curve_fit
-
-  def func_curv(x, a, b, c):
-      return a * np.exp(-b * x) + c
-  xx = np.arange(1, 1 + len(ss[1:]))
-  popt, pcov = curve_fit(func_curv, xx, ss[1:])
-  print(popt) # [6.13053796 0.1813183  6.47103657]
-  ["%.4f" % ii for ii in func_curv(np.arange(len(ss) - 5, len(ss) + 10), *popt)]
-  # ['8.5936', '8.2590', '7.9701', '7.7208', '7.5057', '7.3200', '7.1598', '7.0215']
-
-  plt.plot(np.arange(len(ss) - 3, len(ss)), ss[-3:], label="Original Curve")
-  xx = np.arange(len(ss) - 3, len(ss) + 3)
-  plt.plot(xx, pp[-len(xx):], label="Manuel fit")
-  plt.plot(xx, func_solve(xx), label="func_solve fit")
-  plt.plot(xx, func_curv(xx, *popt), label="func_curv fit")
-  plt.legend()
-  ```
-## Plot styles
-  ```py
-  big, baxes = plt.subplots(5, 5)
-  baxes = baxes.flatten()
-  styles = plt.style.available
-  if 'dark_background' in styles: styles.remove('dark_background')
-  for bax, style in zip(baxes, styles):
-      fn = style + '.png'
-      if not os.path.exists(fn):
-          plt.style.use(style)
-          fig, axes = plt.subplots(2, 2)
-          axes[0][0].plot(np.random.randint(1, 10, 10), label='aa')
-          axes[0][0].plot(np.random.randint(1, 10, 10), label='bb')
-          axes[0][0].legend()
-          axes[0][1].scatter(np.random.randint(1, 10, 10), np.random.randint(1, 10, 10))
-          axes[1][0].hist(np.random.randint(1, 10, 10))
-          rect = plt.Rectangle((0.2, 0.75), 0.4, 0.15, color='k', alpha=0.3)
-          axes[1][1].add_patch(rect)
-          fig.suptitle(style)
-          fig.savefig(fn)
-          plt.close()
-      bax.imshow(plt.imread(fn))
-      bax.axis('off')
-  big.tight_layout()
-  ```
-## Plot color palettes
-  ```py
-  import matplotlib.cm as cm
-  from cycler import cycler
-  import seaborn as sns
-
-  def get_colors(max_color, palette='husl'):
-      if palette == 'rainbow':
-          colors = cm.rainbow(np.linspace(0, 1, max_color))
-      else:
-          colors = sns.color_palette(palette, n_colors=max_color)
-      return colors
-
-  ccs = ['deep', 'muted', 'bright', 'pastel', 'dark', 'colorblind', 'rainbow', 'husl', 'hls']
-  max_color = 10
-  fig, axes = plt.subplots(3, 3, figsize=(15, 12))
-  axes = axes.flatten()
-  for cc, ax in zip (ccs, axes):
-      colors = get_colors(max_color, cc)
-      ax.set_prop_cycle(cycler('color', colors))
-      for ii in range(max_color):
-          ax.plot(np.random.randint(1, 10, 10), label=ii)
-      ax.legend(loc="upper right")
-      ax.set_title(cc)
-  fig.tight_layout()
-  ```
-***
-
 # 图像质量
   ```py
   from scipy import signal
@@ -2689,7 +1937,7 @@
   ```
 ## 失焦检测
   - 失焦的主要表现就是画面模糊，衡量画面模糊的主要方法就是梯度的统计特征，通常梯度值越高，画面的边缘信息越丰富，图像越清晰。需要注意的是梯度信息与每一个视频本身的特点有关系，如果画面中本身的纹理就很少，即使不失焦，梯度统计信息也会很少，对监控设备失焦检测需要人工参与的标定过程，由人告诉计算机某个设备正常情况下的纹理信息是怎样的。
-  ```py
+  ```cpp
   double DefRto(Mat frame)
   {
   	Mat gray;
@@ -2701,18 +1949,126 @@
   	int height=img->height;
   	int width=img->width;
   	int step=img->widthStep/sizeof(uchar);
-  	uchar *data=(uchar*)img->imageData;
+  	uchar * data=(uchar*)img->imageData;
   	double num = width*height;
 
   	for(i=0;i<height;i++)
   	{
   		for(j=0;j<width;j++)
   		{
-  			temp += sqrt((pow((double)(data[(i+1)*step+j]-data[i*step+j]),2) + pow((double)(data[i*step+j+1]-data[i*step+j]),2)));
-  			temp += abs(data[(i+1)*step+j]-data[i*step+j])+abs(data[i*step+j+1]-data[i*step+j]);
+  			temp += sqrt((pow((double)(data[(i+1) * step+j]-data[i * step+j]),2) + pow((double)(data[i * step+j+1]-data[i * step+j]),2)));
+  			temp += abs(data[(i+1)*step+j]-data[i * step+j])+abs(data[i * step+j+1]-data[i * step+j]);
   		}
   	}
   	DR = temp/num;
   	return DR;
+  }
+  ```
+***
+
+# 不同视场角摄像头配准
+# 测距
+  ```py
+  class Face_Detect:
+      def __init__(self, det=None):
+          if det is None:
+              import insightface
+              self.det = insightface.model_zoo.face_detection.retinaface_mnet025_v1()
+              self.det.prepare(-1)
+              def foo(det, frame): bbs, pps = det.detect(frame); return bbs[:, :4], bbs[:, -1], pps
+              self.det.detect_faces = lambda frame: foo(self.det, frame)
+          else:
+              self.det = det
+
+      def __call__(self, frame):
+          self.frame = frame
+          bbs, ccs, pps = self.det.detect_faces(frame)
+          bbs = bbs.astype('int')
+          self.draw_polyboxes(frame, bbs, (0, 255, 0)) # Green
+          for bb in bbs:
+              ww = bb[2]-bb[0]
+              dist = 150 * 0.5 / ww
+              cv2.putText(frame, "Width: {:.4f}, dist: {:.4f}m".format(ww, dist), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+          return frame
+
+      def draw_polyboxes(self, frame, bbs, color=(0, 0, 255)):
+          for idx, bb in enumerate(bbs):
+              left, up, right, down = bb
+              cv2.line(frame, (left, up), (right, up), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, up), (right, down), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, down), (left, down), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
+
+  video_test(func=Face_Detect())
+  ```
+# 不同视场角摄像头配准
+  ```py
+  class Face_Detect:
+      def __init__(self, det=None, physic_bias_w=0, physic_bias_h=0, view_bias_w=0, view_bias_h=0, rotate=0):
+          if det is None:
+              import insightface
+              self.det = insightface.model_zoo.face_detection.retinaface_mnet025_v1()
+              self.det.prepare(-1)
+              def foo(det, frame): bbs, pps = det.detect(frame); return bbs[:, :4], bbs[:, -1], pps
+              self.det.detect_faces = lambda frame: foo(self.det, frame)
+          else:
+              self.det = det
+          self.view_bias_w, self.view_bias_h = view_bias_w, view_bias_h
+          self.physic_bias_w, self.physic_bias_h = physic_bias_w, physic_bias_h
+          self.rotate = rotate
+
+      def __call__(self, frames):
+          # Regard the first frame as RGB one
+          bbs, ccs, pps = self.det.detect_faces(frames[0])
+          bbs = bbs.astype('int')
+          self.draw_polyboxes(frames[0], bbs, (0, 255, 0)) # Green
+          cv2.circle(frames[0], (320, 240), 1, (0, 0, 255), 5)
+          cv2.circle(frames[1], (320, 240), 1, (0, 0, 255), 5)
+          for bb in bbs:
+              ww = bb[2]-bb[0]
+              hh = bb[3]-bb[1]
+              dist = 150 * 0.5 / ww
+              cv2.putText(frames[0], "Width: {:.4f}, dist: {:.4f}m".format(ww, dist), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+              in_hh, in_ww = frames[0].shape[0], frames[0].shape[1] # frames[0].shape == (480, 640, 3)
+              out_hh, out_ww = frames[1].shape[0], frames[1].shape[1] # frames[0].shape == (480, 640, 3)
+              # print(in_hh, in_ww, out_hh, out_ww) # 480 640 480 640
+
+              view_bias_w = self.view_bias_w
+              physic_bias_w = self.physic_bias_w * ww
+              scale_w = out_ww / (in_ww - view_bias_w * 2)
+              bb[0] = (bb[0] - view_bias_w) * scale_w - physic_bias_w
+              bb[2] = (bb[2] - view_bias_w) * scale_w- physic_bias_w
+
+              view_bias_h = self.view_bias_h
+              physic_bias_h = self.physic_bias_h * hh
+              scale_h = out_hh / (in_hh - view_bias_h * 2)
+              bb[1] = (bb[1] - view_bias_h) * scale_h - physic_bias_h
+              bb[3] = (bb[3] - view_bias_h) * scale_h - physic_bias_h
+              bb = self.rotate_bbox(bb, in_ww, in_hh, rotate=self.rotate)
+              self.draw_polyboxes(frames[1], [bb], (0, 0, 255))
+              # cv2.putText(frames[1], "bias_h: {:.4f}, scale_h: {:.4f}m, bb[0]: {:.4f}, ww: {:.4f}".format(bias_h, scale_h, bb[0], ww), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+              cv2.putText(frames[1], "bb[0]:{:.4f}, ww:{:.4f}".format(bb[0], ww), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+          return frames
+
+      def rotate_bbox(self, bb, width, height, rotate=0):
+          left, top, right, bottom = bb
+          if rotate == 90:
+              return [height - top, left, height - bottom, right]
+          if rotate == 180:
+              return [width - right, height - bottom, width - left, height - top]
+          if rotate == 270:
+              return [top, width - right, bottom, width - left]
+          return bb
+
+      def draw_polyboxes(self, frame, bbs, color=(0, 0, 255)):
+          for idx, bb in enumerate(bbs):
+              left, up, right, down = bb
+              cv2.line(frame, (left, up), (right, up), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, up), (right, down), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, down), (left, down), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
+
+  videos_test(func=Face_Detect(), src=[0, 4])
   ```
 ***

@@ -396,6 +396,223 @@
     !ls -lh {str(resnet_tflite_file)}                                                               
     # -rwxrwxrwx 1 root root 43M 十月 28 17:52 /home/leondgarse/.keras/datasets/resnet_v2_101_quantized.tflite
     ```
+## TFLite Model Benchmark Tool
+  - [TFLite Model Benchmark Tool](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/tools/benchmark)
+    ```sh
+    cd ~/workspace/tensorflow.arm32
+    ./configure
+    bazel build -c opt --config=android_arm tensorflow/lite/tools/benchmark:benchmark_model
+    # bazel build --config opt --config monolithic --define tflite_with_xnnpack=false tensorflow/lite/tools/benchmark:benchmark_model
+
+    adb push bazel-bin/tensorflow/lite/tools/benchmark/benchmark_model /data/local/tmp
+    adb shell chmod +x /data/local/tmp/benchmark_model
+
+    cd ~/workspace/examples/lite/examples/image_classification/android/app/src/main/assets
+    adb push mobilenet_v1_1.0_224_quant.tflite /data/local/tmp
+    adb push mobilenet_v1_1.0_224.tflite /data/local/tmp
+    adb push efficientnet-lite0-int8.tflite /data/local/tmp
+    adb push efficientnet-lite0-fp32.tflite /data/local/tmp
+    ```
+  - **参数**
+    - **--graph** 字符串，TFLite 模型路径
+    - **--enable_op_profiling** true / false，是否测试每个步骤的执行时间: bool (default=false) Whether to enable per-operator profiling measurement.
+    - **--nnum_threads** 整数值，线程数量
+    - **--use_gpu** true / false，是否使用 GPU
+    - **--use_nnapi** true / false，是否使用 nnapi
+    - **--use_xnnpack** true / false，是否使用 xnnpack
+    - **--use_coreml** true / false，是否使用 coreml
+  - **Int8 模型 nnapi 测试**
+    ```cpp
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=1
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=4
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=1 --use_nnapi=true
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=4 --use_nnapi=true
+    ```
+  - **Float32 / float16 模型 xnnpack 测试** 不经过量化的浮点型模型可以使用 `xnnpack` 加速
+    ```cpp
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=1
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=4
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=1 --use_xnnpack=true
+    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=4 --use_xnnpack=true
+    ```
+***
+
+# Quantization aware training in Keras example
+## QAT environment
+  - [Quantization aware training in Keras example](https://www.tensorflow.org/model_optimization/guide/quantization/training_example)
+  - **Conda install `tf-nightly` and `tensorflow-model-optimization`**
+    ```sh
+    conda create -n tf-nightly
+    conda activate tf-nightly
+    pip install tf-nightly glob2 pandas tqdm scikit-image scikit-learn ipython
+    pip install -q tensorflow-model-optimization
+
+    # Install matching cuda for tensorflow if not installed
+    conda install cudnn=7.6.5=cuda10.1_0
+
+    source activate tf-nightly
+    ```
+## Traditional post training quantization
+  - **Train a MNIST model**
+    ```py
+    import os
+    import tensorflow as tf
+    from tensorflow import keras
+
+    # Load MNIST dataset
+    mnist = keras.datasets.mnist
+    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+
+    # Normalize the input image so that each pixel value is between 0 to 1.
+    train_images = train_images / 255.0
+    test_images = test_images / 255.0
+
+    # Define the model architecture.
+    model = keras.Sequential([
+        keras.layers.InputLayer(input_shape=(28, 28)),
+        keras.layers.Reshape(target_shape=(28, 28, 1)),
+        keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation='relu'),
+        keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        keras.layers.Flatten(),
+        keras.layers.Dense(10)
+    ])
+
+    # Train the digit classification model
+    model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+
+    model.fit(train_images, train_labels, epochs=1, validation_data=(test_images, test_labels))
+    # 1875/1875 [==============================] - 4s 1ms/step - loss: 0.5236 - accuracy: 0.8526 - val_loss: 0.1493 - val_accuracy: 0.9587
+    ```
+  - **Clone and fine-tune pre-trained model with quantization aware training**
+    - 将 `quantization aware` 应用到整个模型，模型额的每一层将以 `quant` 开头
+    - 训练后的模型是 `quantization aware` 的，但还没有被量化
+    ```py
+    import tensorflow_model_optimization as tfmot
+    quantize_model = tfmot.quantization.keras.quantize_model
+
+    # q_aware stands for for quantization aware.
+    q_aware_model = quantize_model(model)
+    # `quantize_model` requires a recompile.
+    q_aware_model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+
+    q_aware_model.summary()
+    print([ii.name for ii in q_aware_model.layers])
+    # ['quantize_layer', 'quant_reshape', 'quant_conv2d', 'quant_max_pooling2d', 'quant_flatten', 'quant_dense']
+    ```
+  - **Train and evaluate the model against baseline** 作为对比，在一个小的数据集上做 fine tune
+    ```py
+    train_images_subset = train_images[0:1000] # out of 60000
+    train_labels_subset = train_labels[0:1000]
+    q_aware_model.fit(train_images_subset, train_labels_subset, batch_size=500, epochs=1, validation_data=(test_images, test_labels))
+    # 2/2 [==============================] - 1s 276ms/step - loss: 0.1692 - accuracy: 0.9560 - val_loss: 0.1475 - val_accuracy: 0.9596
+    ```
+    **Evaluate**
+    ```py
+    _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
+    print('Baseline test accuracy:', baseline_model_accuracy)
+    # Baseline test accuracy: 0.9587000012397766
+
+    _, q_aware_model_accuracy = q_aware_model.evaluate(test_images, test_labels, verbose=0)
+    print('Quant test accuracy:', q_aware_model_accuracy)
+    # Quant test accuracy: 0.9595999717712402
+    ```
+  - **More training**
+    ```py
+    model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+    # Epoch 1/5 1875/1875 - 3s 1ms/step - loss: 0.1215 - accuracy: 0.9654 - val_loss: 0.0906 - val_accuracy: 0.9731
+    # Epoch 2/5 1875/1875 - 3s 1ms/step - loss: 0.0836 - accuracy: 0.9761 - val_loss: 0.0718 - val_accuracy: 0.9780
+    # Epoch 3/5 1875/1875 - 3s 1ms/step - loss: 0.0679 - accuracy: 0.9796 - val_loss: 0.0655 - val_accuracy: 0.9785
+    # Epoch 4/5 1875/1875 - 3s 1ms/step - loss: 0.0587 - accuracy: 0.9828 - val_loss: 0.0710 - val_accuracy: 0.9770
+    # Epoch 5/5 1875/1875 - 3s 1ms/step - loss: 0.0521 - accuracy: 0.9840 - val_loss: 0.0598 - val_accuracy: 0.9815
+
+    q_aware_model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
+    # Epoch 1/5 1875/1875 - 5s 2ms/step - loss: 0.1210 - accuracy: 0.9658 - val_loss: 0.0879 - val_accuracy: 0.9724
+    # Epoch 2/5 1875/1875 - 4s 2ms/step - loss: 0.0819 - accuracy: 0.9762 - val_loss: 0.0756 - val_accuracy: 0.9755
+    # Epoch 3/5 1875/1875 - 4s 4ms/step - loss: 0.0656 - accuracy: 0.9811 - val_loss: 0.0630 - val_accuracy: 0.9804
+    # Epoch 4/5 1875/1875 - 4s 2ms/step - loss: 0.0576 - accuracy: 0.9824 - val_loss: 0.0632 - val_accuracy: 0.9798
+    # Epoch 5/5 1875/1875 - 4s 2ms/step - loss: 0.0507 - accuracy: 0.9848 - val_loss: 0.0590 - val_accuracy: 0.9807
+    ```
+  - **Create quantized model for TFLite backend** 创建量化模型
+    ```py
+    converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.inference_input_type = tf.uint8
+    converter.inference_output_type = tf.uint8
+    quantized_tflite_model = converter.convert()
+
+    interpreter = tf.lite.Interpreter(model_content=quantized_tflite_model)
+    input_type = interpreter.get_input_details()[0]['dtype']
+    print('input: ', input_type)  # input:  <class 'numpy.uint8'>
+    output_type = interpreter.get_output_details()[0]['dtype']
+    print('output: ', output_type)  # output:  <class 'numpy.uint8'>
+    ```
+    ```py
+    mnist = keras.datasets.mnist
+    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+    train_images, test_images = train_images.astype(np.float32) / 255.0, test_images.astype(np.float32) / 255.0
+    def representative_data_gen():
+        for input_value in tf.data.Dataset.from_tensor_slices(train_images).batch(1).take(100):
+            # Model has only one input so each data point has one element.
+            yield [input_value]
+
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.representative_dataset = representative_data_gen
+    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tf.uint8
+    converter.inference_output_type = tf.uint8
+    tflite_model_quant = converter.convert()
+
+    interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
+    input_type = interpreter.get_input_details()[0]['dtype']
+    print('input: ', input_type)  # input:  <class 'numpy.uint8'>
+    output_type = interpreter.get_output_details()[0]['dtype']
+    print('output: ', output_type)  # output:  <class 'numpy.uint8'>
+    ```
+    **Evaluate**
+    ```py
+    import numpy as np
+
+    def evaluate_model(interpreter):
+        input_details = interpreter.get_input_details()[0]
+        input_index = input_details["index"]
+
+        output_index = interpreter.get_output_details()[0]["index"]
+        prediction_digits = []
+        for i, test_image in enumerate(test_images):
+            if input_details['dtype'] == np.uint8:
+                input_scale, input_zero_point = input_details["quantization"]
+                test_image = test_image / input_scale + input_zero_point
+                test_image = np.expand_dims(test_image, axis=0).astype("uint8")
+            else:
+                test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
+            interpreter.set_tensor(input_index, test_image)
+            interpreter.invoke()
+            output = interpreter.tensor(output_index)
+            digit = np.argmax(output()[0])
+            prediction_digits.append(digit)
+        prediction_digits = np.array(prediction_digits)
+        accuracy = (prediction_digits == test_labels).mean()
+        return accuracy
+
+    interpreter = tf.lite.Interpreter(model_content=quantized_tflite_model)
+    interpreter.allocate_tensors()
+    print('Quant TFLite test accuracy:', evaluate_model(interpreter))
+    # Quant TFLite test accuracy: 0.9807
+
+    _, q_aware_model_accuracy = q_aware_model.evaluate(test_images, test_labels, verbose=0)
+    print('Quant TF test accuracy:', q_aware_model_accuracy)
+    # Quant TF test accuracy: 0.9807000160217285
+
+    interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
+    interpreter.allocate_tensors()
+    print('Quant TFLite test accuracy:', evaluate_model(interpreter))
+    # Quant TFLite test accuracy: 0.9811
+
+    _, accuracy = model.evaluate(test_images, test_labels, verbose=0)
+    print('Model TF test accuracy:', accuracy)
+    # Model TF test accuracy: 0.9815000295639038
+    ```
 ***
 
 # Magnitude-based weight pruning with Keras

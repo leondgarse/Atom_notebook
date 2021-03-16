@@ -396,7 +396,7 @@
     # basicConfig 添加 stdout 到 root 的 handlers
     logging.basicConfig()
     ll = logging.getLogger()
-    logger.handlers
+    ll.handlers
     # Out[7]: [<logging.StreamHandler at 0x7f212f9f6d90>]
 
     ll.level
@@ -625,6 +625,139 @@
     lock.acquire()
     ...
     lock.release()
+    ```
+***
+
+# ThreadPoolExecutor 线程池 ProcessPoolExecutor 进程池
+  - 标准库提供了 `concurrent.futures` 模块，提供了 `ThreadPoolExecutor` 和 `ProcessPoolExecutor` 两个类，实现了对 threading 和 multiprocessing 的进一步抽象
+    ```py
+    class ThreadPoolExecutor(concurrent.futures._base.Executor)
+    __init__(self, max_workers=None, thread_name_prefix='', initializer=None, initargs=())
+
+    class ProcessPoolExecutor(concurrent.futures._base.Executor)
+    __init__(self, max_workers=None, mp_context=None, initializer=None, initargs=())
+    ```
+    - **max_workers** 指定最多同时运行的任务数
+  - 在提交任务的时候，可以使用 `submit` / `map`，主要区别在于 `map` 可以保证输出的顺序, `submit` 输出的顺序是乱的
+  - **submit 使用示例** 提交的任务立即返回，不阻塞，返回值是 `concurrent.futures._base.Future` 类型
+    - **running** 方法判定某个任务是否正在运行
+    - **done** 方法判定某个任务是否完成
+    - **cancel** 方法用于取消某个任务,该任务没有放入线程池中才能取消成功
+    - **result** 方法可以获取任务的执行结果
+    ```py
+    from concurrent.futures import ThreadPoolExecutor
+    import time
+
+    # 参数times用来模拟网络请求的时间
+    def sleepy_print(times, aa):
+        time.sleep(times)
+        print("sleep {}s finished".format(times), aa)
+        return times
+
+    # 通过submit函数提交执行的函数到线程池中，submit函数立即返回，不阻塞
+    executor = ThreadPoolExecutor(max_workers=2)
+    task1 = executor.submit(sleepy_print, 3, 1)
+    task2 = executor.submit(sleepy_print, 2, 2)
+
+    print(task1.done())
+    # False
+    print(task2.cancel())
+    # False
+    time.sleep(4)
+    # sleep 2s finished 2
+    # sleep 3s finished 1
+
+    print(task1.done())
+    # True
+    print(task1.result())
+    # 3
+    ```
+  - **as_completed** 是一个生成器，阻塞的方式等待 submit 的任务完成
+    ```py
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    executor = ThreadPoolExecutor(max_workers=2)
+    tims = [3, 2, 4]
+    all_task = [executor.submit(sleepy_print, ii) for ii in tims]
+
+    for future in as_completed(all_task):
+        data = future.result()
+        print("in main: sleep {}s success".format(data))
+
+    # sleep 2s finished
+    # in main: sleep 2s success
+    # sleep 3s finished
+    # in main: sleep 3s success
+    # sleep 4s finished
+    # in main: sleep 4s success
+    ```
+  - **map 使用示例** 将序列中的每个元素都执行同一个函数，输出顺序和序列中元素的顺序相同
+    ```py
+    map(self, fn, *iterables, timeout=None, chunksize=1)
+    ```
+    ```py
+    tims = [3, 2, 4]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        rets = executor.map(sleepy_print, tims, timeout=1)
+
+    for ii in rets:
+        print("ii = %d" % ii)
+    # sleep 2s finished
+    # sleep 3s finished
+    # sleep 4s finished
+    # ii = 3
+    # ii = 2
+    # ii = 4
+    ```
+  - **timeout** 指定的超时时间只在调用到返回结果生成器的 `__next__` 方法时才会生效，在以上调用时并不会超时
+    ```py
+    from concurrent import futures
+
+    tims = [3, 2, 4]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        rets = executor.map(sleepy_print, tims, timeout=1)
+
+        try:
+            for ii in rets:
+                print("ii = %d" % ii)
+        except futures._base.TimeoutError:
+            print("TIMEOUT")
+    # TIMEOUT
+    # sleep 2s finished
+    # sleep 3s finished
+    ```
+    ```py
+    from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+    from concurrent import futures
+
+    tims = [3, 2, 4]
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        try:
+            for future in executor.map(sleepy_print, tims, timeout=1):
+                print(future.result(timeout=1))
+        except futures._base.TimeoutError:
+            print("This took to long, stop all...")
+            for pid, process in executor._processes.items():
+                process.terminate()
+            executor.shutdown()
+    # This took to long, stop all...
+    ```
+  - **wait** 让主线程阻塞，直到满足设定的要求
+    ```py
+    wait(fs, timeout=None, return_when='ALL_COMPLETED')
+    ```
+    ```py
+    from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
+
+    executor = ThreadPoolExecutor(max_workers=2)
+    tims = [3, 2, 4]
+    all_task = [executor.submit(sleepy_print, (ii)) for ii in tims]
+    wait(all_task, return_when=ALL_COMPLETED)
+    print("ALL DONE!")
+    # sleep 2s finished
+    # sleep 3s finished
+    # sleep 4s finished
+    # ALL DONE!
     ```
 ***
 
@@ -1008,139 +1141,6 @@
   ```
 ***
 
-# ThreadPoolExecutor 线程池 ProcessPoolExecutor 进程池
-  - 标准库提供了 `concurrent.futures` 模块，提供了 `ThreadPoolExecutor` 和 `ProcessPoolExecutor` 两个类，实现了对 threading 和 multiprocessing 的进一步抽象
-    ```py
-    class ThreadPoolExecutor(concurrent.futures._base.Executor)
-    __init__(self, max_workers=None, thread_name_prefix='', initializer=None, initargs=())
-
-    class ProcessPoolExecutor(concurrent.futures._base.Executor)
-    __init__(self, max_workers=None, mp_context=None, initializer=None, initargs=())
-    ```
-    - **max_workers** 指定最多同时运行的任务数
-  - 在提交任务的时候，可以使用 `submit` / `map`，主要区别在于 `map` 可以保证输出的顺序, `submit` 输出的顺序是乱的
-  - **submit 使用示例** 提交的任务立即返回，不阻塞，返回值是 `concurrent.futures._base.Future` 类型
-    - **running** 方法判定某个任务是否正在运行
-    - **done** 方法判定某个任务是否完成
-    - **cancel** 方法用于取消某个任务,该任务没有放入线程池中才能取消成功
-    - **result** 方法可以获取任务的执行结果
-    ```py
-    from concurrent.futures import ThreadPoolExecutor
-    import time
-
-    # 参数times用来模拟网络请求的时间
-    def sleepy_print(times):
-        time.sleep(times)
-        print("sleep {}s finished".format(times))
-        return times
-
-    # 通过submit函数提交执行的函数到线程池中，submit函数立即返回，不阻塞
-    executor = ThreadPoolExecutor(max_workers=2)
-    task1 = executor.submit(sleepy_print, (3))
-    task2 = executor.submit(sleepy_print, (2))
-
-    print(task1.done())
-    # False
-    print(task2.cancel())
-    # False
-    time.sleep(4)
-    # sleep 2s finished
-    # sleep 3s finished
-
-    print(task1.done())
-    # True
-    print(task1.result())
-    # 3
-    ```
-  - **as_completed** 是一个生成器，阻塞的方式等待 submit 的任务完成
-    ```py
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-
-    executor = ThreadPoolExecutor(max_workers=2)
-    tims = [3, 2, 4]
-    all_task = [executor.submit(sleepy_print, ii) for ii in tims]
-
-    for future in as_completed(all_task):
-        data = future.result()
-        print("in main: sleep {}s success".format(data))
-
-    # sleep 2s finished
-    # in main: sleep 2s success
-    # sleep 3s finished
-    # in main: sleep 3s success
-    # sleep 4s finished
-    # in main: sleep 4s success
-    ```
-  - **map 使用示例** 将序列中的每个元素都执行同一个函数，输出顺序和序列中元素的顺序相同
-    ```py
-    map(self, fn, *iterables, timeout=None, chunksize=1)
-    ```
-    ```py
-    tims = [3, 2, 4]
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        rets = executor.map(sleepy_print, tims, timeout=1)
-
-    for ii in rets:
-        print("ii = %d" % ii)
-    # sleep 2s finished
-    # sleep 3s finished
-    # sleep 4s finished
-    # ii = 3
-    # ii = 2
-    # ii = 4
-    ```
-  - **timeout** 指定的超时时间只在调用到返回结果生成器的 `__next__` 方法时才会生效，在以上调用时并不会超时
-    ```py
-    from concurrent import futures
-
-    tims = [3, 2, 4]
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        rets = executor.map(sleepy_print, tims, timeout=1)
-
-        try:
-            for ii in rets:
-                print("ii = %d" % ii)
-        except futures._base.TimeoutError:
-            print("TIMEOUT")
-    # TIMEOUT
-    # sleep 2s finished
-    # sleep 3s finished
-    ```
-    ```py
-    from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-    from concurrent import futures
-
-    tims = [3, 2, 4]
-    with ProcessPoolExecutor(max_workers=2) as executor:
-        try:
-            for future in executor.map(sleepy_print, tims, timeout=1):
-                print(future.result(timeout=1))
-        except futures._base.TimeoutError:
-            print("This took to long, stop all...")
-            for pid, process in executor._processes.items():
-                process.terminate()
-            executor.shutdown()
-    # This took to long, stop all...
-    ```
-  - **wait** 让主线程阻塞，直到满足设定的要求
-    ```py
-    wait(fs, timeout=None, return_when='ALL_COMPLETED')
-    ```
-    ```py
-    from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
-
-    executor = ThreadPoolExecutor(max_workers=2)
-    tims = [3, 2, 4]
-    all_task = [executor.submit(sleepy_print, (ii)) for ii in tims]
-    wait(all_task, return_when=ALL_COMPLETED)
-    print("ALL DONE!")
-    # sleep 2s finished
-    # sleep 3s finished
-    # sleep 4s finished
-    # ALL DONE!
-    ```
-***
-
 # Color print
   | 字体色 | 背景色 | 颜色描述 |
   | ------ | ------ | -------- |
@@ -1272,4 +1272,20 @@
 
     print(np.stack(np.meshgrid(aa, aa, aa), axis=-1).reshape(-1, 3))
     ```
+***
+
+# Icecream
+  - [Github gruns/icecream](https://github.com/gruns/icecream)
+  ```py
+  from icecream import ic
+  ic.lineWrapWidth = 128 # Default 70
+
+  aa, bb, cc, dd = 'hello', 123, [1, 2, 3], np.arange(4)
+  ic(aa, bb, cc, dd.shape)
+  # ic| aa: 'hello', bb: 123, cc: [1, 2, 3], dd.shape: (4,)
+
+  ic.configureOutput(includeContext=True)
+  ic(aa, bb, cc, dd.shape)
+  # ic| <ipython-input-78-c5b16bc2c7c5>:1 in <module>- aa: 'hello', bb: 123, cc: [1, 2, 3], dd.shape: (4,)
+  ```
 ***

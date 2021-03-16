@@ -1679,6 +1679,6 @@
     ```sh
     git diff delegates/xnnpack/xnnpack.go
     # -#cgo LDFLAGS: -ltensorflowlite-delegate_xnnpack -lXNNPACK
-    # +#cgo LDFLAGS: -ltensorflowlite_c
+    # +#cgo LDFLAGS: -ltensorflowlite_c -lm -llog
     ```
 ***

@@ -248,7 +248,7 @@
   - [Steps to clear out the history of a git/github repository](https://gist.github.com/stephenhardy/5470814)
   ```sh
   REMOTE_BACKUP=`git remote -v | awk 'NR==1 {print $2}'`
-  echo $BACKUP_REMOTE
+  echo $REMOTE_BACKUP
 
   # Remove the history from
   rm -rf .git

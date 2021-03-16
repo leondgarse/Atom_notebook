@@ -152,9 +152,11 @@
     I have search with apt-file for the add-apt-repository and found out in which package is the command located.
     Apt file searches for files, inside packages and tells you in what package the file you had searched is located.
     It is not installed by default, so you need to do this:
-    $ sudo apt-get install apt-file &amp;&amp; apt-file update
+    $ sudo apt-get install apt-file && apt-file update
     This is how you use apt-file for fishing files inside packages:
-    $ apt-file search add-apt-repository<br />        python-software-properties: /usr/bin/add-apt-repository<br />        python-software-properties: /usr/share/man/man1/add-apt-repository.1.gz
+    $ apt-file search add-apt-repository
+    python-software-properties: /usr/bin/add-apt-repository
+    python-software-properties: /usr/share/man/man1/add-apt-repository.1.gz
     So, indeed, it is in the python-software-properties package.
     ```
   - If you prefer to use the command line or if there is no graphical installer available you can use this command as an administrator:
@@ -302,6 +304,7 @@
     dig +short txt <keyword>.wp.dg.cx
     ```
   - Windows下拷贝ubuntu镜像到u盘，会造成文件名被截短，在安装过程中提示md5验证失败
+
     - 解决： 将镜像文件在ubuntu下挂载后复制到u盘
   - mtd 设备
     ```shell
@@ -676,7 +679,7 @@
     ```
 ## Checking conflict IP
   - $ sudo apt-get install arp-scan
-  - $ arp-scan -I eth0 -l | grep 192.168.1.42
+  - $ sudo arp-scan -I eth0 -l | grep 192.168.1.42
     ```c
     192.168.1.42 d4:eb:9a:f2:11:a1 (Unknown)
     192.168.1.42 f4:23:a4:38:b5:76 (Unknown) (DUP: 2)
@@ -1099,7 +1102,7 @@
   - 取消挂载 umount 时出现的 "Device is busy"
     - fuser 可以显示出当前哪个程序在使用磁盘上的某个文件、挂载点、甚至网络端口，并给出程序进程的详细信息
       ```sh
-      # 查看那占用的进程
+      # 查看占用的进程
       fuser -m /dev/sdc
       /dev/sdc:             3293c  9704c
 
@@ -1351,6 +1354,7 @@
     ```
   - Chrome 安装 [Proxy SwitchyOmega](https://chrome.google.com/webstore/detail/proxy-switchyomega/padekgcemlokbadohgkifijomclgjgif)
   - 配置代理
+
     ![](images/proxy.png)
   - 命令行测试
     ```sh
@@ -1386,11 +1390,11 @@
     # 测试
     curl www.google.com
     ```
-  - **PAC 代理** [Github MatcherAny/whitelist.pac](https://github.com/MatcherAny/whitelist.pac.git)
+  - **PAC 代理** [Github leondgarse/SSS_PAC](https://github.com/leondgarse/SSS_PAC)
     ```sh
-    # 通过 Apache2 配置 SwitchyOmega 使用本地文件，PAC URL: http://127.0.0.1/whitelist.pac
+    # 通过 Apache2 配置 SwitchyOmega 使用本地文件，PAC URL: http://127.0.0.1/blacklist.pac
     sudo apt install apache2
-    sudo ln -s $HOME/workspace/SSS_PAC/whitelist.pac /var/www/html/whitelist.pac
+    sudo ln -s $HOME/workspace/SSS_PAC/blacklist.pac /var/www/html/blacklist.pac
     ```
     ![](images/pac_proxy.png)
   - **squid** 本地端口转发，默认端口 `3128`
@@ -1417,6 +1421,7 @@
     199.232.69.194 github.global.ssl.fastly.net
     140.82.112.3 github.com
     ```
+  - [Github fhefh2015/Fast-GitHub](https://github.com/fhefh2015/Fast-GitHub)
 ## 每次开机时弹出 System problem report detected
   - Ubuntu 有一个内建的实用程序叫做 **Apport**, 当一个程序崩溃时，可以进行通知
   - **crash 文件** 生成的错误报告，删除后避免每次重启都弹出提示
@@ -1756,7 +1761,24 @@
       ```shell
       sudo apt-get remove virtualbox-dkms
       sudo apt-get install virtualbox-dkms
+
+      sudo dpkg-reconfigure virtualbox-dkms
+      sudo modprobe vboxdrv
       ```
+  - Kernel driver not installed (rc=-1908)
+    ```sh
+    The VirtualBox Linux kernel driver is either not loaded or not set up correctly. Please reinstall virtualbox-dkms package and load the kernel module by executing 'modprobe vboxdrv' as root.
+    ```
+    Install newest virtualbox from [Download VirtualBox for Linux Hosts](https://www.virtualbox.org/wiki/Linux_Downloads)
+    ```sh
+    echo 'deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian focal contrib' | sudo tee /etc/apt/sources.list.d/virtualbox.list
+    wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+    wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+
+    sudo apt-get update
+    sudo apt-get install virtualbox-6.1
+    ```
+
 ## Chrome
   - google-chrome --enable-webgl --ignore-gpu-blacklist
   - **Install**
@@ -1795,7 +1817,7 @@
   - **Flat Remix**
     ```shell
     sudo add-apt-repository ppa:daniruiz/flat-remix
-    sudo apt-get install flat-remix
+    sudo apt-get install flat-remix flat-remix-gnome
     ```
 ## Shutter
   - **Install**
@@ -1965,6 +1987,12 @@
     '''
     ```
   - [手动编译安装](https://github.com/Genymobile/scrcpy/blob/master/BUILD.md)
+    - 下载 [Prebuilt server](https://github.com/Genymobile/scrcpy/blob/master/BUILD.md#prebuilt-server)
+    ```sh
+    meson x --buildtype release --strip -Db_lto=true -Dprebuilt_server=/path/to/scrcpy-server
+    ninja -Cx
+    sudo ninja -Cx install
+    ```
     ```sh
     ''' Q
     libsdl2-dev : Depends: libpulse-dev but it is not going to be installed
@@ -2210,7 +2238,7 @@
     sudo ln -s /usr/bin/python3 /usr/bin/python
 
     sudo apt-get install \
-    aptitude aria2 audacious axel cairo-dock calibre chrome-gnome-shell cmake cscope curl docker.io easystroke expect filezilla flat-remix gconf2 gnome-tweak-tool golang-go google-chrome-stable \
+    aptitude aria2 audacious axel cairo-dock calibre chrome-gnome-shell cmake cscope curl docker.io easystroke expect filezilla flat-remix flat-remix-gnome gconf2 gnome-tweak-tool golang-go google-chrome-stable \
     iptux ibus-pinyin intltool java-common libssl-dev locate minicom mp3info mysql-client mysql-common mysql-server net-tools nfs-common nfs-kernel-server \
     p7zip-full pidgin privoxy proxychains rename rsync samba seahorse shutter supervisor synaptic teamviewer telnet testdisk tftp tftpd tmux tree \
     unrar unzip virtualbox virtualbox-ext-pack virtualbox-guest-additions-iso vlc wget wireshark zip
@@ -2259,7 +2287,7 @@
 
     sudo mount /media/DATA/Operating_Systems/squashfs_backup/xxx.squashfs /media/cdrom0/
     cd /media/cdrom0/usr/share/themes/
-    sudo cp Flat-Remix* Qogir* Sweet* /usr/share/themes/ -r
+    sudo cp Qogir* Sweet* /usr/share/themes/ -r
     sudo cp /media/cdrom0/usr/share/stardict/dic/* /usr/share/stardict/dic/ -r
 
     sudo cp ~/Wallpapers/167557-1.png /boot/grub/back.png

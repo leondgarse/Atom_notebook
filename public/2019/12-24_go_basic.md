@@ -291,6 +291,153 @@
     - **src** 存放 golang 源码
     - **pkg** 存放编译后的文件
     - **bin** 存放编译后可执行的文件
+## Go Module 一般结构
+- **Go 程序文件夹结构**
+  - 从指定文件夹下导入时，会导入所有的 go 文件
+  - 要求该文件夹下的所有 go 文件有统一的包名，包名最好跟文件名相同，避免歧义
+  - 包外调用方法名首字母必须为大写
+  ```sh
+  $ tree greetings hello
+  # greetings
+  # ├── go.mod
+  # ├── greetings.go
+  # └── greetings_test.go
+  # hello
+  # ├── go.mod
+  # └── hello.go
+  ```
+- **greetings/greetings.go**
+  ```go
+  // $ cat greetings/greetings.go
+  package greetings
+
+  import (
+  	"errors"
+  	"fmt"
+  	"math/rand"
+  	"time"
+  )
+
+  // Hello returns a greeting for the named person.
+  func Hello(name string) (string, error) {
+  	if name == "" {
+  		return "", errors.New("empty name")
+  	}
+  	// Return a greeting that embeds the name in a message.
+  	message := fmt.Sprintf(randomFormat(), name)
+  	return message, nil
+  }
+
+  func Hellos(names []string) (map[string]string, error) {
+  	messages := make(map[string]string, len(names))
+  	for _, name := range names {
+  		message, err := Hello(name)
+  		if err != nil {
+  			return nil, err
+  		}
+  		messages[name] = message
+  	}
+  	return messages, nil
+
+  }
+
+  func init() {
+  	rand.Seed(time.Now().UnixNano())
+  }
+
+  func randomFormat() string {
+  	formats := []string{
+  		"Hi, %v. Welcome!",
+  		"Great to see you, %v!",
+  		"Hail, %v! Well met!",
+  	}
+  	return formats[rand.Intn(len(formats))]
+  }
+  ```
+- **hello/hello.go**
+  ```go
+  // $ cat
+  package main
+
+  import (
+  	"fmt"
+  	"log"
+  	"example.com/greetings"
+  )
+
+  func main() {
+  	log.SetPrefix("greetins: ")
+  	log.SetFlags(0)
+
+  	// Get a greeting message and print it.
+  	// message, err := greetings.Hello("")
+  	// message, err := greetings.Hello("Gladys")
+  	message, err := greetings.Hellos([]string{"Gladys", "Samantha", "Darrin"})
+  	if err != nil {
+  		// fmt.Println(err)
+  		log.Fatal(err)
+  	} else {
+  		fmt.Println(message)
+  	}
+  }
+  ```
+- **运行**
+  ```sh
+  cd greetings
+  go mod init example.com/greetings
+  go mod tidy
+
+  cd ../hello
+  go mod init example.com/hello
+  go mod edit -replace=example.com/greetings=../greetings
+  # replace example.com/greetings => ../greetings
+  go mod tidy
+  # go: found example.com/greetings in example.com/greetings v0.0.0-00010101000000-000000000000
+
+  go run .
+  # map[Darrin:Great to see you, Darrin! Gladys:Hail, Gladys! Well met! Samantha:Great to see you, Samantha!]
+  ```
+- **测试用例 greetings/greetings_test.go**
+  - `go test` 命令自动执行 `xxx_test.go` 中的 `TestYYY` 函数，`-v` 参数指定列出所有测试项目与结果
+  ```go
+  // $ cat greetings/greetings_test.go
+  package greetings
+
+  import (
+  	"regexp"
+  	"testing"
+  )
+
+  func TestHelloName(t *testing.T) {
+  	name := "Gladys"
+  	want := regexp.MustCompile(`\b` + name + `\b`)
+  	msg, err := Hello(name)
+  	if err != nil || !want.MatchString(msg) {
+  		t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
+  	}
+  }
+
+  func TestHelloEmpty(t *testing.T) {
+  	msg, err := Hello("")
+  	if err == nil || msg != "" {
+  		t.Fatalf(`Hello("") = %q, %v, want "", error`, msg, err)
+  	}
+  }
+  ```
+  ```sh
+  cd greetings
+  go test -v
+  # === RUN   TestHelloName
+  # --- PASS: TestHelloName (0.00s)
+  # === RUN   TestHelloEmpty
+  # --- PASS: TestHelloEmpty (0.00s)
+  # PASS
+  # ok  	example.com/greetings	0.001s
+  ```
+- **编译与安装**
+  ```sh
+
+  ```
 ## import
   - **包 package / import** Go 程序是通过 package 来组织的
     - 只有 **package** 名称为 **main** 的包可以包含 main 函数，一个可执行程序有且仅有一个 main 包

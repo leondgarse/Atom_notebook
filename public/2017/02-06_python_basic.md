@@ -2261,11 +2261,14 @@
     pip install virtualenv virtualenvwrapper
     source $(which virtualenvwrapper.sh)
 
-    virtualenv -p /usr/bin/python3.6 ~/.virtualenvs/python36
-    source ~/.virtualenvs/python36/bin/activate
+    mkdir /opt/virtualenvs
+    virtualenv -p /usr/bin/python3.6 /opt/virtualenvs/python36
+    source /opt/virtualenvs/python36/bin/activate
     ...
 
     pip install mxnet==1.5.0 tensorflow==1.13.1
+    pip install ipython jedi==0.17.2  # ipython may not compatible with jedi>=0.18
+    pipi pandas scikit-image
 
     deactivate
     ```

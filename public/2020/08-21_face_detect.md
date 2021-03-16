@@ -169,6 +169,27 @@
 
   fig, axes = axes_show_info(nimgs[:-1], info_func=info_func)
   ```
+## Video test function
+  ```py
+  import cv2
+
+  def video_test(func=None, src=0, title="Opencv"):
+      cap = cv2.VideoCapture(src)
+      while True:
+          grabbed, frame = cap.read()
+          if grabbed != True:
+              break
+          if func != None:
+              frame = func(frame)
+          cv2.imshow(title, frame)
+          key = cv2.waitKey(1) & 0xFF
+          if key == ord("q"):
+              break
+      cap.release()
+      cv2.destroyAllWindows()
+
+  video_test(func=lambda frame: cv2.Canny(frame, 50, 200))
+  ```
 ***
 
 # MTCNN
@@ -880,17 +901,33 @@
   adb shell 'cd /data/mobile_test; LD_LIBRARY_PATH=./ ./test_yoloface'
   # Repeat: [20], Total: 930.81401ms, Mean: 46.500000ms
 
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final -num_threads 1 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final -num_threads 4 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final_fp16 -num_threads 1 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final_fp16 -num_threads 4 -max_border_size 320'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final -num_threads 1 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final -num_threads 4 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final_fp16 -num_threads 1 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_small_1_final_fp16 -num_threads 4 -max_border_size 256'
 
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final -num_threads 1 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final -num_threads 4 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final_fp16 -num_threads 1 -max_border_size 320'
-  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final_fp16 -num_threads 4 -max_border_size 320'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final -num_threads 1 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final -num_threads 4 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final_fp16 -num_threads 1 -max_border_size 256'
+  adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=./ ./test_yoloface -model_folder assets/yoloface_mbv3_large_1_final_fp16 -num_threads 4 -max_border_size 256'
   ```
+  **rk3399**
+  | model               | num_threads | max_border_size | Time mean   | max_border_size | Time mean   |
+  | ------------------- | ----------- | --------------- | ----------- | --------------- | ----------- |
+  | yoloface_small      | 4           | 256             | 25.700001ms | 320             | 40.349998ms |
+  | yoloface_small_fp16 | 4           | 256             | 21.950001ms | 320             | 63.700001ms |
+  | yoloface_large      | 4           | 256             | 46.700001ms | 320             | 73.349998ms |
+  | yoloface_large_fp16 | 4           | 256             | 36.650002ms | 320             | 57.299999ms |
 
+  **rk3399 10 person**
+  | model               | num_threads | max_border_size | Time mean   | max_border_size | Time mean   |
+  | ------------------- | ----------- | --------------- | ----------- | --------------- | ----------- |
+  | yoloface_small      | 4           | 256             | 42.650002ms | 320             | 66.150002ms |
+  | yoloface_small_fp16 | 4           | 256             | 27.900000ms | 320             | 55.250000ms |
+  | yoloface_large      | 4           | 256             | 67.150002ms | 320             | 89.150002ms |
+  | yoloface_large_fp16 | 4           | 256             | 48.599998ms | 320             | 70.800003ms |
+
+  **3288**
   | model               | num_threads | max_border_size | Time mean   | max_border_size | Time mean    |
   | ------------------- | ----------- | --------------- | ----------- | --------------- | ------------ |
   | yoloface_small      | 1           | 256             | 43.450001ms | 320             | 55.950001ms  |
@@ -1322,4 +1359,761 @@
     CUDA_VISIBLE_DEVICES='-1' python -m tf2onnx.convert --keras retinaface_resnet50_unsampling_256.h5 --output retinaface.onnx --opset 9
     python -m onnxsim retinaface.onnx retinaface.onnx --input-shape 1,256,160,3
     ```
+***
+
+# 口罩检测
+## FaceMaskDetection 模型转化
+  - [Github AIZOOTech/FaceMaskDetection](https://github.com/AIZOOTech/FaceMaskDetection.git)
+  ```py
+  with open('models/face_mask_detection.json', 'r') as ff:
+      model = keras.models.model_from_json(ff.read())
+  model.load_weights('models/face_mask_detection.hdf5')
+  model.save('face_mask_detection.h5')
+
+  converter = tf.lite.TFLiteConverter.from_keras_model_file("face_mask_detection.h5")
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]
+  converter.target_spec.supported_types = [tf.float16]
+  open('face_mask_detection.tflite', 'wb').write(converter.convert())
+
+  ! adb push face_mask_detection.tflite /data/local/tmp
+  ! adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/face_mask_detection.tflite --num_threads=4 --use_xnnpack=true
+  ```
+  ```py
+  import torch
+  from load_model.pytorch_loader import load_pytorch_model, pytorch_inference
+  model = load_pytorch_model('models/face_mask_detection.pth')
+  dummy_input = torch.randn(1, 3, 260, 260, device='cpu')
+
+  # ModuleAttributeError: 'BatchNorm2d' object has no attribute '_non_persistent_buffers_set'
+  for k, m in model.named_modules():
+      if isinstance(m, torch.nn.modules.batchnorm.BatchNorm2d):
+          m._non_persistent_buffers_set = set()
+  torch.onnx.export(model, dummy_input, "face_mask_detection.onnx", verbose=False, keep_initializers_as_inputs=True)
+
+  from mxnet.contrib import onnx as onnx_mxnet
+  sym, arg, aux = onnx_mxnet.import_model('face_mask_detection.onnx')
+  # KeyError: 'Concat_48'
+  ```
+  ```py
+  from mxnet import gluon, nd
+  from load_model.mxnet_loader import load_mxnet_model, mxnet_inference, SSD
+  ssd = SSD()
+  ssd.load_parameters('models/face_mask_detection.params')
+
+  aa = nd.ones([1, 3, 260, 260])
+  ssd.hybridize()
+  ssd(aa)
+  ssd.export('aa')
+
+  from gluoncv.utils import export_block
+  export_block('face_mask_detection', ssd, preprocess=True, layout='HWC')
+  # net = gcv.model_zoo.get_model('resnet18_v1', pretrained=True)
+  print('Done.')
+  ```
+## FaceMaskDetection Keras
+  ```py
+  def generate_anchors(feature_map_sizes, anchor_sizes, anchor_ratios, offset=0.5):
+      '''
+      generate anchors.
+      :param feature_map_sizes: list of list, for example: [[40,40], [20,20]]
+      :param anchor_sizes: list of list, for example: [[0.05, 0.075], [0.1, 0.15]]
+      :param anchor_ratios: list of list, for example: [[1, 0.5], [1, 0.5]]
+      :param offset: default to 0.5
+      :return:
+      '''
+      anchor_bboxes = []
+      for idx, feature_size in enumerate(feature_map_sizes):
+          cx = (np.linspace(0, feature_size[0] - 1, feature_size[0]) + 0.5) / feature_size[0]
+          cy = (np.linspace(0, feature_size[1] - 1, feature_size[1]) + 0.5) / feature_size[1]
+          cx_grid, cy_grid = np.meshgrid(cx, cy)
+          cx_grid_expend = np.expand_dims(cx_grid, axis=-1)
+          cy_grid_expend = np.expand_dims(cy_grid, axis=-1)
+          center = np.concatenate((cx_grid_expend, cy_grid_expend), axis=-1)
+
+          num_anchors = len(anchor_sizes[idx]) +  len(anchor_ratios[idx]) - 1
+          center_tiled = np.tile(center, (1, 1, 2* num_anchors))
+          anchor_width_heights = []
+
+          # different scales with the first aspect ratio
+          for scale in anchor_sizes[idx]:
+              ratio = anchor_ratios[idx][0] # select the first ratio
+              width = scale * np.sqrt(ratio)
+              height = scale / np.sqrt(ratio)
+              anchor_width_heights.extend([-width / 2.0, -height / 2.0, width / 2.0, height / 2.0])
+
+          # the first scale, with different aspect ratios (except the first one)
+          for ratio in anchor_ratios[idx][1:]:
+              s1 = anchor_sizes[idx][0] # select the first scale
+              width = s1 * np.sqrt(ratio)
+              height = s1 / np.sqrt(ratio)
+              anchor_width_heights.extend([-width / 2.0, -height / 2.0, width / 2.0, height / 2.0])
+
+          bbox_coords = center_tiled + np.array(anchor_width_heights)
+          bbox_coords_reshape = bbox_coords.reshape((-1, 4))
+          anchor_bboxes.append(bbox_coords_reshape)
+      anchor_bboxes = np.concatenate(anchor_bboxes, axis=0)
+      return anchor_bboxes
+
+  def single_class_non_max_suppression(bboxes, confidences, conf_thresh=0.2, iou_thresh=0.5, keep_top_k=-1):
+      '''
+      do nms on single class.
+      Hint: for the specific class, given the bbox and its confidence,
+      1) sort the bbox according to the confidence from top to down, we call this a set
+      2) select the bbox with the highest confidence, remove it from set, and do IOU calculate with the rest bbox
+      3) remove the bbox whose IOU is higher than the iou_thresh from the set,
+      4) loop step 2 and 3, util the set is empty.
+      :param bboxes: numpy array of 2D, [num_bboxes, 4]
+      :param confidences: numpy array of 1D. [num_bboxes]
+      :param conf_thresh:
+      :param iou_thresh:
+      :param keep_top_k:
+      :return:
+      '''
+      if len(bboxes) == 0: return []
+
+      conf_keep_idx = np.where(confidences > conf_thresh)[0]
+
+      bboxes = bboxes[conf_keep_idx]
+      confidences = confidences[conf_keep_idx]
+
+      pick = []
+      xmin = bboxes[:, 0]
+      ymin = bboxes[:, 1]
+      xmax = bboxes[:, 2]
+      ymax = bboxes[:, 3]
+
+      area = (xmax - xmin + 1e-3) * (ymax - ymin + 1e-3)
+      idxs = np.argsort(confidences)
+
+      while len(idxs) > 0:
+          last = len(idxs) - 1
+          i = idxs[last]
+          pick.append(i)
+
+          # keep top k
+          if keep_top_k != -1:
+              if len(pick) >= keep_top_k:
+                  break
+
+          overlap_xmin = np.maximum(xmin[i], xmin[idxs[:last]])
+          overlap_ymin = np.maximum(ymin[i], ymin[idxs[:last]])
+          overlap_xmax = np.minimum(xmax[i], xmax[idxs[:last]])
+          overlap_ymax = np.minimum(ymax[i], ymax[idxs[:last]])
+          overlap_w = np.maximum(0, overlap_xmax - overlap_xmin)
+          overlap_h = np.maximum(0, overlap_ymax - overlap_ymin)
+          overlap_area = overlap_w * overlap_h
+          overlap_ratio = overlap_area / (area[idxs[:last]] + area[i] - overlap_area)
+
+          need_to_be_deleted_idx = np.concatenate(([last], np.where(overlap_ratio > iou_thresh)[0]))
+          idxs = np.delete(idxs, need_to_be_deleted_idx)
+
+      # if the number of final bboxes is less than keep_top_k, we need to pad it.
+      # TODO
+      return conf_keep_idx[pick]
+
+  def decode_bbox(anchors, raw_outputs, variances=[0.1, 0.1, 0.2, 0.2]):
+      '''
+      Decode the actual bbox according to the anchors.
+      the anchor value order is:[xmin,ymin, xmax, ymax]
+      :param anchors: numpy array with shape [batch, num_anchors, 4]
+      :param raw_outputs: numpy array with the same shape with anchors
+      :param variances: list of float, default=[0.1, 0.1, 0.2, 0.2]
+      :return:
+      '''
+      anchor_centers_x = (anchors[:, :, 0:1] + anchors[:, :, 2:3]) / 2
+      anchor_centers_y = (anchors[:, :, 1:2] + anchors[:, :, 3:]) / 2
+      anchors_w = anchors[:, :, 2:3] - anchors[:, :, 0:1]
+      anchors_h = anchors[:, :, 3:] - anchors[:, :, 1:2]
+      raw_outputs_rescale = raw_outputs * np.array(variances)
+      predict_center_x = raw_outputs_rescale[:, :, 0:1] * anchors_w + anchor_centers_x
+      predict_center_y = raw_outputs_rescale[:, :, 1:2] * anchors_h + anchor_centers_y
+      predict_w = np.exp(raw_outputs_rescale[:, :, 2:3]) * anchors_w
+      predict_h = np.exp(raw_outputs_rescale[:, :, 3:]) * anchors_h
+      predict_xmin = predict_center_x - predict_w / 2
+      predict_ymin = predict_center_y - predict_h / 2
+      predict_xmax = predict_center_x + predict_w / 2
+      predict_ymax = predict_center_y + predict_h / 2
+      predict_bbox = np.concatenate([predict_xmin, predict_ymin, predict_xmax, predict_ymax], axis=-1)
+      return predict_bbox
+
+
+  feature_map_sizes = [[33, 33], [17, 17], [9, 9], [5, 5], [3, 3]]
+  anchor_sizes = [[0.04, 0.056], [0.08, 0.11], [0.16, 0.22], [0.32, 0.45], [0.64, 0.72]]
+  anchor_ratios = [[1, 0.62, 0.42]] * 5
+  anchors = generate_anchors(feature_map_sizes, anchor_sizes, anchor_ratios)
+  anchors_exp = np.expand_dims(anchors, axis=0)
+  id2class = {0: 'Mask', 1: 'NoMask'}
+  conf_thresh=0.5
+  iou_thresh=0.4
+  target_shape=(260, 260)
+
+  mm = keras.models.load_model('./my_models/face_mask_detection.h5')
+  from skimage.transform import resize
+  idd = resize(frame, target_shape)
+  y_bboxes_output, y_cls_output = mm(np.expand_dims(idd, 0))
+
+  y_bboxes = decode_bbox(anchors_exp, y_bboxes_output)[0]
+  y_cls = y_cls_output[0]
+  # To speed up, do single class NMS, not multiple classes NMS.
+  bbox_max_scores = np.max(y_cls, axis=1)
+  bbox_max_score_classes = np.argmax(y_cls, axis=1)
+
+  # keep_idx is the alive bounding box after nms.
+  keep_idxs = single_class_non_max_suppression(y_bboxes, bbox_max_scores, conf_thresh=conf_thresh, iou_thresh=iou_thresh)
+
+  for idx in keep_idxs:
+      conf = float(bbox_max_scores[idx])
+      class_id = bbox_max_score_classes[idx]
+      bbox = y_bboxes[idx]
+      # clip the coordinate, avoid the value exceed the image boundary.
+      xmin = max(0, int(bbox[0] * width))
+      ymin = max(0, int(bbox[1] * height))
+      xmax = min(int(bbox[2] * width), width)
+      ymax = min(int(bbox[3] * height), height)
+
+      if draw_result:
+          if class_id == 0:
+              color = (0, 255, 0)
+          else:
+              color = (255, 0, 0)
+          cv2.rectangle(image, (xmin, ymin), (xmax, ymax), color, 2)
+          cv2.putText(image, "%s: %.2f" % (id2class[class_id], conf), (xmin + 2, ymin - 2),
+                      cv2.FONT_HERSHEY_SIMPLEX, 0.8, color)
+      output_info.append([class_id, conf, xmin, ymin, xmax, ymax])
+
+  if show_result:
+      Image.fromarray(image).show()
+  return output_info
+  ```
+## neuralet face mask detection
+  - [Github neuralet/neuralet-models OFMClassifier.h5](https://github.com/neuralet/neuralet-models/blob/master/amd64/OFMClassifier/OFMClassifier.h5)
+  - [Github neuralet/neuralet-models model.h5](https://github.com/neuralet/neuralet-models/blob/master/amd64/face_mask_classifier/model.h5)
+  - [A practical solution to real-world face mask detection – Part 1](https://neuralet.com/article/real-time-face-mask-detection-part-one)
+  ```py
+  from skimage.transform import resize
+
+  mm = keras.models.load_model('OFMClassifier.h5')
+  mm.summary()
+  image_name = 'mask_test/aa.png'
+
+  def mask_classifier(model, image_name, image_shape=(45, 45, 3)):
+      iaa = imread(image_name)
+      bbs, ccs, pps = detect_faces(iaa)
+      left, top, right, bottom = bbs[0].astype('int')
+      # plt.imshow(iaa[top:bottom, left:right, :])
+
+      idd = resize(iaa[top:bottom, left:right, :], image_shape)
+      # return mm(np.expand_dims((idd * 255).astype('uint8'), 0))
+      return mm(np.expand_dims(idd, 0))
+
+  mm = keras.models.load_model('OFMClassifier.h5')
+  mm.summary()
+  mask_classifier(mm, "mask_test/aa.png")
+
+  mm = keras.models.load_model('model.h5')
+  mm.summary()
+  mask_classifier(mm, "mask_test/aa.png", image_shape=(224, 224, 3))
+  ```
+  ```py
+  from icecream import ic
+  from skimage import transform
+
+  def face_align_landmark_sk_224(img, landmark, image_size=(224, 224), method='similar'):
+      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
+      # src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
+      src = np.array([[76.5892, 103.3926], [147.0636, 103.0028], [112.0504, 143.4732], [83.0986, 184.7310], [141.4598, 184.4082]], dtype=np.float32)
+      # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+      tform.estimate(landmark, src)
+      return transform.warp(img, tform.inverse, output_shape=image_size)
+
+  class FaceMaskDetect:
+      def __init__(self, det=None, mask_model='model.h5', mask_image_shape=(224, 224, 3), mask_thresh=0.9):
+          if det is None:
+              import insightface
+              self.det = insightface.model_zoo.face_detection.retinaface_mnet025_v1()
+              self.det.prepare(-1)
+              def foo(det, frame): bbs, pps = det.detect(frame); return bbs[:, :4], bbs[:, -1], pps
+              self.det.detect_faces = lambda frame: foo(self.det, frame)
+          else:
+              self.det = det
+          self.mask_model = keras.models.load_model(mask_model)
+          self.mask_image_shape, self.mask_thresh = mask_image_shape, mask_thresh
+
+      def __call__(self, frame):
+          # return frame
+          # print(frame.shape)  # (480, 640, 3)
+          frame_rgb = frame[:, :, ::-1]
+          bbs, ccs, pps = self.det.detect_faces(frame)
+          bbs = bbs.astype('int')
+          for bb, pp in zip(bbs, pps):
+              left, top, right, bottom = bb
+              left, top = max(0, left), max(0, top)
+              ic(left, top, right, bottom)
+              imm = transform.resize(frame_rgb[top:bottom, left:right, :], self.mask_image_shape)
+              # imm = face_align_landmark_sk_224(frame_rgb, pp)
+              score = self.mask_model(np.expand_dims(imm, 0)).numpy()[0]
+              ic(score)
+              mask_score = score[1]
+              if mask_score > self.mask_thresh:
+                  rr, color, score = "mask", (0, 255, 0), score[1]
+              else:
+                  rr, color, score = "no mask", (0, 0, 255), score[1]
+              cv2.putText(frame, "{}: {:.4f}".format(rr, score), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
+              self.draw_polyboxes(frame, [bb], color) # Green
+          return frame
+
+      def draw_polyboxes(self, frame, bbs, color=(0, 0, 255)):
+          for idx, bb in enumerate(bbs):
+              left, top, right, bottom = bb
+              cv2.line(frame, (left, top), (right, top), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, top), (right, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, bottom), (left, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (left, bottom), (left, top), color, 3, cv2.LINE_AA)
+
+  video_test(func=FaceMaskDetect())
+  ```
+  ```py
+  tf.__version__
+  # 2.2.0
+
+  mm = keras.models.load_model('model.h5', compile=False)
+  inputs = keras.layers.Input((224, 224, 3), dtype=tf.uint8)
+  nn = tf.cast(inputs, 'float32') / 255
+  mm = keras.models.Model(inputs, mm(nn))
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+  converter.target_spec.supported_types = [tf.float16]  # float16
+  tflite_model = converter.convert()
+  open('model_int_norm_inputs_tf22.tflite', 'wb').write(tflite_model)
+
+  !adb push model_int_norm_inputs_tf22.tflite /data/local/tmp
+  !adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/model_int_norm_inputs_tf22.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,224,224,3 --input_layer=input1
+  # Inference timings in us: Init: 20911, First inference: 16168, Warmup (avg): 1859.1, Inference (avg): 1790.37
+  ```
+## Blazeface
+  - [Github ibaiGorordo/BlazeFace-TFLite-Inference](https://github.com/ibaiGorordo/BlazeFace-TFLite-Inference)
+  ```py
+  from BlazeFaceDetection.blazeFaceDetector import blazeFaceDetector
+
+  class BlazeFaceDetect:
+      def __init__(self, modelType="front", scoreThreshold=0.7, iouThreshold=0.3):
+          self.faceDetector = blazeFaceDetector(modelType, scoreThreshold, iouThreshold)
+
+      def __call__(self, frame):
+          # return frame
+          # print(frame.shape)  # (480, 640, 3)
+          # frame_rgb = frame[:, :, ::-1]
+          height, width = frame.shape[0], frame.shape[1]
+          detectionResults = self.faceDetector.detectFaces(frame)  # `detectFaces` will convert BGR to RGB
+          bbs = detectionResults.boxes * [width, height, width, height]
+          bbs = bbs.astype('int')
+          color = (0, 255, 0)
+          for bb, score in zip(bbs, detectionResults.scores):
+              # Enlarge bbox height by decrease top
+              left, top, right, bottom = bb
+              margin = ((right - left) - (bottom - top)) / 2
+              bb[1] -= margin
+              bb[3] += margin
+              cv2.putText(frame, "score: {:.4f}".format(score), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
+          self.draw_polyboxes(frame, bbs, color) # Green
+
+          return frame
+
+      def draw_polyboxes(self, frame, bbs, color=(0, 0, 255)):
+          for idx, bb in enumerate(bbs):
+              left, top, right, bottom = bb
+              cv2.line(frame, (left, top), (right, top), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, top), (right, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, bottom), (left, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (left, bottom), (left, top), color, 3, cv2.LINE_AA)
+
+  video_test(func=BlazeFaceDetect(modelType='back'))
+  ```
+  ```py
+  from BlazeFaceDetection.blazeFaceDetector import blazeFaceDetector
+
+  class BlazeFace(blazeFaceDetector):
+      def __init__(self, modelType="front", scoreThreshold=0.7, iouThreshold=0.3):
+          super(BlazeFace, self).__init__(modelType, scoreThreshold, iouThreshold)
+
+      def detect_faces(self, frame, format="BGR", show_result=False):
+          frame = frame if format == "BGR" else frame[:, :, ::-1]
+          height, width = frame.shape[0], frame.shape[1]
+          detectionResults = self.detectFaces(frame)
+          bbs = detectionResults.boxes * [width, height, width, height]
+          pps = detectionResults.keypoints * [width, height]
+          ccs = detectionResults.scores
+          for bb in bbs:
+              # Enlarge bbox height by decrease top
+              left, top, right, bottom = bb
+              margin = ((right - left) - (bottom - top)) / 2
+              bb[1] -= margin
+              bb[3] += margin
+          bbs = bbs.astype('int')
+          if show_result:
+              self.show_result(frame, bbs, ccs, pps, format="BGR")
+          return bbs, ccs, pps
+
+      def show_result(self, frame, bbs, ccs, pps, format="BGR"):
+          frame_rgb = frame[:, :, ::-1] if format == "BGR" else frame
+          plt.imshow(frame_rgb)
+          for bb, cc, pp in zip(bbs, ccs, pps):
+              left, top, right, bottom = bb
+              plt.plot([left, right, right, left, left], [top, top, bottom, bottom, top])
+              plt.text(left, top, cc)
+              plt.scatter(pp[:, 0], pp[:, 1], s=2)
+          plt.axis('off')
+          plt.tight_layout()
+
+  ic.disable()
+  video_test(func=FaceMaskDetect(det=BlazeFace(), mask_model='../face_mask/model.h5'))
+  ```
+  ```sh
+  adb push models/* /data/local/tmp
+  adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/face_detection_front.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,128,128,3 --input_layer=input1
+  # Inference timings in us: Init: 10672, First inference: 10191, Warmup (avg): 4685.62, Inference (avg): 4615.41
+  adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/face_detection_back.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,256,256,3 --input_layer=input1
+  # Inference timings in us: Init: 14030, First inference: 64989, Warmup (avg): 43455.6, Inference (avg): 41520.6
+  ```
+***
+
+# Ultraface
+## ONNX to tflite
+  - [github Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB](https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB)
+  - [Fix an axis issue for Concatenate layer #111](https://github.com/nerox8664/onnx2keras/pull/111)
+    - First is the `Reshape` layer, that the `target_shape` is like `(-1, 2)`:
+      ```py
+      {'class_name': 'Reshape',
+       'config': {'name': 'LAYER_83', 'trainable': True, 'dtype': 'float32', 'target_shape': (-1, 2)},
+       'name': 'LAYER_83',
+       'inbound_nodes': [[['LAYER_83_CHW', 0, 0, {}]]]
+      }
+      ```
+      I have to edit in `converter.py`, line 226, to keep the `target_shape` unchanged:
+      ```py
+      - 226                 if len(list(layer['config']['target_shape'][1:][:])) > 0:
+      + 226                 if len(list(layer['config']['target_shape'][1:][:])) > 1:
+      ```
+    - Then it's the `Concatenate` layer, that the `inbound_nodes` has a `target_shape`  like `(-1, 2)`:
+      ```py
+      {'class_name': 'Concatenate',
+       'config': {'name': 'LAYER_214', 'trainable': True, 'dtype': 'float32', 'axis': 3},
+       'name': 'LAYER_214',
+       'inbound_nodes': [[['LAYER_83', 0, 0, {}], ['LAYER_129', 0, 0, {}], ['LAYER_169', 0, 0, {}], ['LAYER_201', 0, 0, {}]]]
+      }
+      ```
+      The actual input shape into it is `[[None, 3600, 2], [None, 600, 2], [None, 160, 2], [None, 60, 2]]`. Fixing this, I have to edit in `tensorflow/python/keras/layers/merge.py`, line 499, to keep the `axis` as `1`.
+      ```py
+      497     reduced_inputs_shapes = [list(shape) for shape in input_shape]
+      498     shape_set = set()
+      + 499     if self.axis >= len(reduced_inputs_shapes[0]):
+      + 500         self.axis = 1
+      501     for i in range(len(reduced_inputs_shapes)):
+      502       del reduced_inputs_shapes[i][self.axis]
+      ```
+    - Then the model can be converted successfully with right output values.
+  - **Convert slim onnx model to tflite**
+    - Tensorflow version should be '<=2.2.0', since in `tensorflow >= 2 .3.0`, dynamic shapes of tensors is enabled, which NOT working well with `XNNpack`
+    - It should be `tensorflow-addons==0.11.2` matching `tensorflow==2.2.0`, [tensorflow/addons#python-op-compatility](https://github.com/tensorflow/addons#python-op-compatility)
+    - `slim` models can be converted in `tensorflow==2.2.0`.
+    - `RFB-320_without_postprocessing` can be converted in `tensorflow==1.5.0`, and NOT supporting changing `input_shape`.
+    - `RFB-320_simplified` can be converted in `tensorflow>=2.3.0`, and NOT supporting `XNNpack`.
+    ```py
+    tf.__version__
+    # '2.2.0'
+
+    !pip install tensorflow-addons==0.11.2
+    !pip install -U git+https://github.com.cnpmjs.org/nerox8664/onnx2keras.git
+
+    import onnx
+    from onnx2keras import onnx_to_keras
+    # model_name = "version-slim-320_without_postprocessing"
+    # model_name = "version-slim-320_simplified"
+    model_name = "version-RFB-320_without_postprocessing"
+    # model_name = "version-RFB-320_simplified"
+    onnx_model = onnx.load(os.path.join('models/onnx/', model_name + '.onnx'))
+
+    # We can change input_shapes here
+    mm = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], input_shapes=[(3, 240, 320)], name_policy="renumerate", change_ordering=True)
+
+    # Add preprocess and may change input_shape here
+    # inputs = keras.layers.Input((240, 320, 3), dtype=tf.uint8)
+    nn = (tf.cast(inputs, 'float32') - 127) * 0.0078125
+    mm = keras.models.Model(inputs, mm(nn))
+    new_model_name = model_name + '_tf22_int_norm_inputs'
+    mm.save(new_model_name + '.h5')
+
+    converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+    converter.target_spec.supported_types = [tf.float16]  # float16
+    open(new_model_name + '.tflite', 'wb').write(converter.convert())
+
+    os.system('adb push {} /data/local/tmp'.format(new_model_name + '.tflite'))
+
+    !adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/{new_model_name}.tflite --num_threads=4 --use_xnnpack=true
+    # version-slim-320_without_postprocessing
+    # Inference timings in us: Init: 19093, First inference: 21451, Warmup (avg): 14214.4, Inference (avg): 13376.9
+    # version-slim-320_simplified
+    # Inference timings in us: Init: 16329, First inference: 38314, Warmup (avg): 12419.2, Inference (avg): 11707.3
+    ```
+  - **Convert RFB onnx model to tflite**
+    ```py
+    tf.__version__
+    # '2.2.0'
+
+    model_name = "version-RFB-320_without_postprocessing_tf22_norm_inputs"
+    # model_name = "version-RFB-320_simplified_tf22_norm_inputs"
+    mm = keras.models.load_model(model_name + ".h5", compile=False)
+    mm.save_weights("weights_only.h5")
+    json_config = mm.to_json()
+    model_config = 'model_config.json'
+    with open(model_config, 'w') as json_file:
+        json_file.write(json_config)
+
+    """ Modify `model_config.json`, delete `"ragged": false` """
+    # For tf15 / tf20 saved json file, delete '"ragged": false,'
+    os.system('sed -i \'s/"ragged": false, //\' %s' % model_config)
+    # For tf-nightly saved json file, also replace '"class_name": "Functional"' by '"class_name": "Model"'
+    os.system('sed -i \'s/"class_name": "Functional"/"class_name": "Model"/g\' %s' % model_config)
+    # For tf23 saved json file, delete '"groups": 1, '
+    os.system('sed -i \'s/"groups": 1, //g\' %s' % model_config)
+    ```
+    **Reload in TF15 and convert to tflite**
+    ```py
+    tf.__version__
+    # '1.15.0'
+
+    from tensorflow import keras
+    from keras.initializers import glorot_normal, glorot_uniform
+    from keras.utils import CustomObjectScope
+
+    with open('model_config.json') as json_file:
+        json_config = json_file.read()
+    with CustomObjectScope({'GlorotNormal': glorot_normal(), "GlorotUniform": glorot_uniform()}):
+        new_model = keras.models.model_from_json(json_config)
+    new_model.load_weights('weights_only.h5')
+
+    # model_name = 'version-RFB-320_simplified_tf15_norm_inputs'
+    model_name = 'version-RFB-320_without_postprocessing_tf15_norm_inputs'
+    new_model.save(model_name + '.h5')
+
+    converter = tf.lite.TFLiteConverter.from_keras_model_file(model_name + '.h5')
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+    converter.target_spec.supported_types = [tf.float16]  # float16
+    open(model_name + '.tflite', 'wb').write(converter.convert())
+
+    os.system('adb push {} /data/local/tmp'.format(model_name + '.tflite'))
+
+    !adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/{model_name}.tflite --num_threads=4 --use_xnnpack=true
+    # Inference timings in us: Init: 22483, First inference: 29129, Warmup (avg): 14069, Inference (avg): 13604.3
+    ```
+## Benchmark
+  - **MNN**
+    ```sh
+    adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=. ./benchmark.out ./models/ 10 2 0 4 1'
+    # Forward type: **CPU** thread=4** precision=1
+    # --------> Benchmarking... loop = 10, warmup = 2
+    # [ - ] slim-320.mnn                max =   14.762ms  min =   14.539ms  avg =   14.697ms
+    # [ - ] slim-320-quant-ADMM-50.mnn    max =   12.559ms  min =   12.463ms  avg =   12.488ms
+    # [ - ] RFB-320.mnn                 max =   18.352ms  min =   17.444ms  avg =   17.606ms
+    # [ - ] RFB-320-quant-ADMM-32.mnn    max =   15.049ms  min =   14.986ms  avg =   15.009ms
+    # [ - ] RFB-320-quant-KL-5792.mnn    max =   15.122ms  min =   15.027ms  avg =   15.063ms
+    ```
+  - **ncnn**
+    ```sh
+    adb shell 'cd /data/local/tmp; LD_LIBRARY_PATH=. ./benchncnn 4 4'
+    # loop_count = 4
+    # num_threads = 4
+    # version-RFB/RFB-320  min =   27.04  max =   28.57  avg =   27.69
+    # version-slim/slim_320  min =   25.31  max =   25.58  avg =   25.46
+    ```
+  - **tflite**
+    ```sh
+    adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/version-RFB-320_without_postprocessing_tf15.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,240,320,3 --input_layer=input1
+    # Inference timings in us: Init: 17951, First inference: 24314, Warmup (avg): 11696.8, Inference (avg): 11241.2
+    adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/version-slim-320_without_postprocessing_tf15.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,240,320,3 --input_layer=input1
+    # Inference timings in us: Init: 15889, First inference: 27709, Warmup (avg): 10178.2, Inference (avg): 9165.01
+    adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/version-slim-320_simplified_tf15.tflite --num_threads=4 --use_xnnpack=true --input_layer_shape=1,240,320,3 --input_layer=input1
+    # Inference timings in us: Init: 11754, First inference: 19698, Warmup (avg): 9389.6, Inference (avg): 9069.94
+    ```
+## tflite python
+  - Changing `input_size` for other values is ONLY supported if `tflite` model is converted in `TF >= 2.3.0`, where dynamic shapes of tensors is enabled.
+  ```py
+  import tensorflow as tf
+  import numpy as np
+  # from skimage.transform import resize
+  from cv2 import resize
+
+  class UltraLightFaceDetecion():
+      def __init__(self, model_path, input_size=(240, 320), conf_threshold=0.6, center_variance=0.1, size_variance=0.2, nms_max_output_size=50, nms_iou_threshold=0.3) -> None:
+          self.input_size, self.nms_max_output_size, self.nms_iou_threshold = input_size, nms_max_output_size, nms_iou_threshold
+
+          # tflite model init
+          self.interpreter = tf.lite.Interpreter(model_path=model_path)
+          # model details
+          input_details = self.interpreter.get_input_details()
+          output_details = self.interpreter.get_output_details()
+          self.input_index = input_details[0]["index"]
+          if output_details[0]['shape'][-1] == 4:
+              self.boxes_index, self.scores_index = output_details[0]["index"], output_details[1]["index"]
+          else:
+              self.boxes_index, self.scores_index = output_details[1]["index"], output_details[0]["index"]
+
+          if input_size != (240, 320):
+              self.interpreter.resize_tensor_input(self.input_index, (1, *input_size, 3))
+              feature_maps_320 = np.array([40, 20, 10, 5])
+              feature_maps_h = np.ceil((feature_maps_320 * input_size[0] / 320)).astype('int')
+              feature_maps_w = np.ceil((feature_maps_320 * input_size[1] / 320)).astype('int')
+              self.feature_maps = np.vstack([feature_maps_w, feature_maps_h]).T
+          else:
+              self.feature_maps = np.array([[40, 30], [20, 15], [10, 8], [5, 4]])
+          self.interpreter.allocate_tensors()
+
+          self.min_boxes = [[10, 16, 24], [32, 48], [64, 96], [128, 192, 256]]
+
+          self.anchors_xy, self.anchors_wh = self.generate_anchors()
+          self.conf_threshold = conf_threshold
+          self.center_variance = center_variance
+          self.size_variance = size_variance
+          self.nms = lambda boxes, scores: tf.image.non_max_suppression(boxes=boxes, scores=scores, max_output_size=nms_max_output_size, iou_threshold=nms_iou_threshold)
+
+      def generate_anchors(self):
+          anchors = []
+          input_size = np.expand_dims(self.input_size[::-1], 1)
+          for feature_map_w_h, min_box in zip(self.feature_maps, self.min_boxes):
+              min_box = np.array(min_box)
+              wh_grid = min_box / input_size
+              wh_grid = np.tile(wh_grid.T, (np.prod(feature_map_w_h), 1))
+
+              xy_grid = np.meshgrid(range(feature_map_w_h[0]), range(feature_map_w_h[1]))
+              xy_grid = np.add(xy_grid, 0.5)
+
+              xy_grid /= feature_map_w_h[..., None, None]
+
+              xy_grid = np.stack(xy_grid, axis=-1)
+              xy_grid = np.tile(xy_grid, [1, 1, len(min_box)])
+              xy_grid = xy_grid.reshape(-1, 2)
+
+              prior = np.concatenate((xy_grid, wh_grid), axis=-1)
+              anchors.append(prior)
+
+          anchors = np.concatenate(anchors, axis=0)
+          anchors = np.clip(anchors, 0.0, 1.0)
+
+          return anchors[:, :2], anchors[:, 2:]
+
+      def detect_faces(self, img, image_format="BGR", show=False):
+          # BGR image to tensor
+          # input_tensor = self.pre_processing(img)
+          img_rgb = img[:, :, ::-1].astype("float32") if image_format == "BGR" else img.astype("float32")
+          # img_rgb = resize(img_rgb, self.input_size, preserve_range=True)
+          img_rgb = resize(img_rgb, self.input_size[::-1])
+          # img_rgb = np.expand_dims((img_rgb - 0.5) * 2, 0)
+          # img_rgb = np.expand_dims((img_rgb - 127.5) / 127, 0)
+          img_rgb = np.expand_dims(img_rgb, 0)
+
+          # set tensor and invoke
+          self.interpreter.set_tensor(self.input_index, img_rgb)
+          self.interpreter.invoke()
+          scores = self.interpreter.get_tensor(self.scores_index)[0]
+          boxes = self.interpreter.get_tensor(self.boxes_index)[0]
+
+          # decode boxes to corner format
+          boxes, scores = self.post_processing(boxes, scores, img.shape)
+          if show:
+              self.show_result(boxes, scores, img, image_format)
+
+          return boxes, scores
+
+      def post_processing(self, boxes, scores, image_shape):
+          # bounding box regression
+          center_xy = boxes[:, :2] * self.center_variance * self.anchors_wh + self.anchors_xy
+          center_wh = np.exp(boxes[:, 2:] * self.size_variance) * self.anchors_wh / 2
+
+          # center to corner
+          start_xy = center_xy - center_wh
+          end_xy = center_xy + center_wh
+
+          boxes = np.concatenate((start_xy, end_xy), axis=-1)
+          boxes = np.clip(boxes, 0.0, 1.0)
+
+          scores = scores[:, 1]
+
+          # confidence threshold filter
+          conf_mask = self.conf_threshold < scores
+          boxes, scores = boxes[conf_mask], scores[conf_mask]
+
+          # non-maximum suppression
+
+          nms_mask = self.nms(boxes=boxes, scores=scores)
+          scores = np.take(scores, nms_mask, axis=0)
+          boxes = np.take(boxes, nms_mask, axis=0)
+          boxes *= np.tile(image_shape[:2][::-1], 2)
+
+          return boxes, scores
+
+      def show_result(self, boxes, scores, img, image_format="BGR"):
+          img_rgb = img[:, :, ::-1] if image_format == "BGR" else img
+          fig = plt.figure()
+          plt.imshow(img_rgb)
+          for bb in boxes:
+              left, top, right, bottom = bb
+              plt.plot([left, right, right, left, left], [top, top, bottom, bottom, top], c='r')
+          plt.axis('off')
+          plt.tight_layout()
+          return fig
+  ```
+  ```py
+  img = imread('imgs/1.jpg')
+  det = UltraLightFaceDetecion('tflite/version-RFB-320_without_postprocessing_tf2.tflite', conf_threshold=0.6, input_size=(320, 320))
+  bbs, ccs, _ = det.detect_faces(img, image_format="RGB", show=True)
+  ```
+## Face detection video tests
+  ```py
+  class UltraFaceDetect(UltraLightFaceDetecion):
+      def __init__(self, model_path, input_size=(240, 320), conf_threshold=0.6, nms_iou_threshold=0.3):
+          super(UltraFaceDetect, self).__init__(model_path, input_size=input_size, conf_threshold=conf_threshold, nms_iou_threshold=nms_iou_threshold)
+
+      def detect_faces(self, img, image_format="BGR"):
+          boxes, scores = super(UltraFaceDetect, self).detect_faces(img, image_format=image_format, show=False)
+          landmarks = np.zeros(len(boxes)) # Fake one
+          for bb in boxes:
+              # Enlarge bbox width by decrease height
+              left, top, right, bottom = bb
+              ic(boxes)
+              margin = ((bottom - top) - (right - left)) / 4
+              # margin = 0
+              bb[0] -= margin
+              bb[2] += margin
+              bb[1] += margin
+              bb[3] -= margin
+              ic(boxes)
+          return boxes, scores, landmarks
+
+      def __call__(self, frame):
+          print(frame.shape)  # (480, 640, 3)
+          bbs, ccs, _ = self.detect_faces(frame, image_format="BGR")
+          bbs = bbs.astype('int')
+          color = (0, 255, 0)
+          for bb, score in zip(bbs, ccs):
+              cv2.putText(frame, "score: {:.4f}".format(score), (bb[0] - 10, bb[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
+          self.draw_polyboxes(frame, bbs, color) # Green
+
+          return frame
+
+      def draw_polyboxes(self, frame, bbs, color=(0, 0, 255)):
+          for idx, bb in enumerate(bbs):
+              left, top, right, bottom = bb
+              cv2.line(frame, (left, top), (right, top), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, top), (right, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (right, bottom), (left, bottom), color, 3, cv2.LINE_AA)
+              cv2.line(frame, (left, bottom), (left, top), color, 3, cv2.LINE_AA)
+
+  video_test(func=UltraFaceDetect(model_path='tflite/version-RFB-320_without_postprocessing_tf2.tflite', input_size=(240, 320), nms_iou_threshold=0.2))
+  ```
+  ```py
+  ic.disable()
+  video_test(func=FaceMaskDetect(det=UltraFaceDetect(model_path='tflite/version-RFB-320_without_postprocessing_tf2.tflite', input_size=(240, 320), nms_iou_threshold=0.2), mask_model='../../face_mask/model.h5'))
+  ```
 ***

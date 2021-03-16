@@ -711,6 +711,16 @@
     echo 'test' | sed 's/.*/foo &/'
     # foo test
     ```
+    只在匹配的第一行前面添加字符串
+    ```sh
+    # 查找第一行后面不以 # 开头的一行，添加一个 #，然后删除第一行前面添加的 #
+    printf "foo\n#test\ntest\ntest\nfoo\n" | sed '1,/^[^#]/s/^[^#].*/# &/' | sed '1s/^# \(.*\)/\1/'
+    foo
+    #test
+    # test
+    test
+    foo
+    ```
   - awk
     ```shell
     echo 'test' | awk '{print "foo "$0}'

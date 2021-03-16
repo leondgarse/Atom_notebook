@@ -1,9 +1,807 @@
-
+- [Github openvino](https://github.com/openvinotoolkit/openvino.git)
+- [Github Go imaging](https://github.com/disintegration/imaging)
 - [Github ResNeSt](https://github.com/zhanghang1989/ResNeSt)
 - [Github bleakie/MaskInsightface](https://github.com/bleakie/MaskInsightface)
 - [Group Convolution分组卷积，以及Depthwise Convolution和Global Depthwise Convolution](https://cloud.tencent.com/developer/article/1394912)
 - [深度学习中的卷积方式](https://zhuanlan.zhihu.com/p/75972500)
+
+# Tests
+## Image rotate
+  ```py
+  @tf.function
+  def image_rotation(imm, degree):
+      if degree == 90:
+          return np.transpose(imm[::-1, :, :], (1, 0, 2))
+      if degree == 180:
+          return imm[::-1, ::-1, :]
+      if degree == 270:
+          return np.transpose(imm[:, ::-1, :], (1, 0, 2))
+      return imm
+
+  plt.imshow(image_rotation(imm, 90))
+  plt.imshow(image_rotation(imm, 180))
+  plt.imshow(image_rotation(imm, 270))
+  ```
+  ```py
+  mm3 = keras.Sequential([
+      keras.layers.Input((None, None, 3)),
+      keras.preprocessing.image.apply_affine_transform,
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
+  tflite_model = converter.convert()
+  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
+
+  inputs = keras.layers.Input([None, None, 3])
+  nn = keras.preprocessing.image.apply_affine_transform(inputs)
+  mm = keras.models.Model(inputs, nn)
+  ```
+  ```py
+  @tf.function
+  def images_funcs(image, trans, type):
+      ret = image
+      type = type[0]
+      if type == 0:
+          # Resize
+          ret = keras.layers.experimental.preprocessing.Resizing(trans[0], trans[1])
+      elif type == 1:
+          # Rotate
+          angle = trans[0]
+          if angle == 90:
+              ret = image[::-1, :, :].transpose(1, 0, 2)
+          elif angle == 180:
+              ret = imm[::-1, ::-1, :]
+          elif angle == 270:
+              ret = imm[:, ::-1, :].transpose(1, 0, 2)
+      elif type == 2:
+          # Affine
+          ret = keras.preprocessing.image.apply_affine_transform(image, *trans)
+      return ret
+
+  image_input = keras.layers.Input([None, None, 3])
+  trans_input = keras.layers.Input([6])
+  type_input = keras.layers.Input(None)
+  ```
+  ```py
+  def transform_matrix_offset_center(matrix, x, y):
+      o_x = float(x) / 2 + 0.5
+      o_y = float(y) / 2 + 0.5
+      offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]])
+      reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]])
+      transform_matrix = np.dot(np.dot(offset_matrix, matrix), reset_matrix)
+      return transform_matrix
+
+
+  theta = tform.rotation / np.pi * 180
+  _tx, _ty = tform.translation
+  tx = np.cos(theta) * _tx + np.sin(theta) * _ty
+  ty = np.cos(theta) * _ty - np.sin(theta) * _tx
+  # tx, ty = _tx, _ty
+  zx, zy = tform.scale, tform.scale
+  transform_matrix = None
+
+  if theta != 0:
+      theta = np.deg2rad(theta)
+      rotation_matrix = np.array([[np.cos(theta), -np.sin(theta), 0],
+                                  [np.sin(theta), np.cos(theta), 0],
+                                  [0, 0, 1]])
+      transform_matrix = rotation_matrix
+
+  if tx != 0 or ty != 0:
+      # np.cos(theta), -np.sin(theta), np.cos(theta) * tx - np.sin(theta) * ty
+      # np.sin(theta), np.cos(theta), np.sin(theta) * tx + np.cos(theta) * ty
+      # 0, 0, 1
+      shift_matrix = np.array([[1, 0, tx],
+                               [0, 1, ty],
+                               [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = shift_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, shift_matrix)
+
+  if shear != 0:
+      shear = np.deg2rad(shear)
+      shear_matrix = np.array([[1, -np.sin(shear), 0],
+                               [0, np.cos(shear), 0],
+                               [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = shear_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, shear_matrix)
+
+  if zx != 1 or zy != 1:
+      # np.cos(theta) * zx, -np.sin(theta) * zy, np.cos(theta) * tx - np.sin(theta) * ty
+      # np.sin(theta) * zx, np.cos(theta) * zy, np.sin(theta) * tx + np.cos(theta) * ty
+      # 0, 0, 1
+      zoom_matrix = np.array([[zx, 0, 0],
+                              [0, zy, 0],
+                              [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = zoom_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, zoom_matrix)
+
+  if transform_matrix is not None:
+      h, w = x.shape[row_axis], x.shape[col_axis]
+      transform_matrix = transform_matrix_offset_center(
+          transform_matrix, h, w)
+      x = np.rollaxis(x, channel_axis, 0)
+      final_affine_matrix = transform_matrix[:2, :2]
+      final_offset = transform_matrix[:2, 2]
+
+      channel_images = [ndimage.interpolation.affine_transform(
+          x_channel,
+          final_affine_matrix,
+          final_offset,
+          order=order,
+          mode=fill_mode,
+          cval=cval) for x_channel in x]
+      x = np.stack(channel_images, axis=0)
+      x = np.rollaxis(x, 0, channel_axis + 1)
+  return x
+  ```
+## 几何变换 geometric transformations
+## Face align landmarks
+  ```py
+  from skimage.transform import SimilarityTransform
+  import cv2
+
+  def face_align_landmarks(img, landmarks, image_size=(112, 112)):
+      ret = []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          src = np.array(
+              [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]],
+              dtype=np.float32,
+          )
+
+          dst = landmark.astype(np.float32)
+          tform = SimilarityTransform()
+          tform.estimate(dst, src)
+          M = tform.params[0:2, :]
+          ret.append(cv2.warpAffine(img, M, (image_size[1], image_size[0]), borderValue=0.0))
+
+      return np.array(ret)
+  ```
+  ```py
+  from skimage import transform
+  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', show=True):
+      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
+      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
+      ret, nns = [], []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          tform.estimate(landmark, src)
+          ret.append(transform.warp(img, tform.inverse, output_shape=image_size))
+      ret = (np.array(ret) * 255).astype(np.uint8)
+
+      return (np.array(ret) * 255).astype(np.uint8)
+
+  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', order=1, show=True):
+      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
+      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
+      ret, nns = [], []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          tform.estimate(src, landmark)
+          ret.append(transform.warp(img, tform, output_shape=image_size, order=order))
+          if show:
+              nns.append(tform.inverse(landmark))
+
+      ret = (np.array(ret) * 255).astype(np.uint8)
+      if show:
+          plt.figure()
+          plt.imshow(np.hstack(ret))
+          for id, ii in enumerate(nns):
+              plt.scatter(ii[:, 0] + image_size[0] * id, ii[:, 1], c='r', s=8)
+      return ret
+  ```
+  ```py
+  mm3 = keras.Sequential([
+      keras.layers.Input((None, None, 3)),
+      keras.preprocessing.image.apply_affine_transform,
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
+  tflite_model = converter.convert()
+  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
+
+  inputs = keras.layers.Input([None, None, 3])
+  nn = keras.preprocessing.image.apply_affine_transform(inputs)
+  mm = keras.models.Model(inputs, nn)
+  ```
+## ndimage affine_transform
+  - 对于 `skimage.transform` 生成的转换矩阵，`ndimage.interpolation.affine_transform` 在使用时，需要将横纵坐标上的变幻对调
+  - **变换 tform.parameters**
+    - `rotation` 改为反向旋转
+    - `translation` 对调 `xy` 变换值
+    ```py
+    from scipy import ndimage
+
+    tform = transform.SimilarityTransform()
+    tform.estimate(src, pps[0])
+
+    # tt = transform.SimilarityTransform(rotation=tform.rotation*-1, scale=tform.scale, translation=tform.translation[::-1]).params
+    tt = tform.params.copy()
+    tt[0, -1], tt[1, -1] = tt[1, -1], tt[0, -1]
+    tt[0, 1], tt[1, 0] = -1 * tt[0, 1], -1 * tt[1, 0]
+    channel_images = [ndimage.interpolation.affine_transform(
+        imm[:, :, ii],
+        tt,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for ii in range(3)]
+    x = np.stack(channel_images, axis=-1)
+    plt.imshow(x)
+    ```
+  - **变换时图像转置** 使用原值的 `tform.parameters`，转置图像的宽高
+    ```py
+    from scipy import ndimage
+
+    tform = transform.SimilarityTransform()
+    tform.estimate(src, pps[0])
+
+    channel_images = [ndimage.interpolation.affine_transform(
+        imm[:, :, ii].T,
+        tform.params,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for ii in range(3)]
+    x = np.stack(channel_images, axis=-1)
+    x = np.transpose(x, (1, 0, 2))
+    plt.imshow(x)
+    ```
+  - **生成转置的变换矩阵** `skimage.transform` `estimate` 的参数值对调 `xy` 坐标值
+    ```py
+    tform.estimate(src[:, ::-1], pps[0][:, ::-1])
+    channel_axis = 2
+    x = np.rollaxis(imm, channel_axis, 0)  # (976, 1920, 3) --> (3, 976, 1920)
+    channel_images = [ndimage.interpolation.affine_transform(
+        x_channel,
+        tform.params,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for x_channel in x]
+    x = np.stack(channel_images, axis=0)  # (3, 112, 112)
+    x = np.rollaxis(x, 0, channel_axis + 1) # (112, 112, 3)
+    plt.imshow(x)
+    ```
+## affine_transform 图像缩放
+  ```py
+  scale = 3
+  tt = transform.SimilarityTransform(scale=scale, translation=[0, 0]).params
+  channel_images = [ndimage.interpolation.affine_transform(
+      imm[:, :, ii],
+      tt,
+      output_shape=(imm.shape[0] // scale, imm.shape[1] // scale),
+      order=1,
+      mode='nearest',
+      cval=0) for ii in range(3)]
+  x = np.stack(channel_images, axis=-1)
+  plt.imshow(x)
+  ```
+## affine_transform 图像旋转
+  ```py
+  theta = 90 # [90, 180, 270]
+  rotation = theta / 180 * np.pi
+  # translation=[imm.shape[0] * abs(cos(rotation)), imm.shape[1] * abs(sin(rotation))]
+  if theta == 90:
+      translation=[imm.shape[0], 0]
+      output_shape = imm.shape[:2][::-1]
+  elif theta == 180:
+      translation=imm.shape[:2]
+      output_shape = imm.shape[:2]
+  elif theta == 270:
+      translation=[0, imm.shape[1]]
+      output_shape = imm.shape[:2][::-1]
+
+  tt = transform.SimilarityTransform(rotation=rotation, translation=translation).params
+  channel_images = [ndimage.interpolation.affine_transform(
+      imm[:, :, ii],
+      tt,
+      output_shape=output_shape,
+      order=1,
+      mode='nearest',
+      cval=0) for ii in range(3)]
+  x = np.stack(channel_images, axis=-1)
+  plt.imshow(x)
+  ```
+## TF function
+  ```py
+  class WarpAffine(keras.layers.Layer):
+      def __call__(self, imm, tformP, output_shape):
+          rets = []
+          for xx in imm:
+              x = tf.transpose(xx, (2, 0, 1))
+              channel_images = [ndimage.interpolation.affine_transform(
+                  x_channel,
+                  tformP,
+                  output_shape=output_shape,
+                  order=1,
+                  mode='nearest',
+                  cval=0) for x_channel in x]
+              x = tf.stack(channel_images, axis=0)
+              x = tf.transpose(x, (1, 2, 0))
+              rets.append(x)
+          return rets
+  ```
+## Rotation
+  ```go
+  func (nnInterpolator) transform_RGBA_RGBA_Src(dst *image.RGBA, dr, adr image.Rectangle, d2s *f64.Aff3, src *image.RGBA, sr image.Rectangle, bias image.Point) {
+      for dy := int32(adr.Min.Y); dy < int32(adr.Max.Y); dy++ {
+          dyf := float64(dr.Min.Y+int(dy)) + 0.5
+          d := (dr.Min.Y+int(dy)-dst.Rect.Min.Y)*dst.Stride + (dr.Min.X+adr.Min.X-dst.Rect.Min.X)*4
+          for dx := int32(adr.Min.X); dx < int32(adr.Max.X); dx, d = dx+1, d+4 {
+              dxf := float64(dr.Min.X+int(dx)) + 0.5
+              sx0 := int(d2s[0]*dxf+d2s[1]*dyf+d2s[2]) + bias.X
+              sy0 := int(d2s[3]*dxf+d2s[4]*dyf+d2s[5]) + bias.Y
+              if !(image.Point{sx0, sy0}).In(sr) {
+                  continue
+              }
+              pi := (sy0-src.Rect.Min.Y)*src.Stride + (sx0-src.Rect.Min.X)*4
+              pr := uint32(src.Pix[pi+0]) * 0x101
+              pg := uint32(src.Pix[pi+1]) * 0x101
+              pb := uint32(src.Pix[pi+2]) * 0x101
+              pa := uint32(src.Pix[pi+3]) * 0x101
+              dst.Pix[d+0] = uint8(pr >> 8)
+              dst.Pix[d+1] = uint8(pg >> 8)
+              dst.Pix[d+2] = uint8(pb >> 8)
+              dst.Pix[d+3] = uint8(pa >> 8)
+          }
+      }    
+  }
+  ```
+  ```cpp
+  void RotateDrawWithClip(
+      WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
+      WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+      float fDstCX, float fDstCY, float fSrcCX, float fSrcCY, float fAngle, float fScale) {
+      if (dstW <= 0) { return; }
+      if (dstH <= 0) { return; }
+
+      srcDelta /= sizeof(WDIBPIXEL);
+      dstDelta /= sizeof(WDIBPIXEL);
+
+      float duCol = (float)sin(-fAngle) * (1.0f / fScale);
+      float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
+      float duRow = dvCol;
+      float dvRow = -duCol;
+
+      float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
+      float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
+
+      float rowu = startingu;
+      float rowv = startingv;
+
+      for(int y = 0; y < dstH; y++) {
+          float uu = rowu;
+          float vv = rowv;
+
+          WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
+
+          for(int x = 0; x < dstW ; x++) {
+              int sx = (int)uu;
+              int sy = (int)vv;
+
+              // For non-negative values we have to check u and v (not sx and sy)
+              // since u = -0.25 gives sx=0 after rounsing, so 1 extra pixel line will be drawn
+              // (we assume that u,v >= 0 will lead to sx,sy >= 0)
+
+              if ((uu >= 0) && (vv >= 0) && (sx < srcW) && (sy < srcH)) {
+                  WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
+                  *pDst++ = *pSrc++;
+              } else {
+                  pDst++; // Skip
+                  //*pDst++ = VOID_COLOR; // Fill void (black)
+              }
+
+              uu += duRow;
+              vv += dvRow;
+          }
+
+          rowu += duCol;
+          rowv += dvCol;
+      }
+  }
+  ```
+  ```py
+  def image_rotate(src, dstW, dstH, tf):
+      # convW = cos(rotate) / scale
+      dst = np.zeros([dstW, dstH, 3], dtype=src.dtype)
+      ww, hh = src.shape[:2]
+      ww, hh = ww - 1, hh - 1
+      for ii in range(dstW):
+          tw, th = tf[0] * ii, tf[3] * ii
+          for jj in range(dstH):
+              sw = int(tw + tf[1] * jj + tf[2])
+              sh = int(th + tf[4] * jj + tf[5])
+              if sw > 0 and sw < ww and sh > 0 and sh < hh:
+                  dst[ii, jj] = src[sw, sh]
+              else:
+                  dst[ii, jj] = [0, 0, 0]
+      return dst
+
+  angle = 60 / 180 * np.pi
+  tf = [cos(angle), -sin(angle), 0, sin(angle), cos(angle), 0]
+  ```
+## NV21 to RGB
+  ```py
+  import cv2
+  def YUVtoRGB(byteArray, width, height):
+      e = width * height
+      Y = byteArray[0:e]
+      Y = np.reshape(Y, (height, width))
+
+      s = e
+      V = byteArray[s::2]
+      V = np.repeat(V, 2, 0)
+      V = np.reshape(V, (height // 2, width))
+      V = np.repeat(V, 2, 0)
+
+      U = byteArray[s+1::2]
+      U = np.repeat(U, 2, 0)
+      U = np.reshape(U, (height // 2, width))
+      U = np.repeat(U, 2, 0)
+
+      RGBMatrix = (np.dstack([Y,U,V])).astype(np.uint8)
+      RGBMatrix = cv2.cvtColor(RGBMatrix, cv2.COLOR_YUV2RGB, 3)
+      return RGBMatrix
+
+  with open('nv21.txt', 'r') as ff:
+      aa = ff.read()
+  bb = [byte(ii) for ii in aa[1:-1].split(', ')]
+  with open('nv21.bin', 'wb') as ff:
+      for ii in bb:
+          ff.write(ii)
+
+  with open('nv21.bin', 'rb') as ff:
+      cc = ff.read()
+  plt.imshow(YUVtoRGB([byte(ii) for ii in cc], 1280, 800))
+  ```
+## 曲线拟合
+  ```py
+  import json
+  with open("./checkpoints/keras_resnet101_emore_hist.json", 'r') as ff:
+      jj = json.load(ff)
+  ss = jj['loss'][29:-5]
+  ['%.4f' % ii for ii in jj['loss'][-10:]]
+  # ['8.6066', '8.2645', '7.9587', '7.6866', '7.4418', '7.2208']
+
+  zz = np.polyfit(np.arange(1, len(ss)), ss[1:], 3)
+  yy = np.poly1d(zz)
+  ["%.4f" % ii for ii in yy(np.arange(len(ss) - 5, len(ss) + 10))]
+  # ['8.6065', '8.2710', '7.9557', '7.6401', '7.3035', '6.9252', '6.4847', '5.9613']
+
+  ee = 0.105
+  pp = ss[:len(ss) - 3].copy()
+  for ii in range(len(ss) - 5, len(ss) + 10):
+      pp.append(pp[ii - 1] - (pp[ii - 2] - pp[ii - 1]) * (1 - ee))
+      print("%.4f" % pp[-1], end=', ')
+  # 8.5960, 8.2454, 7.9316, 7.6508, 7.3994, 7.1744, 6.9731, 6.7929
+  # ==> (f(x-1) - f(x)) / (f(x-2) - f(x-1)) = (1 - ee)
+  #     && f(x) = aa * np.exp(-bb * x) + cc
+  # ==> (np.exp(bb) - 1) / (np.exp(2 * bb) - np.exp(bb)) = (1 - ee)
+  # ==> (1 - ee) * np.exp(2 * bb) - (2 - ee) * np.exp(bb) + 1 = 0
+
+  from sympy import solve, symbols, Eq
+  bb = symbols('bb')
+  brr = solve(Eq(np.e ** (2 * bb) * (1 - ee) - (2 - ee) * np.e ** bb + 1, 0), bb)
+  print(brr) # [0.0, 0.110931560707281]
+  ff = lambda xx: np.e ** (-xx * brr[1])
+  ['%.4f' % ((ff(ii - 1) - ff(ii)) / (ff(ii - 2) - ff(ii - 1))) for ii in range(10, 15)]
+  # ['0.8950', '0.8950', '0.8950', '0.8950', '0.8950']
+
+  aa, cc = symbols('aa'), symbols('cc')
+  rr = solve([Eq(aa * ff(len(ss) - 3) + cc, ss[-3]), Eq(aa * ff(len(ss) - 1) + cc, ss[-1])], [aa, cc])
+  func_solve = lambda xx: rr[aa] * ff(xx) + rr[cc]
+  ["%.4f" % ii for ii in func_solve(np.arange(len(ss) - 5, len(ss) + 10))]
+  # ['8.6061', '8.2645', '7.9587', '7.6850', '7.4401', '7.2209', '7.0247', '6.8491']
+
+  from scipy.optimize import curve_fit
+
+  def func_curv(x, a, b, c):
+      return a * np.exp(-b * x) + c
+  xx = np.arange(1, 1 + len(ss[1:]))
+  popt, pcov = curve_fit(func_curv, xx, ss[1:])
+  print(popt) # [6.13053796 0.1813183  6.47103657]
+  ["%.4f" % ii for ii in func_curv(np.arange(len(ss) - 5, len(ss) + 10), *popt)]
+  # ['8.5936', '8.2590', '7.9701', '7.7208', '7.5057', '7.3200', '7.1598', '7.0215']
+
+  plt.plot(np.arange(len(ss) - 3, len(ss)), ss[-3:], label="Original Curve")
+  xx = np.arange(len(ss) - 3, len(ss) + 3)
+  plt.plot(xx, pp[-len(xx):], label="Manuel fit")
+  plt.plot(xx, func_solve(xx), label="func_solve fit")
+  plt.plot(xx, func_curv(xx, *popt), label="func_curv fit")
+  plt.legend()
+  ```
+## Plot styles
+  ```py
+  big, baxes = plt.subplots(5, 5)
+  baxes = baxes.flatten()
+  styles = plt.style.available
+  if 'dark_background' in styles: styles.remove('dark_background')
+  for bax, style in zip(baxes, styles):
+      fn = style + '.png'
+      if not os.path.exists(fn):
+          plt.style.use(style)
+          fig, axes = plt.subplots(2, 2)
+          axes[0][0].plot(np.random.randint(1, 10, 10), label='aa')
+          axes[0][0].plot(np.random.randint(1, 10, 10), label='bb')
+          axes[0][0].legend()
+          axes[0][1].scatter(np.random.randint(1, 10, 10), np.random.randint(1, 10, 10))
+          axes[1][0].hist(np.random.randint(1, 10, 10))
+          rect = plt.Rectangle((0.2, 0.75), 0.4, 0.15, color='k', alpha=0.3)
+          axes[1][1].add_patch(rect)
+          fig.suptitle(style)
+          fig.savefig(fn)
+          plt.close()
+      bax.imshow(plt.imread(fn))
+      bax.axis('off')
+  big.tight_layout()
+  ```
+## Plot color palettes
+  ```py
+  import matplotlib.cm as cm
+  from cycler import cycler
+  import seaborn as sns
+
+  def get_colors(max_color, palette='husl'):
+      if palette == 'rainbow':
+          colors = cm.rainbow(np.linspace(0, 1, max_color))
+      else:
+          colors = sns.color_palette(palette, n_colors=max_color)
+      return colors
+
+  ccs = ['deep', 'muted', 'bright', 'pastel', 'dark', 'colorblind', 'rainbow', 'husl', 'hls']
+  max_color = 10
+  fig, axes = plt.subplots(3, 3, figsize=(15, 12))
+  axes = axes.flatten()
+  for cc, ax in zip (ccs, axes):
+      colors = get_colors(max_color, cc)
+      ax.set_prop_cycle(cycler('color', colors))
+      for ii in range(max_color):
+          ax.plot(np.random.randint(1, 10, 10), label=ii)
+      ax.legend(loc="upper right")
+      ax.set_title(cc)
+  fig.tight_layout()
+  ```
 ***
+
+# skimage segmentation
+## Felzenszwalb Quickshift SLIC watershed
+  This example compares four popular low-level image segmentation methods. As it is difficult to obtain good segmentations, and the definition of “good” often depends on the application, these methods are usually used for obtaining an oversegmentation, also known as superpixels. These superpixels then serve as a basis for more sophisticated algorithms such as conditional random fields (CRF).
+
+  Felzenszwalb’s efficient graph based segmentation
+  This fast 2D image segmentation algorithm, proposed in 1 is popular in the computer vision community. The algorithm has a single scale parameter that influences the segment size. The actual size and number of segments can vary greatly, depending on local contrast.
+
+  1
+  Efficient graph-based image segmentation, Felzenszwalb, P.F. and Huttenlocher, D.P. International Journal of Computer Vision, 2004
+
+  Quickshift image segmentation
+  Quickshift is a relatively recent 2D image segmentation algorithm, based on an approximation of kernelized mean-shift. Therefore it belongs to the family of local mode-seeking algorithms and is applied to the 5D space consisting of color information and image location 2.
+
+  One of the benefits of quickshift is that it actually computes a hierarchical segmentation on multiple scales simultaneously.
+
+  Quickshift has two main parameters: sigma controls the scale of the local density approximation, max_dist selects a level in the hierarchical segmentation that is produced. There is also a trade-off between distance in color-space and distance in image-space, given by ratio.
+
+  2
+  Quick shift and kernel methods for mode seeking, Vedaldi, A. and Soatto, S. European Conference on Computer Vision, 2008
+
+  SLIC - K-Means based image segmentation
+  This algorithm simply performs K-means in the 5d space of color information and image location and is therefore closely related to quickshift. As the clustering method is simpler, it is very efficient. It is essential for this algorithm to work in Lab color space to obtain good results. The algorithm quickly gained momentum and is now widely used. See 3 for details. The compactness parameter trades off color-similarity and proximity, as in the case of Quickshift, while n_segments chooses the number of centers for kmeans.
+
+  3
+  Radhakrishna Achanta, Appu Shaji, Kevin Smith, Aurelien Lucchi, Pascal Fua, and Sabine Suesstrunk, SLIC Superpixels Compared to State-of-the-art Superpixel Methods, TPAMI, May 2012.
+
+  Compact watershed segmentation of gradient images
+  Instead of taking a color image as input, watershed requires a grayscale gradient image, where bright pixels denote a boundary between regions. The algorithm views the image as a landscape, with bright pixels forming high peaks. This landscape is then flooded from the given markers, until separate flood basins meet at the peaks. Each distinct basin then forms a different image segment. 4
+
+  As with SLIC, there is an additional compactness argument that makes it harder for markers to flood faraway pixels. This makes the watershed regions more regularly shaped. 5
+  ```py
+  from skimage.color import rgb2gray
+  from skimage.filters import sobel
+  from skimage.segmentation import felzenszwalb, slic, quickshift, watershed
+  from skimage.segmentation import mark_boundaries
+  from skimage.util import img_as_float
+  from skimage.io import imread
+
+  img = img_as_float(imread('./000067.dcm.png'))[:, :, :3]
+  segments_fz = felzenszwalb(img, scale=100, sigma=0.5, min_size=50)
+  segments_slic = slic(img, n_segments=250, compactness=10, sigma=1)
+  segments_quick = quickshift(img, kernel_size=3, max_dist=6, ratio=0.5)
+  gradient = sobel(rgb2gray(img))
+  segments_watershed = watershed(gradient, markers=250, compactness=0.001)
+
+  print(f"Felzenszwalb number of segments: {len(np.unique(segments_fz))}")
+  print(f"SLIC number of segments: {len(np.unique(segments_slic))}")
+  print(f"Quickshift number of segments: {len(np.unique(segments_quick))}")
+
+  fig, ax = plt.subplots(2, 2, figsize=(10, 10), sharex=True, sharey=True)
+
+  ax[0, 0].imshow(mark_boundaries(img, segments_fz))
+  ax[0, 0].set_title("Felzenszwalbs's method")
+  ax[0, 1].imshow(mark_boundaries(img, segments_slic))
+  ax[0, 1].set_title('SLIC')
+  ax[1, 0].imshow(mark_boundaries(img, segments_quick))
+  ax[1, 0].set_title('Quickshift')
+  ax[1, 1].imshow(mark_boundaries(img, segments_watershed))
+  ax[1, 1].set_title('Compact watershed')
+
+  for a in ax.ravel():
+      a.set_axis_off()
+
+  plt.tight_layout()
+  plt.show()
+  ```
+  ![](images/skimage_seg_fsqw.png)
+## Join segmentations
+  When segmenting an image, you may want to combine multiple alternative segmentations. The skimage.segmentation.join_segmentations() function computes the join of two segmentations, in which a pixel is placed in the same segment if and only if it is in the same segment in both segmentations.
+  ```py
+  import numpy as np
+  import matplotlib.pyplot as plt
+
+  from skimage.filters import sobel
+  from skimage.measure import label
+  from skimage.segmentation import slic, join_segmentations
+  from skimage.morphology import watershed
+  from skimage.color import label2rgb, rgb2gray
+  from skimage.io import imread
+
+  img = (rgb2gray(imread('./000067.dcm.png')) * 255).astype(np.uint8)
+
+  # Make segmentation using edge-detection and watershed.
+  edges = sobel(img)
+
+  # Identify some background and foreground pixels from the intensity values.
+  # These pixels are used as seeds for watershed.
+  markers = np.zeros_like(img)
+  foreground, background = 1, 2
+  markers[img < 20] = background
+  markers[img > 30] = foreground
+
+  ws = watershed(edges, markers)
+  seg1 = label(ws == foreground)
+
+  # Make segmentation using SLIC superpixels.
+  seg2 = slic(img, n_segments=117, max_iter=160, sigma=1, compactness=0.75,
+              multichannel=False)
+
+  # Combine the two.
+  segj = join_segmentations(seg1, seg2)
+
+  # Show the segmentations.
+  fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(9, 5),
+                           sharex=True, sharey=True)
+  ax = axes.ravel()
+  ax[0].imshow(img, cmap='gray')
+  ax[0].set_title('Image')
+
+  color1 = label2rgb(seg1, image=img, bg_label=0)
+  ax[1].imshow(color1)
+  ax[1].set_title('Sobel+Watershed')
+
+  color2 = label2rgb(seg2, image=img, image_alpha=0.5)
+  ax[2].imshow(color2)
+  ax[2].set_title('SLIC superpixels')
+
+  color3 = label2rgb(segj, image=img, image_alpha=0.5)
+  ax[3].imshow(color3)
+  ax[3].set_title('Join')
+
+  for a in ax:
+      a.axis('off')
+  fig.tight_layout()
+  plt.show()
+  ```
+  ![](images/skimage_seg_join.png)
+## Morphological Snakes
+  - **活动轮廓分割 snakes** 使用用户定义的轮廓或线进行初始化，然后该轮廓慢慢收缩
+
+  Morphological Snakes 1 are a family of methods for image segmentation. Their behavior is similar to that of active contours (for example, Geodesic Active Contours 2 or Active Contours without Edges 3). However, Morphological Snakes use morphological operators (such as dilation or erosion) over a binary array instead of solving PDEs over a floating point array, which is the standard approach for active contours. This makes Morphological Snakes faster and numerically more stable than their traditional counterpart.
+
+  There are two Morphological Snakes methods available in this implementation: Morphological Geodesic Active Contours (MorphGAC, implemented in the function morphological_geodesic_active_contour) and Morphological Active Contours without Edges (MorphACWE, implemented in the function morphological_chan_vese).
+
+  MorphGAC is suitable for images with visible contours, even when these contours might be noisy, cluttered, or partially unclear. It requires, however, that the image is preprocessed to highlight the contours. This can be done using the function inverse_gaussian_gradient, although the user might want to define their own version. The quality of the MorphGAC segmentation depends greatly on this preprocessing step.
+
+  On the contrary, MorphACWE works well when the pixel values of the inside and the outside regions of the object to segment have different averages. Unlike MorphGAC, MorphACWE does not require that the contours of the object are well defined, and it works over the original image without any preceding processing. This makes MorphACWE easier to use and tune than MorphGAC.
+  ```py
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from skimage import data, img_as_float
+  from skimage.io import imread
+  from skimage.segmentation import (morphological_chan_vese,
+                                    morphological_geodesic_active_contour,
+                                    inverse_gaussian_gradient,
+                                    checkerboard_level_set)
+
+
+  def store_evolution_in(lst):
+      """Returns a callback function to store the evolution of the level sets in
+      the given list.
+      """
+
+      def _store(x):
+          lst.append(np.copy(x))
+
+      return _store
+
+
+  # Morphological ACWE\
+  image = rgb2gray(imread('./000067.dcm.png'))
+
+  # Initial level set
+  init_ls = checkerboard_level_set(image.shape, 6)
+  # List with intermediate results for plotting the evolution
+  evolution = []
+  callback = store_evolution_in(evolution)
+  ls = morphological_chan_vese(image, 35, init_level_set=init_ls, smoothing=3,
+                               iter_callback=callback)
+
+  fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+  ax = axes.flatten()
+
+  ax[0].imshow(image, cmap="gray")
+  ax[0].set_axis_off()
+  ax[0].contour(ls, [0.5], colors='r')
+  ax[0].set_title("Morphological ACWE segmentation", fontsize=12)
+
+  ax[1].imshow(ls, cmap="gray")
+  ax[1].set_axis_off()
+  contour = ax[1].contour(evolution[2], [0.5], colors='g')
+  contour.collections[0].set_label("Iteration 2")
+  contour = ax[1].contour(evolution[7], [0.5], colors='y')
+  contour.collections[0].set_label("Iteration 7")
+  contour = ax[1].contour(evolution[-1], [0.5], colors='r')
+  contour.collections[0].set_label("Iteration 35")
+  ax[1].legend(loc="upper right")
+  title = "Morphological ACWE evolution"
+  ax[1].set_title(title, fontsize=12)
+
+
+  # Morphological GAC
+  gimage = inverse_gaussian_gradient(image)
+
+  # Initial level set
+  init_ls = np.zeros(image.shape, dtype=np.int8)
+  init_ls[10:-10, 10:-10] = 1
+  # List with intermediate results for plotting the evolution
+  evolution = []
+  callback = store_evolution_in(evolution)
+  ls = morphological_geodesic_active_contour(gimage, 230, init_ls,
+                                             smoothing=1, balloon=-1,
+                                             threshold=0.69,
+                                             iter_callback=callback)
+
+  ax[2].imshow(image, cmap="gray")
+  ax[2].set_axis_off()
+  ax[2].contour(ls, [0.5], colors='r')
+  ax[2].set_title("Morphological GAC segmentation", fontsize=12)
+
+  ax[3].imshow(ls, cmap="gray")
+  ax[3].set_axis_off()
+  contour = ax[3].contour(evolution[0], [0.5], colors='g')
+  contour.collections[0].set_label("Iteration 0")
+  contour = ax[3].contour(evolution[100], [0.5], colors='y')
+  contour.collections[0].set_label("Iteration 100")
+  contour = ax[3].contour(evolution[-1], [0.5], colors='r')
+  contour.collections[0].set_label("Iteration 230")
+  ax[3].legend(loc="upper right")
+  title = "Morphological GAC evolution"
+  ax[3].set_title(title, fontsize=12)
+
+  fig.tight_layout()
+  plt.show()
+  ```
+  ![](images/skiamge_seg_morphological_snakes.png)
+***
+
 
 # Auto Tuner
 ## Keras Tuner
@@ -271,357 +1069,6 @@
                 session_num += 1
 
     %tensorboard --logdir logs/hparam_tuning_cifar10
-    ```
-***
-
-# TfLite
-## TFLite Model Benchmark Tool
-  - [TFLite Model Benchmark Tool](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/tools/benchmark)
-    ```sh
-    cd ~/workspace/tensorflow.arm32
-    ./configure
-    bazel build -c opt --config=android_arm tensorflow/lite/tools/benchmark:benchmark_model
-    # bazel build --config opt --config monolithic --define tflite_with_xnnpack=false tensorflow/lite/tools/benchmark:benchmark_model
-
-    adb push bazel-bin/tensorflow/lite/tools/benchmark/benchmark_model /data/local/tmp
-    adb shell chmod +x /data/local/tmp/benchmark_model
-
-    cd ~/workspace/examples/lite/examples/image_classification/android/app/src/main/assets
-    adb push mobilenet_v1_1.0_224_quant.tflite /data/local/tmp
-    adb push mobilenet_v1_1.0_224.tflite /data/local/tmp
-    adb push efficientnet-lite0-int8.tflite /data/local/tmp
-    adb push efficientnet-lite0-fp32.tflite /data/local/tmp
-    ```
-  - **参数**
-    - **--graph** 字符串，TFLite 模型路径
-    - **--enable_op_profiling** true / false，是否测试每个步骤的执行时间: bool (default=false) Whether to enable per-operator profiling measurement.
-    - **--nnum_threads** 整数值，线程数量
-    - **--use_gpu** true / false，是否使用 GPU
-    - **--use_nnapi** true / false，是否使用 nnapi
-    - **--use_xnnpack** true / false，是否使用 xnnpack
-    - **--use_coreml** true / false，是否使用 coreml
-  - **Int8 模型 nnapi 测试**
-    ```cpp
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=1
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 4.27635
-    Inference timings in us: Init: 5388, First inference: 101726, Warmup (avg): 92755.2, Inference (avg): 90865.9
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=4
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 4.27635
-    Inference timings in us: Init: 5220, First inference: 50829, Warmup (avg): 29745.6, Inference (avg): 27044.7
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=1 --use_nnapi=true
-    Explicitly applied NNAPI delegate, and the model graph will be completely executed by the delegate.
-    The input model file size (MB): 4.27635
-    Inference timings in us: Init: 25558, First inference: 9992420, Warmup (avg): 9.99242e+06, Inference (avg): 8459.69
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224_quant.tflite --num_threads=4 --use_nnapi=true
-    Explicitly applied NNAPI delegate, and the model graph will be completely executed by the delegate.
-    The input model file size (MB): 4.27635
-    Inference timings in us: Init: 135723, First inference: 10013451, Warmup (avg): 1.00135e+07, Inference (avg): 8413.35
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-int8.tflite --num_threads=1
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 5.42276
-    Inference timings in us: Init: 16296, First inference: 111237, Warmup (avg): 100603, Inference (avg): 98068.9
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-int8.tflite --num_threads=4
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 5.42276
-    Inference timings in us: Init: 13910, First inference: 52150, Warmup (avg): 30097.1, Inference (avg): 28823.8
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-int8.tflite --num_threads=1 --use_nnapi=true
-    Explicitly applied NNAPI delegate, and the model graph will be partially executed by the delegate w/ 11 delegate kernels.
-    The input model file size (MB): 5.42276
-    Inference timings in us: Init: 30724, First inference: 226753, Warmup (avg): 171396, Inference (avg): 143630
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-int8.tflite --num_threads=4 --use_nnapi=true
-    Explicitly applied NNAPI delegate, and the model graph will be partially executed by the delegate w/ 11 delegate kernels.
-    The input model file size (MB): 5.42276
-    Inference timings in us: Init: 32209, First inference: 207213, Warmup (avg): 75055, Inference (avg): 53974.5
-    ```
-  - **Float32 模型 xnnpack 测试** 不经过量化的浮点型模型可以使用 `xnnpack` 加速
-    ```cpp
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=1
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 16.9008
-    Inference timings in us: Init: 2491, First inference: 183222, Warmup (avg): 170631, Inference (avg): 163455
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=4
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 16.9008
-    Inference timings in us: Init: 2482, First inference: 101750, Warmup (avg): 58520.2, Inference (avg): 52692.1
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=1 --use_xnnpack=true
-    Explicitly applied XNNPACK delegate, and the model graph will be partially executed by the delegate w/ 2 delegate kernels.
-    The input model file size (MB): 16.9008
-    Inference timings in us: Init: 55797, First inference: 167033, Warmup (avg): 160670, Inference (avg): 159191
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/mobilenet_v1_1.0_224.tflite --num_threads=4 --use_xnnpack=true
-    Explicitly applied XNNPACK delegate, and the model graph will be partially executed by the delegate w/ 2 delegate kernels.
-    The input model file size (MB): 16.9008
-    Inference timings in us: Init: 61780, First inference: 75098, Warmup (avg): 51450.6, Inference (avg): 47564.3
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-fp32.tflite --num_threads=1
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 18.5702
-    Inference timings in us: Init: 6697, First inference: 169388, Warmup (avg): 148210, Inference (avg): 141517
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-fp32.tflite --num_threads=4
-    INFO: Initialized TensorFlow Lite runtime.
-    The input model file size (MB): 18.5702
-    Inference timings in us: Init: 4137, First inference: 84115, Warmup (avg): 52832.1, Inference (avg): 52848.9
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-fp32.tflite --num_threads=1 --use_xnnpack=true
-    Explicitly applied XNNPACK delegate, and the model graph will be completely executed by the delegate.
-    The input model file size (MB): 18.5702
-    Inference timings in us: Init: 53629, First inference: 120858, Warmup (avg): 114820, Inference (avg): 112744
-
-    $ adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/efficientnet-lite0-fp32.tflite --num_threads=4 --use_xnnpack=true
-    Explicitly applied XNNPACK delegate, and the model graph will be completely executed by the delegate.
-    The input model file size (MB): 18.5702
-    Inference timings in us: Init: 52265, First inference: 45786, Warmup (avg): 42789.7, Inference (avg): 40117.3
-    ```
-***
-
-# Quantization aware training in Keras example
-  - [Quantization aware training in Keras example](https://www.tensorflow.org/model_optimization/guide/quantization/training_example)
-  - **Conda install `tf-nightly` and `tensorflow-model-optimization`**
-    ```sh
-    conda create -n tf-nightly
-    conda activate tf-nightly
-    pip install tf-nightly glob2 pandas tqdm scikit-image scikit-learn ipython
-    pip install -q tensorflow-model-optimization
-
-    # Install cuda 10.1 if not installed
-    conda install cudnn=7.6.5=cuda10.1_0
-
-    source activate tf-nightly
-    ```
-  - **Train a MNIST model**
-    ```py
-    import os
-    import tensorflow as tf
-    from tensorflow import keras
-
-    # Load MNIST dataset
-    mnist = keras.datasets.mnist
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-
-    # Normalize the input image so that each pixel value is between 0 to 1.
-    train_images = train_images / 255.0
-    test_images = test_images / 255.0
-
-    # Define the model architecture.
-    model = keras.Sequential([
-      keras.layers.InputLayer(input_shape=(28, 28)),
-      keras.layers.Reshape(target_shape=(28, 28, 1)),
-      keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation='relu'),
-      keras.layers.MaxPooling2D(pool_size=(2, 2)),
-      keras.layers.Flatten(),
-      keras.layers.Dense(10)
-    ])
-
-    # Train the digit classification model
-    model.compile(optimizer='adam',
-                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
-
-    model.fit(train_images, train_labels, epochs=1, validation_data=(test_images, test_labels))
-    # 1875/1875 [==============================] - 5s 3ms/step - loss: 0.5267 - accuracy: 0.8500 - val_loss: 0.1736 - val_accuracy: 0.9523
-    ```
-  - **Clone and fine-tune pre-trained model with quantization aware training**
-    - 将 `quantization aware` 应用到整个模型，模型额的每一层将以 `quant` 开头
-    - 训练后的模型是 `quantization aware` 的，但还没有被量化
-    ```py
-    import tensorflow_model_optimization as tfmot
-    quantize_model = tfmot.quantization.keras.quantize_model
-
-    # q_aware stands for for quantization aware.
-    q_aware_model = quantize_model(model)
-    # `quantize_model` requires a recompile.
-    q_aware_model.compile(optimizer='adam',
-                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
-
-    q_aware_model.summary()
-    print([ii.name for ii in q_aware_model.layers])
-    # ['quantize_layer', 'quant_reshape', 'quant_conv2d', 'quant_max_pooling2d', 'quant_flatten', 'quant_dense']
-    ```
-  - **Train and evaluate the model against baseline** 作为对比，在一个小的数据集上做 fine tune
-    ```py
-    train_images_subset = train_images[0:1000] # out of 60000
-    train_labels_subset = train_labels[0:1000]
-    q_aware_model.fit(train_images_subset, train_labels_subset, batch_size=500, epochs=1, validation_data=(test_images, test_labels))
-    # 2/2 [==============================] - 1s 325ms/step - loss: 0.1783 - accuracy: 0.9447 - val_loss: 0.1669 - val_accuracy: 0.9551
-    ```
-    **Evaluate**
-    ```py
-    _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
-    print('Baseline test accuracy:', baseline_model_accuracy)
-    # Baseline test accuracy: 0.9523000121116638
-
-    _, q_aware_model_accuracy = q_aware_model.evaluate(test_images, test_labels, verbose=0)
-    print('Quant test accuracy:', q_aware_model_accuracy)
-    # Quant test accuracy: 0.9550999999046326
-    ```
-  - **More training**
-    ```py
-    model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
-    # Epoch 1/5 1875/1875 - 3s 2ms/step - loss: 0.1368 - accuracy: 0.9613 - val_loss: 0.1023 - val_accuracy: 0.9706
-    # Epoch 2/5 1875/1875 - 3s 2ms/step - loss: 0.0921 - accuracy: 0.9742 - val_loss: 0.0810 - val_accuracy: 0.9763
-    # Epoch 3/5 1875/1875 - 3s 2ms/step - loss: 0.0732 - accuracy: 0.9786 - val_loss: 0.0754 - val_accuracy: 0.9746
-    # Epoch 4/5 1875/1875 - 3s 1ms/step - loss: 0.0624 - accuracy: 0.9821 - val_loss: 0.0709 - val_accuracy: 0.9768
-    # Epoch 5/5 1875/1875 - 3s 1ms/step - loss: 0.0550 - accuracy: 0.9841 - val_loss: 0.0658 - val_accuracy: 0.9776
-
-    q_aware_model.fit(train_images, train_labels, epochs=5, validation_data=(test_images, test_labels))
-    # Epoch 1/5 1875/1875 - 6s 3ms/step - loss: 0.1359 - accuracy: 0.9619 - val_loss: 0.0974 - val_accuracy: 0.9720
-    # Epoch 2/5 1875/1875 - 6s 3ms/step - loss: 0.0895 - accuracy: 0.9746 - val_loss: 0.0779 - val_accuracy: 0.9768
-    # Epoch 3/5 1875/1875 - 6s 3ms/step - loss: 0.0708 - accuracy: 0.9795 - val_loss: 0.0650 - val_accuracy: 0.9790
-    # Epoch 4/5 1875/1875 - 6s 3ms/step - loss: 0.0605 - accuracy: 0.9821 - val_loss: 0.0636 - val_accuracy: 0.9798
-    # Epoch 5/5 1875/1875 - 6s 3ms/step - loss: 0.0541 - accuracy: 0.9840 - val_loss: 0.0666 - val_accuracy: 0.9802
-    ```
-  - **Create quantized model for TFLite backend** 创建量化模型
-    ```py
-    converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-
-    quantized_tflite_model = converter.convert()
-    ```
-    ```py
-    mnist = keras.datasets.mnist
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-    train_images, test_images = train_images.astype(np.float32) / 255.0, test_images.astype(np.float32) / 255.0
-    def representative_data_gen():
-        for input_value in tf.data.Dataset.from_tensor_slices(train_images).batch(1).take(100):
-            # Model has only one input so each data point has one element.
-            yield [input_value]
-
-    converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_data_gen
-    # Ensure that if any ops can't be quantized, the converter throws an error
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    # Set the input and output tensors to uint8 (APIs added in r2.3)
-    converter.inference_input_type = tf.uint8
-    converter.inference_output_type = tf.uint8
-
-    tflite_model_quant = converter.convert()
-
-    interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
-    input_type = interpreter.get_input_details()[0]['dtype']
-    print('input: ', input_type)
-    output_type = interpreter.get_output_details()[0]['dtype']
-    print('output: ', output_type)
-    ```
-    **Evaluate**
-    ```py
-    import numpy as np
-
-    def evaluate_model(interpreter):
-        input_index = interpreter.get_input_details()[0]["index"]
-        output_index = interpreter.get_output_details()[0]["index"]
-        prediction_digits = []
-        for i, test_image in enumerate(test_images):
-            test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
-            interpreter.set_tensor(input_index, test_image)
-            interpreter.invoke()
-            output = interpreter.tensor(output_index)
-            digit = np.argmax(output()[0])
-            prediction_digits.append(digit)
-        prediction_digits = np.array(prediction_digits)
-        accuracy = (prediction_digits == test_labels).mean()
-        return accuracy
-
-    interpreter = tf.lite.Interpreter(model_content=quantized_tflite_model)
-    interpreter.allocate_tensors()
-    print('Quant TFLite test accuracy:', evaluate_model(interpreter))
-    # Quant TFLite test accuracy: 0.9826
-
-    _, q_aware_model_accuracy = q_aware_model.evaluate(test_images, test_labels, verbose=0)
-    print('Quant TF test accuracy:', q_aware_model_accuracy)
-    # Quant TF test accuracy: 0.982699990272522
-    ```
-  - **全整型量化 [ Fail ??? ]** `RuntimeError: Quantization not yet supported for op: 'DEQUANTIZE'.`
-    ```py
-    import tensorflow as tf
-    from tensorflow import keras
-    import tensorflow_model_optimization as tfmot
-
-    # Load MNIST dataset
-    (train_images, train_labels), (test_images, test_labels) = keras.datasets.mnist.load_data()
-    train_images, test_images = train_images / 255.0, test_images / 255.0
-
-    # Define the model architecture.
-    model = keras.Sequential([
-        keras.layers.InputLayer(input_shape=(28, 28)),
-        keras.layers.Flatten(),
-        keras.layers.Dense(10)
-    ])
-
-    # Train the digit classification model
-    model.compile(optimizer='adam', loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-    model.fit(train_images, train_labels, epochs=1, validation_data=(test_images, test_labels))
-    # 1875/1875 [==============================] - 2s 946us/step - loss: 0.7303 - accuracy: 0.8100 - val_loss: 0.3097 - val_accuracy: 0.9117
-
-    # Train the quantization aware model
-    q_aware_model = tfmot.quantization.keras.quantize_model(model)
-    q_aware_model.compile(optimizer='adam', loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-    q_aware_model.fit(train_images, train_labels, epochs=1, validation_data=(test_images, test_labels))
-    # 1875/1875 [==============================] - 2s 1ms/step - loss: 0.3107 - accuracy: 0.9136 - val_loss: 0.2824 - val_accuracy: 0.9225
-
-    # Define the representative data.
-    def representative_data_gen():
-        for input_value in tf.data.Dataset.from_tensor_slices(train_images.astype("float32")).batch(1).take(100):
-            yield [input_value]
-
-    # Successful converting from model
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_data_gen
-    tflite_model = converter.convert()
-
-    # Successful converting from model to uint8
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    converter.inference_input_type = tf.uint8
-    converter.inference_output_type = tf.uint8
-    tflite_model_quant = converter.convert()
-
-    # Successful converting from q_aware_model
-    q_converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
-    q_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    q_converter.representative_dataset = representative_data_gen
-    q_tflite_model = q_converter.convert()
-
-    # Fail converting from q_aware_model to uint8
-    q_converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    q_converter.inference_input_type = tf.uint8
-    q_converter.inference_output_type = tf.uint8
-    q_tflite_model_quant = q_converter.convert()
-    # RuntimeError: Quantization not yet supported for op: 'DEQUANTIZE'.
-
-    # Successful converting from model to uint8
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_data_gen
-    converter.inference_input_type = tf.uint8
-    converter.inference_output_type = tf.uint8
-    tflite_model_quant = converter.convert()
-
-    # Fail converting from q_aware_model to uint8
-    q_converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
-    q_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    q_converter.representative_dataset = representative_data_gen
-    q_converter.inference_input_type = tf.uint8
-    q_converter.inference_output_type = tf.uint8
-    q_tflite_model_quant = q_converter.convert()
-    # RuntimeError: Unsupported output type UINT8 for output tensor 'Identity' of type FLOAT32.
-
-    interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
-    print('input: ', interpreter.get_input_details()[0]['dtype'])
-    print('output: ', interpreter.get_output_details()[0]['dtype'])
     ```
 ***
 
@@ -2106,4 +2553,58 @@ data_augmentation = keras.Sequential([
     layers.experimental.preprocessing.RandomRotation(0.1),
     layers.experimental.preprocessing.RandomZoom(0.1),
 ])
+```
+***
+# Learning rate
+- **keras.optimizers.schedules.LearningRateSchedule**
+```py
+from tensorflow.python.keras import backend as K
+
+class lr_sch(keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, init_lr=0.1):
+        super(lr_sch, self).__init__()
+        self.init_lr = init_lr
+    def __call__(self, global_step:int):
+        self.global_step = tf.cast(global_step, dtype=tf.float32)
+        self.lr = self.init_lr / self.global_step
+        tf.print("global_step:", self.global_step, "lr:", self.lr)
+        # self.global_step = K.get_value(global_step)
+        return self.lr
+
+import tensorflow as tf
+mnist = tf.keras.datasets.mnist
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+x_train, x_test = np.expand_dims(x_train, -1), np.expand_dims(x_test, -1)
+
+model = tf.keras.models.Sequential([
+  tf.keras.layers.InputLayer(input_shape=[28,28, 1]),
+  tf.keras.layers.Flatten(),
+  tf.keras.layers.Dense(512, activation=tf.nn.relu),
+  # tf.keras.layers.Dropout(0.2),
+  tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+])
+
+optimizer = keras.optimizers.Adam(learning_rate=lr_sch(0.1))
+model.compile(optimizer=optimizer,
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.fit(x_train, y_train, epochs=5)
+model.evaluate(x_test, y_test)
+# [0.0712303157694405, 0.9791]
+
+np.argmax(model.predict(x_test[:1]))
+```
+```py
+from myCallbacks import CosineLrScheduler
+epochs = 50
+first_restart_step=16
+aa = CosineLrScheduler(0.1, first_restart_step=first_restart_step, lr_min=1e-5, warmup=1, m_mul=0.5)
+cc = [[aa.on_epoch_begin(ii)] * 50 for ii in range(0, epochs)]
+bb = CosineLrScheduler(0.1, first_restart_step=first_restart_step * 5000, lr_min=1e-5, warmup=50, m_mul=0.5)
+dd = [bb.on_train_batch_begin(ii) for ii in range(0, epochs * 5000, 100)]
+plt.plot(range(0, epochs * 5000, 100), np.ravel(cc))
+plt.plot(range(0, epochs * 5000, 100), dd)
 ```

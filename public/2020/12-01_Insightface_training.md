@@ -140,13 +140,13 @@
   ```py
   import json
 
-  def choose_accuracy(aa):
+  def choose_accuracy(aa, skip_name_len=0, sort_agedb=False):
       evals = ['lfw', 'cfp_fp', 'agedb_30']
       dd_agedb_max, dd_all_max, dd_sum_max = {}, {}, {}
       for pp in aa:
           with open(pp, 'r') as ff:
               hh = json.load(ff)
-          nn = os.path.splitext(os.path.basename(pp))[0]
+          nn = os.path.splitext(os.path.basename(pp))[0][skip_name_len:]
           agedb_arg_max = np.argmax(hh['agedb_30'])
           dd_agedb_max[nn] = {kk: hh[kk][agedb_arg_max] for kk in evals}
           dd_agedb_max[nn]["epoch"] = int(agedb_arg_max)
@@ -164,7 +164,10 @@
           print()
           print(">>>>", nn, ":")
           # print(pd.DataFrame(dd).T.to_markdown())
-          print(pd.DataFrame(dd).T)
+          rr = pd.DataFrame(dd).T
+          rr = rr.sort_values('agedb_30') if sort_agedb else rr
+          print(rr.to_markdown())
+      return dd_agedb_max, dd_all_max, dd_sum_max
   ```
 ## Remove regular loss from total loss
   ```py
@@ -176,6 +179,16 @@
       aa['loss'] = [ii - jj for ii, jj in zip(aa['loss'], aa['regular_loss'])]
       if dest_hist == None:
           dest_hist = os.path.splitext(src_hist)[0] + "_no_reg.json"
+      with open(dest_hist, 'w') as ff:
+          json.dump(aa, ff)
+      return dest_hist
+
+  def add_reg_loss_from_hist(src_hist, dest_hist=None):
+      with open(src_hist, 'r') as ff:
+          aa = json.load(ff)
+      aa['loss'] = [ii + jj for ii, jj in zip(aa['loss'], aa['regular_loss'])]
+      if dest_hist == None:
+          dest_hist = src_hist
       with open(dest_hist, 'w') as ff:
           json.dump(aa, ff)
       return dest_hist
@@ -430,232 +443,6 @@
   ```
 ***
 
-# Model conversion
-## ONNX
-  - `tf2onnx` convert `saved model` to `tflite`, support `tf1.15.0`
-    ```py
-    tf.__version__
-    # '1.15.0'
-
-    # Convert to saved model first
-    import glob2
-    mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
-    tf.keras.experimental.export_saved_model(mm, './saved_model')
-    # tf.contrib.saved_model.save_keras_model(mm, 'saved_model') # TF 1.13
-
-    ! pip install -U tf2onnx
-    ! python -m tf2onnx.convert --saved-model ./saved_model --output model.onnx
-    ```
-  - [keras2onnx](https://github.com/onnx/keras-onnx)
-    ```py
-    ! pip install keras2onnx
-
-    import keras2onnx
-    import glob2
-    mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
-    onnx_model = keras2onnx.convert_keras(mm, mm.name)
-    keras2onnx.save_model(onnx_model, 'mm.onnx')
-    ```
-## TensorRT
-  - [Atom_notebook TensorRT](https://github.com/leondgarse/Atom_notebook/blob/master/public/2019/08-19_tensorrt.md)
-## TFlite
-  - Convert to TFlite
-    ```py
-    tf.__version__
-    # '1.15.0'
-
-    import glob2
-    converter = tf.lite.TFLiteConverter.from_keras_model_file("checkpoints/keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5")
-    tflite_model = converter.convert()
-    open('./model.tflite', 'wb').write(tflite_model)
-    ```
-    ```py
-    tf.__version__
-    # '2.1.0'
-
-    import glob2
-    mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
-    converter = tf.lite.TFLiteConverter.from_keras_model(mm)
-    tflite_model = converter.convert()
-    open('./model_tf2.tflite', 'wb').write(tflite_model)
-    ```
-  - interpreter test
-    ```py
-    tf.__version__
-    # '2.1.0'
-
-    import glob2
-    interpreter = tf.lite.Interpreter('./model.tflite')
-    interpreter.allocate_tensors()
-    input_index = interpreter.get_input_details()[0]["index"]
-    output_index = interpreter.get_output_details()[0]["index"]
-
-    def tf_imread(file_path):
-        img = tf.io.read_file(file_path)
-        img = tf.image.decode_jpeg(img, channels=3)
-        img = tf.image.convert_image_dtype(img, tf.float32)
-        img = (img - 0.5) * 2
-        return tf.expand_dims(img, 0)
-
-    imm = tf_imread('/datasets/faces_emore_112x112_folders/0/1.jpg')
-    # imm = tf_imread('./temp_test/faces_emore_test/0/1.jpg')
-    interpreter.set_tensor(input_index, imm)
-    interpreter.invoke()
-    aa = interpreter.get_tensor(output_index)[0]
-
-    def foo(imm):
-        interpreter.set_tensor(input_index, imm)
-        interpreter.invoke()
-        return interpreter.get_tensor(output_index)[0]
-    %timeit -n 100 foo(imm)
-    # 36.7 ms ± 471 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
-
-    mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
-    bb = mm(imm).numpy()
-    assert np.allclose(aa, bb, rtol=1e-3)
-    %timeit mm(imm).numpy()
-    # 71.6 ms ± 213 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
-    ```
-  - **On ARM64 board**
-    ```sh
-    lscpu
-    # Architecture:        aarch64
-
-    python --version
-    # Python 3.6.9
-
-    sudo apt install python3-pip ipython cython3
-    pip install ipython
-
-    git clone https://github.com/noahzhy/tf-aarch64.git
-    cd tf-aarch64/
-    pip install tensorflow-1.9.0rc0-cp36-cp36m-linux_aarch64.whl
-    pip install https://dl.google.com/coral/python/tflite_runtime-2.1.0.post1-cp36-cp36m-linux_aarch64.whl
-    ```
-    ```py
-    import tensorflow as tf
-    tf.enable_eager_execution()
-    tf.__version__
-    # 1.9.0-rc0
-
-    import tflite_runtime
-    tflite_runtime.__version__
-    # 2.1.0.post1
-
-    import tflite_runtime.interpreter as tflite
-    interpreter = tflite.Interpreter('./mobilefacenet_tf2.tflite')
-    interpreter.allocate_tensors()
-    input_index = interpreter.get_input_details()[0]["index"]
-    output_index = interpreter.get_output_details()[0]["index"]
-
-    imm = tf.convert_to_tensor(np.ones([1, 112, 112, 3]), dtype=tf.float32)
-    interpreter.set_tensor(input_index, imm)
-    interpreter.invoke()
-    out = interpreter.get_tensor(output_index)[0]
-
-    def foo(imm):
-        interpreter.set_tensor(input_index, imm)
-        interpreter.invoke()
-        return interpreter.get_tensor(output_index)[0]
-    %timeit -n 100 foo(imm)
-    # 42.4 ms ± 43.1 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
-
-    %timeit -n 100 foo(imm) # EfficientNetB0
-    # 71.2 ms ± 52.5 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
-    ```
-  - **Wapper trained model with `Rescale` / `L2_normalize`**
-    ```py
-    mm2 = keras.Sequential([
-        keras.layers.Input((112, 112, 3)),
-        keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
-        mm,
-        keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
-    ])
-    ```
-    ```py
-    mm2 = keras.Sequential([
-        keras.layers.Input((112, 112, 3), dtype='uint8'),
-        keras.layers.Lambda(lambda xx: (xx / 127) - 1),
-        # keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
-        mm,
-        # keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1}),
-        keras.layers.Lambda(lambda xx: tf.cast(xx / tf.sqrt(tf.reduce_sum(xx ** 2)) * 255, 'uint8')),
-        # keras.layers.Lambda(lambda xx: tf.cast(xx * 255, 'uint8')),
-    ])
-    ```
-    ```py
-    inputs = keras.layers.Input([112, 112, 3])
-    nn = (inputs - 127.5) / 128
-    nn = mm(nn)
-    nn = tf.divide(nn, tf.expand_dims(tf.sqrt(tf.reduce_sum(tf.pow(nn, 2), -1)), -1))
-    bb = keras.models.Model(inputs, nn)
-    ```
-  - **Dynamic input shape**
-    ```py
-    mm3 = keras.Sequential([
-        keras.layers.Input((None, None, 3)),
-        keras.layers.experimental.preprocessing.Resizing(112 ,112),
-        keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
-        mm,
-        keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
-    ])
-
-    converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
-    tflite_model = converter.convert()
-    open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
-
-    interpreter = tf.lite.Interpreter('./norm_model_tf2.tflite')
-    input_index = interpreter.get_input_details()[0]["index"]
-    output_index = interpreter.get_output_details()[0]["index"]
-
-    interpreter.resize_tensor_input(input_index, (1, 512, 512, 3))
-    interpreter.allocate_tensors()
-    interpreter.set_tensor(input_index, tf.ones([1, 512, 112, 3], dtype='float32'))
-    interpreter.invoke()
-    out = interpreter.get_tensor(output_index)[0]
-    ```
-  - **Integer-only quantization**
-    ```py
-    def tf_imread(file_path):
-        img = tf.io.read_file(file_path)
-        img = tf.image.decode_jpeg(img, channels=3)
-        img = tf.image.convert_image_dtype(img, tf.float32)
-        img = (img - 0.5) * 2
-        return tf.expand_dims(img, 0)
-
-    def representative_data_gen():
-        for input_value in tf.data.Dataset.from_tensor_slices(image_names).batch(1).take(100):
-            yield [tf_imread(input_value[0])]
-
-    aa = np.load('faces_emore_112x112_folders_shuffle.pkl', allow_pickle=True)
-    image_names, image_classes = aa["image_names"], aa["image_classes"]
-
-    mm = tf.keras.models.load_model("checkpoints/keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5", compile=False)
-    converter = tf.lite.TFLiteConverter.from_keras_model(mm)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_data_gen
-    # Ensure that if any ops can't be quantized, the converter throws an error
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    # Set the input and output tensors to uint8 (APIs added in r2.3)
-    converter.inference_input_type = tf.uint8
-    converter.inference_output_type = tf.uint8
-
-    tflite_model_quant = converter.convert()
-    interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
-    input_type = interpreter.get_input_details()[0]['dtype']
-    print('input: ', input_type)
-    output_type = interpreter.get_output_details()[0]['dtype']
-    print('output: ', output_type)
-
-    interpreter.allocate_tensors()
-    input_index = interpreter.get_input_details()[0]["index"]
-    output_index = interpreter.get_output_details()[0]["index"]
-    interpreter.set_tensor(input_index, tf.ones([1, 112, 112, 3], dtype=input_type))
-    interpreter.invoke()
-    interpreter.get_tensor(output_index)[0]
-    ```
-***
-
 # Emore training backbones
 ## ResNet101V2
   - **Nadam + softmax E25 -> bottleneckOnly E4 -> Arcface -> Triplet**
@@ -722,36 +509,57 @@
   names = ["Warmup", "Arcfacelose learning rate 0.1", "Arcfacelose learning rate 0.01", "Arcfacelose learning rate 0.001"]
   axes, pre = plot.hist_plot_split(hist_path + "mxnet_r34_wdm1_new.json", fig_label="Original MXNet", names=names, **pp)
   pp["axes"] = axes
-  # axes, pre = plot.hist_plot_split("checkpoints/MXNET_r34_casia.json", epochs, axes=axes, customs=customs)
+  # axes, pre = plot.hist_plot_split(hist_path + "TF_resnet50_MXNET_E_sgdw_5e4_dr0.4_wdm10_soft_E10_arc_casia_hist.json", **pp)
 
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGD baseline", **pp)
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGDW 5e-4", **pp)
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist.json", fig_label="TF SGDW 1e-3", **pp)
 
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg.json", fig_label="TF SGD, l2 5e-4", **pp)
-  # axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_SGD_REG_1e3_clone_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist.json", fig_label="TF SGD, l2 1e-3", **pp, save="resnet34_casia.svg")
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3", **pp, save="resnet34_casia.svg")
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3", **pp, save="resnet34_casia.svg")
 
-  choose_accuracy([
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, output 10", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, on_batch False", **pp)
+
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 5e-4, on_batch False", **pp)
+
+
+  hist_path = "checkpoints/resnet34/"
+  aa = [
       hist_path + "mxnet_r34_wdm1_new.json",
       hist_path + "NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist.json",
       hist_path + "NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist.json",
       hist_path + "NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist.json",
       hist_path + "NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg.json",
-      hist_path + "NNNN_resnet34_MXNET_E_SGD_REG_1e3_clone_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist.json",
-      hist_path + "resnet34_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
-  ])
+      hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+  ]
+  _ = choose_accuracy(aa)
   ```
   ![](images/resnet34_casia.svg)
 
-  | Backbone    | Optimizer | wd   | l2_reg | lfw,cfp_fp,agedb_30,epoch       |
-  | ----------- | --------- | ---- | ------ | ------------------------------- |
-  | MXNet r34   | SGD       | 5e-4 | None   | 0.9933, 0.9514, 0.9448, E31     |
-  | TF resnet34 | SGD       | None | None   | 0.9897, 0.9269, 0.9228, E20     |
-  | TF resnet34 | SGDW      | 5e-4 | None   | 0.9927, 0.9476, 0.9388, E32     |
-  | TF resnet34 | SGDW      | 1e-3 | None   | 0.9935, **0.9549**, 0.9458, E35 |
-  | TF resnet34 | SGD       | None | 5e-4   | **0.9940**, 0.9466, 0.9415, E31 |
-  | TF resnet34 | SGD       | None | 1e-3   | 0.9937, 0.9491, **0.9463**, E31 |
+  |                                                                                           |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | mxnet_r34_wdm1_new                                                                        | 0.99433  | 0.94271  |   0.94483  |      27 |
+  | NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist             | 0.991333 | 0.907714 |   0.923667 |      14 |
+  | NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist        | 0.993167 | 0.943286 |   0.940333 |      23 |
+  | NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist                | 0.993333 | 0.950857 |   0.947    |      34 |
+  | NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg | 0.9945   | 0.941857 |   0.941667 |      22 |
+  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist           | 0.993833 | 0.949    |   0.9475   |      34 |
+  | resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist             | 0.993333 | 0.947429 |   0.941667 |      35 |
+  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist     | 0.993833 | 0.945286 |   0.943833 |      31 |
+  | resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist     | 0.994833 | 0.943143 |   0.9415   |      24 |
+
+  | Backbone    | Optimizer | wd   | l2_reg | lfw,cfp_fp,agedb_30,epoch              |
+  | ----------- | --------- | ---- | ------ | -------------------------------------- |
+  | MXNet r34   | SGD       | 5e-4 | None   | 0.9933, 0.9514, 0.9448, E31            |
+  | TF resnet34 | SGD       | None | None   | 0.9897, 0.9269, 0.9228, E20            |
+  | TF resnet34 | SGDW      | 5e-4 | None   | 0.9927, 0.9476, 0.9388, E32            |
+  | TF resnet34 | SGDW      | 1e-3 | None   | 0.9935, **0.9549**, 0.9458, E35        |
+  | TF resnet34 | SGD       | None | 5e-4   | 0.9940, 0.9466, 0.9415, E31            |
+  | TF resnet34 | SGD       | None | 1e-3   | **0.99417**, 0.95086, **0.94733**, E31 |
 ## Mobilefacenet
   ```py
   hist_path = "checkpoints/mobilefacenet/"
@@ -980,34 +788,9 @@
   tt.train(sch, 0)
   ```
   ```py
-  import json
-  pp = {}
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  # pp["customs"] = plot.EVALS_NAME + ['lr']
-  pp["epochs"] = [10] * 8 + [2] + [10] * 4 + [50]
-  names = ["Softmax + Center = %d" % ii for ii in [1, 10, 20, 30, 40, 50, 60, 70]] + ["Arcloss Bottleneck Only"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
-  axes, _ = plot.hist_plot_split(["checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_hist.json", "checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], **pp)
-  pp["axes"] = axes
-
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_E_emore_adamw_5e5_soft_hist.json", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_hist.json", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_prelu_emore_adamw_5e5_soft_new_center_1e2D_arc_tripD_hist.json", names=names, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(["checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", "checkpoints/keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_hist.json"], **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_hist.json", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_hist.json", **pp)
-
-  pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
-  axes, _ = plot.hist_plot_split(["checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", "checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_hist.json"], pre_item=pre_item, init_epoch=80, **pp)
-  ```
-  ```py
   # Plot the previous best of batch_size=256
   import json
+  hist_path = "checkpoints/mobilenet_emore_tests/"
   pp = {}
   # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
   pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
@@ -1016,46 +799,142 @@
   pp["epochs"] = [10] * 8 + [2] + [10] * 4 + [50]
   # pp["epochs"] = [10] * 8 + [2] + [10] * 1
   pp["names"] = ["Softmax + Center = %d" % ii for ii in [1, 10, 20, 30, 40, 50, 60, 70]] + ["Arcloss Bottleneck Only"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
-  axes, _ = plot.hist_plot_split(["checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_hist.json", "checkpoints/mobilenet_emore_tests/mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], **pp)
+  axes, _ = plot.hist_plot_split([hist_path + "mobilenet_adamw_BS256_E80_hist.json", hist_path + "mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], **pp)
   pp["axes"] = axes
 
   pp["epochs"] = [15, 30] + [10] * 4
   pp["names"] = ["", "Arcloss"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2]]
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_nadam_soft_arc_tripD_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_nadam_soft_arc_tripD_hist.json", **pp)
   pp["names"] = None
 
   pp["epochs"] = [10] * 8 + [10] * 4 + [50]
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
-  pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", pre_item=pre_item, init_epoch=80, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json", pre_item=pre_item, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
 
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l21e3_hist.json", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l25e1_hist.json", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_activity_regularizer_l21e2_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_arc_tripD_hist.json", fig_label="SUM/2, diff/count, C0.01, 0.1->0.7, E10x8", **pp)
 
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_arc_tripD_hist.json", fig_label="SUM/2, diff/count, C0.01, 0.1->0.7, E10x8", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_prelu_emore_adamw_5e5_soft_new_center_1e2D_arc_tripD_hist.json", fig_label="PReLU, SUM/2, diff/count, C0.01, 0.1, 1, 10, E20x4", **pp)
-
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_norm_arc_tripD_hist.json", fig_label="Norm, C1, 10->70, E10x8", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_cosine_arc_tripD_hist.json", fig_label="Cosine, C1, 10->70, E10x8", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_mean_arc_tripD_hist.json", fig_label="Mean, C1, 10->70, E10x8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_norm_arc_tripD_hist.json", fig_label="Norm, C1, 10->70, E10x8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_cosine_arc_tripD_hist.json", fig_label="Cosine, C1, 10->70, E10x8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_mean_arc_tripD_hist.json", fig_label="Mean, C1, 10->70, E10x8", **pp)
 
   pp["names"] = [""] * 8 + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2]]
   if "center_embedding_loss" in pp["customs"]: pp["customs"].pop(pp["customs"].index('center_embedding_loss'))
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", fig_label="SUM/2, diff/(count+1), C0.01, 0.1->0.7, E10x8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", fig_label="SUM/2, diff/(count+1), C0.01, 0.1->0.7, E10x8", **pp)
 
-  pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", 'r')).items() if len(vv) > 80}
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_hist.json", pre_item=pre_item, init_epoch=80, **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_hist.json", pre_item=pre_item, init_epoch=80, **pp)
+  pre_item = {kk: vv[79] for kk, vv in json.load(open(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_hist.json", 'r')).items() if len(vv) > 80}
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_hist.json", pre_item=pre_item, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_hist.json", pre_item=pre_item, init_epoch=80, **pp, save="mobilenet_emore_bs400_sgdw_centers.svg")
+  ```
+  ![](images/mobilenet_emore_bs400_sgdw_centers.svg)
+## Mobilenet testing after 80 epochs softmax
+  ```py
+  # Plot the previous best of batch_size=256
+  import json
+  hist_path = "checkpoints/mobilenet_emore_tests/"
+  pp = {}
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  # pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [10] * 8 + [10] * 4 + [50]
+  # pp["epochs"] = [10] * 8 + [2] + [10] * 1
+  names = ["Softmax + Center = %d" % ii for ii in [1, 10, 20, 30, 40, 50, 60, 70]] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
+  # axes, _ = plot.hist_plot_split([hist_path + "mobilenet_adamw_BS256_E80_hist.json", hist_path + "mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", names=names, **pp)
+  pp["axes"] = axes
 
-  pre_item = {kk: vv[79] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_arc_MSEtripD_hist.json", pre_item=pre_item, init_epoch=80, **pp)
-  pre_item = {kk: vv[1] for kk, vv in json.load(open("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", 'r')).items()}
-  axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtripD_hist.json", pre_item=pre_item, init_epoch=82, **pp)
+  pre_item_E80 = {kk: vv[79] for kk, vv in json.load(open(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_arc_MSEtripD_hist.json", pre_item=pre_item_E80, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_MSEtriplet_hist.json", pre_item=pre_item_E80, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_soft_hist.json", pre_item=pre_item_E80, init_epoch=80, **pp)
 
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_resnet101v2_emore_adamw_5e5_soft_center_1e2D1_arc_tripD_hist.json", fig_label="resnet101v2, SUM/2, diff/count, C0, 0.01, 0.1, 1, E20x4", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/keras_mobilenetv2_emore_adamw_5e5_soft_center_1e2D_arc_tripD_hist.json", fig_label="mobilenetv2, SUM/2, diff/count, C0.01, 0.1, 1, 10, E20x4", **pp)
+  pp["epochs"] = [10] * 8 + [2] + [10] * 4 + [50]
+  names = [""] * 8 + ["Arcloss Bottleneck Only"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
+  pre_item_E80_BTO = {kk: vv[1] for kk, vv in json.load(open(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", 'r')).items()}
+
+  axes, pre_item = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json", pre_item=pre_item_E80, init_epoch=80, names=names, **pp)
+  # lr_base=0.0001, lr_decay=0.1, lr_decay_steps=[110, 120]
+  # optimizer = tfa.optimizers.SGDW(learning_rate=0.0001, weight_decay=5e-6, momentum=0.9)
+  # tt.train_single_scheduler(loss=losses.ArcfaceLoss(scale=64), epoch=30, optimizer=optimizer, initial_epoch=100)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_hist.json", pre_item=pre_item, init_epoch=122, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json", pre_item=pre_item_E80_BTO, init_epoch=82, **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtripD_hist.json", pre_item=pre_item_E80_BTO, init_epoch=82, **pp)
+  axes, pre_item = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_hist.json", pre_item=pre_item_E80_BTO, init_epoch=82, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_hist.json", pre_item=pre_item, init_epoch=125, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_hist.json", pre_item=pre_item, init_epoch=125, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_alpha30_hist.json", pre_item=pre_item, init_epoch=125, **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/mobilenet_emore_tests/"
+  aa = [
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_alpha30_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_soft_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_MSEtriplet_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtripD_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_arc_MSEtripD_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len('keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_'))
+  # >>>> agedb max :
+  #                                                          lfw    cfp_fp  agedb_30  epoch
+  # E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_hist     0.996000  0.945286  0.952000    2.0
+  # E80_soft_hist                                       0.996333  0.953714  0.952167   11.0
+  # E80_BTO_E2_arc_hist                                 0.995500  0.943429  0.955000   17.0
+  # E80_arc_MSEtripD_hist                               0.996333  0.952429  0.956500   29.0
+  # E80_MSEtriplet_hist                                 0.996333  0.963143  0.956667   36.0
+  # E80_BTO_E2_arc_MSEtripD_hist                        0.995667  0.952286  0.956667   16.0
+  # E80_BTO_E2_arc_MSEtrip_auto_alpha_hist              0.996167  0.955714  0.958167   34.0
+  # E80_BTO_E2_arc_E42_sgdw_hist                        0.995833  0.952286  0.958333   26.0
+  # E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_...  0.996500  0.961143  0.959000    9.0
+  # E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_...  0.996833  0.961000  0.959167   13.0
+  # E80_BTO_E2_arc_sgdw_hist                            0.996000  0.951714  0.959333   18.0
+  ```
+## Mobilenet testing pointwise and PReLU
+  ```py
+  import json
+  hist_path = "checkpoints/mobilenet_emore_tests/"
+  pp = {}
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  # pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [10] * 8 + [2] + [10] * 4 + [50]
+  names = ["Softmax + Center = %d" % ii for ii in [1, 10, 20, 30, 40, 50, 60, 70]] + ["Arcloss Bottleneck Only"] + ["Arcloss + Triplet 64 alpha %.2f" % ii for ii in [0.35, 0.3, 0.25, 0.2, 0.15]]
+  axes, _ = plot.hist_plot_split([hist_path + "mobilenet_adamw_BS256_E80_hist.json", hist_path + "mobilenet_adamw_BS256_E80_arc_tripD_hist.json"], **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_pointwise_E_emore_adamw_5e5_soft_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split([hist_path + "keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json", hist_path + "keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_hist.json"], **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_hist.json", **pp)
+  pre_item = {kk: vv[79] for kk, vv in json.load(open(hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_hist.json", 'r')).items() if len(vv) > 80}
+  axes, _ = plot.hist_plot_split([hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_hist.json", hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_arc_sgdw_hist.json"], pre_item=pre_item, init_epoch=80, **pp)
+  axes, _ = plot.hist_plot_split([hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_nadam_hist.json", hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_nadam_arc_sgdw_hist.json"], pre_item=pre_item, init_epoch=80, **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", **pp)
+  pre_item = {kk: vv[79] for kk, vv in json.load(open(hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_hist.json", 'r')).items() if len(vv) > 80}
+  axes, _ = plot.hist_plot_split([hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json"], pre_item=pre_item, init_epoch=80, **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/mobilenet_emore_tests/"
+  aa = [
+      hist_path + "keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_hist.json",
+      hist_path + "keras_mobilenet_PRELU_emore_adamw_5e5_soft_hist.json",
+      hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_arc_sgdw_hist.json",
+      hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_E80_before_arc_BTO_E2_nadam_arc_sgdw_hist.json",
+      hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_hist.json",
+      hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_hist.json",
+      hist_path + "keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_hist.json",
+      hist_path + "keras_mobilenet_pointwise_E_emore_adamw_5e5_soft_hist.json",
+      hist_path + "keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_hist.json",
+  ]
   ```
 ## Mobilenet testing SGDW
   ```py
@@ -1157,57 +1036,210 @@
   | TopK 3->1                                   | 0.9838     | 0.8960     | 0.8768       |
   | TopK 3->1, bottleneckOnly, initial_epoch=0  | **0.9878** | 0.8920     | **0.8857**   |
   | TopK 3->1, bottleneckOnly, initial_epoch=40 | 0.9835     | **0.9030** | 0.8763       |
-## Distillation Result
-```py
-pp = {}
-pp["epochs"] = [5, 5, 10, 10, 40]
-pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss", "arcface_loss"]
-names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json", names=names, **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc")
-pp["axes"] = axes
+***
 
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_128_emb256_dr0_arc_bs400_r100_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb256, distill 128 + arc")
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_hist.json", **pp, fig_label="mobilenet CASIA, AdamW, emb512, distill_loss_cosine only")
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_adamw_hist.json", **pp, fig_label="mobilenet CASIA, AdamW, emb512, distill_loss_euclidean only")
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill_loss_euclidean only")
-# axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_exp02_hist.json", **pp)
-axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_pick_3_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc, pick min_dist 0.3")
+# Backbones
+  **BoTNet50 on MS1MV3**
+  ```py
+  import json
+  hist_path = "checkpoints/"
+  pp = {}
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [1, 17, 17, 17, 20]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([32, 64, 64, 64], [0.1, 0.1, 0.05, 0.025])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json", fig_label="aa", names=names, **pp)
 
-# axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_adamw_lr1e1_hist.json", **pp)
-axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json", **pp)
-# axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_euc_tripEuc_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
-axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_10_tripcos_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
-axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_triplet_64_emb512_dr04_arc_bs400_r100_casia_fp16_hist.json", **pp)
+  pp["axes"] = axes
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_hist.json", fig_label="no bias", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_hist.json", fig_label="no bias, shortcut act none, tmul 2", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_hist.json", fig_label="no bias, shortcut act none, tmul 2, randaug", **pp)
 
-axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
-axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json", fig_label="swish", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_prelu_shortcut_act_none_GDC_arc_emb512_bs768_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json", fig_label="prelu", **pp)
 
-# axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_random3_hist.json", **pp)
-# axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_trip_emb512_dr04_bs400_r100_subcenter_hist.json", **pp)
-# axes, _ = plot.hist_plot_split("checkpoints//TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_random3_hist.json", **pp)
-```
-```py
-aa = [
-  "checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json",
-  "checkpoints/TT_mobilenet_distill_128_emb256_dr0_arc_bs400_r100_hist.json",
-  "checkpoints/TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_hist.json",
-  "checkpoints/TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_adamw_hist.json",
-  "checkpoints/TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_hist.json",
-  "checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_pick_3_hist.json",
-  "checkpoints//TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json",
-  "checkpoints//TT_mobilenet_distill_10_tripcos_emb512_dr04_admw_bs400_r100_subcenter_hist.json",
-]
-```
+  hist_path = "checkpoints/"
+  aa = [
+      hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json",
+      hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_hist.json",
+      hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_hist.json",
+      hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_hist.json",
+      hist_path + "TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json",
+      hist_path + "TT_botnet50_prelu_shortcut_act_none_GDC_arc_emb512_bs768_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len("TT_botnet50_"))
+  ```
+  **GhostNet on MS1MV3**
+  ```py
+  import json
+  hist_path = "checkpoints/"
+  pp = {}
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [5, 5, 10, 10, 20]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json", **pp)
+
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json", **pp, limit_loss_max=80)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efb0_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_sgdw_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_sgdw_hist.json", **pp)
+
+  ```
+  ```py
+  hist_path = "checkpoints/"
+  aa = [
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json",
+      hist_path + "TT_ghostnet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json",
+      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json",
+  ]
+
+  _ = choose_accuracy(aa, skip_name_len=len("TT_ghostnet_prelu_GDC_arc_emb512_dr0_"))
+  |                                                             |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | _wd5e4_bs512_ms1m_hist                                      | 0.995333 | 0.957714 |   0.956    |      47 |
+  | 04_wd5e4_bs512_ms1m_hist                                    | 0.995833 | 0.953571 |   0.959    |      45 |
+  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist  | 0.997167 | 0.959429 |   0.969333 |      45 |
+  | sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist    | 0.996167 | 0.961286 |   0.966833 |      46 |
+  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist         | 0.9965   | 0.965    |   0.97     |      48 |
+  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist         | 0.996833 | 0.962429 |   0.969    |      53 |
+  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist         | 0.997167 | 0.959857 |   0.968667 |      48 |
+  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist | 0.996333 | 0.959714 |   0.968    |      47 |
+  | sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist          | 0.9965   | 0.957857 |   0.966    |      45 |
+  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist        | 0.996667 | 0.960429 |   0.968667 |      45 |
+  ```
+  **Mobilenet ArcFace and CurricularFace on Emore**
+  ```py
+  import json
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  # pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [5, 5, 10, 10, 80]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json", **pp, names=names)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_batch_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_false_bias_true_cos16_batch_hist.json", **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/"
+  aa = [
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_batch_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_hist.json",
+      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_false_bias_true_cos16_batch_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_GDC_emb512_"))
+  ```
+  **Mobilenet CurricularFace on CASIA**
   ```py
   hist_path = "checkpoints/mobilenet_casia_tests/"
   pp = {}
   pp["epochs"] = [5, 5, 10, 10, 40]
   pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_emb512_dr0_bs400_hist.json", fig_label="Mobilenet, emb512, dr0, bs400, base", names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_bs400_hist.json", names=names, **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_emb512_dr4_bs400_hist.json", fig_label="Mobilenet, emb512, dr0.4, bs400, base", **pp)
+  hist_path = "checkpoints/"
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_false_usebias_true_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_true_usebias_true_hist.json", **pp)
+  ```
+  **Mobilenet scale and use_bias on CASIA**
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["epochs"] = [5, 5, 30]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  names = ["ArcFace Scale 16", "ArcFace Scale 32", "ArcFace Scale 64"]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json", names=names, **pp)
+  pp["axes"] = axes
+
+  hist_path = "checkpoints/"
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_curricular_bs512_scale_true_bias_true_cos30_casia_hist.json", **pp)
+
+  hist_path = "checkpoints/"
+  aa = [
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_emb512_GDC_dr04_arc_bs512_"))
+  ```
+***
+
+# Distillation
+## Basic distillation
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 40]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split("checkpoints/mobilenet_casia_tests/TT_mobilenet_base_emb512_dr0_bs400_hist.json", fig_label="Mobilenet, emb512, dr0, bs400, base", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split("checkpoints/mobilenet_casia_tests/TT_mobilenet_base_emb512_dr4_bs400_hist.json", fig_label="Mobilenet, emb512, dr0.4, bs400, base", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_hist.json", fig_label="Mobilenet, emb512, dr0, bs400, Teacher r34", **pp)
 
@@ -1215,7 +1247,6 @@ aa = [
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr4_bs400_2_hist.json", fig_label="Mobilenet, emb512, dr0.4, bs400, Teacher r100", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_64_emb512_dr4_adamw_lr1e3_arcT4_bs400_r100_hist.json", fig_label="Mobilenet, emb512, dr0.4, distill 64, bs400, arcT4, adamw, Teacher r100", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_64_emb512_dr4_arcT4_bs400_r100_hist.json", fig_label="Mobilenet, emb512, dr0.4, distill 64, bs400, arcT4, Teacher r100", **pp, save="mobilenet_casia_bs400_subcenter_distill.svg")
 
   aa = [
@@ -1226,6 +1257,8 @@ aa = [
       hist_path + "TT_mobilenet_distill_emb512_dr4_bs400_2_hist.json",
       hist_path + "TT_mobilenet_distill_64_emb512_dr4_adamw_lr1e3_arcT4_bs400_r100_hist.json",
       hist_path + "TT_mobilenet_distill_64_emb512_dr4_arcT4_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_128_emb256_dr0_arc_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json",
   ]
 
   choose_accuracy(aa)
@@ -1241,6 +1274,103 @@ aa = [
   | r100    | 0.4     | SGDW      | 7       | 0.9905     | 0.9170     | 0.9112       |
   | r100    | 0.4     | SGDW      | 64      | **0.9938** | 0.9333     | **0.9435**   |
   | r100    | 0.4     | AdamW     | 64      | 0.9920     | **0.9346** | 0.9387       |
+## Distillation with arcface on CASIA
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 40]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss", "arcface_loss"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json", names=names, **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc")
+  pp["axes"] = axes
+
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_random3_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_casia_fp16_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_1_sgdw_emb512_dr04_arc_bs400_r100_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_hist.json", **pp, fig_label="mobilenet CASIA, AdamW, emb512, distill_loss_cosine only")
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_cos_only_emb512_dr4_bs400_r100_adamw_random3_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill_loss_euclidean only")
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_adamw_hist.json", **pp, fig_label="mobilenet CASIA, AdamW, emb512, distill_loss_euclidean only")
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_eucd_only_emb512_dr4_bs400_r100_adamw_lr1e1_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb256_dr0_arc_bs400_r100_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb256, dr0, distill 128 + arc")
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb256, dr0.4, distill 128 + arc")
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_exp02_hist.json", **pp, save="mobilenet_casia_distillation_arc_sgdw.svg")
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_pick_3_hist.json", **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc, pick min_dist 0.3")
+
+  aa = [
+      hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_hist.json",
+      hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_emb512_dr4_bs400_2_hist.json",
+      hist_path + "TT_mobilenet_distill_64_emb512_dr4_adamw_lr1e3_arcT4_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_64_emb512_dr4_arcT4_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_128_emb256_dr0_arc_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json",
+      hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json",
+  ]
+
+  choose_accuracy(aa)
+  ```
+  ![](images/mobilenet_casia_distillation_arc_sgdw.svg)
+## Distillation with softmax or triplet on CASIA
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 40]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss", "arcface_loss"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json", names=names, **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc")
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_softmax_emb512_dr04_arc_bs400_r100_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128to16_softmax_emb512_dr04_bs400_r100_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_64_softmax_emb512_dr04_bs400_r100_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_softmax_5_emb512_dr04_bs400_r100_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_softmax_2_emb512_dr04_arc_bs400_r100_casia_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_sgdw_emb512_dr04_arc_bs400_r100_casia_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_trip_emb512_dr04_bs400_r100_subcenter_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_10_tripcos_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_triplet_64_emb512_dr04_arc_bs400_r100_casia_fp16_hist.json", **pp, save="mobilenet_casia_distillation_soft_sgdw.svg")
+
+  # pp["customs"].pop(pp["customs"].index('distill_embedding_loss'))
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_euc_tripEuc_emb512_dr04_admw_bs400_r100_subcenter_hist.json", **pp)
+  ```
+  ![](images/mobilenet_casia_distillation_soft_sgdw.svg)
+## Distillation with arcface on Emore or Glint360k
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 60]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss", "arcface_loss"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_emb512_dr0_bs400_r100_subcenter_hist.json", names=names, **pp, fig_label="mobilenet CASIA, SGDW, emb512, distill 128 + arc")
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_emore_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_cos_only_sgdw_emb512_dr04_arc_bs400_r100_emore_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_cos_only_128_sgdw_emb512_dr04_arc_bs400_r100_emore_hist.json", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_ms1m_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_hist.json", **pp, save="mobilenet_emore_glint_distillation_arc_sgdw.svg")
+
+  TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist
+  TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist
+  ```
+  ![](images/mobilenet_emore_glint_distillation_arc_sgdw.svg)
+***
+
 ## MSE Dense
   ```py
   hist_path = "checkpoints/mobilenet_casia_tests/"
@@ -1333,7 +1463,6 @@ aa = [
 | glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB                     |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 |
 | glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |
 | GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                           |     0.872066 |     0.961497 |     0.973871 |     0.980672 |     0.987421 |     0.991819 |
 | keras_ResNest101_emore_triplet_basic_agedb_30_epoch_96_0.973333_IJBB |     0.374294 |     0.762025 |     0.895813 |     0.944012 |     0.974878 |     0.991431 |
 
 |                                                                                                                                                        |        1e-06 |        1e-05 |       0.0001 |       0.001 |         0.01 |          0.1 |
@@ -1356,9 +1485,70 @@ aa = [
 | keras_mobilenet_PRELU_emore_adamw_5e5_soft_basic_agedb_30_epoch_58_0.945000_IJBB                                                                       |     0.354528 |       0.6963 |     0.836514 |    0.911003 |     0.963681 |     0.986758 |
 | keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_basic_agedb_30_epoch_100_0.956833_IJBB                                                     |      0.27926 |     0.714508 |     0.860175 |    0.927361 | **0.967965** |     0.986952 |
 | keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_basic_agedb_30_epoch_77_0.951167_IJBB                                                     |     0.341383 |     0.677215 |     0.834859 |    0.921422 |     0.963389 |     0.985979 |
-| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_35_0.968000_IJBB                                                   |      0.36777 |     0.810127 |     0.898734 |    0.938462 |     0.964654 |     0.983155 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.971667_IJBB_11                                      |      0.36962 |     0.820545 |     0.909056 |    0.945862 |     0.967575 |       0.9852 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_49_0.972333_IJBB_11                                      |     0.372931 |     0.817916 |     0.908082 |    0.944304 |     0.968549 |     0.984907 |
+| TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_basic_agedb_30_epoch_28_0.956000_IJBB_11               |     0.379552 |     0.788705 |      0.88705 |    0.930185 |     0.960759 |     0.980234 |
+| TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_basic_agedb_30_epoch_49_0.951333_IJBB_11                      |    0.0356378 |     0.174878 |      0.46407 |    0.785394 |     0.943817 |     0.979065 |
+| TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_basic_agedb_30_epoch_49_0.950167_IJBB_11                     |     0.345375 |     0.710029 |     0.850243 |    0.924245 |     0.959786 |     0.981402 |
+
+|                                                                                                                                                                            |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_35_0.968000_IJBB                                                                       |  0.36777 | 0.810127 | 0.898734 | 0.938462 | 0.964654 | 0.983155 |
+| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_47_0.968833_IJBB_11                                                                    | 0.387244 | 0.821908 | 0.906621 | 0.941967 | 0.966407 | 0.984226 |
+| TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_emore_fp16_basic_agedb_30_epoch_43_0.969167_IJBB_11                                                              |  0.34888 |  0.81334 | 0.898442 | 0.938169 |  0.96816 | 0.985589 |
+| TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.969667_IJBB_11                                                              | 0.340896 | 0.817429 | 0.896884 | 0.939241 | 0.966796 | 0.985394 |
+| TT_mobilenet_pointwise_distill_cos_only_sgdw_emb512_dr04_arc_bs400_r100_emore_basic_agedb_30_epoch_37_0.965833_IJBB_11                                                     | 0.351801 | 0.764557 | 0.869133 | 0.922103 | 0.959104 | 0.983155 |
+| TT_mobilenet_pointwise_distill_cos_only_128_sgdw_emb512_dr04_arc_bs400_r100_emore_basic_agedb_30_epoch_35_0.969000_IJBB_11                                                 | 0.364946 |   0.8185 |      0.9 | 0.938851 | 0.966407 | 0.984713 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_10_batch_10000_0.968167_IJBB_11                                              | 0.360175 | 0.832425 | 0.914703 | 0.946154 | 0.966018 | 0.983447 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_10_batch_20000_0.969833_IJBB_11                                              | 0.345959 | 0.839435 | 0.915579 |  0.94742 | 0.967478 | 0.983155 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_11_0.971667_IJBB_11                                                          | 0.372444 | 0.791918 | 0.910321 | 0.944401 | 0.967089 | 0.983544 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_1_batch_40000_0.971500_IJBB_11                                               | 0.377507 | 0.826582 | 0.916553 | 0.946543 | 0.967965 | 0.983544 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBB_11                                              | 0.363875 | 0.836125 | 0.916358 | 0.947322 | 0.969036 | 0.983252 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBB_11                                              | 0.346835 | 0.816748 | 0.915871 | 0.947225 |  0.97001 | 0.983447 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.971667_IJBB_11                                                          |  0.36962 | 0.820545 | 0.909056 | 0.945862 | 0.967575 |   0.9852 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_49_0.972333_IJBB_11                                                          | 0.372931 | 0.817916 | 0.908082 | 0.944304 | 0.968549 | 0.984907 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_39_0.969833_IJBB_11                                                     | 0.395813 | 0.829114 | 0.906524 | 0.946641 | 0.971568 | 0.985979 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_41_0.971667_IJBB_11                                                     | 0.365141 | 0.846154 | 0.914508 | 0.950146 | 0.971373 | 0.986368 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_44_0.971833_IJBB_11                                                     | 0.365044 | 0.844693 | 0.915579 | 0.950341 |  0.97147 | 0.985979 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBB_11                                                     | 0.366699 | 0.841675 |   0.9148 | 0.950536 | 0.971081 | 0.986368 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBB_11                                        | 0.352483 | 0.835151 | 0.912463 | 0.950341 |  0.97001 | 0.983739 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_19_batch_2000_0.962167_IJBB_11                                    |  0.30964 | 0.816553 | 0.905355 | 0.943038 | 0.970497 | 0.985686 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_20_batch_2000_0.964667_IJBB_11                                    | 0.319864 | 0.823369 | 0.906037 | 0.944596 | 0.969426 | 0.985686 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_21_batch_4000_0.965333_IJBB_11                                    | 0.316456 | 0.804771 | 0.903895 | 0.945667 | 0.969815 | 0.985005 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_20_0.962333_IJBB_11                                               | 0.351607 | 0.818695 |  0.90224 |  0.94187 | 0.968549 | 0.983155 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_49_0.970000_IJBB_11                                               |  0.36446 | 0.860954 | 0.919766 | 0.953067 | 0.971081 |  0.98481 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_15_0.970000_IJBB_11                         | 0.344888 | 0.864752 | 0.920156 | 0.951315 | 0.969912 | 0.984129 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_basic_agedb_30_epoch_47_batch_2000_0.966333_IJBB_11                                     | 0.353944 | 0.788413 | 0.904771 | 0.945959 | 0.970204 | 0.985297 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_basic_agedb_30_epoch_44_batch_4000_0.969500_IJBB_11                                   | 0.315579 | 0.843525 | 0.916261 | 0.949659 | 0.969718 | 0.986076 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_basic_agedb_30_epoch_15_batch_4000_0.971500_IJBB_11 |  0.39075 | 0.822785 | 0.911879 | 0.951607 | 0.974586 | 0.988413 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_E17_arc_basic_agedb_30_epoch_4_0.970333_IJBB_11     | 0.372055 | 0.849757 | 0.920351 | 0.952386 |  0.97186 | 0.986076 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_curricular_trip_basic_agedb_30_epoch_15_0.959667_IJBB_11                      | 0.408861 | 0.756767 | 0.886758 | 0.940701 |  0.96962 | 0.988413 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_basic_agedb_30_epoch_47_0.955333_IJBB_11                                          | 0.427751 |   0.8074 | 0.896884 | 0.938364 | 0.964946 | 0.985492 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_basic_agedb_30_epoch_16_0.959500_IJBB_11                             | 0.450828 | 0.776436 | 0.890847 | 0.942454 | 0.969815 | 0.990068 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_basic_agedb_30_epoch_24_0.960167_IJBB_11                             | 0.445959 | 0.782084 | 0.891237 | 0.942454 | 0.970204 | 0.989484 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_basic_agedb_30_epoch_16_0.955500_IJBB_11                                  | 0.390652 | 0.802629 | 0.900097 | 0.941188 | 0.966018 | 0.984713 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_basic_agedb_30_epoch_22_0.961167_IJBB_11                          | 0.413827 | 0.772639 | 0.881013 | 0.938948 | 0.969523 | 0.989679 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_random2_basic_agedb_30_epoch_18_0.960667_IJBB_11                  | 0.409737 | 0.777215 | 0.883836 | 0.939143 | 0.970497 | 0.989971 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_random3_basic_agedb_30_epoch_26_0.952500_IJBB_11                  | 0.387342 | 0.733885 |  0.86407 | 0.929893 | 0.968257 |  0.99075 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_E16_arc_basic_agedb_30_epoch_18_0.959000_IJBB_11                  | 0.392697 | 0.819085 |      0.9 | 0.940896 | 0.966796 | 0.985297 |
+| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_E16_arc_basic_agedb_30_epoch_3_0.959000_IJBB_11                   | 0.395618 | 0.819377 | 0.900195 | 0.940409 | 0.966894 | 0.985784 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBB_11                          | 0.360759 | 0.899318 | 0.941967 | 0.960273 | 0.972444 | 0.984129 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_48_batch_4000_0.978833_IJBB_11  | 0.317235 | 0.896981 | 0.941675 | 0.960954 | 0.971762 | 0.983836 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_50_batch_2000_0.979000_IJBB_11  | 0.313632 | 0.898832 | 0.941675 | 0.960759 | 0.971957 | 0.984031 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                    | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                            | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
+
+
+|                                                                                                                                                   |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+|:------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                        | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
+| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                            | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBC_11                     | 0.716981 | 0.886077 | 0.938743 | 0.960986 | 0.977604 | 0.987933 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBC_11                     | 0.774608 | 0.890985 | 0.939357 | 0.960986 | 0.977144 | 0.987779 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBC_11                            | 0.741423 | 0.848699 | 0.911745 | 0.951629 | 0.974127 |  0.98737 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBC_11                            | 0.848545 | 0.896457 | 0.935573 | 0.961651 | 0.977706 | 0.990438 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBC_11               | 0.817406 | 0.889656 | 0.934499 |  0.96119 | 0.977451 | 0.988495 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBC_11 | 0.880043 | 0.934499 | 0.955924 | 0.970241 | 0.980161 | 0.988597 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBC_11   |   0.8894 | 0.933834 |  0.95577 | 0.970292 | 0.981439 | 0.988546 |
+
 ***
 # Ali Datasets
   ```py
@@ -1629,6 +1819,7 @@ aa = [
   }
   ```
 ***
+
 # EuclideanDense
   ```py
   class EuclideanDense(NormDense):
@@ -1650,12 +1841,916 @@ aa = [
   ```
 ***
 
-# Bob
-- [QMUL-SurvFace: Surveillance Face Recognition Challenge](https://qmul-survface.github.io/protocols.html)
-- [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
-- [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
-- [Surveillance Face Recognition Challenge](https://arxiv.org/pdf/1804.09691.pdf)
-```sh
-sudo apt-get install libblitz0-dev
-pip install bob.blitz bob.core bob.io.base bob.math bob.measure
-```
+# 人脸识别常用评价指标
+## 链接
+  - [QMUL-SurvFace: Surveillance Face Recognition Challenge](https://qmul-survface.github.io/protocols.html)
+  - [QMUL Surveillance Face Recognition Challenge @ ICCV2019 workshop RLQ](https://eval.ai/web/challenges/challenge-page/392/evaluation)
+  - [Surveillance Face Recognition Challenge](https://arxiv.org/pdf/1804.09691.pdf)
+## 基本概念
+  - **混淆矩阵的性能度量**
+    - **真正例 TP** True Positive, 预测值和真实值都为 1
+    - **真负例 TN** True Negative, 预测值与真实值都为 0
+    - **假正例 FP** False positive, 预测值为 1，真实值为 0
+    - **假负例 FN** False Negative, 预测值为 0，真实值为 1
+    - **真正例率 TPR = TP / (TP + FN)** True Positive Rate, 也称为召回率和灵敏性，正确识别的正例数据在实际正例数据中的百分比
+    - **假正例率 FPR = FP / (TN + FP)** False Positive Rate, 实际值是负例数据，预测错误的百分比
+    - **假负例率 FNR = FN / (TP + FN) = 1 - TPR** False Negative Rate
+    - **真负例率 TNR = TN / (TN + FP) = 1 - FPR** True Negative Rate
+    - **准确率 Accuracy = (TP + TN) / (TP + FN + FP + TN)**
+    - **精确度 Precision = TP / (TP + FP)**
+  - **人脸验证 Face Verification 性能度量**
+    - **NFA (FP)** 错误接受次数
+    - **NIRA (FP + TN)** 类间测试次数
+    - **NFR (FN)** 错误拒绝次数
+    - **NGRA (TP + FN)** 类内测试次数
+    - **错误接受率 FAR / FMR** False Acceptance / Match Rate, `不同人之间的相似度 > 给定阈值 T 的数量 / 实际所有不同人的数量 == NFA / NIRA == FP / (FP + TN) == FPR`
+      ```sh
+      FAR(t) = |{s >= t, where s ∈ U}| / |U|, where U￼ denotes the set of unmatched face image pairs.
+      ```
+    - **错误拒绝率 FRR / FNMR** False Rejection / Non-Match Rate, `相同人之间的相似度 < 给定阈值 T 的数量 / 实际所有相同人的数量 == NFR / NGRA == FN / (TP + FN) == FNR`
+      ```sh
+      FRR(t) = |{s < t, where s ∈ M}| / |M|, where M is the set of matched face image pairs.
+      ```
+    - **正确接受率 TAR / GAR** True / Genuine Acceptance Rate, `相同人之间的相似度 > 给定阈值 T 的数量 / 实际所有相同人的数量 == 1 - FRR == TPR​`
+    - **等错误率 EER** Equal Error Rate, 取阈值 `T` 时，使得 `FAR=FRR` 的 FAR 值
+  - **人脸认证 Face Indentification 1：N 识别**，数据集中包含 `注册库 gallery set` 与 `查询库 probe set`，其中查询库包含 `库中人脸 in-gallery probe items` 与  `库外人脸 out-of-gallery probe items`
+    - **FPIR / FAR** False Positive Identification Rate, 将库外的人脸错误识别为库中人脸的比例
+      ```sh
+      FPIR(t) = 错误次数 false alarm / 库外人脸总数 total number of un-mated retrieved probe
+      其中 r 为阈值
+      ```
+    - **FNIR** False Negative Identification Rate, 将库中的人脸识别错误，或识别为库外人脸的比例
+      ```sh
+      FNIR(t,r) = 错误次数 number of mated probe with lower matching score than thresold / 库中人脸总数 total number of mated retrieved probe
+      其中 r 为阈值，t 为 top / rank / searching attempts
+      ```
+    - **TPIR / DIR** True Positive Identification Rate / Detection and Identification Rate, 将库中的人脸识别正确的比例
+      ```sh
+      TPIR(t,r) = 1 - FNIR(t,r)
+      ```
+    - **TAR@FAR=0.01 / TPIR@FPIR=0.01** 表示在 `FAR/FPIR = 0.001` 时的 `TAR / TPIR` 值
+## Python 示例
+  - **python 计算 EER 示例** 使用 `bob.measure` 作为对比结果
+    ```py
+    from icecream import ic
+    pos_sims, neg_sims = np.random.normal(1, 1, 100), np.random.normal(0, 1, 2000)
+    pos_sorted, neg_sorted = np.sort(pos_sims), np.sort(neg_sims)
+    pos_num, neg_num = pos_sorted.shape[0], neg_sorted.shape[0]
+    for ii in range(pos_sorted.shape[0]):
+        thresh = pos_sorted[ii]
+        tpr = (pos_num - ii) / pos_num
+        frr = 1 - tpr
+        far = (neg_sorted > thresh).sum() / neg_num
+        if far < frr:
+            break
+        else:
+            err, err_thresh = far, thresh
+    ic(err, err_thresh)
+    # ic| err: 0.2935, err_thresh: 0.5190348191618015
+
+    import bob.measure
+    err_thresh = bob.measure.eer_threshold(neg_sims, pos_sims)
+    far, frr = bob.measure.farfrr(neg_sims, pos_sims, err_thresh)
+    ic(far, err_thresh)
+    # ic| far: 0.2935, err_thresh: 0.5189544119811565
+
+    from sklearn.metrics import roc_curve, auc
+    from scipy.optimize import brentq
+    from scipy.interpolate import interp1d
+    label = [1] * pos_sims.shape[0] + [0] * neg_sims.shape[0]
+    score = np.hstack([pos_sims, neg_sims])
+    fpr, tpr, _ = roc_curve(label, score)
+    roc_auc = auc(fpr,tpr)
+    eer = brentq(lambda x : 1. - x - interp1d(fpr, tpr)(x), 0., 1)
+    ic(eer)
+    # ic| eer: 0.293500000000161
+    ```
+  - **python 计算 tpir fpir 示例** 使用 `bob.measure` 作为对比结果
+    ```py
+    import bob.measure
+
+    in_gallery_num, out_gallery_num, gallery_id_num = 3000, 2000, 150
+    pos_sims = np.random.normal(1, 1, in_gallery_num) + 0.5
+    neg_sims = np.random.normal(0, 1, gallery_id_num * in_gallery_num).reshape(in_gallery_num, -1) - 0.5
+    non_gallery_sims = np.random.normal(-2, 1, gallery_id_num * out_gallery_num).reshape(out_gallery_num, -1)
+    print(pos_sims.shape, neg_sims.shape, non_gallery_sims.shape)
+    # (3000,) (3000, 150) (2000, 150)
+
+    correct_pos_cond = pos_sims > neg_sims.max(1)
+    non_gallery_sims_sorted = np.sort(non_gallery_sims.max(1))[::-1]
+    cmc_scores = list(zip(neg_sims, pos_sims.reshape(-1, 1))) + list(zip(non_gallery_sims, [None] * non_gallery_sims.shape[0]))
+    for far in [0.001, 0.01, 0.1]:
+        thresh = non_gallery_sims_sorted[max(int((non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
+        tpir = np.logical_and(correct_pos_cond, pos_sims > thresh).sum() / pos_sims.shape[0]
+        bob_thresh = bob.measure.far_threshold(non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
+        bob_tpir = bob.measure.detection_identification_rate(cmc_scores, threshold=bob_thresh, rank=1)
+        bob_far = bob.measure.false_alarm_rate(cmc_scores, threshold=bob_thresh)
+        print("far=%f, pr=%f, th=%f, bob_far=%f, bob_tpir=%f, bob_th=%f" %(far, tpir, thresh, bob_far, bob_tpir, bob_thresh))
+    # far=0.001000, pr=0.183000, th=2.342741, bob_far=0.001000, bob_tpir=0.183000, bob_th=2.342741
+    # far=0.010000, pr=0.257333, th=1.847653, bob_far=0.010000, bob_tpir=0.257333, bob_th=1.847653
+    # far=0.100000, pr=0.276000, th=1.178892, bob_far=0.100000, bob_tpir=0.276000, bob_th=1.178892
+
+    bob.measure.plot.detection_identification_curve(cmc_scores)
+    ```
+## Bob
+  - [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
+  - [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
+  - [Gitlab bob](https://gitlab.idiap.ch/bob)
+  ```sh
+  sudo apt-get install libblitz0-dev
+  pip install bob.blitz bob.core bob.io.base bob.math bob.measure
+
+  sudo apt install libgif-dev
+  pip install bob.db.ijbc
+
+  # bob_dbmanage.py ijbc download
+  mwget -n 20 https://www.idiap.ch/software/bob/databases/latest/ijbc.tar.bz2
+  tar xvf ijbc.tar.bz2 -C /opt/anaconda3/lib/python3.7/site-packages/bob/db/ijbc
+
+  sudo apt install libmatio-dev
+  pip install bob.io.matlab bob.learn.linear bob.sp bob.learn.activation bob.bio.base
+  ```
+  ```py
+  import bob.db.ijbc
+  db = bob.db.ijbc.Database()
+  ```
+  ```py
+  sys.path.append('workspace/samba/Keras_insightface/')
+  import IJB_evals
+  tt = IJB_evals.IJB_test(None, '/datasets/IJB_release/', 'IJBC', restore_embs='workspace/samba/Keras_insightface/IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz')
+  fars, tpirs, g1_cmc_scores, g2_cmc_scores = tt.run_model_test_1N()
+  IJB_evals.plot_dir_far_cmc_scores([(fars, tpirs)], names=["aa"])
+
+  ''' Gallery 1 '''
+  g1_neg_sims = np.array([ii[0] for ii in g1_cmc_scores[:9670]])
+  g1_pos_sims = np.array([ii[1][0] for ii in g1_cmc_scores[:9670]])
+  g1_non_gallery_sims = np.array([ii[0] for ii in g1_cmc_scores[9670:]])
+  print(g1_neg_sims.shape, g1_pos_sims.shape, g1_non_gallery_sims.shape)
+  # (9670, 1771) (9670,) (9923, 1772)
+
+  g1_correct_pos_cond = g1_pos_sims > g1_neg_sims.max(1)
+  g1_non_gallery_sims_sorted = np.sort(g1_non_gallery_sims.max(1))[::-1]
+  g1_threshes, g1_recalls = [], []
+  for far in fars:
+      # thresh = g1_non_gallery_sims_sorted[int(np.ceil(g1_non_gallery_sims_sorted.shape[0] * far))]
+      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
+      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
+      g1_threshes.append(thresh)
+      g1_recalls.append(recall)
+      # print("FAR = {:.10f} TPIR = {:.10f} th = {:.10f}".format(far, recall, thresh))
+
+  ''' Gallery 2 '''
+  g2_neg_sims = np.array([ii[0] for ii in g2_cmc_scores[:9923]])
+  g2_pos_sims = np.array([ii[1][0] for ii in g2_cmc_scores[:9923]])
+  g2_non_gallery_sims = np.array([ii[0] for ii in g2_cmc_scores[9923:]])
+  print(g2_neg_sims.shape, g2_pos_sims.shape, g2_non_gallery_sims.shape)
+  # (9923, 1758) (9923,) (9670, 1759)
+
+  g2_correct_pos_cond = g2_pos_sims > g2_neg_sims.max(1)
+  g2_non_gallery_sims_sorted = np.sort(g2_non_gallery_sims.max(1))[::-1]
+  g2_threshes, g2_recalls = [], []
+  for far in fars:
+      # thresh = g2_non_gallery_sims_sorted[int(np.ceil(g2_non_gallery_sims_sorted.shape[0] * far)) - 1]
+      thresh = g2_non_gallery_sims_sorted[max(int((g2_non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
+      recall = np.logical_and(g2_correct_pos_cond, g2_pos_sims > thresh).sum() / g2_pos_sims.shape[0]
+      g2_threshes.append(thresh)
+      g2_recalls.append(recall)
+
+  ''' Bob FAR thresh and DIR '''
+  for far in [10 ** (-ii) for ii in range(4, -1, -1)]:
+      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
+      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
+      bob_thresh = bob.measure.far_threshold(g1_non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
+        dir = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=bob_thresh, rank=1)
+      bob_far = bob.measure.false_alarm_rate(g1_cmc_scores, threshold=bob_thresh)
+      print("far=%f, pr=%f, th=%f, bob_th=%f, bob_far=%f, dir=%f" %(far, recall, thresh, bob_thresh, bob_far, dir))
+  # far=0.000100, pr=0.359359, th=0.841509, bob_th=0.841509, bob_far=0.000000, dir=0.359359
+  # far=0.001000, pr=0.824405, th=0.639982, bob_th=0.639982, bob_far=0.000907, dir=0.824405
+  # far=0.010000, pr=0.954188, th=0.412905, bob_th=0.412905, bob_far=0.009977, dir=0.954188
+  # far=0.100000, pr=0.969183, th=0.338687, bob_th=0.338687, bob_far=0.099970, dir=0.969183
+  # far=1.000000, pr=0.975698, th=0.185379, bob_th=0.185379, bob_far=1.000000, dir=0.975698
+
+  ''' Bob rank '''
+  for ii in [1, 5, 10]:
+      g1_top_k = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=0, rank=ii)
+      g2_top_k = bob.measure.detection_identification_rate(g2_cmc_scores, threshold=0, rank=ii)
+      mean_top_k = bob.measure.detection_identification_rate(g1_cmc_scores + g2_cmc_scores, threshold=0, rank=ii)
+      print("[top%2d] g1=%f, g2=%f, mean=%f" % (ii, g1_top_k, g2_top_k, mean_top_k))
+  # [top 1] g1=0.975698, g2=0.958581, mean=0.967029
+  # [top 5] g1=0.983351, g2=0.972186, mean=0.977696
+  # [top10] g1=0.985212, g2=0.976418, mean=0.980758
+
+  ''' Plot comparing bob '''
+  import bob.measure
+  axes = bob.measure.plot.detection_identification_curve(g1_cmc_scores, far_values=fars, rank=1, logx=True)
+  axes[0].set_label("bob gallery 1")
+  aa = axes[0].get_ydata().copy()
+  axes = bob.measure.plot.detection_identification_curve(g2_cmc_scores, far_values=fars, rank=1, logx=True)
+  axes[0].set_label("bob gallery 2")
+  bb = axes[0].get_ydata().copy()
+  plt.plot(axes[0].get_xdata(), (aa + bb) / 2, label="bob mean")
+
+  plt.plot(fars, g1_recalls, lw=1, linestyle="--", label="gallery 1")
+  plt.plot(fars, g2_recalls, lw=1, linestyle="--", label="gallery 2")
+  plt.plot(fars, tpirs, lw=1, linestyle="--", label="mean")
+
+  plt.xlabel("False Alarm Rate")
+  plt.xlim([0.0001, 1])
+  plt.xscale("log")
+  plt.ylabel("Detection & Identification Rate (%)")
+  plt.ylim([0, 1])
+
+  plt.grid(linestyle="--", linewidth=1)
+  plt.legend()
+  plt.tight_layout()
+  ```
+***
+
+# cavaface.pytorch
+  ```py
+  from optimizer.lr_scheduler import CosineWarmupLR
+  aa = CosineWarmupLR(None, batches=100, epochs=16, base_lr=0.1, target_lr=1e-5, warmup_epochs=0, warmup_lr=0)
+  aa.last_iter = -1
+  xx, yy = range(100 * 32), []
+  for ii in xx:
+      aa.last_iter += 1
+      aa.get_lr()
+      yy.append(aa.learning_rate)
+  plt.plot(xx, yy)
+
+  targetlr = 1e-5
+  baselr = 0.1
+  niters = 100
+  warmup_iters = 0
+  learning_rate = lambda nn: targetlr + (baselr - targetlr) * (1 + np.cos(np.pi * (nn - warmup_iters) / (niters - warmup_iters))) / 2
+  xx = np.arange(1, 120)
+  plt.plot(xx, learning_rate(xx))
+  ```
+  ```py
+  import evals
+  from data_distiller import teacher_model_interf_wrapper
+  mm = teacher_model_interf_wrapper('../models/GhostNet_x1.3_Arcface_Epoch_24.pth')
+  for aa in [os.path.join("/datasets/ms1m-retinaface-t1", ii) for ii in ["lfw.bin", "cfp_fp.bin", "agedb_30.bin"]]:
+      evals.eval_callback(lambda imm: mm(imm * 128 + 127.5), aa).on_epoch_end()
+  # lfw evaluation max accuracy: 0.997333, thresh: 0.290534
+  # cfp_fp evaluation max accuracy: 0.975571, thresh: 0.176912
+  # agedb_30 evaluation max accuracy: 0.974667, thresh: 0.196453
+  ```
+***
+
+# TFlite
+## TFlite float model
+  ```py
+  tf.__version__
+  # '2.1.0'
+
+  import glob2
+  mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+  converter.target_spec.supported_types = [tf.float16]  # float16
+  open('./model_tf2.tflite', 'wb').write(converter.convert())
+  ```
+  ```py
+  tf.__version__
+  # '1.15.0'
+
+  import glob2
+  converter = tf.lite.TFLiteConverter.from_keras_model_file("checkpoints/keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5")
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+  converter.target_spec.supported_types = [tf.float16]  # float16
+  open('./model.tflite', 'wb').write(converter.convert())
+  ```
+  ```py
+  tf.__version__
+  # '1.11.0'
+
+  converter = tf.contrib.lite.TocoConverter.from_keras_model_file('mobilenet_prelu_tf11.h5')
+  open('mobilenet_prelu_tf11.tflite', 'wb').write(converter.convert())
+  ```
+## TFLite interpreter test
+  ```py
+  tf.__version__
+  # '2.1.0'
+
+  import glob2
+  interpreter = tf.lite.Interpreter('./model.tflite')
+  interpreter.allocate_tensors()
+  input_index = interpreter.get_input_details()[0]["index"]
+  output_index = interpreter.get_output_details()[0]["index"]
+
+  def tf_imread(file_path):
+      img = tf.io.read_file(file_path)
+      img = tf.image.decode_jpeg(img, channels=3)
+      img = tf.image.convert_image_dtype(img, tf.float32)
+      img = (img - 0.5) * 2
+      return tf.expand_dims(img, 0)
+
+  imm = tf_imread('/datasets/faces_emore_112x112_folders/0/1.jpg')
+  # imm = tf_imread('./temp_test/faces_emore_test/0/1.jpg')
+  interpreter.set_tensor(input_index, imm)
+  interpreter.invoke()
+  aa = interpreter.get_tensor(output_index)[0]
+
+  def foo(imm):
+      interpreter.set_tensor(input_index, imm)
+      interpreter.invoke()
+      return interpreter.get_tensor(output_index)[0]
+  %timeit -n 100 foo(imm)
+  # 36.7 ms ± 471 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+  mm = tf.keras.models.load_model(glob2.glob('./keras_mobilefacenet_256_basic_*.h5')[0], compile=False)
+  bb = mm(imm).numpy()
+  assert np.allclose(aa, bb, rtol=1e-3)
+  %timeit mm(imm).numpy()
+  # 71.6 ms ± 213 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+  ```
+## TFLite uint8 quantization
+  ```py
+  def tf_imread(file_path):
+      img = tf.io.read_file(file_path)
+      img = tf.image.decode_jpeg(img, channels=3)
+      img = tf.image.convert_image_dtype(img, tf.float32)
+      img = (img - 0.5) * 2
+      return tf.expand_dims(img, 0)
+
+  def representative_data_gen():
+      for input_value in tf.data.Dataset.from_tensor_slices(image_names).batch(1).take(100):
+          yield [tf_imread(input_value[0])]
+
+  aa = np.load('faces_emore_112x112_folders_shuffle.npz', allow_pickle=True)
+  image_names, image_classes = aa["image_names"], aa["image_classes"]
+
+  mm = tf.keras.models.load_model("checkpoints/keras_se_mobile_facenet_emore_triplet_basic_agedb_30_epoch_100_0.958333.h5", compile=False)
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]
+  converter.representative_dataset = representative_data_gen
+  # Ensure that if any ops can't be quantized, the converter throws an error
+  converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+  # Set the input and output tensors to uint8 (APIs added in r2.3)
+  converter.inference_input_type = tf.uint8
+  converter.inference_output_type = tf.uint8
+
+  tflite_model_quant = converter.convert()
+  interpreter = tf.lite.Interpreter(model_content=tflite_model_quant)
+  input_type = interpreter.get_input_details()[0]['dtype']
+  print('input: ', input_type)
+  output_type = interpreter.get_output_details()[0]['dtype']
+  print('output: ', output_type)
+
+  interpreter.allocate_tensors()
+  input_index = interpreter.get_input_details()[0]["index"]
+  output_index = interpreter.get_output_details()[0]["index"]
+  interpreter.set_tensor(input_index, tf.ones([1, 112, 112, 3], dtype=input_type))
+  interpreter.invoke()
+  interpreter.get_tensor(output_index)[0]
+  ```
+## Wapper trained model with Rescale or normalize
+  ```py
+  mm2 = keras.Sequential([
+      keras.layers.Input((112, 112, 3)),
+      keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+  ```
+  ```py
+  mm2 = keras.Sequential([
+      keras.layers.Input((112, 112, 3), dtype='uint8'),
+      keras.layers.Lambda(lambda xx: (xx / 127) - 1),
+      # keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
+      mm,
+      # keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1}),
+      keras.layers.Lambda(lambda xx: tf.cast(xx / tf.sqrt(tf.reduce_sum(xx ** 2)) * 255, 'uint8')),
+      # keras.layers.Lambda(lambda xx: tf.cast(xx * 255, 'uint8')),
+  ])
+  ```
+  ```py
+  inputs = keras.layers.Input([112, 112, 3])
+  nn = (inputs - 127.5) / 128
+  nn = mm(nn)
+  nn = tf.divide(nn, tf.expand_dims(tf.sqrt(tf.reduce_sum(tf.pow(nn, 2), -1)), -1))
+  bb = keras.models.Model(inputs, nn)
+  ```
+## Dynamic input shape
+  ```py
+  mm3 = keras.Sequential([
+      keras.layers.Input((None, None, 3)),
+      keras.layers.experimental.preprocessing.Resizing(112 ,112),
+      keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1),
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  tflite_model = converter.convert()
+  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
+
+  interpreter = tf.lite.Interpreter('./norm_model_tf2.tflite')
+  input_index = interpreter.get_input_details()[0]["index"]
+  output_index = interpreter.get_output_details()[0]["index"]
+
+  interpreter.resize_tensor_input(input_index, (1, 512, 512, 3))
+  interpreter.allocate_tensors()
+  interpreter.set_tensor(input_index, tf.ones([1, 512, 112, 3], dtype='float32'))
+  interpreter.invoke()
+  out = interpreter.get_tensor(output_index)[0]
+  ```
+## TFLite ARM64 python runtime
+  ```sh
+  lscpu
+  # Architecture:        aarch64
+
+  python --version
+  # Python 3.6.9
+
+  sudo apt install python3-pip ipython cython3
+  pip install ipython
+
+  git clone https://github.com/noahzhy/tf-aarch64.git
+  cd tf-aarch64/
+  pip install tensorflow-1.9.0rc0-cp36-cp36m-linux_aarch64.whl
+  pip install https://dl.google.com/coral/python/tflite_runtime-2.1.0.post1-cp36-cp36m-linux_aarch64.whl
+  ```
+  ```py
+  import tensorflow as tf
+  tf.enable_eager_execution()
+  tf.__version__
+  # 1.9.0-rc0
+
+  import tflite_runtime
+  tflite_runtime.__version__
+  # 2.1.0.post1
+
+  import tflite_runtime.interpreter as tflite
+  interpreter = tflite.Interpreter('./mobilefacenet_tf2.tflite')
+  interpreter.allocate_tensors()
+  input_index = interpreter.get_input_details()[0]["index"]
+  output_index = interpreter.get_output_details()[0]["index"]
+
+  imm = tf.convert_to_tensor(np.ones([1, 112, 112, 3]), dtype=tf.float32)
+  interpreter.set_tensor(input_index, imm)
+  interpreter.invoke()
+  out = interpreter.get_tensor(output_index)[0]
+
+  def foo(imm):
+      interpreter.set_tensor(input_index, imm)
+      interpreter.invoke()
+      return interpreter.get_tensor(output_index)[0]
+  %timeit -n 100 foo(imm)
+  # 42.4 ms ± 43.1 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+  %timeit -n 100 foo(imm) # EfficientNetB0
+  # 71.2 ms ± 52.5 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+  ```
+## TFLite bench test function
+  ```py
+  import models
+  import subprocess
+  from itertools import product
+
+  def adb_bench_test(model_name, model_fp16_name=None, print_log=True, use_fp16s=[True, False], num_threadses=[1, 4], use_xnnpacks=[True, False]):
+      result = []
+      for use_fp16, num_threads, use_xnnpack in product(use_fp16s, num_threadses, use_xnnpacks):
+          test_name = model_fp16_name if use_fp16 else model_name
+          os.system('adb push {} /data/local/tmp'.format(test_name))
+          print("\n>>>> [{}] use_fp16={}, num_threads={}, use_xnnpack={}".format(test_name, use_fp16, num_threads, use_xnnpack))
+          error, rr = subprocess.getstatusoutput('adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/{} --num_threads={} --use_xnnpack={}'.format(test_name, num_threads, str(use_xnnpack).lower()))
+          if print_log:
+              print(rr)
+
+          if error == 0:
+              ss = [float(ii.split(' ')[-1]) for ii in rr.split('\n') if 'The input model file size' in ii][0]
+              tt = [float(ii.split(' ')[-1]) for ii in rr.split('\n') if 'Inference (avg):' in ii][0]
+          else:
+              ss, tt = None, None
+          result.append([use_fp16, num_threads, use_xnnpack, ss, tt])
+      result = pd.DataFrame(result, columns=['use_fp16', 'num_threads', 'use_xnnpack', 'model_size(MB)', 'inference_time(μs)'])
+      result = result.sort_values('inference_time(μs)')
+      return result
+  ```
+## Test mobilenetv2 conversion type
+  ```py
+  tf.__version__
+  # 2.3.0
+
+  def tf_imread(file_path):
+      img = tf.io.read_file(file_path)
+      img = tf.image.decode_jpeg(img, channels=3)
+      img = tf.image.convert_image_dtype(img, tf.float32)
+      img = (img - 0.5) * 2
+      return tf.expand_dims(img, 0)
+
+  class representative_data_gen:
+      def __init__(self, npz_data_path):
+          aa = np.load(npz_data_path, allow_pickle=True)
+          self.image_names, self.image_classes = aa["image_names"], aa["image_classes"]
+      def __call__(self):
+          for input_value in tf.data.Dataset.from_tensor_slices(self.image_names).batch(1).take(100):
+              yield [tf_imread(input_value[0])]
+
+  model_name = 'mobilenetv2'
+  model_orignal = model_name + '_orignal.tflite'
+  model_dynamic = model_name + '_dynamic.tflite'
+  model_float16 = model_name + '_float16.tflite'
+  model_uint8 = model_name + '_uint8.tflite'
+
+  mm = models.buildin_models(model_name, output_layer='GDC', emb_shape=512, add_pointwise_conv=False)
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  open(model_orignal, 'wb').write(converter.convert())
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+  open(model_dynamic, 'wb').write(converter.convert())
+  converter.target_spec.supported_types = [tf.float16]  # float16
+  open(model_float16, 'wb').write(converter.convert())
+
+  """ Uint8 quantization """
+  converter.representative_dataset = representative_data_gen('../../Keras_insightface/faces_emore_112x112_folders_shuffle.npz')
+  converter.target_spec.supported_types = []
+  converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+  converter.inference_input_type = tf.uint8
+  converter.inference_output_type = tf.uint8
+  open(model_uint8, 'wb').write(converter.convert())
+
+  """ PReLU model, float16 """
+  model_prelu_name = 'mobilenetv2_prelu'
+  model_prelu_float16 = model_prelu_name + '_float16.tflite'
+  mm = models.replace_ReLU_with_PReLU(mm)
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]  # dynamic
+  converter.target_spec.supported_types = [tf.float16]  # float16
+  open(model_prelu_float16, 'wb').write(converter.convert())
+
+  for model in [model_orignal, model_dynamic, model_float16, model_uint8, model_prelu_float16]:
+      rr = adb_bench_test(model, None, use_fp16s=[False], num_threadses=[1, 4], use_xnnpacks=[True, False], print_log=False)
+      print("\n>>>>", model)
+      print(rr.to_markdown())
+  ```
+
+  | mobilenetv2_orignal | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                   2 | False    |           4 | True        |         11.576 |             8744.9 |
+  |                   3 | False    |           4 | False       |         11.576 |            18102.9 |
+  |                   0 | False    |           1 | True        |         11.576 |              29116 |
+  |                   1 | False    |           1 | False       |         11.576 |            52224.2 |
+
+  | mobilenetv2_dynamic | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                   2 | False    |           4 | True        |        3.36376 |            19234.9 |
+  |                   3 | False    |           4 | False       |        3.36376 |            20008.4 |
+  |                   0 | False    |           1 | True        |        3.36376 |            37433.5 |
+  |                   1 | False    |           1 | False       |        3.36376 |            38497.1 |
+
+  | mobilenetv2_float16 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                   2 | False    |           4 | True        |         5.8267 |            8661.27 |
+  |                   3 | False    |           4 | False       |         5.8267 |            19191.9 |
+  |                   0 | False    |           1 | True        |         5.8267 |            29862.3 |
+  |                   1 | False    |           1 | False       |         5.8267 |              53986 |
+
+  | mobilenetv2_uint8 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -----------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                 2 | False    |           4 | True        |        3.59032 |            10617.3 |
+  |                 3 | False    |           4 | False       |        3.59032 |            10783.9 |
+  |                 0 | False    |           1 | True        |        3.59032 |            27233.7 |
+  |                 1 | False    |           1 | False       |        3.59032 |            27247.5 |
+
+  | mobilenetv2_prelu_float16 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                         2 | False    |           4 | True        |        5.85275 |            10481.8 |
+  |                         3 | False    |           4 | False       |        5.85275 |            21427.4 |
+  |                         0 | False    |           1 | True        |        5.85275 |            33159.2 |
+  |                         1 | False    |           1 | False       |        5.85275 |            55705.4 |
+## Testing backbones with different headers
+  ```py
+  def model_convert_and_adb_bench_test(model_name, print_log=True, emb_shapes=[256, 512], output_layers=['E', 'GDC'], add_pointwise_convs=[True, False], use_fp16s=[True, False], num_threadses=[1, 4], use_xnnpacks=[True, False]):
+      tt_name = model_name + '_emb{}_{}_pointwise_{}.tflite'
+      tt_fp16_name = model_name + '_emb{}_{}_pointwise_{}_tf16.tflite'
+      result = []
+      total_test = len(use_fp16s) * len(num_threadses) * len(use_xnnpacks)
+      for id, (emb_shape, output_layer, add_pointwise_conv) in enumerate(product(emb_shapes, output_layers, add_pointwise_convs)):
+          mm = models.buildin_models(model_name, emb_shape=emb_shape, output_layer=output_layer, add_pointwise_conv=add_pointwise_conv)
+          if tf.__version__.startswith('1.1'):
+              save_model_name = model_name + '_tf15.h5'
+              mm.save(save_model_name)
+              converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(save_model_name, custom_objects={"swish": lambda xx: tf.sigmoid(xx) * xx})
+          else:
+              converter = tf.lite.TFLiteConverter.from_keras_model(mm)
+          converter.optimizations = [tf.lite.Optimize.DEFAULT]
+          mm_name = tt_name.format(emb_shape, output_layer, add_pointwise_conv)
+          open(mm_name, 'wb').write(converter.convert())
+          mm_fp16_name = tt_fp16_name.format(emb_shape, output_layer, add_pointwise_conv)
+          if True in use_fp16s:
+              converter.target_spec.supported_types = [tf.float16]
+              open(mm_fp16_name, 'wb').write(converter.convert())
+
+          rr = adb_bench_test(mm_name, mm_fp16_name, print_log, use_fp16s, num_threadses, use_xnnpacks)
+          rr.index = rr.index + total_test * id
+
+          dd = pd.DataFrame([[emb_shape, output_layer, add_pointwise_conv]], columns=['emb_shape', 'output_layer', 'add_pointwise_conv'])
+          dd = pd.concat([dd] * rr.shape[0])
+          dd.index = rr.index
+          dd = dd.join(rr)
+          result.append(dd)
+      result = pd.concat(result)
+      result = result.sort_values('inference_time(μs)')
+      print("\n>>>>", model_name)
+      print(result.to_markdown())
+      return result
+
+  tf.__version__
+  # 2.3.0
+  results = {}
+  for name in ['mobilenet', 'mobilenetv2', 'mobilenet_m1', 'mobilefacenet']:
+      results[name] = model_convert_and_adb_bench_test(name, use_fp16s=[True], num_threadses=[4], use_xnnpacks=[True])
+
+  tf.__version__
+  # 1.15.0
+  results = {}
+  for model_name in ['mobilenetv3_small', 'mobilenetv3_large']:
+      results[name] = model_convert_and_adb_bench_test(name, use_fp16s=[True], num_threadses=[4], use_xnnpacks=[True])
+  ```
+  | mobilenet | emb_shape | output_layer | add_pointwise_conv | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ---------:| ---------:|:------------ |:------------------ |:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |         7 |       512 | GDC          | False              | True     |           4 | True        |         7.4905 |            11836.8 |
+  |         3 |       256 | GDC          | False              | True     |           4 | True        |        6.96568 |            11837.9 |
+  |         2 |       256 | GDC          | True               | True     |           4 | True        |         7.7447 |              12328 |
+  |         6 |       512 | GDC          | True               | True     |           4 | True        |         8.0068 |            12733.5 |
+  |         0 |       256 | E            | True               | True     |           4 | True        |        9.83318 |            12925.8 |
+  |         1 |       256 | E            | False              | True     |           4 | True        |        11.1435 |              13072 |
+  |         4 |       512 | E            | True               | True     |           4 | True        |        12.1913 |            13710.2 |
+  |         5 |       512 | E            | False              | True     |           4 | True        |        15.8624 |            14649.5 |
+
+  | mobilenetv2 | emb_shape | output_layer | add_pointwise_conv | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -----------:| ---------:|:------------ |:------------------ |:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |           3 |       256 | GDC          | False              | True     |           4 | True        |        5.17011 |            8214.65 |
+  |           7 |       512 | GDC          | False              | True     |           4 | True        |        5.82598 |            8436.42 |
+  |           2 |       256 | GDC          | True               | True     |           4 | True        |        6.06384 |             9129.9 |
+  |           6 |       512 | GDC          | True               | True     |           4 | True        |        6.32542 |               9357 |
+  |           0 |       256 | E            | True               | True     |           4 | True        |        9.98053 |            10669.4 |
+  |           1 |       256 | E            | False              | True     |           4 | True        |        14.9618 |            11502.5 |
+  |           4 |       512 | E            | True               | True     |           4 | True        |         14.174 |              11958 |
+  |           5 |       512 | E            | False              | True     |           4 | True        |        25.4481 |            15063.1 |
+
+  | mobilenet_m1 | emb_shape | output_layer | add_pointwise_conv | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ------------:| ---------:|:------------ |:------------------ |:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |            3 |       256 | GDC          | False              | True     |           4 | True        |        7.02651 |              50270 |
+  |            7 |       512 | GDC          | False              | True     |           4 | True        |        7.55074 |              52648 |
+  |            2 |       256 | GDC          | True               | True     |           4 | True        |         7.7657 |            53925.1 |
+  |            6 |       512 | GDC          | True               | True     |           4 | True        |        8.02778 |            54340.9 |
+  |            0 |       256 | E            | True               | True     |           4 | True        |        20.2983 |            58086.8 |
+  |            1 |       256 | E            | False              | True     |           4 | True        |        32.0935 |              61229 |
+  |            4 |       512 | E            | True               | True     |           4 | True        |        33.1431 |            62566.2 |
+  |            5 |       512 | E            | False              | True     |           4 | True        |        57.7832 |            69999.5 |
+
+  | mobilefacenet | emb_shape | output_layer | add_pointwise_conv | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------:| ---------:|:------------ |:------------------ |:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |             7 |       512 | GDC          | False              | True     |           4 | True        |        1.84267 |            20443.2 |
+  |             3 |       256 | GDC          | False              | True     |           4 | True        |        1.77661 |            20612.8 |
+  |             2 |       256 | GDC          | True               | True     |           4 | True        |        2.14242 |            21147.6 |
+  |             6 |       512 | GDC          | True               | True     |           4 | True        |        2.40522 |            21303.7 |
+  |             1 |       256 | E            | False              | True     |           4 | True        |        4.90949 |            21599.9 |
+  |             5 |       512 | E            | False              | True     |           4 | True        |        8.12101 |              22619 |
+  |             0 |       256 | E            | True               | True     |           4 | True        |        14.6758 |            25264.3 |
+  |             4 |       512 | E            | True               | True     |           4 | True        |         27.521 |            29819.7 |
+
+  | mobilenetv3_small | emb_shape | output_layer | add_pointwise_conv | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -----------------:| ---------:|:------------ |:------------------ |:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                 3 |       256 | GDC          | False              | True     |           4 | True        |        2.50516 |            4063.06 |
+  |                 7 |       512 | GDC          | False              | True     |           4 | True        |        2.80058 |            4211.49 |
+  |                 2 |       256 | GDC          | True               | True     |           4 | True        |        3.06171 |            4540.34 |
+  |                 6 |       512 | GDC          | True               | True     |           4 | True        |        3.32314 |            4619.39 |
+  |                 1 |       256 | E            | False              | True     |           4 | True        |        6.91161 |            5698.54 |
+  |                 0 |       256 | E            | True               | True     |           4 | True        |        6.97823 |             5759.2 |
+  |                 5 |       512 | E            | False              | True     |           4 | True        |        11.6307 |            7159.78 |
+  |                 4 |       512 | E            | True               | True     |           4 | True        |        11.1718 |            7192.85 |
+## Testing xnnpack in TF15
+  ```py
+  tf.__version__
+  # 2.3.0
+  model_names = ['efficientnetb0', 'efficientnetb1', 'ghostnet', 'se_mobilefacenet']
+  for model_name in model_names:
+      print(">>>>", model_name)
+      model_config = model_name + "_model_config.json"
+      model_weight = model_name + "_weights_only.h5"
+
+      mm = models.buildin_models(model_name, emb_shape=512, output_layer="GDC", add_pointwise_conv=False)
+      mm.save_weights(model_weight)
+      json_config = mm.to_json()
+      with open(model_config, 'w') as json_file:
+          json_file.write(json_config)
+
+      os.system('sed -i \'s/"ragged": false, //\' %s' % model_config)
+      os.system('sed -i \'s/"class_name": "Functional"/"class_name": "Model"/g\' %s' % model_config)
+      os.system('sed -i \'s/"groups": 1, //g\' %s' % model_config)
+  ```
+  ```py
+  tf.__version__
+  # 1.15.0
+
+  from tensorflow.keras import backend as K
+  def swish(inputs):
+      return (K.sigmoid(inputs) * inputs)
+
+  ''' Save TF 1.15 keras model'''
+  model_names = ['efficientnetb0', 'efficientnetb1', 'ghostnet', 'se_mobilefacenet']
+  for model_name in model_names:
+      model_config = model_name + "_model_config.json"
+      model_weight = model_name + "_weights_only.h5"
+      new_model_name = model_name + "_tf15.h5"
+
+      with open(model_config) as json_file:
+          json_config = json_file.read()
+      new_model = keras.models.model_from_json(json_config, custom_objects={"swish": swish})
+      new_model.load_weights(model_weight)
+      # inputs = keras.layers.Input([256, 160, 3])
+      # bb = keras.models.Model(inputs, new_model(inputs))
+      # new_model = bb
+      new_model.save(new_model_name)
+
+      ''' Convert to TFLite float16 model '''
+      new_model_name = model_name + "_tf15.h5"
+      model_name, model_fp16_name = model_name + '_tf15.tflite', model_name + '_tf15_fp16.tflite'
+      converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(new_model_name, custom_objects={"swish": swish})
+      converter.optimizations = [tf.compat.v1.lite.Optimize.DEFAULT]
+      open(model_name, 'wb').write(converter.convert())
+      converter.target_spec.supported_types = [tf.compat.v1.float16]
+      open(model_fp16_name, 'wb').write(converter.convert())
+
+      rr = adb_bench_test(model_name, model_fp16_name, use_fp16s=[True, False], num_threadses=[1, 4], use_xnnpacks=[True, False])
+      print("\n>>>>", model_name)
+      print(rr.to_markdown())
+  ```
+
+  | efficientnetb0_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                   2 | True     |           4 | True        |        9.40449 |            22054.3 |
+  |                   6 | False    |           4 | True        |         4.8435 |            37508.6 |
+  |                   0 | True     |           1 | True        |        9.40449 |              61719 |
+  |                   4 | False    |           1 | True        |         4.8435 |            70255.8 |
+  |                   7 | False    |           4 | False       |         4.8435 |            89158.3 |
+  |                   3 | True     |           4 | False       |        9.40449 |            91659.2 |
+  |                   5 | False    |           1 | False       |         4.8435 |             113140 |
+  |                   1 | True     |           1 | False       |        9.40449 |             131299 |
+
+  | efficientnetb1_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                   2 | True     |           4 | True        |        14.4268 |            31881.2 |
+  |                   6 | False    |           4 | True        |        7.41522 |            50213.1 |
+  |                   0 | True     |           1 | True        |        14.4268 |              90029 |
+  |                   4 | False    |           1 | True        |        7.41522 |             104653 |
+  |                   7 | False    |           4 | False       |        7.41522 |             127617 |
+  |                   3 | True     |           4 | False       |        14.4268 |             130962 |
+  |                   5 | False    |           1 | False       |        7.41522 |             164143 |
+  |                   1 | True     |           1 | False       |        14.4268 |             192448 |
+
+  | ghostnet_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |             2 | True     |           4 | True        |        8.06546 |            11125.7 |
+  |             6 | False    |           4 | True        |        4.12497 |            19709.9 |
+  |             0 | True     |           1 | True        |        8.06546 |            30511.9 |
+  |             7 | False    |           4 | False       |        4.12497 |            30903.7 |
+  |             4 | False    |           1 | True        |        4.12497 |            34656.8 |
+  |             3 | True     |           4 | False       |        8.06546 |            35990.2 |
+  |             5 | False    |           1 | False       |        4.12497 |            48887.2 |
+  |             1 | True     |           1 | False       |        8.06546 |            64461.5 |
+
+  | se_mobilefacenet_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ---------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                     2 | True     |           4 | True        |        1.88518 |            18713.2 |
+  |                     6 | False    |           4 | True        |       0.971264 |            48540.7 |
+  |                     3 | True     |           4 | False       |        1.88518 |            58363.9 |
+  |                     0 | True     |           1 | True        |        1.88518 |            61308.1 |
+  |                     7 | False    |           4 | False       |       0.971264 |            75776.4 |
+  |                     4 | False    |           1 | True        |       0.971264 |            94486.8 |
+  |                     5 | False    |           1 | False       |       0.971264 |             120372 |
+  |                     1 | True     |           1 | False       |        1.88518 |             122325 |
+## Others
+  | mobilenetv3_small_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ----------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                      2 | True     |           4 | True        |        2.80058 |            4357.41 |
+  |                      6 | False    |           4 | True        |        1.42936 |            6188.48 |
+  |                      0 | True     |           1 | True        |        2.80058 |            10342.6 |
+  |                      4 | False    |           1 | True        |        1.42936 |            10912.7 |
+  |                      7 | False    |           4 | False       |        1.42936 |            12317.2 |
+  |                      3 | True     |           4 | False       |        2.80058 |            14039.3 |
+  |                      5 | False    |           1 | False       |        1.42936 |            17141.4 |
+  |                      1 | True     |           1 | False       |        2.80058 |            20899.2 |
+
+  | mobilenetv3_large_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ----------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                      2 | True     |           4 | True        |        6.95015 |            10025.9 |
+  |                      6 | False    |           4 | True        |         3.5097 |            18505.7 |
+  |                      0 | True     |           1 | True        |        6.95015 |            27024.9 |
+  |                      7 | False    |           4 | False       |         3.5097 |              29743 |
+  |                      3 | True     |           4 | False       |        6.95015 |            32289.6 |
+  |                      4 | False    |           1 | True        |         3.5097 |            33306.3 |
+  |                      5 | False    |           1 | False       |         3.5097 |            44703.5 |
+  |                      1 | True     |           1 | False       |        6.95015 |              58223 |
+
+  | mobilenet_prelu_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | --------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                    2 | True     |           4 | True        |        7.47974 |            11701.4 |
+  |                    6 | False    |           4 | True        |        3.78725 |            19655.1 |
+  |                    7 | False    |           4 | False       |        3.78725 |            19906.8 |
+  |                    3 | True     |           4 | False       |        7.47974 |            24177.4 |
+  |                    0 | True     |           1 | True        |        7.47974 |              43139 |
+  |                    4 | False    |           1 | True        |        3.78725 |            45493.5 |
+  |                    5 | False    |           1 | False       |        3.78725 |            46815.1 |
+  |                    1 | True     |           1 | False       |        7.47974 |            74502.3 |
+
+  | mobilenetv2_prelu_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ----------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                      2 | True     |           4 | True        |        5.80292 |            8489.76 |
+  |                      3 | True     |           4 | False       |        5.80292 |            19238.3 |
+  |                      7 | False    |           4 | False       |        2.97391 |            22333.9 |
+  |                      6 | False    |           4 | True        |        2.97391 |            23413.9 |
+  |                      0 | True     |           1 | True        |        5.80292 |            29650.6 |
+  |                      4 | False    |           1 | True        |        2.97391 |            41924.6 |
+  |                      5 | False    |           1 | False       |        2.97391 |            43547.7 |
+  |                      1 | True     |           1 | False       |        5.80292 |            53345.1 |
+***
+
+# AutoAugment and RandAugment
+## Tensorflow image random
+  ```py
+  import data
+  ds, steps_per_epoch = data.prepare_dataset('/datasets/faces_casia_112x112_folders/', random_status=0)
+  imms, labels = ds.as_numpy_iterator().next()
+
+  cc = (imms + 1) / 2
+  plt.imshow(np.vstack([np.hstack(cc[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(cc.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+
+  img = cc[4] * 255
+  random_status = 3
+  total = 10
+  aa = np.vstack([
+      np.hstack([tf.image.adjust_brightness(img, ii) for ii in arange(-12.75 * random_status, 12.75 * random_status, 12.75 * random_status * 2 / total)]),
+      np.hstack([tf.image.adjust_contrast(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
+      np.hstack([tf.image.adjust_saturation(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
+      np.hstack([tf.image.adjust_hue(img, ii) for ii in arange(1 - 0.02 * random_status, 1 + 0.02 * random_status, 0.02 * random_status * 2 / total)[:total]]),
+      np.hstack([tf.image.adjust_jpeg_quality(img / 255, ii) * 255 for ii in arange(80 - random_status * 5, 80 + random_status * 5, random_status * 5 * 2 / total)]),
+  ])
+  plt.imshow(aa / 255)
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## RandAugment
+  - [Github tensorflow/models augment.py](https://github.com/tensorflow/models/blob/HEAD/official/vision/image_classification/augment.py)
+  ```py
+  sys.path.append("/home/leondgarse/workspace/tensorflow_models/official/vision/image_classification")
+  import augment
+
+  aa = augment.RandAugment(magnitude=5)
+  # ['AutoContrast', 'Equalize', 'Invert', 'Rotate', 'Posterize', 'Solarize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Cutout', 'SolarizeAdd']
+  aa.available_ops = ['AutoContrast', 'Equalize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
+  dd = np.stack([aa.distort(tf.image.random_flip_left_right(tf.convert_to_tensor(ii * 255))) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+
+  enlarge = 2
+  aa = augment.RandAugment(magnitude=5 * enlarge)
+  aa.available_ops = ['AutoContrast', 'Equalize', 'Posterize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
+  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## AutoAugment
+  ```py
+  policy = [
+      [('Equalize', 0.8, 1), ('ShearY', 0.8, 4)],
+      [('Color', 0.4, 9), ('Equalize', 0.6, 3)],
+      [('Color', 0.2, 0), ('Equalize', 0.8, 8)],
+      [('Color', 0.6, 1), ('Equalize', 1.0, 2)],
+      [('Equalize', 1.0, 9), ('ShearY', 0.6, 3)],
+      [('Color', 0.4, 7), ('Equalize', 0.6, 0)],
+      [('Posterize', 0.4, 6), ('AutoContrast', 0.4, 7)],
+      [('ShearY', 0.8, 0), ('Color', 0.6, 4)],
+      [('Equalize', 0.8, 4), ('Equalize', 0.0, 8)],
+      [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
+  ]
+  aa = augment.AutoAugment()
+  aa.policies = policy
+  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+  ```py
+  import autoaugment
+  policy = autoaugment.ImageNetPolicy()
+  policy_func = lambda img: np.array(policy(tf.keras.preprocessing.image.array_to_img(img)), dtype=np.float32)
+
+  dd = np.stack([policy_func(tf.convert_to_tensor(ii)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+***

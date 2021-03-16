@@ -93,6 +93,7 @@ function generate_exclude_list_addition {
     generate_exclude_list_base
     printf "
 /home
+/opt
 " >> $EXCLUDE_FILE
 }
 

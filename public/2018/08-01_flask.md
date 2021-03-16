@@ -857,9 +857,6 @@
            +238                       {{ "layui-v{{ layui.v }}" }}
     '''
     ```
-    ```py
-
-    ```
 ***
 
 # 部署 Deployment
