@@ -1778,7 +1778,6 @@
     sudo apt-get update
     sudo apt-get install virtualbox-6.1
     ```
-
 ## Chrome
   - google-chrome --enable-webgl --ignore-gpu-blacklist
   - **Install**
@@ -2027,6 +2026,18 @@
     | 手机复制到电脑 | `Ctrl`+`c`           |
     | 电脑粘贴到手机 | `Ctrl`+`v`           |
     | 电脑复制到手机 | `Ctrl`+`Shift`+`v`   |
+## n2n 内网穿透
+  - [Github ntop/n2n](https://github.com/ntop/n2n)
+  - [N2N 中心节点](http://www.supernode.ml/)
+  ```sh
+  # use the stable version
+  wget -O n2n-2.8.tar.gz https://github.com/ntop/n2n/archive/2.8.tar.gz
+  tar xvf n2n-2.8.tar.gz && cd n2n-2.8/
+  ./autogen.sh && ./configure && make
+  sudo make install
+
+  sudo edge -d T3 -a 172.3.0.101 -c n2n -k test -Efr -l n2n.udpfile.com:10086
+  ```
 ## md5sum sha256sum
   - 查看文件 MD5 / SHA256 值
     ```sh

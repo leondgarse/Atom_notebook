@@ -1956,6 +1956,7 @@
           output_details = self.interpreter.get_output_details()
           self.input_index = input_details[0]["index"]
           if output_details[0]['shape'][-1] == 4:
+              # self.boxes_index, self.scores_index = output_details[0]["index"], output_details[2]["index"]
               self.boxes_index, self.scores_index = output_details[0]["index"], output_details[1]["index"]
           else:
               self.boxes_index, self.scores_index = output_details[1]["index"], output_details[0]["index"]
@@ -2010,12 +2011,13 @@
           # img_rgb = resize(img_rgb, self.input_size, preserve_range=True)
           img_rgb = resize(img_rgb, self.input_size[::-1])
           # img_rgb = np.expand_dims((img_rgb - 0.5) * 2, 0)
-          # img_rgb = np.expand_dims((img_rgb - 127.5) / 127, 0)
+          # img_rgb = np.expand_dims((img_rgb - 128) / 127, 0)
           img_rgb = np.expand_dims(img_rgb, 0)
 
           # set tensor and invoke
           self.interpreter.set_tensor(self.input_index, img_rgb)
           self.interpreter.invoke()
+          # scores = tf.nn.softmax(self.interpreter.get_tensor(self.scores_index)[0])
           scores = self.interpreter.get_tensor(self.scores_index)[0]
           boxes = self.interpreter.get_tensor(self.boxes_index)[0]
 

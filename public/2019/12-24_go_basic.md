@@ -224,9 +224,24 @@
   - **垃圾回收器** Go 拥有简单却高效的 **标记-清除** 回收器
     - 主要思想来源于 IBM 的可复用垃圾回收器，旨在打造一个高效、低延迟的并发回收器，目前 gccgo 还没有回收器，同时适用 gc 和 gccgo 的新回收器正在研发中
     - 使用一门具有垃圾回收功能的编程语言不代表可以避免内存分配所带来的问题，分配和回收内容都是消耗 CPU 资源的一种行为
+## GPROXY 代理
+  - [Github goproxy/goproxy.cn](https://github.com/goproxy/goproxy.cn)
+  - [Goproxy China](https://goproxy.cn/)
+  ```sh
+  go env GOPROXY
+  # https://proxy.golang.org,direct
+
+  go env -w GOPROXY=https://goproxy.cn,direct
+  go env GOPROXY
+  # https://goproxy.cn,direct
+  ```
+## GO111MODULE 与 GOPATH
+  - `Go 1.16` 以上默认 `GO111MODULE=on`
+  - `go env -w GO111MODULE=auto` 在有 `go.mod` 时才使用 `go module`
+  - `GO111MODULE=off go run xxx` 使用 `GOPATH` 模式
 ***
 
-# 基础语法
+# Go 项目一般结构
 ## 约定规则
   - **命名规则**
     - 一个名字在程序包之外的可见性是由它的首字符 **是否为大写** 来确定的
@@ -246,20 +261,20 @@
     - **多赋值语句** 需要多个左值，但如果其中某个左值在程序中并没有被使用到，那么就需要用 **空白标识符** 来占位，以避免引入一个新的无用变量
     - **未使用的导入和变量** 如果在程序中导入了一个包或声明了一个变量，却没有使用的话，会引起编译错误，可以将包 / 变量赋值给 `_` 禁止编译错误
     - **只调用导入包的 init 函数** 有时需要导入一些包，但不实际使用，只是调用其中的 `init` 函数
-## Go 程序的一般结构
+## GOPATH 下 Go 项目一般结构
   - **Go 程序文件夹结构**
     - 从指定文件夹下导入时，会导入所有的 go 文件
     - 要求该文件夹下的所有 go 文件有统一的包名，包名最好跟文件名相同，避免歧义
     - 包外调用方法名首字母必须为大写
     ```sh
-    $ tree
-    .
-    ├── foo
-    │   ├── add.go
-    │   └── sub.go
-    └── test.go
+    $ tree testFoo
+    # testFoo
+    # ├── foo
+    # │   ├── add.go
+    # │   └── sub.go
+    # └── test.go
     ```
-    **文件内容**
+  - **文件内容**
     ```go
     // $ cat test.go
     package main
@@ -282,168 +297,272 @@
         return x - y
     }
     ```
-    **运行**
+  - **运行**
     ```sh
-    go run test.go
+    GO111MODULE=off go run test.go
     # Hello World! 2 0
     ```
   - **项目目录** 一般包含三个文件夹，分别为 `src` / `pkg` / `bin`
     - **src** 存放 golang 源码
     - **pkg** 存放编译后的文件
     - **bin** 存放编译后可执行的文件
-## Go Module 一般结构
-- **Go 程序文件夹结构**
-  - 从指定文件夹下导入时，会导入所有的 go 文件
-  - 要求该文件夹下的所有 go 文件有统一的包名，包名最好跟文件名相同，避免歧义
-  - 包外调用方法名首字母必须为大写
-  ```sh
-  $ tree greetings hello
-  # greetings
-  # ├── go.mod
-  # ├── greetings.go
-  # └── greetings_test.go
-  # hello
-  # ├── go.mod
-  # └── hello.go
-  ```
-- **greetings/greetings.go**
-  ```go
-  // $ cat greetings/greetings.go
-  package greetings
+## Go Module 项目一般结构
+  - [Tutorial: Create a Go module](https://golang.org/doc/tutorial/create-module)
+  - [Using Go Modules](https://blog.golang.org/using-go-modules)
+  - [Github eliben/modlib](https://github.com/eliben/modlib)
+  - [Github goproxy/goproxy.cn](https://github.com/goproxy/goproxy.cn)
+  - [Goproxy China](https://goproxy.cn/)
+  - [Go Modules Wiki](https://github.com/golang/go/wiki/Modules)
+  - [When should I use the replace directive?](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive)
+  - **go.mod**
+    ```sh
+    module example.com/hello
 
-  import (
-  	"errors"
-  	"fmt"
-  	"math/rand"
-  	"time"
-  )
+    go 1.16
 
-  // Hello returns a greeting for the named person.
-  func Hello(name string) (string, error) {
-  	if name == "" {
-  		return "", errors.New("empty name")
-  	}
-  	// Return a greeting that embeds the name in a message.
-  	message := fmt.Sprintf(randomFormat(), name)
-  	return message, nil
-  }
+    replace example.com/greetings => ../greetings
 
-  func Hellos(names []string) (map[string]string, error) {
-  	messages := make(map[string]string, len(names))
-  	for _, name := range names {
-  		message, err := Hello(name)
-  		if err != nil {
-  			return nil, err
-  		}
-  		messages[name] = message
-  	}
-  	return messages, nil
+    require example.com/greetings v0.0.0-00010101000000-000000000000
+    ```
+    - 包含包名 / 版本 / 依赖 / 本地路径等
+    - 如果使用 `replace` 指定了本地路径，目标路径下 **需要有 `go.mod` 文件**
+    - 引用同一个 `go module` 下其他路径的包时，**不需要使用 `replace`，但需要使用完整的包名**
+  - **文件内容**
+    ```sh
+    tree testModule/
+    # testModule/
+    # ├── greetings
+    # │   ├── go.mod
+    # │   ├── greetings.go
+    # │   └── greetings_test.go
+    # └── hello
+    #     ├── go.mod
+    #     └── hello.go
+    ```
+    **greetings/greetings.go**
+    ```go
+    // $ cat greetings/greetings.go
+    package greetings
 
-  }
+    import (
+    	"errors"
+    	"fmt"
+    	"math/rand"
+    	"time"
+    )
 
-  func init() {
-  	rand.Seed(time.Now().UnixNano())
-  }
+    // Hello returns a greeting for the named person.
+    func Hello(name string) (string, error) {
+    	if name == "" {
+    		return "", errors.New("empty name")
+    	}
+    	// Return a greeting that embeds the name in a message.
+    	message := fmt.Sprintf(randomFormat(), name)
+    	return message, nil
+    }
 
-  func randomFormat() string {
-  	formats := []string{
-  		"Hi, %v. Welcome!",
-  		"Great to see you, %v!",
-  		"Hail, %v! Well met!",
-  	}
-  	return formats[rand.Intn(len(formats))]
-  }
-  ```
-- **hello/hello.go**
-  ```go
-  // $ cat
-  package main
+    func Hellos(names []string) (map[string]string, error) {
+    	messages := make(map[string]string, len(names))
+    	for _, name := range names {
+    		message, err := Hello(name)
+    		if err != nil {
+    			return nil, err
+    		}
+    		messages[name] = message
+    	}
+    	return messages, nil
 
-  import (
-  	"fmt"
-  	"log"
-  	"example.com/greetings"
-  )
+    }
 
-  func main() {
-  	log.SetPrefix("greetins: ")
-  	log.SetFlags(0)
+    func init() {
+    	rand.Seed(time.Now().UnixNano())
+    }
 
-  	// Get a greeting message and print it.
-  	// message, err := greetings.Hello("")
-  	// message, err := greetings.Hello("Gladys")
-  	message, err := greetings.Hellos([]string{"Gladys", "Samantha", "Darrin"})
-  	if err != nil {
-  		// fmt.Println(err)
-  		log.Fatal(err)
-  	} else {
-  		fmt.Println(message)
-  	}
-  }
-  ```
-- **运行**
-  ```sh
-  cd greetings
-  go mod init example.com/greetings
-  go mod tidy
+    func randomFormat() string {
+    	formats := []string{
+    		"Hi, %v. Welcome!",
+    		"Great to see you, %v!",
+    		"Hail, %v! Well met!",
+    	}
+    	return formats[rand.Intn(len(formats))]
+    }
+    ```
+    **hello/hello.go**
+    ```go
+    // $ cat
+    package main
 
-  cd ../hello
-  go mod init example.com/hello
-  go mod edit -replace=example.com/greetings=../greetings
-  # replace example.com/greetings => ../greetings
-  go mod tidy
-  # go: found example.com/greetings in example.com/greetings v0.0.0-00010101000000-000000000000
+    import (
+    	"fmt"
+    	"log"
+    	"testModule/greetings"
+    )
 
-  go run .
-  # map[Darrin:Great to see you, Darrin! Gladys:Hail, Gladys! Well met! Samantha:Great to see you, Samantha!]
-  ```
-- **测试用例 greetings/greetings_test.go**
-  - `go test` 命令自动执行 `xxx_test.go` 中的 `TestYYY` 函数，`-v` 参数指定列出所有测试项目与结果
-  ```go
-  // $ cat greetings/greetings_test.go
-  package greetings
+    func main() {
+    	log.SetPrefix("greetins: ")
+    	log.SetFlags(0)
 
-  import (
-  	"regexp"
-  	"testing"
-  )
+    	// Get a greeting message and print it.
+    	// message, err := greetings.Hello("")
+    	// message, err := greetings.Hello("Gladys")
+    	message, err := greetings.Hellos([]string{"Gladys", "Samantha", "Darrin"})
+    	if err != nil {
+    		// fmt.Println(err)
+    		log.Fatal(err)
+    	} else {
+    		fmt.Println(message)
+    	}
+    }
+    ```
+  - **运行**
+    ```sh
+    cd greetings
+    go mod init testModule/greetings
+    go mod tidy
 
-  func TestHelloName(t *testing.T) {
-  	name := "Gladys"
-  	want := regexp.MustCompile(`\b` + name + `\b`)
-  	msg, err := Hello(name)
-  	if err != nil || !want.MatchString(msg) {
-  		t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
-  	}
-  }
+    cd ../hello
+    go mod init testModule/hello
+    go mod edit -replace=testModule/greetings=../greetings
+    # replace example.com/greetings => ../greetings
+    go mod tidy # Clean and get dependencies
+    # go: found example.com/greetings in example.com/greetings v0.0.0-00010101000000-000000000000
 
-  func TestHelloEmpty(t *testing.T) {
-  	msg, err := Hello("")
-  	if err == nil || msg != "" {
-  		t.Fatalf(`Hello("") = %q, %v, want "", error`, msg, err)
-  	}
-  }
-  ```
-  ```sh
-  cd greetings
-  go test -v
-  # === RUN   TestHelloName
-  # --- PASS: TestHelloName (0.00s)
-  # === RUN   TestHelloEmpty
-  # --- PASS: TestHelloEmpty (0.00s)
-  # PASS
-  # ok  	example.com/greetings	0.001s
-  ```
-- **编译与安装**
-  ```sh
+    GO111MODULE=on go run .
+    # map[Darrin:Great to see you, Darrin! Gladys:Hail, Gladys! Well met! Samantha:Great to see you, Samantha!]
+    ```
+  - **测试用例 greetings/greetings_test.go**
+    - `go test` 命令自动执行 `xxx_test.go` 中的 `TestYYY` 函数，`-v` 参数指定列出所有测试项目与结果
+    ```go
+    // $ cat greetings/greetings_test.go
+    package greetings
 
-  ```
+    import (
+    	"regexp"
+    	"testing"
+    )
+
+    func TestHelloName(t *testing.T) {
+    	name := "Gladys"
+    	want := regexp.MustCompile(`\b` + name + `\b`)
+    	msg, err := Hello(name)
+    	if err != nil || !want.MatchString(msg) {
+    		t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
+    	}
+    }
+
+    func TestHelloEmpty(t *testing.T) {
+    	msg, err := Hello("")
+    	if err == nil || msg != "" {
+    		t.Fatalf(`Hello("") = %q, %v, want "", error`, msg, err)
+    	}
+    }
+    ```
+    ```sh
+    cd greetings
+    go test -v
+    # === RUN   TestHelloName
+    # --- PASS: TestHelloName (0.00s)
+    # === RUN   TestHelloEmpty
+    # --- PASS: TestHelloEmpty (0.00s)
+    # PASS
+    # ok  	example.com/greetings	0.001s
+    ```
+  - **编译与安装**
+    ```sh
+    cd hello
+    go build
+
+    # Go install path
+    go list -f '{{.Target}}'  # ~/go/bin/hello
+    go install
+    ```
+  - **其他命令**
+    ```sh
+    go mod vendor # 将所有依赖存放到当前文件夹下的 `vendor`
+    go list -m all  # 打印当前包的依赖
+    go mod graph  # 查看当前包的依赖关系
+    go mod why -m rsc.io/quote  # 查看依赖关系
+    go clean -modcache
+    ```
+## Go 使用多个本地 module
+  - **目录结构**
+    ```sh
+    cd testModule
+    rm greetings/go.mod hello/go.mod
+    go mod init testModule
+    go mod tidy
+
+    cd ../testFoo
+    go mid init testFoo
+    go mod tidy
+
+    cd ../
+    mkdir testMultiModule
+    cd testMultiModule
+    go mod init testMultiModule
+    touch testMultiModule.go
+
+    cd ../
+    tree testModule testFoo testMultiModule
+    # testModule
+    # ├── go.mod
+    # ├── greetings
+    # │   ├── greetings.go
+    # │   └── greetings_test.go
+    # └── hello
+    #     └── hello.go
+    # testFoo
+    # ├── foo
+    # │   ├── add.go
+    # │   └── sub.go
+    # ├── go.mod
+    # └── test.go
+    # testMultiModule
+    # ├── go.mod
+    # └── testMultiModule.go
+    ```
+  - **testMultiModule.go**
+    ```go
+    package main
+
+    import (
+    	"fmt"
+    	"testModule/greetings"
+    	"testFoo/foo"
+    )
+
+    func main() {
+    	fmt.Println("Hello World!", goo.Add(1, 1), goo.Sub(1, 1))
+    	message, _ := greetings.Hellos([]string{"Gladys", "Samantha", "Darrin"})
+    	fmt.Println(message)
+    }
+    ```
+  - **Run testMultiModule**
+    ```sh
+    cd testMultiModule
+    go mod tidy
+    # go: found testFoo/foo in testFoo v0.0.0-00010101000000-000000000000
+    # go: found testModule/greetings in testModule v0.0.0-00010101000000-000000000000
+    go run testMultiModule.go
+    # Hello World! 2 0
+    # map[Darrin:Hail, Darrin! Well met! Gladys:Hail, Gladys! Well met! Samantha:Hail, Samantha! Well met!]
+    ```
+  - **Run testModule** 引用同一个 `go module` 下其他路径的包时，不需要使用 `replace`，但需要使用完整的包名
+    ```sh
+    cd ../testModule
+    go run hello/hello.go
+    # map[Darrin:Great to see you, Darrin! Gladys:Hail, Gladys! Well met! Samantha:Great to see you, Samantha!]
+    ```
+***
+
+# 基础语法
 ## import
   - **包 package / import** Go 程序是通过 package 来组织的
     - 只有 **package** 名称为 **main** 的包可以包含 main 函数，一个可执行程序有且仅有一个 main 包
     - 通过 **import** 关键字来导入其他非 main 包，使用 `<PackageName>.<FunctionName>` 调用
     - 文件名 / 文件夹名与包名没有直接关系，不需要一致，但按照惯例，最好一致，同一个文件夹下的文件只能有一个包名，否则编译报错
     - 可以使用 **()** 打包导入多个
+    - `Go 1.16` 起默认不支持相对路径的导入，应按照 `go module` 的方式管理项目
     ```go
     package main  // 当前程序的包名
     import "fmt"  // 导入其他包
@@ -454,14 +573,14 @@
     import fmt2 "fmt" // package 别名
     import . "fmt"  // 表示省略调用，调用该模块里面的函数可以不写模块名
     ```
-  - **相对导入** 导入当前文件夹下的某个 module 的文件夹
+  - **相对导入** 导入当前文件夹下的某个 module 的文件夹 **[Deprecated]**
     ```go
     import (
         "./test1"
         "../test2"
     )
     ```
-  - **绝对导入** 将目标项目添加到 `$GOPATH` 环境变量中
+  - **绝对导入** 将目标项目添加到 `$GOPATH` 环境变量中 **[Deprecated]**
     ```sh
     export GOPATH=$GOPATH:$HOME/practice_code/go
     ```
@@ -563,8 +682,8 @@
 
     fmt.Printf("z is of type %T\n", z)
     // z is of type complex128
-    ```go
     ```
+    ```go
     const (
         Middle = 1.0
         Big   = Middle << 100
