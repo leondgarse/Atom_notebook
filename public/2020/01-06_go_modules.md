@@ -1326,50 +1326,77 @@
     ```
   - **Test**
     ```go
-    // test_resize.go
+    // testResize/testResize.go
     package main
 
     import (
+    	"fmt"
+    	"github.com/disintegration/imaging"
     	"github.com/nfnt/resize"
     	"image/jpeg"
     	"os"
-    	"fmt"
-        "time"
+    	"runtime"
+    	"time"
     )
 
     func main() {
     	file, _ := os.Open("go_resize_test_2.jpeg")
+    	defer file.Close()
     	img, _ := jpeg.Decode(file)
-    	file.Close()
+    	runtime.GOMAXPROCS(4)
 
     	methods := []resize.InterpolationFunction{resize.NearestNeighbor, resize.Bilinear, resize.Bicubic, resize.MitchellNetravali, resize.Lanczos2, resize.Lanczos3}
     	saveNames := []string{"NearestNeighbor", "Bilinear", "Bicubic", "MitchellNetravali", "Lanczos2", "Lanczos3"}
 
     	iter := 20
+    	target_scale := 2000
+    	fmt.Println(">>>> github.com/nfnt/resize")
     	for id, mm := range methods {
     		ss := time.Now()
     		for i := 0; i < iter; i++ {
-    			resize.Resize(2000, 0, img, mm)
+    			resize.Resize(uint(target_scale), 0, img, mm)
     		}
     		dd := time.Since(ss)
-    		fmt.Println(saveNames[id], ": Iter:", iter, "Total:", dd, "Mean:", dd.Seconds() * 1000 / float64(iter), "ms")
+    		fmt.Println(saveNames[id], ": Iter:", iter, "Total:", dd, "Mean:", dd/time.Duration(iter))
 
-    		iss := resize.Resize(2000, 0, img, mm)
+    		iss := resize.Resize(uint(target_scale), 0, img, mm)
     		out, _ := os.Create("test_resized_" + saveNames[id] + ".jpg")
     		defer out.Close()
     		jpeg.Encode(out, iss, nil)
+    	}
+
+    	methods2 := []imaging.ResampleFilter{imaging.Box, imaging.CatmullRom, imaging.Linear, imaging.MitchellNetravali, imaging.NearestNeighbor, imaging.Lanczos}
+    	saveNames2 := []string{"Box", "CatmullRom", "Linear", "MitchellNetravali", "NearestNeighbor", "Lanczos"}
+    	fmt.Println(">>>> github.com/disintegration/imaging")
+    	for id, mm := range methods2 {
+    		ss := time.Now()
+    		for i := 0; i < iter; i++ {
+    			imaging.Resize(img, target_scale, 0, mm)
+    		}
+    		dd := time.Since(ss)
+    		fmt.Println(saveNames2[id], ": Iter:", iter, "Total:", dd, "Mean:", dd/time.Duration(iter))
     	}
     }
     ```
     **Run**
     ```go
-    go run test_resize.go
-    // NearestNeighbor : Iter: 20 Total: 287.269807ms Mean: 14.363490350000001 ms
-    // Bilinear : Iter: 20 Total: 330.768269ms Mean: 16.53841345 ms
-    // Bicubic : Iter: 20 Total: 404.085138ms Mean: 20.2042569 ms
-    // MitchellNetravali : Iter: 20 Total: 400.273979ms Mean: 20.01369895 ms
-    // Lanczos2 : Iter: 20 Total: 405.309636ms Mean: 20.265481799999996 ms
-    // Lanczos3 : Iter: 20 Total: 478.777911ms Mean: 23.93889555 ms
+    go mod init testResize
+    go mod tidy
+    go run testResize.go
+    // >>>> github.com/nfnt/resize
+    // NearestNeighbor : Iter: 20 Total: 317.834034ms Mean: 15.891701ms
+    // Bilinear : Iter: 20 Total: 401.037935ms Mean: 20.051896ms
+    // Bicubic : Iter: 20 Total: 493.334781ms Mean: 24.666739ms
+    // MitchellNetravali : Iter: 20 Total: 497.312038ms Mean: 24.865601ms
+    // Lanczos2 : Iter: 20 Total: 499.966012ms Mean: 24.9983ms
+    // Lanczos3 : Iter: 20 Total: 758.183492ms Mean: 37.909174ms
+    // >>>> github.com/disintegration/imaging
+    // Box : Iter: 20 Total: 236.476505ms Mean: 11.823825ms
+    // CatmullRom : Iter: 20 Total: 374.478657ms Mean: 18.723932ms
+    // Linear : Iter: 20 Total: 266.608065ms Mean: 13.330403ms
+    // MitchellNetravali : Iter: 20 Total: 376.092672ms Mean: 18.804633ms
+    // NearestNeighbor : Iter: 20 Total: 63.533029ms Mean: 3.176651ms
+    // Lanczos : Iter: 20 Total: 491.078708ms Mean: 24.553935ms
     ```
     ```py
     import glob2

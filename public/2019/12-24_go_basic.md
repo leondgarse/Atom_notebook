@@ -2052,6 +2052,98 @@
     - **At** 应当返回一个颜色，如 `color.RGBA{v, v, 255, 255}`
 ***
 
+# 文件读写
+## 读文件
+  ```go
+  import (
+      "os"
+      "io"
+      "fmt"
+  )
+
+  // 检查文件状态
+  ss, err := os.Stat("./hello.go")
+  fmt.Println(os.IsNotExist(err), ss.Size())
+  // false 108
+
+  // 只独方式打开文件
+  ff, err := os.Open(ss.Name())
+  buf := make([]byte, 4096)
+  read_len, err := ff.Read(buf)
+  fmt.Println(read_len, err == io.EOF)
+  // 108 false
+  read_len, err := ff.Read(buf)
+  fmt.Println(read_len, err == io.EOF)
+  // 0 true
+  ```
+  ```go
+  func ReadAll(file_name string) []byte {
+      ss, err := os.Stat(file_name)
+      if os.IsNotExist(err) {
+          return nil
+      }
+
+      ff, err := os.Open(file_name)
+      if err != nil {
+          return nil
+      }
+      buf := make([]byte, int(ss.Size()))
+      ff.Read(buf)
+      return buf
+  }
+  ```
+## 写文件
+  - **创建文件**
+    ```go
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY, 0666)
+    fmt.Println(err)
+    // open new_file.foo: no such file or directory
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666)
+    fmt.Println(err)
+    // <nil>
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666)
+    fmt.Println(err)
+    // open new_file.foo: file exists
+    ```
+  - **写文件**
+    ```go
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY, 0666)
+    ff.Write([]uint8("Hello bytes"))  // 11 <nil>
+    ff.WriteString(" Hello string")  // 13 <nil>
+    ff.Close()
+    fmt.Println(string(ReadAll("new_file.foo")))
+    // Hello bytes Hello string
+    ```
+  - **文件截断**
+    ```go
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY, 0666)
+    ff.WriteString("another string")  // 14 <nil>
+    ff.Close()
+    fmt.Println(string(ReadAll("new_file.foo")))
+    // another stringllo string
+
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY, 0666)
+    ff.Truncate(0)
+    ff.WriteString("another string")  // 14 <nil>
+    ff.Close()
+    fmt.Println(string(ReadAll("new_file.foo")))
+    // another string
+
+    ff, err := os.OpenFile("new_file.foo", os.O_WRONLY | os.O_TRUNC, 0666)
+    ff.WriteString("new string")  // 11 <nil>
+    ff.Close()
+    fmt.Println(string(ReadAll("new_file.foo")))
+    // new string
+    ```
+  - **附加方式写文件**
+    ```go
+    ff, err := os.OpenFile("new_file.foo", os.O_APPEND | os.O_WRONLY, 0666)
+    ff.WriteString(" append string")  // 14 <nil>
+    fmt.Println(string(ReadAll("new_file.foo")))
+    // another string append string
+    ```
+***
+
 # 并发
 ## Goroutine
   - **Goroutine** 是由 Go 运行时环境管理的轻量级线程
@@ -2618,4 +2710,32 @@
     }
     ```
   - **panic - recover 模式** 可以完全被封装在模块的内部，对 `panic` 的调用可以隐藏在 `error` 之中，而不会将 `panics` 信息暴露给外部使用者，这是一个设计良好的编程技巧
+***
+
+# embed
+  - [Package embed](https://golang.org/pkg/embed/)
+  ```go
+  package main
+
+  import (
+  	"fmt"
+  	"embed"
+  )
+
+  //go:embed hello.go
+  var byte_file []byte
+
+  //go:embed hello.go
+  var txt_file string
+
+  //go:embed hello.go
+  var ff embed.FS
+
+  func main() {
+  	fmt.Println(txt_file)
+  	fmt.Println(len(byte_file))
+  	data, _ := ff.ReadFile("hello.go")
+  	fmt.Println(string(data))
+  }
+  ```
 ***

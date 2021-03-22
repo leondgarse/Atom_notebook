@@ -1005,13 +1005,14 @@
     sudo cp xxx.jpg /boot/grub/back.jpg
     sudo update-grub 重启即可
     ```
-  - 更改grub背景主题：
+  - 更改 grub 背景主题
     ```c
     将下载的主题文件解压到/boot/grub/themes文件夹中（没有的自己创建）
     然后修改/etc/default/grub
     加入：GRUB_THEME="/boot/grub/themes/******/theme.txt"（主题名自己设置）
     然后sudo grub-update
     ```
+  - [Github vinceliuice/grub2-themes](https://github.com.cnpmjs.org/vinceliuice/grub2-themes.git)
   - grub rescue
     ```shell
     # 查找 boot 目录
@@ -1318,8 +1319,8 @@
     ip add show dev enp7s0
     ```
 ## 更改登录界面
-  - 可以将背景图放到 `/usr/share/backgrounds/`
-  - 修改 `/etc/alternatives/gdm3.css`
+  - [18.04] 可以将背景图放到 `/usr/share/backgrounds/`
+  - [18.04] 修改 `/etc/alternatives/gdm3.css`
     ```sh
     # sudo vi /etc/alternatives/gdm3.css
     #找到默认的这个部分
@@ -1334,6 +1335,12 @@
       background-size: cover;
       background-position: center;
     }
+    ```
+  - [20.04] [Github PRATAP-KUMAR/focalgdm3](https://github.com.cnpmjs.org/PRATAP-KUMAR/focalgdm3.git)
+    ```sh
+    gti clone https://github.com/PRATAP-KUMAR/focalgdm3.git
+    cd focalgdm3
+    sudo ./focalgdm3 /absolute/path/to/Image
     ```
 ## Shadow socket 代理
   - 安装 shadowsocks 客户端
@@ -1866,7 +1873,6 @@
     - 配置 `Sensitivity` 指定是否鼠标接近屏幕顶部时显示顶栏
     - 配置 `Keyboard shortcuts` 指定快捷键
     - 配置 `Intellihide` 指定何时隐藏顶栏
-  - [proxy-switcher](https://extensions.gnome.org/extension/771/proxy-switcher/)
   - **隐藏侧边栏的磁盘图标**
     - 安装 [dash-to-dock](https://extensions.gnome.org/extension/307/dash-to-dock/)
     - 打开 `gnome-tweak-tool` -> `Extensions` -> `Dash to dock` 配置
@@ -1874,6 +1880,8 @@
     - 打开 `Intelligent autohide`
     - 打开 `Panel mode: extend to the screen edge`
     - 关闭系统 dock: `sudo mv /usr/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com{,.bak}`
+  - **[proxy-switcher](https://extensions.gnome.org/extension/771/proxy-switcher/)**
+  - **[Control Blur Effect On Lock Screen](https://extensions.gnome.org/extension/2935/control-blur-effect-on-lock-screen/)**
 ## 多线程下载 mwget axel aria2
   - **mwget**
     ```sh

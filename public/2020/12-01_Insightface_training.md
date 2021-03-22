@@ -1535,6 +1535,7 @@
 | TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_50_batch_2000_0.979000_IJBB_11  | 0.313632 | 0.898832 | 0.941675 | 0.960759 | 0.971957 | 0.984031 |
 | TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                    | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
 | TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                            | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
+| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11        | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
 
 
 |                                                                                                                                                   |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
