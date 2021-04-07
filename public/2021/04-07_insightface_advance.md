@@ -4,6 +4,179 @@
 # 目录
 ***
 
+# BotNet
+  - [aravindsrinivas/botnet.py](https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2)
+  - [leondgarse/botnet.py](https://gist.github.com/leondgarse/351dba9457c5a36516aea3ce1950ac74)
+  - **botnet MHSA**
+    ```py
+    from icecream import ic
+    inputs = keras.layers.Input([14, 16, 1024])
+    featuremap = inputs
+
+    print(botnet.MHSA(featuremap, 512, pos_enc_type='relative', heads=4).shape)
+    # (None, 14, 16, 512)
+
+    q = botnet.group_pointwise(featuremap, proj_factor=1, name='q_proj', heads=4, target_dimension=512)
+    k = botnet.group_pointwise(featuremap, proj_factor=1, name='k_proj', heads=4, target_dimension=512)
+    v = botnet.group_pointwise(featuremap, proj_factor=1, name='v_proj', heads=4, target_dimension=512)
+
+    ic(q.shape.as_list(), k.shape.as_list(), v.shape.as_list())
+    # q.shape.as_list(): [None, 4, 14, 16, 128]
+    print(botnet.relpos_self_attention(q=q, k=k, v=v, relative=True, fold_heads=True).shape)
+    # (None, 14, 16, 512)
+
+    relative, fold_heads = True, True
+    bs, heads, h, w, dim = q.shape
+    int_dim = int(dim)
+    q = q * (dim ** -0.5) # scaled dot-product
+    logits = tf.einsum('bhHWd,bhPQd->bhHWPQ', q, k)
+    if relative:
+        logits += botnet.relative_logits(q)
+    # weights = tf.reshape(logits, [-1, heads, h, w, h * w])
+    # weights = tf.nn.softmax(weights)
+    # weights = tf.reshape(weights, [-1, heads, h, w, h, w])
+    weights = tf.nn.softmax(logits)
+    attn_out = tf.einsum('bhHWPQ,bhPQd->bHWhd', weights, v)
+    if fold_heads:
+        attn_out = tf.reshape(attn_out, [-1, h, w, heads * dim])
+    ic(attn_out.shape.as_list())
+    # ic| attn_out.shape.as_list(): [None, 14, 16, 512]
+    ```
+  - **relative_logits**
+    ```py
+    def rel_to_abs(x):
+        """
+        Converts relative indexing to absolute.
+        Input: [bs, heads, h, w, 2*w - 1]
+        Output: [bs, heads, h, w, w]
+        """
+        bs, heads, h, w, dim = x.shape
+        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
+        x = tf.concat([x, col_pad], axis=-1)
+        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
+        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
+        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
+        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
+        final_x = final_x[:, :, :, :w, w-1:]
+        return final_x
+
+
+    def relative_logits_1d(*, q, rel_k, transpose_mask):
+        """
+        Compute relative logits along one dimenion.
+        `q`: [bs, heads, height, width, dim]
+        `rel_k`: [2*width - 1, dim]
+        """
+        bs, heads, h, w, dim = q.shape
+        # rel_logits = tf.einsum('bhxyd,md->bhxym', q, rel_k)
+        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
+        rel_logits = rel_to_abs(rel_logits)
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        return rel_logits
+
+
+    def relative_logits(q):
+        bs, heads, h, w, dim = q.shape
+        stddev = dim ** -0.5
+        rel_emb_w = tf.compat.v1.get_variable('r_width', shape=(2*w - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
+        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
+
+        # Relative logits in height dimension.
+        rel_emb_h = tf.compat.v1.get_variable('r_height', shape=(2*h - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
+        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
+        return rel_logits_h + rel_logits_w
+    ```
+    ```py
+    aa = tf.convert_to_tensor(np.arange(45).reshape(1, 1, 3, 3, 5))
+    rel_to_abs(aa)
+    print(aa[0, 0].numpy())
+    # [[[ 0  1  2  3  4]
+    #   [ 5  6  7  8  9]
+    #   [10 11 12 13 14]]
+    #  [[15 16 17 18 19]
+    #   [20 21 22 23 24]
+    #   [25 26 27 28 29]]
+    #  [[30 31 32 33 34]
+    #   [35 36 37 38 39]
+    #   [40 41 42 43 44]]]
+    print(rel_to_abs(aa)[0, 0].numpy())
+    # [[[ 2  3  4]
+    #   [ 6  7  8]
+    #   [10 11 12]]
+    #  [[17 18 19]
+    #   [21 22 23]
+    #   [25 26 27]]
+    #  [[32 33 34]
+    #   [36 37 38]
+    #   [40 41 42]]]
+    ```
+  - **keras.layers.MultiHeadAttention**
+    ```py
+    from tensorflow.python.ops import math_ops
+    from tensorflow.python.ops import special_math_ops
+    from icecream import ic
+    inputs = keras.layers.Input([14, 16, 1024])
+
+    nn = keras.layers.MultiHeadAttention(num_heads=4, key_dim=128)
+    ic(nn(inputs, inputs).shape.as_list())
+    # ic| nn(inputs, inputs).shape.as_list(): [None, 14, 16, 1024]
+
+    query = nn._query_dense(inputs)
+    key = nn._key_dense(inputs)
+    value = nn._value_dense(inputs)
+    ic(query.shape.as_list(), key.shape.as_list(), value.shape.as_list())
+    # ic| query.shape.as_list(): [None, 14, 16, 4, 128]
+
+    # attention_output, attention_scores = nn._compute_attention(query, key, value)
+    query = math_ops.multiply(query, 1.0 / math.sqrt(float(nn._key_dim)))
+    # 'afgde,abcde->adbcfg', 'bhHWd,bhPQd->bhHWPQ' == 'afgde,adbce->afgdbc'
+    attention_scores = special_math_ops.einsum(nn._dot_product_equation, key, query)
+    ic(attention_scores.shape.as_list())
+    # ic| attention_scores.shape.as_list(): [None, 4, 14, 16, 14, 16]
+
+    if relative:
+        query = tf.transpose(query, [0, 3, 1, 2, 4])
+        attention_scores += relative_logits(query)
+    attention_scores = nn._masked_softmax(attention_scores, None)
+    attention_scores_dropout = nn._dropout_layer(attention_scores, training=False)
+    attention_output = special_math_ops.einsum(nn._combine_equation, attention_scores_dropout, value)
+    ic(attention_output.shape.as_list())
+    # ic| attention_output.shape.as_list(): [None, 14, 16, 4, 128]
+
+    attention_output = nn._output_dense(attention_output)
+    ic(attention_output.shape.as_list())
+    # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
+    ```
+    ```py
+    def rel_to_abs(x):
+        bs, heads, h, w, dim = x.shape
+        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
+        x = tf.concat([x, col_pad], axis=-1)
+        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
+        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
+        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
+        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
+        final_x = final_x[:, :, :, :w, w-1:]
+        return final_x
+
+    def relative_logits_1d(*, q, rel_k, transpose_mask):
+        bs, heads, h, w, dim = q.shape
+        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
+        rel_logits = rel_to_abs(rel_logits)
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        return rel_logits
+
+    def relative_logits(q):
+        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
+        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
+        return rel_logits_h + rel_logits_w
+    ```
+***
+
 # Backbones
   **BoTNet50 on MS1MV3**
   ```py
