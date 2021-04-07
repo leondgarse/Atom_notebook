@@ -37,7 +37,6 @@
   	- [Apache](#apache)
   	- [IBus 中文输入法](#ibus-中文输入法)
   	- [触控板右键](#触控板右键)
-  	- [Ubuntu configure vpn](#ubuntu-configure-vpn)
   	- [grub](#grub)
   	- [坏块检测 badblocks](#坏块检测-badblocks)
   	- [NTFS disk mount error](#ntfs-disk-mount-error)
@@ -50,6 +49,7 @@
   	- [nohup](#nohup)
   	- [静态 IP](#静态-ip)
   	- [更改登录界面](#更改登录界面)
+    - [Ubuntu configure vpn](#ubuntu-configure-vpn)
   	- [Shadow socket 代理](#shadow-socket-代理)
   	- [每次开机时弹出 System problem report detected](#每次开机时弹出-system-problem-report-detected)
   	- [Nvidia](#nvidia)
@@ -116,17 +116,17 @@
     apt-get install .*canberra.*gtk.*
     ```
 ## apt-get
-  - apt-get --purge remove ...... （完全删除）
-  - apt-get -f install        （修复依赖关系）
-  - apt-get install -d foobar （只下载不安装）
+  - **Q / A**
     ```c
     Q: The following packages have been kept back
     A: sudo apt-get -u dist-upgrade
     ```
-    ```c
-    Q: Unable to lock directory /var/lib/apt/lists/
-    A: sudo rm /var/lib/apt/lists/lock
-    ```
+  - **常用命令**
+    - `apt-get --purge remove ...` 完全删除
+    - `apt-get -f install` 修复依赖关系
+    - `apt-get install -d foobar` 只下载不安装
+    - `apt list --installed` 列出已安装的包
+    - `apt search --names-only '^python'` 只匹配包名，默认在详细信息中匹配
   - 清理已卸载包配置文件
     ```sh
     apt list | grep -i residual-config
@@ -200,17 +200,17 @@
     sudo apt-mark unhold pkg1 [pkg2 ...]
     ```
 ## echo
-  - echo $? 打印终止状态
-  - **-n** 指定不换行
-  - echo "✨ 🍰 ✨"
+  - `echo $?` 打印终止状态
+  - echo -n 'hello' 指定不换行
+  - `echo "✨ 🍰 ✨"`
+  - `echo -e 'hello\n'` 启用 `\` 转义字符
 ## ls
-  - 参数
-    - **-1** 每一项单独一行显示
-    - **-d** 只列出目录，不显示目录中的内容
-    - **-t** 时间顺序排序
-    - **-r** 反序排列
-    - **-S** 按照文件大小由到小排序
-    - **--time-style** 指定时间格式 iso / full-iso / long-iso / local / +FORMAT
+  - **-1** 每一项单独一行显示
+  - **-d** 只列出目录，不显示目录中的内容
+  - **-t** 时间顺序排序
+  - **-r** 反序排列
+  - **-S** 按照文件大小由到小排序
+  - **--time-style** 指定时间格式 iso / full-iso / long-iso / local / +FORMAT
 ## ps
   - -a 显示有其他用户所拥有的进程的状态，
   - -x 显示没有控制终端的进程状态，
@@ -244,6 +244,9 @@
     - count=0 表示拷贝 0 个块，块大小由 bs 指定
     - seek=15000000 从输出文件开头跳过 15000000 个块后再开始复制
     - 命令的结果是创建了一个 15000000*1024 字节大小的文件（约15GB）
+## cp / mv
+  - `cp foo{,.bak}` 复制添加后缀
+  - `mv {,_pre}foo` 添加前缀
 ## date
   - 格式化输出
     ```bash
@@ -992,12 +995,6 @@
 ## 触控板右键
   - gnome-tweak-tool
   - Keyboard & Mouse -> Mouse Click Emulation
-## Ubuntu configure vpn
-  - Settings -> Network -> VPN -> Add
-  - Identity -> Advanced
-  - Choose Use Point-to-Point encryption (MPPE)
-
-    ![](images/vpn_conf.jpg)
 ## grub
   - grub配置文件 /etc/default/grub 与 /etc/grub.d 目录下的对应文件，如修改分辨率、等待时间等可通过修改 /etc/default/grub 实现
   - 修改grub背景图片：
@@ -1342,6 +1339,12 @@
     cd focalgdm3
     sudo ./focalgdm3 /absolute/path/to/Image
     ```
+## Ubuntu configure vpn
+  - Settings -> Network -> VPN -> Add
+  - Identity -> Advanced
+  - Choose Use Point-to-Point encryption (MPPE)
+
+  ![](images/vpn_conf.jpg)
 ## Shadow socket 代理
   - 安装 shadowsocks 客户端
     ```sh
@@ -1557,6 +1560,27 @@
   beep -f 350 -l 700
   beep -f 250 -l 600
   ```
+## crontab
+  - **格式**
+    ```sh
+    m    h    dom  mon  dow   command
+    *    *    *    *    *
+    -    -    -    -    -
+    |    |    |    |    |
+    |    |    |    |    +----- day of week (0 - 7) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+    |    |    |    +---------- month (1 - 12) OR jan,feb,mar,apr ...
+    |    |    +--------------- day of month (1 - 31)
+    |    +-------------------- hour (0 - 23)
+    +------------------------- minute (0 - 59)
+    ```
+    - **\*** 表示该字段的任意时间
+    - **,** 表示列表，如 `dow` 使用 `MON,WED,FRI` 表示 `周一、周三和周五`
+    - **-** 表示范围，如 `h` 使用 `6-23` 表示 `6:00 - 24:00`，`8,21-23` 表示 `8:00, 21:00-24:00`
+    - **/** 表示每一定时间间隔，如 `m` 使用 `*/10`，表示 `每小时内，每隔 10 分钟`
+  - crontab 的环境变量 `PATH` 中只有 `/usr/bin:/bin`，因此在执行其他路径的命令，需要指定路径
+    ```sh
+    */10 6-23 * * * PATH=/opt/anaconda3/bin:$HOME/local_bin:$PATH PYTHONPATH=/opt/anaconda3/lib:$PYTHONPATH xxxx
+    ```
 ***
 
 # 软件

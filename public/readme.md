@@ -101,6 +101,7 @@
   - [01-02_tests.md](./2021/01-02_tests.md)
   - [01-22_rknn.md](./2021/01-22_rknn.md)
   - [01-25_botnet.md](./2021/01-25_botnet.md)
+  - [04-07_insightface_advance.md](./2021/04-07_insightface_advance.md)
 - [Dainty_factory](./Dainty_factory)
   - [Dainty_factory.md](./Dainty_factory/Dainty_factory.md)
   - [images](./Dainty_factory/images)

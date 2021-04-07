@@ -2273,3 +2273,60 @@
     deactivate
     ```
 ***
+
+# Python 38
+  - [Python 3.8 有什么新变化](https://docs.python.org/zh-cn/3.8/whatsnew/3.8.html)
+  - **f 字符串支持 = 用于调试 `f'{expr=}'`**，自动记录表达式和调试文档
+    ```py
+    from datetime import date
+    user = 'eric_idle'
+    member_since = date(1975, 7, 31)
+    print(f'{user = } {member_since = }')
+    # user = 'eric_idle' member_since = datetime.date(1975, 7, 31)
+    ```
+    ```py
+    theta = 30
+    print(f'{theta=}  {cos(radians(theta))=:.3f}')
+    theta=30  cos(radians(theta))=0.866
+    ```
+  - **`:=` 赋值表达式** 可在表达式内部为变量赋值，在判断的同时为表达式赋值，被称为 “海象运算符”
+    ```py
+    aa = [1, 2, 3, 4, 5] * 3
+    if (n := len(aa)) > 10:
+        print(f"List is too long ({n} elements, expected <= 10)")
+    # List is too long (15 elements, expected <= 10)
+    ```
+    ```py
+    import re
+    discount = 0.0
+    advertisement = "42% discount"
+    if (mo := re.search(r'(\d+)% discount', advertisement)):
+        discount = float(mo.group(1)) / 100.0
+    print(f"{discount = }")
+    # discount = 0.42
+    ```
+    ```py
+    with open("foo", "r") as ff:
+        while (line := ff.readline()) != "":
+            print(line)
+    ```
+    ```py
+    names = ["hello", "WORLD", "Abc", "dEf"]
+    allowed_names = ["hello", "world"]
+    [name_lower.title() for name in names if (name_lower := name.lower()) in allowed_names]
+    # ['Hello', 'World']
+    ```
+  - **仅限位置形参 `/`** 限制某些函数形参必须使用仅限位置而非关键字参数的形式
+    ```py
+    def ppow(x, y, z=None, /):    
+        r = x ** y
+        if z is not None:
+            r %= z
+        return r
+    print(f'{ppow(10, 2) = }, {ppow(10, 2, 3) = }')
+    # ppow(10, 2) = 100, ppow(10, 2, 3) = 1
+
+    ppow(10, 2, z=3)
+    # TypeError: ppow() got some positional-only arguments passed as keyword arguments: 'z'
+    ```
+***

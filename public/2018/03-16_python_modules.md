@@ -381,6 +381,7 @@
     # 输出到文件，需要新的执行环境
     logging.basicConfig(filename='./foo', level=logging.DEBUG)
     ```
+    Python 3.8 添加 `force` 关键字参数，当设为 `True` 时，关联到根日志记录器的任何现有处理程序都将在执行由其他参数所指定的配置之前被移除并关闭
   - **log 级别**
     ```python
     logging.getLevelName(10)
@@ -1246,7 +1247,7 @@
 ***
 
 # 排列组合
-  - **排列**
+  - **组合 Combinations `C(n, m) = n! / (m! * (n - m)!)`**
     ```py
     import itertools
     print(list(itertools.combinations(range(3), 2)))
@@ -1254,7 +1255,7 @@
     print(list(itertools.combinations_with_replacement(range(3), 2)))
     # [(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (2, 2)]
     ```
-  - **组合**
+  - **排列 Permutations / Arrangement `A(n, m) = n! / (n - m)!`**
     ```py
     print(list(itertools.permutations(range(3), 2)))
     # [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
@@ -1270,7 +1271,15 @@
     print([[ii, jj, kk] for kk in aa for jj in aa for ii in aa])
     # [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]]
 
-    print(np.stack(np.meshgrid(aa, aa, aa), axis=-1).reshape(-1, 3))
+    print(np.stack(np.meshgrid(aa, aa, aa), axis=-1).reshape(-1, 3).tolist())
+    # [[0, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 1], [0, 1, 0], [0, 1, 1], [1, 1, 0], [1, 1, 1]]
+    ```
+  - **Python 3.8 math.perm 与 math.comb**
+    ```py
+    print(f'{math.perm(10, 3) = }') # 排列
+    # math.perm(10, 3) = 720
+    print(f'{math.comb(10, 3) = }') # 组合
+    # math.comb(10, 3) = 120
     ```
 ***
 
@@ -1288,4 +1297,32 @@
   ic(aa, bb, cc, dd.shape)
   # ic| <ipython-input-78-c5b16bc2c7c5>:1 in <module>- aa: 'hello', bb: 123, cc: [1, 2, 3], dd.shape: (4,)
   ```
+***
+
+# Typing 类型标注
+- [typing --- 类型标注支持](https://docs.python.org/zh-cn/3.8/library/typing.html)
+- [Mypy: Optional Static Typing for Python](https://github.com/python/mypy)
+- **格式**
+  - 传入参数通过 **参数名:类型** 的形式声明参数的类型
+  - 返回结果通过 **->结果类型** 的形式声明结果的类型
+  ```py
+  def greeting(name: str) -> str:
+      return 'Hello ' + name
+  ```
+- **类型别名** 通过将类型分配给别名来定义，可用于简化复杂类型签名
+  ```py
+  from typing import List
+  Vector = List[float]
+
+  def scale(scalar: float, vector: Vector) -> Vector:
+      return [scalar * num for num in vector]
+
+  # typechecks; a list of floats qualifies as a Vector.
+  new_vector = scale(2.0, [1.0, -4.2, 5.4])
+  ```
+- **常用类型**
+  - 基本类型 `int / long / float / bool / str` - 整型 / 长整型 / 浮点型 / 布尔型 / 字符串类型
+  - 泛型 `List / Tuple / Dict / Set` - 列表 / 元组 / 字典 / 集合
+  - `Iterable / Mapping / Callable / Generics`
+  - 任意类型 `Any`
 ***

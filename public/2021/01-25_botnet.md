@@ -350,38 +350,413 @@
     fig = plot_results_sub("Blueprint_Wallpaper", 400, 600, 600, 900, 3)
     fig = plot_results_sub("307622911", 150, 300, 100, 250, 4)
     ```
+  ```py
+  from to_4k_image import ImageSuperResolution
+
+  isr = ImageSuperResolution("pre_trained/edsr-baseline-liif.pth")
+
+  image_name = '307622911/307622911.jpg'
+  imm = imread(image_name)
+  fig = plt.figure()
+  plt.imshow(imm)
+  plt.tight_layout()
+
+  imms = [imm / 255]
+  resulution = 4
+  while True:
+      print("Waiting for input...")
+      aa = plt.ginput(2)
+      aa = np.array(aa)
+
+      left, right = int(aa[:, 0].min()), int(aa[:, 0].max())
+      top, bottom = int(aa[:, 1].min()), int(aa[:, 1].max())
+
+      if right - left < 1 or bottom - top < 1:
+          if len(imms) > 1:
+              imms.pop(-1)
+          else:
+              break
+              # pass
+      else:
+          sub_image = imms[-1][top:bottom, left:right, :]
+          idd = isr.image_super_resolution(sub_image, resulution)
+          imms.append(idd)
+      plt.imshow(imms[-1])
+      plt.draw()
+      print("Sub image displayed")
+  ```
+***
+
+# Float16 mixed precision
+## Basic test
+  ```py
+  from icecream import ic
+
+  keras.mixed_precision.set_global_policy('mixed_float16')
+  policy = keras.mixed_precision.global_policy()
+  ic(policy.compute_dtype, policy.variable_dtype)
+
+  inputs = keras.layers.Input([10])
+  dd = keras.layers.Dense(10)
+  dd.build([10])
+  mm = keras.models.Model(inputs, dd(inputs))
+
+  ic(dd(np.ones([1, 10])).dtype)  # ic| dd(np.ones([1, 10])).dtype: tf.float16
+  ic(dd.weights[0].dtype) # ic| dd.weights[0].dtype: tf.float32
+  ic(inputs.dtype)  # ic| inputs.dtype: tf.float32
+  ic(mm.outputs[0].dtype) # ic| mm.outputs[0].dtype: tf.float16
+  ```
+  ```py
+  import json
+  json_config = mm.to_json()
+  aa = json.loads(json_config)
+  with open('model_fp16.json', 'w') as ff:
+      json.dump(aa, ff, indent=2)
+  ```
+  ```py
+  keras.mixed_precision.set_global_policy('mixed_float16')
+  # tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
+
+  def load_cifar10(batch_size=1024, image_shape=(32, 32), classes=10):
+      # (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+      # x_train, x_test = x_train.astype('float32') / 255, x_test.astype('float32') / 255
+      import tensorflow_datasets as tfds
+      AUTOTUNE = tf.data.experimental.AUTOTUNE
+
+      if image_shape[:2] == (32, 32):
+          preprocessing = lambda data: (tf.cast(data["image"], tf.float32) / 255.0, tf.one_hot(data["label"], classes))
+      else:
+          preprocessing = lambda data: (tf.image.resize(data["image"], image_shape[:2]) / 255.0, tf.one_hot(data["label"], classes))
+      dataset = tfds.load("cifar10", split="train").map(preprocessing, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+      dataset = dataset.cache().batch(batch_size).prefetch(buffer_size=AUTOTUNE)
+      return dataset
+
+def test_dense_model(num_classes=10):
+    return keras.Sequential([
+        # keras.Input(shape=(784,), name='digits'),
+        keras.layers.Flatten(),
+        keras.layers.Dense(4096, activation='relu'),
+        keras.layers.Dense(4096, activation='relu'),
+        keras.layers.Dense(num_classes),
+        keras.layers.Activation('softmax', dtype='float32'),
+    ])
+
+def test_conv_model(num_classes=10, input_shape=(32, 32, 3)):
+    return keras.models.Sequential([
+        keras.layers.Conv2D(8, 3, padding="same", activation="relu", input_shape=input_shape),
+        keras.layers.DepthwiseConv2D(3, depth_multiplier=8, padding="same", activation="relu"),
+        keras.layers.GlobalAveragePooling2D(),
+        keras.layers.Dense(num_classes),
+        keras.layers.Activation("softmax", dtype="float32"),
+    ])
+
+  # (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+  # x_train, x_test = x_train.astype('float32') / 255, x_test.astype('float32') / 255
+  # initial_weights = model.get_weights()
+  input_shape, classes = (128, 128, 3), 80000
+  dataset = load_cifar10(batch_size=512, image_shape=input_shape, classes=classes)
+
+  # model = test_dense_model(classes)
+  # model = test_conv_model(classes, input_shape=input_shape)
+  # model = keras.applications.MobileNet(include_top=True, classes=classes, input_shape=input_shape, weights=None)
+  model = keras.applications.ResNet50(include_top=True, classes=classes, input_shape=input_shape, weights=None)
+  model = keras.models.Model(model.inputs[0], keras.layers.Activation("linear", dtype="float32")(model.outputs[0]))
+
+  # optimizer = keras.mixed_precision.LossScaleOptimizer(keras.optimizers.Adam())
+  optimizer = keras.optimizers.Adam()
+  model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+  # history = model.fit(x_train, y_train, batch_size=1024, epochs=5, validation_split=0.2)
+  history = model.fit(dataset, epochs=2)
+  ```
+| Model      | Dataset      | batchsize | float16 | XLA   | first epoch (ms/step) | min (ms/step) |
+| ---------- | ------------ | --------- | ------- | ----- | --------------------- | ------------- |
+| DenseModel | MNIST        | 8192      | False   | False | 223                   | 113           |
+| DenseModel | MNIST        | 8192      | True    | False | 101                   | 56            |
+| DenseModel | MNIST        | 8192      | False   | True  | 227                   | 111           |
+| DenseModel | MNIST        | 8192      | True    | True  | 144                   | 56            |
+| ConvModel  | cifar10      | 1024      | False   | False | 118                   | 110           |
+| ConvModel  | cifar10      | 1024      | True    | False | 41                    | 38            |
+| MobileNet  | cifar10, 32  | 1024      | Fasle   | False | 89                    | 59            |
+| MobileNet  | cifar10, 32  | 1024      | True    | False | 44                    | 41            |
+| MobileNet  | cifar10, 128 | 128       | False   | False | 142                   | 139           |
+| MobileNet  | cifar10, 128 | 128       | True    | False | 65                    | 62            |
+| Resnet50   | cifar10, 32  | 128       | False   | False | 69                    | 64            |
+| Resnet50   | cifar10, 32  | 128       | True    | False | 74                    | 71            |
+| Resnet50   | cifar10, 128 | 128       | False   | False | 187                   | 184           |
+| Resnet50   | cifar10, 128 | 128       | True    | False | 128                   | 122           |
+
+## Resnet50 cifar10
+- [Keras mixed precision API 50x slower than mixed precision graph rewrite](https://github.com/tensorflow/tensorflow/issues/41715)
+- [Much worse performance when using mixed precision training (using tensorflow.keras policy)](https://github.com/tensorflow/tensorflow/issues/39556)
 ```py
-from to_4k_image import ImageSuperResolution
+import tensorflow as tf
+from tensorflow import keras
 
-isr = ImageSuperResolution("pre_trained/edsr-baseline-liif.pth")
+def load_cifar10(batch_size=1024, image_shape=(32, 32)):
+    import tensorflow_datasets as tfds
+    AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-image_name = '307622911/307622911.jpg'
-imm = imread(image_name)
-fig = plt.figure()
-plt.imshow(imm)
-plt.tight_layout()
-
-imms = [imm / 255]
-resulution = 4
-while True:
-    print("Waiting for input...")
-    aa = plt.ginput(2)
-    aa = np.array(aa)
-
-    left, right = int(aa[:, 0].min()), int(aa[:, 0].max())
-    top, bottom = int(aa[:, 1].min()), int(aa[:, 1].max())
-
-    if right - left < 1 or bottom - top < 1:
-        if len(imms) > 1:
-            imms.pop(-1)
-        else:
-            break
-            # pass
+    if image_shape[:2] == (32, 32):
+        preprocessing = lambda data: (tf.cast(data["image"], tf.float32) / 255.0, data["label"])
     else:
-        sub_image = imms[-1][top:bottom, left:right, :]
-        idd = isr.image_super_resolution(sub_image, resulution)
-        imms.append(idd)
-    plt.imshow(imms[-1])
-    plt.draw()
-    print("Sub image displayed")
+        preprocessing = lambda data: (tf.image.resize(data["image"], image_shape[:2]) / 255.0, data["label"])
+    dataset = tfds.load("cifar10", split="train").map(preprocessing, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.cache().batch(batch_size).prefetch(buffer_size=AUTOTUNE)
+    return dataset
+
+def run_test(input_shape=(32, 32, 3), batch_size=512, use_fp16=True):
+    if use_fp16:
+        keras.mixed_precision.set_global_policy('mixed_float16')
+        # tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
+
+    dataset = load_cifar10(batch_size=batch_size, image_shape=input_shape)
+
+    # model = keras.applications.MobileNet(include_top=True, classes=10, input_shape=input_shape, weights=None)
+    model = keras.applications.ResNet50(include_top=True, classes=10, input_shape=input_shape, weights=None)
+    model = keras.models.Model(model.inputs[0], keras.layers.Activation("linear", dtype="float32")(model.outputs[0]))
+
+    # optimizer = keras.mixed_precision.LossScaleOptimizer(keras.optimizers.Adam())
+    optimizer = keras.optimizers.Adam()
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer)
+    history = model.fit(dataset, epochs=2)
+
+if __name__ == "__main__":
+    import sys
+    import argparse
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-b", "--batch_size", type=int, default=512, help="Batch size")
+    parser.add_argument("-i", "--input_shape", type=int, default=32, help="Input shape")
+
+    args = parse_arguments(sys.argv[1:])
+    run_test((args.input_shape, args.input_shape, 3), args.batch_size)
 ```
+```sh
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 512
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 512 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 128 -b 512
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 128 -b 512 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 256
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 256 -f
+
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 224 -b 512
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 224 -b 512 -f
+
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 32 -b 512
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 32 -b 512 -f
+```
+
+| input_shape | batch_size | use_fp16 | first epoch (ms/step) | second epoch (ms/step) |
+| ----------- | ---------- | -------- | --------------------- | ---------------------- |
+| 112         | 512        | False    | 83                    | 67                     |
+| 112         | 512        | True     | 1969                  | 1857                   |
+| 128         | 512        | False    | 96                    | 85                     |
+| 128         | 512        | True     | 96                    | 97                     |
+| 112         | 256        | False    | 43                    | 38                     |
+| 112         | 256        | True     | 46                    | 41                     |
+| 224         | 512        | False    | 233                   | 212                    |
+| 224         | 512        | True     | 228                   | 210                    |
+| 32          | 512        | False    | 8                     | 5                      |
+| 32          | 512        | True     | 38                    | 37                     |
+
+```sh
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 384 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 112 -b 385 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 120 -b 512 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 121 -b 512 -f
+CUDA_VISIBLE_DEVICES='0' python test_fp16.py -i 122 -b 512 -f
+```
+
+| input_shape | batch_size | use_fp16 | first epoch (ms/step) | second epoch (ms/step) |
+| ----------- | ---------- | -------- | --------------------- | ---------------------- |
+| 112         | 384        | True     | 63                    | 45                     |
+| 112         | 385        | True     | 1407                  | 1353                   |
+| 120         | 512        | True     | 2306                  | 2183                   |
+| 121         | 512        | True     | 90                    | 84                     |
+| 122         | 512        | True     | 88                    | 66                     |
+
+**Conv2D, 112, 512, float16**
+
+| kernel_size | padding | first epoch (ms/step) | second epoch (ms/step) |
+| ----------- | ------- | --------------------- | ---------------------- |
+| 7           | SAME    | 77                    | 60                     |
+| 7           | VALID   | 1969                  | 1857                   |
+| 5           | SAME    | 1132                  | 1061                   |
+| 5           | VALID   | 953                   | 948                    |
+| 3           | SAME    | 351                   | 342                    |
+| 3           | VALID   | 339                   | 330                    |
+
+**Resnet50, 112, 512**
+
+| padding | float16 | first epoch (ms/step) | second epoch (ms/step) |
+| ------- | ------- | --------------------- | ---------------------- |
+| VALID   | False   | 608                   | 570                    |
+| VALID   | True    | 2622                  | 2397                   |
+| SAME    | False   | 691                   | 656                    |
+| SAME    | True    | 438                   | 396                    |
+
+## Convert from float32 model
+  ```py
+  def convert_to_mixed_float16(model):
+      policy = keras.mixed_precision.Policy('mixed_float16')
+      policy_config = keras.utils.serialize_keras_object(policy)
+      from tensorflow.keras.layers import InputLayer, Activation
+      from tensorflow.keras.activations import linear
+
+      def do_convert_to_mixed_float16(layer):
+          if not isinstance(layer, InputLayer) and not (isinstance(layer, Activation) and layer.activation == linear):
+              aa = layer.get_config()
+              aa.update({'dtype': policy_config})
+              bb = layer.__class__.from_config(aa)
+              bb.build(layer.input_shape)
+              bb.set_weights(layer.get_weights())
+              return bb
+          return layer
+      return keras.models.clone_model(model, clone_function=do_convert_to_mixed_float16)
+  ```
+## Resnet
+```py
+keras.mixed_precision.set_global_policy('mixed_float16')
+
+import data
+ds, steps = data.prepare_dataset('/datasets/faces_emore_112x112_folders/', batch_size=512)
+
+model = keras.applications.ResNet50(include_top=True, classes=85742, input_shape=(112, 112, 3), weights=None)
+model = keras.models.Model(model.inputs[0], keras.layers.Activation("linear", dtype="float32")(model.outputs[0]))
+
+# optimizer = keras.mixed_precision.LossScaleOptimizer(keras.optimizers.Adam())
+optimizer = keras.optimizers.Adam()
+model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+# history = model.fit(x_train, y_train, batch_size=1024, epochs=5, validation_split=0.2)
+history = model.fit(ds, epochs=2)
+```
+```py
+# float32 100/11373 [..............................] - ETA: 2:07:29
+# float16
+```
+```py
+from tensorflow import keras
+
+def test_conv(use_fp16=True, padding="VALID"):
+    if use_fp16:
+        dtype = keras.mixed_precision.Policy('mixed_float16')
+    else:
+        dtype = "float32"
+    inputs = tf.ones([512, 112, 112, 3])
+    nn = keras.layers.Conv2D(64, 7, strides=2, use_bias=False, padding=padding, name="conv1_conv", dtype=dtype)
+    print(nn(inputs).dtype)
+
+    %timeit nn(inputs)
+
+test_conv(use_fp16=True, padding="VALID") # 5.62 ms ± 82.2 µs
+test_conv(use_fp16=True, padding="SAME")  # 6.61 ms ± 109 µs
+test_conv(use_fp16=False, padding="VALID")  # 4.77 ms ± 36.6 µs
+test_conv(use_fp16=False, padding="SAME") # 5.14 ms ± 53.9 µs
+```
+```py
+def bench(dtype, data_format):
+    if data_format == 'NHWC':
+        x = tf.random.normal((512, 112, 112, 3), dtype="float32")
+        f = tf.random.normal((7, 7, 3, 64), dtype="float32")
+    else:
+        x = tf.random.normal((512, 3, 112, 112), dtype="float32")
+        f = tf.random.normal((7, 7, 3, 64), dtype="float32")
+
+    p = tf.constant(0.)
+
+    # Warmup
+    tf.nn.conv2d(x, f, strides=2, padding='VALID', data_format=data_format)
+
+    start = time.time()
+    for _ in range(10):
+        tf.nn.conv2d(x, f, strides=2, padding='VALID', data_format=data_format)
+    # Synchronize GPU by sending result of computation to CPU
+    p = p + 1.
+    p.numpy()
+
+    end = time.time()
+    print('time for %s %s: %s' % (dtype, data_format, end - start))
+
+bench('float32', 'NHWC')
+bench('float32', 'NCHW')
+bench('float16', 'NHWC')
+bench('float16', 'NCHW')
+```
+```py
+keras.mixed_precision.set_global_policy('mixed_float16')
+
+inputs = tf.ones([512, 112, 112, 3])
+nn = keras.layers.Conv2D(64, 7, strides=2, use_bias=False, padding='VALID', name="conv1_conv")
+nn.build([112, 112, 3])
+print(inputs.dtype, nn.kernel.dtype, nn(inputs).dtype)
+%timeit nn(inputs)
+
+
+nn = keras.layers.Conv2D(64, 7, strides=2, use_bias=False, padding='SAME', name="conv1_conv")
+nn.build([112, 112, 3])
+nn(inputs).shape
+%timeit nn(inputs)
+# 7.34 ms ± 54.4 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+```
+```py
+def test_resnet(input_shape=None, classes=1000, padding='VALID'):
+    img_input = keras.layers.Input(shape=input_shape)
+    nn = img_input
+
+    nn = keras.layers.Conv2D(64, 7, strides=2, use_bias=False, padding=padding, name="conv1_conv")(nn)
+
+    nn = keras.layers.Flatten()(nn)
+    nn = keras.layers.Dense(classes, name="predictions")(nn)
+    nn = keras.layers.Activation('softmax', dtype='float32')(nn)
+    return keras.models.Model(img_input, nn)
+
+mm = test_resnet(classes=10, input_shape=(112, 112, 3), padding='VALID')
+inputs = tf.ones([512, 112, 112, 3])
+print(inputs.dtype, mm(inputs).dtype)
+%timeit mm(inputs)
+
+mm = test_resnet(classes=10, input_shape=(112, 112, 3), padding='SAME')
+inputs = tf.ones([512, 112, 112, 3])
+print(inputs.dtype, mm(inputs).dtype)
+%timeit mm(inputs)
+```
+***
+# XLA Accelerated Linear Algebra
+  - [XLA: Optimizing Compiler for Machine Learning](https://www.tensorflow.org/xla)
+  ```py
+  tf.config.optimizer.set_jit(True)
+
+  @tf.function(jit_compile=True)
+  ```
+  ```sh
+  $ TF_XLA_FLAGS=--tf_xla_auto_jit=2
+  ```
+***
+# Visualizing Data using the Embedding Projector in TensorBoard
+  ```py
+  import os
+  import tensorflow_datasets as tfds
+  import tensorflow as tf
+  from tensorboard.plugins import projector
+  import models
+
+  log_dir='/tmp/embedding-example/'
+  model_path = "checkpoints/TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16.h5"
+  if not os.path.exists(log_dir):
+      os.makedirs(log_dir)
+
+  mm = tf.keras.models.load_model(model_path, custom_objects={"NormDense": models.NormDense}, compile=False)
+  checkpoint = tf.train.Checkpoint(embedding=tf.Variable(tf.transpose(mm.layers[-1].weights[0])))
+  checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+
+  with open(os.path.join(log_dir, 'metadata.tsv'), "w") as ff:
+      for ii in range(mm.layers[-1].output.shape[-1]):
+          ff.write("{}\n".format(ii))
+  config = projector.ProjectorConfig()
+  embedding = config.embeddings.add()
+  embedding.tensor_name = "embedding/.ATTRIBUTES/VARIABLE_VALUE"
+  embedding.metadata_path = 'metadata.tsv'
+  projector.visualize_embeddings(log_dir, config)
+
+  !tensorboard --logdir /tmp/embedding-example/
+  ```
+***

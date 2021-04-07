@@ -1969,7 +1969,7 @@
 # 不同视场角摄像头配准
 # 测距
   ```py
-  class Face_Detect:
+  class FaceDetectDistance:
       def __init__(self, det=None):
           if det is None:
               import insightface
@@ -1999,11 +1999,24 @@
               cv2.line(frame, (right, down), (left, down), color, 3, cv2.LINE_AA)
               cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
 
-  video_test(func=Face_Detect())
+  video_test(func=FaceDetectDistance())
   ```
 # 不同视场角摄像头配准
+  - **视场角差异**
+    - Input: (IH, IW) = (600, 800), Output: (OH, OW) = (1000, 1000)
+    - 配置参数 view_bias_h: VH = 50, view_bias_w: VW = 50
+    - 计算视场角缩放比例 SH = OH / (IH - VH * 2), SW = OW / (IW - VW * 2)
+    - 输入 top --> 输出 OT = （top - VH） * SH
+  - **摄像头物理偏移**
+    - 配置参数 physic_bias_w = 1
+    - 实际人脸宽度 FW = 100
+    - 实际水平偏移 PW = physic_bias_w * FW
+    - 输入 top --> 输出 OT = (top - VH) * SH - PW
+
+  ![](images/camera_view_match.png)
+
   ```py
-  class Face_Detect:
+  class FaceDetectViewMatch:
       def __init__(self, det=None, physic_bias_w=0, physic_bias_h=0, view_bias_w=0, view_bias_h=0, rotate=0):
           if det is None:
               import insightface
@@ -2069,6 +2082,6 @@
               cv2.line(frame, (right, down), (left, down), color, 3, cv2.LINE_AA)
               cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
 
-  videos_test(func=Face_Detect(), src=[0, 4])
+  videos_test(func=FaceDetectViewMatch(), src=[0, 4])
   ```
 ***

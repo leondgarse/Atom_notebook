@@ -1,13 +1,14 @@
-# ___2019 - 11 - 18 Keras Insightface___
+# ___2020 - 12 - 01 Keras Insightface Training___
 ***
 
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-  - [___2019 - 11 - 18 Keras Insightface___](#2019-11-18-keras-insightface)
+  - [___2020 - 12 - 01 Keras Insightface___](#2020-12-01-keras-insightface)
   - [目录](#目录)
   - [Test functions](#test-functions)
   	- [Decode mxnet log](#decode-mxnet-log)
+  	- [Decode TF log](#decode-tf-log)
   	- [Choose accuracy](#choose-accuracy)
   	- [Remove regular loss from total loss](#remove-regular-loss-from-total-loss)
   	- [Multi GPU losses test](#multi-gpu-losses-test)
@@ -15,15 +16,21 @@
   	- [Face recognition test](#face-recognition-test)
   	- [Replace ReLU with PReLU in mobilenet](#replace-relu-with-prelu-in-mobilenet)
   	- [Convolution test](#convolution-test)
-  - [Model conversion](#model-conversion)
-  	- [ONNX](#onnx)
-  	- [TensorRT](#tensorrt)
-  	- [TFlite](#tflite)
-  - [ResNet and ResNeSt and EfficientNet](#resnet-and-resnest-and-efficientnet)
+  	- [Cosine and Euclidean Distance](#cosine-and-euclidean-distance)
+  	- [Summary print function](#summary-print-function)
+  	- [Ali Datasets](#ali-datasets)
+  - [人脸识别常用评价指标](#人脸识别常用评价指标)
+  	- [链接](#链接)
+  	- [基本概念](#基本概念)
+  	- [Python 示例](#python-示例)
+  	- [Bob](#bob)
+  - [Emore training backbones](#emore-training-backbones)
   	- [ResNet101V2](#resnet101v2)
   	- [ResNeSt101](#resnest101)
   	- [EfficientNetB4](#efficientnetb4)
   	- [ResNet34 CASIA](#resnet34-casia)
+  	- [Mobilefacenet](#mobilefacenet)
+  	- [Mobilefacenet SE](#mobilefacenet-se)
   	- [MXNet record](#mxnet-record)
   - [Mobilenet on Emore](#mobilenet-on-emore)
   	- [Mobilenet batch size 256 on Emore](#mobilenet-batch-size-256-on-emore)
@@ -31,17 +38,32 @@
   	- [Mobilenet batch size 1024 on Emore testing cosine learning rate](#mobilenet-batch-size-1024-on-emore-testing-cosine-learning-rate)
   	- [Mobilenet batch size 1024 on Emore testing soft center triplet combination](#mobilenet-batch-size-1024-on-emore-testing-soft-center-triplet-combination)
   	- [Mobilenet testing centerloss](#mobilenet-testing-centerloss)
+  	- [Mobilenet testing after 80 epochs softmax](#mobilenet-testing-after-80-epochs-softmax)
+  	- [Mobilenet testing pointwise and PReLU](#mobilenet-testing-pointwise-and-prelu)
   	- [Mobilenet testing SGDW](#mobilenet-testing-sgdw)
-  	- [Mobilefacenet](#mobilefacenet)
-  	- [Mobilefacenet SE](#mobilefacenet-se)
   - [Mobilenet on CASIA](#mobilenet-on-casia)
   	- [Combination of adamw and label smoothing and dropout on cifar10](#combination-of-adamw-and-label-smoothing-and-dropout-on-cifar10)
   	- [Combination of adamw and dropout and centerloss and triplet on CASIA](#combination-of-adamw-and-dropout-and-centerloss-and-triplet-on-casia)
   	- [Combination of nesterov and label smoothing and dropout on CASIA](#combination-of-nesterov-and-label-smoothing-and-dropout-on-casia)
   	- [Sub center Result](#sub-center-result)
-  	- [Distillation Result](#distillation-result)
-  - [IJB](#ijb)
-  - [Ali Datasets](#ali-datasets)
+  - [Distillation](#distillation)
+  	- [Basic distillation](#basic-distillation)
+  	- [Distillation with arcface on CASIA](#distillation-with-arcface-on-casia)
+  	- [Distillation with softmax or triplet on CASIA](#distillation-with-softmax-or-triplet-on-casia)
+  	- [Distillation with arcface on Emore or Glint360k](#distillation-with-arcface-on-emore-or-glint360k)
+  	- [Match model layers](#match-model-layers)
+  - [TFlite](#tflite)
+  	- [TFlite float model](#tflite-float-model)
+  	- [TFLite interpreter test](#tflite-interpreter-test)
+  	- [TFLite uint8 quantization](#tflite-uint8-quantization)
+  	- [Wapper trained model with Rescale or normalize](#wapper-trained-model-with-rescale-or-normalize)
+  	- [Dynamic input shape](#dynamic-input-shape)
+  	- [TFLite ARM64 python runtime](#tflite-arm64-python-runtime)
+  	- [TFLite bench test function](#tflite-bench-test-function)
+  	- [Test mobilenetv2 conversion type](#test-mobilenetv2-conversion-type)
+  	- [Testing backbones with different headers](#testing-backbones-with-different-headers)
+  	- [Testing xnnpack in TF15](#testing-xnnpack-in-tf15)
+  	- [Others](#others)
 
   <!-- /TOC -->
 ***
@@ -217,10 +239,16 @@
 ## Temp test
   ```py
   sys.path.append('..')
+  from tensorflow.keras import mixed_precision
+  policy = mixed_precision.Policy('mixed_float16')
+  mixed_precision.set_global_policy(policy)
+  print('>>>> Compute dtype: %s, Variable dtype: %s' % (policy.compute_dtype, policy.variable_dtype))
+
   import losses, train, models
   import tensorflow_addons as tfa
   basic_model = models.buildin_models("MobileNet", dropout=0, emb_shape=256)
   tt = train.Train('faces_emore_test', save_path='temp_test.h5', eval_paths=['lfw.bin'], basic_model=basic_model, batch_size=16)
+  for ii in tt.my_evals: ii.PCA_acc = False
   optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
   tt.train_single_scheduler(loss=losses.MarginSoftmax(), epoch=2, optimizer=optimizer)
 
@@ -235,8 +263,6 @@
       {"loss": losses.CenterLoss(num_classes=5, emb_shape=256), "triplet": 10, "epoch": 2}
   ]
   tt.my_evals[-1].save_model = None
-  tt.basic_callbacks.pop(1) # NOT saving
-  tt.basic_callbacks.pop(-1) # NO gently_stop
   tt.train(sch)
 
   sch = [
@@ -261,7 +287,7 @@
   ]
   tt.train(sch)
 
-  tt.reset_dataset('faces_emore_test_shuffle_label_embs_normed_512.npz')
+  tt.reset_dataset('faces_emore_test_shuffle_label_embs_512_fp16.tfrecord')
   tt.train(sch[:3])
 
   mm = keras.models.load_model('../checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_basic_agedb_30_epoch_112_0.958167.h5')
@@ -440,6 +466,428 @@
       model.summary(print_fn=lambda xx: aa.append(xx) if 'params:' in xx else None)
       # print(aa)
       return aa
+  ```
+## Ali Datasets
+  ```py
+  import cv2
+  import shutil
+  import glob2
+  from tqdm import tqdm
+  from skimage.transform import SimilarityTransform
+  from sklearn.preprocessing import normalize
+
+  def face_align_landmarks(img, landmarks, image_size=(112, 112)):
+      ret = []
+      for landmark in landmarks:
+          src = np.array(
+              [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]],
+              dtype=np.float32,
+          )
+
+          if image_size[0] != 112:
+              src *= image_size[0] / 112
+              src[:, 0] += 8.0
+
+          dst = landmark.astype(np.float32)
+          tform = SimilarityTransform()
+          tform.estimate(dst, src)
+          M = tform.params[0:2, :]
+          ret.append(cv2.warpAffine(img, M, (image_size[1], image_size[0]), borderValue=0.0))
+
+      return np.array(ret)
+
+  def extract_face_images(source_reg, dest_path, detector, limit=-1):
+      aa = glob2.glob(source_reg)
+      dest_single = dest_path
+      dest_multi = dest_single + '_multi'
+      dest_none = dest_single + '_none'
+      os.makedirs(dest_none, exist_ok=True)
+      if limit != -1:
+          aa = aa[:limit]
+      for ii in tqdm(aa):
+          imm = imread(ii)
+          bbs, pps = detector(imm)
+          if len(bbs) == 0:
+              shutil.copy(ii, os.path.join(dest_none, '_'.join(ii.split('/')[-2:])))
+              continue
+          user_name, image_name = ii.split('/')[-2], ii.split('/')[-1]
+          if len(bbs) == 1:
+              dest_path = os.path.join(dest_single, user_name)
+          else:
+              dest_path = os.path.join(dest_multi, user_name)
+
+          if not os.path.exists(dest_path):
+              os.makedirs(dest_path)
+          # if len(bbs) != 1:
+          #     shutil.copy(ii, dest_path)
+
+          nns = face_align_landmarks(imm, pps)
+          image_name_form = '%s_{}.%s' % tuple(image_name.split('.'))
+          for id, nn in enumerate(nns):
+              dest_name = os.path.join(dest_path, image_name_form.format(id))
+              imsave(dest_name, nn)
+
+  import insightface
+  os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
+  # retina = insightface.model_zoo.face_detection.retinaface_mnet025_v1()
+  retina = insightface.model_zoo.face_detection.retinaface_r50_v1()
+  retina.prepare(0)
+  detector = lambda imm: retina.detect(imm)
+
+  sys.path.append('/home/leondgarse/workspace/samba/tdFace-flask')
+  from face_model.face_model import FaceModel
+  det = FaceModel(None)
+
+  def detector(imm):
+      bbox, confid, points  = det.get_face_location(imm)
+      return bbox, points
+  extract_face_images("./face_image/*/*.jpg", 'tdevals', detector)
+  extract_face_images("./tdface_Register/*/*.jpg", 'tdface_Register_cropped', detector)
+  extract_face_images("./tdface_Register/*/*.jpg", 'tdface_Register_mtcnn', detector)
+
+  ''' Review _multi and _none folder by hand, then do detection again on _none folder using another detector '''
+  inn = glob2.glob('tdface_Register_mtcnn_none/*.jpg')
+  for ii in tqdm(inn):
+      imm = imread(ii)
+      bbs, pps = detector(imm)
+      if len(bbs) != 0:
+          image_name = os.path.basename(ii)
+          user_name = image_name.split('_')[0]
+          dest_path = os.path.join(os.path.dirname(ii), user_name)
+          os.makedirs(dest_path, exist_ok=True)
+          nns = face_align_landmarks(imm, pps)
+          image_name_form = '%s_{}.%s' % tuple(image_name.split('.'))
+          for id, nn in enumerate(nns):
+              dest_name = os.path.join(dest_path, image_name_form.format(id))
+              imsave(dest_name, nn)
+              os.rename(ii, os.path.join(dest_path, image_name))
+
+  print(">>>> 提取特征值")
+  model_path = "/home/tdtest/workspace/Keras_insightface/checkpoints/keras_resnet101_emore_II_triplet_basic_agedb_30_epoch_107_0.971000.h5"
+  model = tf.keras.models.load_model(model_path, compile=False)
+  interp = lambda ii: normalize(model.predict((np.array(ii) - 127.5) / 127))
+  register_path = 'tdface_Register_mtcnn'
+
+  backup_file = 'tdface_Register_mtcnn.npy'
+  if os.path.exists(backup_file):
+      imms = np.load('tdface_Register_mtcnn.npy')
+  else:
+      imms = glob2.glob(os.path.join(register_path, "*/*.jpg"))
+      np.save('tdface_Register_mtcnn.npy', imms)
+
+  batch_size = 64
+  steps = int(np.ceil(len(imms) / batch_size))
+  embs = []
+  for ii in tqdm(range(steps), total=steps):
+      ibb = imms[ii * batch_size : (ii + 1) * batch_size]
+      embs.append(interp([imread(jj) for jj in ibb]))
+
+  embs = np.concatenate(embs)
+  dd, pp = {}, {}
+  for ii, ee in zip(imms, embs):
+      user = os.path.basename(os.path.dirname(ii))
+      dd[user] = np.vstack([dd.get(user, np.array([]).reshape(0, embs.shape[-1])), [ee]])
+      pp[user] = np.hstack([pp.get(user, []), ii])
+  # dd_bak = dd.copy()
+  # pp_bak = pp.copy()
+  print("Total: %d" % (len(dd)))
+
+  print(">>>> 合并组间距离过小的成员")
+  OUT_THREASH = 0.7
+  tt = dd.copy()
+  while len(tt) > 0:
+      kk, vv = tt.popitem()
+      # oo = np.vstack(list(tt.values()))
+      for ikk, ivv in tt.items():
+          imax = np.dot(vv, ivv.T).max()
+          if imax > OUT_THREASH:
+              print("First: %s, Second: %s, Max dist: %.4f" % (kk, ikk, imax))
+              if kk in dd and ikk in dd:
+                  dd[kk] = np.vstack([dd[kk], dd[ikk]])
+                  dd.pop(ikk)
+                  pp[kk] = np.hstack([pp[kk], pp[ikk]])
+                  pp.pop(ikk)
+  # print([kk for kk, vv in pp.items() if vv.shape[0] != dd[kk].shape[0]])
+  print("Total left: %d" % (len(dd)))
+
+  ''' Similar images between users '''
+  src = 'tdface_Register_mtcnn'
+  dst = 'tdface_Register_mtcnn_simi'
+  with open('tdface_Register_mtcnn.foo', 'r') as ff:
+      aa = ff.readlines()
+  for id, ii in tqdm(enumerate(aa), total=len(aa)):
+      first, second, simi = [jj.split(': ')[1] for jj in ii.strip().split(', ')]
+      dest_path = os.path.join(dst, '_'.join([str(id), first, second, simi]))
+      os.makedirs(dest_path, exist_ok=True)
+      for pp in os.listdir(os.path.join(src, first)):
+          src_path = os.path.join(src, first, pp)
+          shutil.copy(src_path, os.path.join(dest_path, first + '_' + pp))
+      for pp in os.listdir(os.path.join(src, second)):
+          src_path = os.path.join(src, second, pp)
+          shutil.copy(src_path, os.path.join(dest_path, second + '_' + pp))
+
+  ''' Pos & Neg dists '''
+  batch_size = 128
+  gg = ImageDataGenerator(rescale=1./255, preprocessing_function=lambda img: (img - 0.5) * 2)
+  tt = gg.flow_from_directory('./tdevals', target_size=(112, 112), batch_size=batch_size)
+  steps = int(np.ceil(tt.classes.shape[0] / batch_size))
+  embs = []
+  classes = []
+  for _ in tqdm(range(steps), total=steps):
+      aa, bb = tt.next()
+      emb = interp(aa)
+      embs.extend(emb)
+      classes.extend(np.argmax(bb, 1))
+  embs = np.array(embs)
+  classes = np.array(classes)
+  class_matrix = np.equal(np.expand_dims(classes, 0), np.expand_dims(classes, 1))
+  dists = np.dot(embs, embs.T)
+  pos_dists = np.where(class_matrix, dists, np.ones_like(dists))
+  neg_dists = np.where(np.logical_not(class_matrix), dists, np.zeros_like(dists))
+  (neg_dists.max(1) <= pos_dists.min(1)).sum()
+  ```
+  ```py
+  import glob2
+  def dest_test(aa, bb, model, reg_path="./tdface_Register_mtcnn"):
+      ees = []
+      for ii in [aa, bb]:
+          iee = glob2.glob(os.path.join(reg_path, ii, "*.jpg"))
+          iee = [imread(jj) for jj in iee]
+          ees.append(normalize(model.predict((np.array(iee) / 255. - 0.5) * 2)))
+      return np.dot(ees[0], ees[1].T)
+
+  with open('tdface_Register_mtcnn_0.7.foo', 'r') as ff:
+      aa = ff.readlines()
+  for id, ii in enumerate(aa):
+      first, second, simi = [jj.split(': ')[1] for jj in ii.strip().split(', ')]
+      dist = dest_test(first, second, model)
+      if dist < OUT_THREASH:
+          print(("first = %s, second = %s, simi = %s, model_simi = %f" % (first, second, simi, dist)))
+  ```
+***
+
+# 人脸识别常用评价指标
+## 链接
+  - [QMUL-SurvFace: Surveillance Face Recognition Challenge](https://qmul-survface.github.io/protocols.html)
+  - [QMUL Surveillance Face Recognition Challenge @ ICCV2019 workshop RLQ](https://eval.ai/web/challenges/challenge-page/392/evaluation)
+  - [Surveillance Face Recognition Challenge](https://arxiv.org/pdf/1804.09691.pdf)
+## 基本概念
+  - **混淆矩阵的性能度量**
+    - **真正例 TP** True Positive, 预测值和真实值都为 1
+    - **真负例 TN** True Negative, 预测值与真实值都为 0
+    - **假正例 FP** False positive, 预测值为 1，真实值为 0
+    - **假负例 FN** False Negative, 预测值为 0，真实值为 1
+    - **真正例率 TPR = TP / (TP + FN)** True Positive Rate, 也称为召回率和灵敏性，正确识别的正例数据在实际正例数据中的百分比
+    - **假正例率 FPR = FP / (TN + FP)** False Positive Rate, 实际值是负例数据，预测错误的百分比
+    - **假负例率 FNR = FN / (TP + FN) = 1 - TPR** False Negative Rate
+    - **真负例率 TNR = TN / (TN + FP) = 1 - FPR** True Negative Rate
+    - **准确率 Accuracy = (TP + TN) / (TP + FN + FP + TN)**
+    - **精确度 Precision = TP / (TP + FP)**
+  - **人脸验证 Face Verification 性能度量**
+    - **NFA (FP)** 错误接受次数
+    - **NIRA (FP + TN)** 类间测试次数
+    - **NFR (FN)** 错误拒绝次数
+    - **NGRA (TP + FN)** 类内测试次数
+    - **错误接受率 FAR / FMR** False Acceptance / Match Rate, `不同人之间的相似度 > 给定阈值 T 的数量 / 实际所有不同人的数量 == NFA / NIRA == FP / (FP + TN) == FPR`
+      ```sh
+      FAR(t) = |{s >= t, where s ∈ U}| / |U|, where U￼ denotes the set of unmatched face image pairs.
+      ```
+    - **错误拒绝率 FRR / FNMR** False Rejection / Non-Match Rate, `相同人之间的相似度 < 给定阈值 T 的数量 / 实际所有相同人的数量 == NFR / NGRA == FN / (TP + FN) == FNR`
+      ```sh
+      FRR(t) = |{s < t, where s ∈ M}| / |M|, where M is the set of matched face image pairs.
+      ```
+    - **正确接受率 TAR / GAR** True / Genuine Acceptance Rate, `相同人之间的相似度 > 给定阈值 T 的数量 / 实际所有相同人的数量 == 1 - FRR == TPR​`
+    - **等错误率 EER** Equal Error Rate, 取阈值 `T` 时，使得 `FAR=FRR` 的 FAR 值
+  - **人脸认证 Face Indentification 1：N 识别**，数据集中包含 `注册库 gallery set` 与 `查询库 probe set`，其中查询库包含 `库中人脸 in-gallery probe items` 与  `库外人脸 out-of-gallery probe items`
+    - **FPIR / FAR** False Positive Identification Rate, 将库外的人脸错误识别为库中人脸的比例
+      ```sh
+      FPIR(t) = 错误次数 false alarm / 库外人脸总数 total number of un-mated retrieved probe
+      其中 r 为阈值
+      ```
+    - **FNIR** False Negative Identification Rate, 将库中的人脸识别错误，或识别为库外人脸的比例
+      ```sh
+      FNIR(t,r) = 错误次数 number of mated probe with lower matching score than thresold / 库中人脸总数 total number of mated retrieved probe
+      其中 r 为阈值，t 为 top / rank / searching attempts
+      ```
+    - **TPIR / DIR** True Positive Identification Rate / Detection and Identification Rate, 将库中的人脸识别正确的比例
+      ```sh
+      TPIR(t,r) = 1 - FNIR(t,r)
+      ```
+    - **TAR@FAR=0.01 / TPIR@FPIR=0.01** 表示在 `FAR/FPIR = 0.001` 时的 `TAR / TPIR` 值
+## Python 示例
+  - **python 计算 EER 示例** 使用 `bob.measure` 作为对比结果
+    ```py
+    from icecream import ic
+    pos_sims, neg_sims = np.random.normal(1, 1, 100), np.random.normal(0, 1, 2000)
+    pos_sorted, neg_sorted = np.sort(pos_sims), np.sort(neg_sims)
+    pos_num, neg_num = pos_sorted.shape[0], neg_sorted.shape[0]
+    for ii in range(pos_sorted.shape[0]):
+        thresh = pos_sorted[ii]
+        tpr = (pos_num - ii) / pos_num
+        frr = 1 - tpr
+        far = (neg_sorted > thresh).sum() / neg_num
+        if far < frr:
+            break
+        else:
+            err, err_thresh = far, thresh
+    ic(err, err_thresh)
+    # ic| err: 0.2935, err_thresh: 0.5190348191618015
+
+    import bob.measure
+    err_thresh = bob.measure.eer_threshold(neg_sims, pos_sims)
+    far, frr = bob.measure.farfrr(neg_sims, pos_sims, err_thresh)
+    ic(far, err_thresh)
+    # ic| far: 0.2935, err_thresh: 0.5189544119811565
+
+    from sklearn.metrics import roc_curve, auc
+    from scipy.optimize import brentq
+    from scipy.interpolate import interp1d
+    label = [1] * pos_sims.shape[0] + [0] * neg_sims.shape[0]
+    score = np.hstack([pos_sims, neg_sims])
+    fpr, tpr, _ = roc_curve(label, score)
+    roc_auc = auc(fpr,tpr)
+    eer = brentq(lambda x : 1. - x - interp1d(fpr, tpr)(x), 0., 1)
+    ic(eer)
+    # ic| eer: 0.293500000000161
+    ```
+  - **python 计算 tpir fpir 示例** 使用 `bob.measure` 作为对比结果
+    ```py
+    import bob.measure
+
+    in_gallery_num, out_gallery_num, gallery_id_num = 3000, 2000, 150
+    pos_sims = np.random.normal(1, 1, in_gallery_num) + 0.5
+    neg_sims = np.random.normal(0, 1, gallery_id_num * in_gallery_num).reshape(in_gallery_num, -1) - 0.5
+    non_gallery_sims = np.random.normal(-2, 1, gallery_id_num * out_gallery_num).reshape(out_gallery_num, -1)
+    print(pos_sims.shape, neg_sims.shape, non_gallery_sims.shape)
+    # (3000,) (3000, 150) (2000, 150)
+
+    correct_pos_cond = pos_sims > neg_sims.max(1)
+    non_gallery_sims_sorted = np.sort(non_gallery_sims.max(1))[::-1]
+    cmc_scores = list(zip(neg_sims, pos_sims.reshape(-1, 1))) + list(zip(non_gallery_sims, [None] * non_gallery_sims.shape[0]))
+    for far in [0.001, 0.01, 0.1]:
+        thresh = non_gallery_sims_sorted[max(int((non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
+        tpir = np.logical_and(correct_pos_cond, pos_sims > thresh).sum() / pos_sims.shape[0]
+        bob_thresh = bob.measure.far_threshold(non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
+        bob_tpir = bob.measure.detection_identification_rate(cmc_scores, threshold=bob_thresh, rank=1)
+        bob_far = bob.measure.false_alarm_rate(cmc_scores, threshold=bob_thresh)
+        print("far=%f, pr=%f, th=%f, bob_far=%f, bob_tpir=%f, bob_th=%f" %(far, tpir, thresh, bob_far, bob_tpir, bob_thresh))
+    # far=0.001000, pr=0.183000, th=2.342741, bob_far=0.001000, bob_tpir=0.183000, bob_th=2.342741
+    # far=0.010000, pr=0.257333, th=1.847653, bob_far=0.010000, bob_tpir=0.257333, bob_th=1.847653
+    # far=0.100000, pr=0.276000, th=1.178892, bob_far=0.100000, bob_tpir=0.276000, bob_th=1.178892
+
+    bob.measure.plot.detection_identification_curve(cmc_scores)
+    ```
+## Bob
+  - [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
+  - [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
+  - [Gitlab bob](https://gitlab.idiap.ch/bob)
+  ```sh
+  sudo apt-get install libblitz0-dev
+  pip install bob.blitz bob.core bob.io.base bob.math bob.measure
+
+  sudo apt install libgif-dev
+  pip install bob.db.ijbc
+
+  # bob_dbmanage.py ijbc download
+  mwget -n 20 https://www.idiap.ch/software/bob/databases/latest/ijbc.tar.bz2
+  tar xvf ijbc.tar.bz2 -C /opt/anaconda3/lib/python3.7/site-packages/bob/db/ijbc
+
+  sudo apt install libmatio-dev
+  pip install bob.io.matlab bob.learn.linear bob.sp bob.learn.activation bob.bio.base
+  ```
+  ```py
+  import bob.db.ijbc
+  db = bob.db.ijbc.Database()
+  ```
+  ```py
+  sys.path.append('workspace/samba/Keras_insightface/')
+  import IJB_evals
+  tt = IJB_evals.IJB_test(None, '/datasets/IJB_release/', 'IJBC', restore_embs='workspace/samba/Keras_insightface/IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz')
+  fars, tpirs, g1_cmc_scores, g2_cmc_scores = tt.run_model_test_1N()
+  IJB_evals.plot_dir_far_cmc_scores([(fars, tpirs)], names=["aa"])
+
+  ''' Gallery 1 '''
+  g1_neg_sims = np.array([ii[0] for ii in g1_cmc_scores[:9670]])
+  g1_pos_sims = np.array([ii[1][0] for ii in g1_cmc_scores[:9670]])
+  g1_non_gallery_sims = np.array([ii[0] for ii in g1_cmc_scores[9670:]])
+  print(g1_neg_sims.shape, g1_pos_sims.shape, g1_non_gallery_sims.shape)
+  # (9670, 1771) (9670,) (9923, 1772)
+
+  g1_correct_pos_cond = g1_pos_sims > g1_neg_sims.max(1)
+  g1_non_gallery_sims_sorted = np.sort(g1_non_gallery_sims.max(1))[::-1]
+  g1_threshes, g1_recalls = [], []
+  for far in fars:
+      # thresh = g1_non_gallery_sims_sorted[int(np.ceil(g1_non_gallery_sims_sorted.shape[0] * far))]
+      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
+      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
+      g1_threshes.append(thresh)
+      g1_recalls.append(recall)
+      # print("FAR = {:.10f} TPIR = {:.10f} th = {:.10f}".format(far, recall, thresh))
+
+  ''' Gallery 2 '''
+  g2_neg_sims = np.array([ii[0] for ii in g2_cmc_scores[:9923]])
+  g2_pos_sims = np.array([ii[1][0] for ii in g2_cmc_scores[:9923]])
+  g2_non_gallery_sims = np.array([ii[0] for ii in g2_cmc_scores[9923:]])
+  print(g2_neg_sims.shape, g2_pos_sims.shape, g2_non_gallery_sims.shape)
+  # (9923, 1758) (9923,) (9670, 1759)
+
+  g2_correct_pos_cond = g2_pos_sims > g2_neg_sims.max(1)
+  g2_non_gallery_sims_sorted = np.sort(g2_non_gallery_sims.max(1))[::-1]
+  g2_threshes, g2_recalls = [], []
+  for far in fars:
+      # thresh = g2_non_gallery_sims_sorted[int(np.ceil(g2_non_gallery_sims_sorted.shape[0] * far)) - 1]
+      thresh = g2_non_gallery_sims_sorted[max(int((g2_non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
+      recall = np.logical_and(g2_correct_pos_cond, g2_pos_sims > thresh).sum() / g2_pos_sims.shape[0]
+      g2_threshes.append(thresh)
+      g2_recalls.append(recall)
+
+  ''' Bob FAR thresh and DIR '''
+  for far in [10 ** (-ii) for ii in range(4, -1, -1)]:
+      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
+      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
+      bob_thresh = bob.measure.far_threshold(g1_non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
+        dir = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=bob_thresh, rank=1)
+      bob_far = bob.measure.false_alarm_rate(g1_cmc_scores, threshold=bob_thresh)
+      print("far=%f, pr=%f, th=%f, bob_th=%f, bob_far=%f, dir=%f" %(far, recall, thresh, bob_thresh, bob_far, dir))
+  # far=0.000100, pr=0.359359, th=0.841509, bob_th=0.841509, bob_far=0.000000, dir=0.359359
+  # far=0.001000, pr=0.824405, th=0.639982, bob_th=0.639982, bob_far=0.000907, dir=0.824405
+  # far=0.010000, pr=0.954188, th=0.412905, bob_th=0.412905, bob_far=0.009977, dir=0.954188
+  # far=0.100000, pr=0.969183, th=0.338687, bob_th=0.338687, bob_far=0.099970, dir=0.969183
+  # far=1.000000, pr=0.975698, th=0.185379, bob_th=0.185379, bob_far=1.000000, dir=0.975698
+
+  ''' Bob rank '''
+  for ii in [1, 5, 10]:
+      g1_top_k = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=0, rank=ii)
+      g2_top_k = bob.measure.detection_identification_rate(g2_cmc_scores, threshold=0, rank=ii)
+      mean_top_k = bob.measure.detection_identification_rate(g1_cmc_scores + g2_cmc_scores, threshold=0, rank=ii)
+      print("[top%2d] g1=%f, g2=%f, mean=%f" % (ii, g1_top_k, g2_top_k, mean_top_k))
+  # [top 1] g1=0.975698, g2=0.958581, mean=0.967029
+  # [top 5] g1=0.983351, g2=0.972186, mean=0.977696
+  # [top10] g1=0.985212, g2=0.976418, mean=0.980758
+
+  ''' Plot comparing bob '''
+  import bob.measure
+  axes = bob.measure.plot.detection_identification_curve(g1_cmc_scores, far_values=fars, rank=1, logx=True)
+  axes[0].set_label("bob gallery 1")
+  aa = axes[0].get_ydata().copy()
+  axes = bob.measure.plot.detection_identification_curve(g2_cmc_scores, far_values=fars, rank=1, logx=True)
+  axes[0].set_label("bob gallery 2")
+  bb = axes[0].get_ydata().copy()
+  plt.plot(axes[0].get_xdata(), (aa + bb) / 2, label="bob mean")
+
+  plt.plot(fars, g1_recalls, lw=1, linestyle="--", label="gallery 1")
+  plt.plot(fars, g2_recalls, lw=1, linestyle="--", label="gallery 2")
+  plt.plot(fars, tpirs, lw=1, linestyle="--", label="mean")
+
+  plt.xlabel("False Alarm Rate")
+  plt.xlim([0.0001, 1])
+  plt.xscale("log")
+  plt.ylabel("Detection & Identification Rate (%)")
+  plt.ylim([0, 1])
+
+  plt.grid(linestyle="--", linewidth=1)
+  plt.legend()
+  plt.tight_layout()
   ```
 ***
 
@@ -1038,196 +1486,6 @@
   | TopK 3->1, bottleneckOnly, initial_epoch=40 | 0.9835     | **0.9030** | 0.8763       |
 ***
 
-# Backbones
-  **BoTNet50 on MS1MV3**
-  ```py
-  import json
-  hist_path = "checkpoints/"
-  pp = {}
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  pp["customs"] = plot.EVALS_NAME + ['lr']
-  pp["epochs"] = [1, 17, 17, 17, 20]
-  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([32, 64, 64, 64], [0.1, 0.1, 0.05, 0.025])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json", fig_label="aa", names=names, **pp)
-
-  pp["axes"] = axes
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_hist.json", fig_label="no bias", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_hist.json", fig_label="no bias, shortcut act none, tmul 2", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_hist.json", fig_label="no bias, shortcut act none, tmul 2, randaug", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json", fig_label="swish", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_prelu_shortcut_act_none_GDC_arc_emb512_bs768_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json", fig_label="prelu", **pp)
-
-  hist_path = "checkpoints/"
-  aa = [
-      hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json",
-      hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_hist.json",
-      hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_hist.json",
-      hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_hist.json",
-      hist_path + "TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json",
-      hist_path + "TT_botnet50_prelu_shortcut_act_none_GDC_arc_emb512_bs768_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_hist.json",
-  ]
-  _ = choose_accuracy(aa, skip_name_len=len("TT_botnet50_"))
-  ```
-  **GhostNet on MS1MV3**
-  ```py
-  import json
-  hist_path = "checkpoints/"
-  pp = {}
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  pp["customs"] = plot.EVALS_NAME + ['lr']
-  pp["epochs"] = [5, 5, 10, 10, 20]
-  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json", **pp)
-
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json", **pp)
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json", **pp)
-  pp["axes"] = axes
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json", **pp, limit_loss_max=80)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efb0_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_sgdw_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_sgdw_hist.json", **pp)
-
-  ```
-  ```py
-  hist_path = "checkpoints/"
-  aa = [
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json",
-      hist_path + "TT_ghostnet_pointwise_E_arc_emb512_dr04_wd5e4_bs512_ms1m_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json",
-      hist_path + "TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist.json",
-  ]
-
-  _ = choose_accuracy(aa, skip_name_len=len("TT_ghostnet_prelu_GDC_arc_emb512_dr0_"))
-  |                                                             |      lfw |   cfp_fp |   agedb_30 |   epoch |
-  |:------------------------------------------------------------|---------:|---------:|-----------:|--------:|
-  | _wd5e4_bs512_ms1m_hist                                      | 0.995333 | 0.957714 |   0.956    |      47 |
-  | 04_wd5e4_bs512_ms1m_hist                                    | 0.995833 | 0.953571 |   0.959    |      45 |
-  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist  | 0.997167 | 0.959429 |   0.969333 |      45 |
-  | sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_hist    | 0.996167 | 0.961286 |   0.966833 |      46 |
-  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist         | 0.9965   | 0.965    |   0.97     |      48 |
-  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_hist         | 0.996833 | 0.962429 |   0.969    |      53 |
-  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_hist         | 0.997167 | 0.959857 |   0.968667 |      48 |
-  | sgd_l2_1e3_bs1024_ms1m_bnm09_bne1e5_cos7_batch_image_4_hist | 0.996333 | 0.959714 |   0.968    |      47 |
-  | sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist          | 0.9965   | 0.957857 |   0.966    |      45 |
-  | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist        | 0.996667 | 0.960429 |   0.968667 |      45 |
-  ```
-  **Mobilenet ArcFace and CurricularFace on Emore**
-  ```py
-  import json
-  hist_path = "checkpoints/"
-  pp = {}
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
-  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  # pp["customs"] = plot.EVALS_NAME + ['lr']
-  pp["epochs"] = [5, 5, 10, 10, 80]
-  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json", **pp, names=names)
-  pp["axes"] = axes
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_batch_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_false_bias_true_cos16_batch_hist.json", **pp)
-  ```
-  ```py
-  hist_path = "checkpoints/"
-  aa = [
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr04_wd5e4_bs512_emore_sgdw_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr04_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos7_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_batch_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos16_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_hist.json",
-      hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_false_bias_true_cos16_batch_hist.json",
-  ]
-  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_GDC_emb512_"))
-  ```
-  **Mobilenet CurricularFace on CASIA**
-  ```py
-  hist_path = "checkpoints/mobilenet_casia_tests/"
-  pp = {}
-  pp["epochs"] = [5, 5, 10, 10, 40]
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_bs400_hist.json", names=names, **pp)
-  pp["axes"] = axes
-
-  hist_path = "checkpoints/"
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_false_usebias_true_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_true_usebias_true_hist.json", **pp)
-  ```
-  **Mobilenet scale and use_bias on CASIA**
-  ```py
-  hist_path = "checkpoints/"
-  pp = {}
-  pp["epochs"] = [5, 5, 30]
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
-  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
-  names = ["ArcFace Scale 16", "ArcFace Scale 32", "ArcFace Scale 64"]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json", names=names, **pp)
-  pp["axes"] = axes
-
-  hist_path = "checkpoints/"
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_curricular_bs512_scale_true_bias_true_cos30_casia_hist.json", **pp)
-
-  hist_path = "checkpoints/"
-  aa = [
-      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json",
-      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json",
-      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json",
-      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json",
-  ]
-  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_emb512_GDC_dr04_arc_bs512_"))
-  ```
-***
-
 # Distillation
 ## Basic distillation
   ```py
@@ -1369,391 +1627,7 @@
   TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist
   ```
   ![](images/mobilenet_emore_glint_distillation_arc_sgdw.svg)
-***
-
-## MSE Dense
-  ```py
-  hist_path = "checkpoints/mobilenet_casia_tests/"
-  pp = {}
-  pp["epochs"] = [5, 5, 10, 10, 40]
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
-  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_bs400_hist.json", fig_label='Mobilnet, CASIA, emb256, dr0, bs400, base', names=names, **pp)
-  pp["axes"] = axes
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_MSEDense_margin_softmax_sgdw_5e4_emb256_dr0_bs400_hist.json", **pp)
-  ```
-***
-
-# IJB
-  ```py
-  $ time CUDA_VISIBLE_DEVICES='1' python IJB_evals.py -m '/media/SD/tdtest/IJB_release/pretrained_models/MS1MV2-ResNet100-Arcface/model,0' -L -d /media/SD/tdtest/IJB_release -B -b 64 -F
-  >>>> loading mxnet model: /media/SD/tdtest/IJB_release/pretrained_models/MS1MV2-ResNet100-Arcface/model 0 [gpu(0)]
-  [09:17:15] src/nnvm/legacy_json_util.cc:209: Loading symbol saved by previous version v1.2.0. Attempting to upgrade...
-  [09:17:15] src/nnvm/legacy_json_util.cc:217: Symbol successfully upgraded!
-  >>>> Loading templates and medias...
-  templates: (227630,), medias: (227630,), unique templates: (12115,)
-  >>>> Loading pairs...
-  p1: (8010270,), unique p1: (1845,)
-  p2: (8010270,), unique p2: (10270,)
-  label: (8010270,), label value counts: {0: 8000000, 1: 10270}
-  >>>> Loading images...
-  img_names: (227630,), landmarks: (227630, 5, 2), face_scores: (227630,)
-  face_scores value counts: {0.1: 2515, 0.2: 0, 0.3: 62, 0.4: 94, 0.5: 136, 0.6: 197, 0.7: 291, 0.8: 538, 0.9: 223797}
-  >>>> Saving backup to: /media/SD/IJB_release/IJBB_backup.npz ...
-
-  Embedding: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 3557/3557 [17:00<00:00,  3.48it/s]
-  >>>> N1D1F1 True True True
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 4948.45it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:39<00:00,  2.04it/s]
-  >>>> N1D1F0 True True False
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 5010.94it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  >>>> N1D0F1 True False True
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 5018.59it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  >>>> N1D0F0 True False False
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 4994.06it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.13it/s]
-  >>>> N0D1F1 False True True
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 4984.76it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  >>>> N0D1F0 False True False
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 4997.04it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  >>>> N0D0F1 False False True
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 4992.75it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  >>>> N0D0F0 False False False
-  Extract template feature: 100%|███████████████████████████████████████████████████████████████████████████| 12115/12115 [00:02<00:00, 5007.00it/s]
-  Verification: 100%|███████████████████████████████████████████████████████████████████████████████████████████████| 81/81 [00:38<00:00,  2.12it/s]
-  |                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-  |:-------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|
-  | MS1MV2-ResNet100-Arcface_IJBB_N1D1F1 | 0.408861 | 0.899513 | 0.946349 | 0.964167 | 0.976144 | 0.98666  |
-  | MS1MV2-ResNet100-Arcface_IJBB_N1D1F0 | 0.389192 | 0.898442 | 0.94557  | 0.96261  | 0.975268 | 0.986076 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N1D0F1 | 0.402142 | 0.893184 | 0.943622 | 0.963096 | 0.975755 | 0.986173 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N1D0F0 | 0.382765 | 0.893281 | 0.942454 | 0.961538 | 0.975073 | 0.985589 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N0D1F1 | 0.42814  | 0.908179 | 0.948978 | 0.964654 | 0.976728 | 0.986563 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N0D1F0 | 0.392989 | 0.903895 | 0.947614 | 0.962999 | 0.975755 | 0.986076 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N0D0F1 | 0.425998 | 0.907011 | 0.947809 | 0.96446  | 0.976436 | 0.986563 |
-  | MS1MV2-ResNet100-Arcface_IJBB_N0D0F0 | 0.389971 | 0.904187 | 0.946738 | 0.962025 | 0.976144 | 0.985979 |
-
-  real    23m36.871s
-  user    68m56.171s
-  sys     138m6.504s
-  ```
-  ```py
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_116_0.958000.h5 -d ~/workspace/IJB_release/
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_117_batch_10000_0.956000.h5 -d ~/workspace/IJB_release/
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956500.h5 -d ~/workspace/IJB_release/
-
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m ./checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_107_0.957167.h5 -d ~/workspace/IJB_release/
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_basic_agedb_30_epoch_104_0.955333.h5 -d ~/workspace/IJB_release/
-  CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_97_batch_20000_0.955333.h5 -d ~/workspace/IJB_release/
-
-  PYTHONPATH="$PYTHONPATH:/usr/local/cuda-10.1/targets/x86_64-linux/lib" CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m /media/SD/tdtest/partial_fc/mxnet/glint360k_r100FC_0.1_fp16_cosface8GPU/model,0 -d /datasets/IJB_release/ -s IJBB
-  PYTHONPATH="$PYTHONPATH:/opt/anaconda3/lib" CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m /media/SD/tdtest/partial_fc/mxnet/glint360k_r100FC_0.1_fp16_cosface8GPU/model,0 -d /datasets/IJB_release/ -s IJBB
-  ```
-|                                                                      |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |
-|:-------------------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
-| MS1MV2-ResNet100-Arcface_IJBB_N0D1F1                                 |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |
-| r100-arcface-msfdrop75_IJBB                                          |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB                     |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB             | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB                     |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |
-| keras_ResNest101_emore_triplet_basic_agedb_30_epoch_96_0.973333_IJBB |     0.374294 |     0.762025 |     0.895813 |     0.944012 |     0.974878 |     0.991431 |
-
-|                                                                                                                                                        |        1e-06 |        1e-05 |       0.0001 |       0.001 |         0.01 |          0.1 |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------:| ------------:| ------------:| -----------:| ------------:| ------------:|
-| mobilenet_adamw_BS256_E80_arc_tripD_basic_agedb_30_epoch_123_0.955333_IJBB                                                                             |     0.342843 |     0.741577 |     0.865141 |    0.932522 |     0.965433 |      0.98481 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956333_IJBB_N0D1F1                         |     0.362804 |     0.719182 |     0.848491 |    0.919182 | **0.964752** | **0.987829** |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_arc_MSEtripD_basic_agedb_30_epoch_1_batch_10000_0.956500_IJBB                                |     0.383447 |      0.72444 |      0.85667 |    0.921324 |      0.96592 |     0.987342 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_E80_BTO_E2_arc_basic_agedb_30_epoch_104_0.955333_IJBB_N0D1F1                                     |     0.228627 |     0.536319 |     0.738656 |    0.856962 |     0.930769 |     0.974684 |
-| keras_mobilenet_emore_adamw_5e5_soft_centerD_type_sum_arc_tripD_basic_agedb_30_epoch_108_0.956833_IJBB_N0D1F1                                          |     0.285102 |      0.57517 |     0.735443 |    0.848588 |      0.92259 |     0.972249 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_107_0.957167_IJBB_N0D1F1                                                            |      0.33038 |     0.716456 |     0.857838 |    0.925609 |     0.962999 |     0.984713 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_basic_agedb_30_epoch_116_0.958000_IJBB                                                                   |     0.346251 |     0.710808 |     0.860273 |    0.930964 |     0.964167 |     0.984129 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_97_batch_20000_0.955333_IJBB_N0D1F1                       |     0.351022 |     0.746056 |     0.869036 |     0.92814 |     0.962512 |     0.983057 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_basic_agedb_30_epoch_117_batch_10000_0.956000_IJBB                             |     0.368452 | **0.781305** |     0.879942 |    0.931159 |     0.961928 |     0.981597 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_E42_sgdw_basic_agedb_30_epoch_127_0.958333_IJBB                                |     0.372444 |      0.78111 | **0.889776** | **0.93739** |     0.966407 |     0.981207 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBB                                    | **0.393184** |     0.765433 |     0.887147 |     0.93593 |     0.964362 |     0.982278 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_basic_agedb_30_epoch_112_0.958167_IJBB                      |     0.340701 |     0.707011 |     0.854138 |    0.930088 |     0.966894 |     0.988023 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_arc_basic_agedb_30_epoch_123_0.952000_IJBB             |     0.346835 |     0.759396 |     0.876534 |    0.932717 |     0.962804 |     0.982278 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_basic_agedb_30_epoch_134_0.959167_IJBB         |      0.29036 |     0.660954 |     0.818793 |     0.91889 |     0.967381 |     0.990944 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_MSEtrip_auto_alpha_E120_MSEtrip_alpha30_basic_agedb_30_epoch_130_0.959000_IJBB |     0.264946 |     0.619182 |     0.774781 |    0.875365 |     0.924635 |     0.948296 |
-| keras_mobilenet_PRELU_emore_adamw_5e5_soft_basic_agedb_30_epoch_58_0.945000_IJBB                                                                       |     0.354528 |       0.6963 |     0.836514 |    0.911003 |     0.963681 |     0.986758 |
-| keras_mobilenet_PRELU_emore_adamw_5e5_soft_E80_arc_MSE_trip_basic_agedb_30_epoch_100_0.956833_IJBB                                                     |      0.27926 |     0.714508 |     0.860175 |    0.927361 | **0.967965** |     0.986952 |
-| keras_mobilenet_pointwise_emore_adamw_5e5_soft_2_emb256_dr04_basic_agedb_30_epoch_77_0.951167_IJBB                                                     |     0.341383 |     0.677215 |     0.834859 |    0.921422 |     0.963389 |     0.985979 |
-| TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_batch_basic_agedb_30_epoch_28_0.956000_IJBB_11               |     0.379552 |     0.788705 |      0.88705 |    0.930185 |     0.960759 |     0.980234 |
-| TT_mobilenet_GDC_emb512_curricular_dr0_l2_5e4_bs512_emore_sgdw_scale_true_bias_true_cos7_basic_agedb_30_epoch_49_0.951333_IJBB_11                      |    0.0356378 |     0.174878 |      0.46407 |    0.785394 |     0.943817 |     0.979065 |
-| TT_mobilenet_GDC_emb512_curricular_dr04_wd5e4_bs512_emore_sgdw_scale_true_bias_true_cos30_basic_agedb_30_epoch_49_0.950167_IJBB_11                     |     0.345375 |     0.710029 |     0.850243 |    0.924245 |     0.959786 |     0.981402 |
-
-|                                                                                                                                                                            |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_35_0.968000_IJBB                                                                       |  0.36777 | 0.810127 | 0.898734 | 0.938462 | 0.964654 | 0.983155 |
-| TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_47_0.968833_IJBB_11                                                                    | 0.387244 | 0.821908 | 0.906621 | 0.941967 | 0.966407 | 0.984226 |
-| TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_emore_fp16_basic_agedb_30_epoch_43_0.969167_IJBB_11                                                              |  0.34888 |  0.81334 | 0.898442 | 0.938169 |  0.96816 | 0.985589 |
-| TT_mobilenet_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.969667_IJBB_11                                                              | 0.340896 | 0.817429 | 0.896884 | 0.939241 | 0.966796 | 0.985394 |
-| TT_mobilenet_pointwise_distill_cos_only_sgdw_emb512_dr04_arc_bs400_r100_emore_basic_agedb_30_epoch_37_0.965833_IJBB_11                                                     | 0.351801 | 0.764557 | 0.869133 | 0.922103 | 0.959104 | 0.983155 |
-| TT_mobilenet_pointwise_distill_cos_only_128_sgdw_emb512_dr04_arc_bs400_r100_emore_basic_agedb_30_epoch_35_0.969000_IJBB_11                                                 | 0.364946 |   0.8185 |      0.9 | 0.938851 | 0.966407 | 0.984713 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_10_batch_10000_0.968167_IJBB_11                                              | 0.360175 | 0.832425 | 0.914703 | 0.946154 | 0.966018 | 0.983447 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_10_batch_20000_0.969833_IJBB_11                                              | 0.345959 | 0.839435 | 0.915579 |  0.94742 | 0.967478 | 0.983155 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_11_0.971667_IJBB_11                                                          | 0.372444 | 0.791918 | 0.910321 | 0.944401 | 0.967089 | 0.983544 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_1_batch_40000_0.971500_IJBB_11                                               | 0.377507 | 0.826582 | 0.916553 | 0.946543 | 0.967965 | 0.983544 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBB_11                                              | 0.363875 | 0.836125 | 0.916358 | 0.947322 | 0.969036 | 0.983252 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBB_11                                              | 0.346835 | 0.816748 | 0.915871 | 0.947225 |  0.97001 | 0.983447 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_46_0.971667_IJBB_11                                                          |  0.36962 | 0.820545 | 0.909056 | 0.945862 | 0.967575 |   0.9852 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_basic_agedb_30_epoch_49_0.972333_IJBB_11                                                          | 0.372931 | 0.817916 | 0.908082 | 0.944304 | 0.968549 | 0.984907 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_39_0.969833_IJBB_11                                                     | 0.395813 | 0.829114 | 0.906524 | 0.946641 | 0.971568 | 0.985979 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_41_0.971667_IJBB_11                                                     | 0.365141 | 0.846154 | 0.914508 | 0.950146 | 0.971373 | 0.986368 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_44_0.971833_IJBB_11                                                     | 0.365044 | 0.844693 | 0.915579 | 0.950341 |  0.97147 | 0.985979 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBB_11                                                     | 0.366699 | 0.841675 |   0.9148 | 0.950536 | 0.971081 | 0.986368 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBB_11                                        | 0.352483 | 0.835151 | 0.912463 | 0.950341 |  0.97001 | 0.983739 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_19_batch_2000_0.962167_IJBB_11                                    |  0.30964 | 0.816553 | 0.905355 | 0.943038 | 0.970497 | 0.985686 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_20_batch_2000_0.964667_IJBB_11                                    | 0.319864 | 0.823369 | 0.906037 | 0.944596 | 0.969426 | 0.985686 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_21_batch_4000_0.965333_IJBB_11                                    | 0.316456 | 0.804771 | 0.903895 | 0.945667 | 0.969815 | 0.985005 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_20_0.962333_IJBB_11                                               | 0.351607 | 0.818695 |  0.90224 |  0.94187 | 0.968549 | 0.983155 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos7_epoch_basic_agedb_30_epoch_49_0.970000_IJBB_11                                               |  0.36446 | 0.860954 | 0.919766 | 0.953067 | 0.971081 |  0.98481 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_15_0.970000_IJBB_11                         | 0.344888 | 0.864752 | 0.920156 | 0.951315 | 0.969912 | 0.984129 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_basic_agedb_30_epoch_47_batch_2000_0.966333_IJBB_11                                     | 0.353944 | 0.788413 | 0.904771 | 0.945959 | 0.970204 | 0.985297 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_basic_agedb_30_epoch_44_batch_4000_0.969500_IJBB_11                                   | 0.315579 | 0.843525 | 0.916261 | 0.949659 | 0.969718 | 0.986076 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_basic_agedb_30_epoch_15_batch_4000_0.971500_IJBB_11 |  0.39075 | 0.822785 | 0.911879 | 0.951607 | 0.974586 | 0.988413 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_E17_arc_basic_agedb_30_epoch_4_0.970333_IJBB_11     | 0.372055 | 0.849757 | 0.920351 | 0.952386 |  0.97186 | 0.986076 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_curricular_trip_basic_agedb_30_epoch_15_0.959667_IJBB_11                      | 0.408861 | 0.756767 | 0.886758 | 0.940701 |  0.96962 | 0.988413 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_basic_agedb_30_epoch_47_0.955333_IJBB_11                                          | 0.427751 |   0.8074 | 0.896884 | 0.938364 | 0.964946 | 0.985492 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_basic_agedb_30_epoch_16_0.959500_IJBB_11                             | 0.450828 | 0.776436 | 0.890847 | 0.942454 | 0.969815 | 0.990068 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_basic_agedb_30_epoch_24_0.960167_IJBB_11                             | 0.445959 | 0.782084 | 0.891237 | 0.942454 | 0.970204 | 0.989484 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_basic_agedb_30_epoch_16_0.955500_IJBB_11                                  | 0.390652 | 0.802629 | 0.900097 | 0.941188 | 0.966018 | 0.984713 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_basic_agedb_30_epoch_22_0.961167_IJBB_11                          | 0.413827 | 0.772639 | 0.881013 | 0.938948 | 0.969523 | 0.989679 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_random2_basic_agedb_30_epoch_18_0.960667_IJBB_11                  | 0.409737 | 0.777215 | 0.883836 | 0.939143 | 0.970497 | 0.989971 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_random3_basic_agedb_30_epoch_26_0.952500_IJBB_11                  | 0.387342 | 0.733885 |  0.86407 | 0.929893 | 0.968257 |  0.99075 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_E16_arc_basic_agedb_30_epoch_18_0.959000_IJBB_11                  | 0.392697 | 0.819085 |      0.9 | 0.940896 | 0.966796 | 0.985297 |
-| TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_E16_arc_basic_agedb_30_epoch_3_0.959000_IJBB_11                   | 0.395618 | 0.819377 | 0.900195 | 0.940409 | 0.966894 | 0.985784 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBB_11                          | 0.360759 | 0.899318 | 0.941967 | 0.960273 | 0.972444 | 0.984129 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_48_batch_4000_0.978833_IJBB_11  | 0.317235 | 0.896981 | 0.941675 | 0.960954 | 0.971762 | 0.983836 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_50_batch_2000_0.979000_IJBB_11  | 0.313632 | 0.898832 | 0.941675 | 0.960759 | 0.971957 | 0.984031 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                    | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                            | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
-| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11        | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
-
-
-|                                                                                                                                                   |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                        | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                            | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBC_11                     | 0.716981 | 0.886077 | 0.938743 | 0.960986 | 0.977604 | 0.987933 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBC_11                     | 0.774608 | 0.890985 | 0.939357 | 0.960986 | 0.977144 | 0.987779 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBC_11                            | 0.741423 | 0.848699 | 0.911745 | 0.951629 | 0.974127 |  0.98737 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBC_11                            | 0.848545 | 0.896457 | 0.935573 | 0.961651 | 0.977706 | 0.990438 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBC_11               | 0.817406 | 0.889656 | 0.934499 |  0.96119 | 0.977451 | 0.988495 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBC_11 | 0.880043 | 0.934499 | 0.955924 | 0.970241 | 0.980161 | 0.988597 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBC_11   |   0.8894 | 0.933834 |  0.95577 | 0.970292 | 0.981439 | 0.988546 |
-
-***
-# Ali Datasets
-  ```py
-  import cv2
-  import shutil
-  import glob2
-  from tqdm import tqdm
-  from skimage.transform import SimilarityTransform
-  from sklearn.preprocessing import normalize
-
-  def face_align_landmarks(img, landmarks, image_size=(112, 112)):
-      ret = []
-      for landmark in landmarks:
-          src = np.array(
-              [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]],
-              dtype=np.float32,
-          )
-
-          if image_size[0] != 112:
-              src *= image_size[0] / 112
-              src[:, 0] += 8.0
-
-          dst = landmark.astype(np.float32)
-          tform = SimilarityTransform()
-          tform.estimate(dst, src)
-          M = tform.params[0:2, :]
-          ret.append(cv2.warpAffine(img, M, (image_size[1], image_size[0]), borderValue=0.0))
-
-      return np.array(ret)
-
-  def extract_face_images(source_reg, dest_path, detector, limit=-1):
-      aa = glob2.glob(source_reg)
-      dest_single = dest_path
-      dest_multi = dest_single + '_multi'
-      dest_none = dest_single + '_none'
-      os.makedirs(dest_none, exist_ok=True)
-      if limit != -1:
-          aa = aa[:limit]
-      for ii in tqdm(aa):
-          imm = imread(ii)
-          bbs, pps = detector(imm)
-          if len(bbs) == 0:
-              shutil.copy(ii, os.path.join(dest_none, '_'.join(ii.split('/')[-2:])))
-              continue
-          user_name, image_name = ii.split('/')[-2], ii.split('/')[-1]
-          if len(bbs) == 1:
-              dest_path = os.path.join(dest_single, user_name)
-          else:
-              dest_path = os.path.join(dest_multi, user_name)
-
-          if not os.path.exists(dest_path):
-              os.makedirs(dest_path)
-          # if len(bbs) != 1:
-          #     shutil.copy(ii, dest_path)
-
-          nns = face_align_landmarks(imm, pps)
-          image_name_form = '%s_{}.%s' % tuple(image_name.split('.'))
-          for id, nn in enumerate(nns):
-              dest_name = os.path.join(dest_path, image_name_form.format(id))
-              imsave(dest_name, nn)
-
-  import insightface
-  os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
-  # retina = insightface.model_zoo.face_detection.retinaface_mnet025_v1()
-  retina = insightface.model_zoo.face_detection.retinaface_r50_v1()
-  retina.prepare(0)
-  detector = lambda imm: retina.detect(imm)
-
-  sys.path.append('/home/leondgarse/workspace/samba/tdFace-flask')
-  from face_model.face_model import FaceModel
-  det = FaceModel(None)
-
-  def detector(imm):
-      bbox, confid, points  = det.get_face_location(imm)
-      return bbox, points
-  extract_face_images("./face_image/*/*.jpg", 'tdevals', detector)
-  extract_face_images("./tdface_Register/*/*.jpg", 'tdface_Register_cropped', detector)
-  extract_face_images("./tdface_Register/*/*.jpg", 'tdface_Register_mtcnn', detector)
-
-  ''' Review _multi and _none folder by hand, then do detection again on _none folder using another detector '''
-  inn = glob2.glob('tdface_Register_mtcnn_none/*.jpg')
-  for ii in tqdm(inn):
-      imm = imread(ii)
-      bbs, pps = detector(imm)
-      if len(bbs) != 0:
-          image_name = os.path.basename(ii)
-          user_name = image_name.split('_')[0]
-          dest_path = os.path.join(os.path.dirname(ii), user_name)
-          os.makedirs(dest_path, exist_ok=True)
-          nns = face_align_landmarks(imm, pps)
-          image_name_form = '%s_{}.%s' % tuple(image_name.split('.'))
-          for id, nn in enumerate(nns):
-              dest_name = os.path.join(dest_path, image_name_form.format(id))
-              imsave(dest_name, nn)
-              os.rename(ii, os.path.join(dest_path, image_name))
-
-  print(">>>> 提取特征值")
-  model_path = "/home/tdtest/workspace/Keras_insightface/checkpoints/keras_resnet101_emore_II_triplet_basic_agedb_30_epoch_107_0.971000.h5"
-  model = tf.keras.models.load_model(model_path, compile=False)
-  interp = lambda ii: normalize(model.predict((np.array(ii) - 127.5) / 127))
-  register_path = 'tdface_Register_mtcnn'
-
-  backup_file = 'tdface_Register_mtcnn.npy'
-  if os.path.exists(backup_file):
-      imms = np.load('tdface_Register_mtcnn.npy')
-  else:
-      imms = glob2.glob(os.path.join(register_path, "*/*.jpg"))
-      np.save('tdface_Register_mtcnn.npy', imms)
-
-  batch_size = 64
-  steps = int(np.ceil(len(imms) / batch_size))
-  embs = []
-  for ii in tqdm(range(steps), total=steps):
-      ibb = imms[ii * batch_size : (ii + 1) * batch_size]
-      embs.append(interp([imread(jj) for jj in ibb]))
-
-  embs = np.concatenate(embs)
-  dd, pp = {}, {}
-  for ii, ee in zip(imms, embs):
-      user = os.path.basename(os.path.dirname(ii))
-      dd[user] = np.vstack([dd.get(user, np.array([]).reshape(0, embs.shape[-1])), [ee]])
-      pp[user] = np.hstack([pp.get(user, []), ii])
-  # dd_bak = dd.copy()
-  # pp_bak = pp.copy()
-  print("Total: %d" % (len(dd)))
-
-  print(">>>> 合并组间距离过小的成员")
-  OUT_THREASH = 0.7
-  tt = dd.copy()
-  while len(tt) > 0:
-      kk, vv = tt.popitem()
-      # oo = np.vstack(list(tt.values()))
-      for ikk, ivv in tt.items():
-          imax = np.dot(vv, ivv.T).max()
-          if imax > OUT_THREASH:
-              print("First: %s, Second: %s, Max dist: %.4f" % (kk, ikk, imax))
-              if kk in dd and ikk in dd:
-                  dd[kk] = np.vstack([dd[kk], dd[ikk]])
-                  dd.pop(ikk)
-                  pp[kk] = np.hstack([pp[kk], pp[ikk]])
-                  pp.pop(ikk)
-  # print([kk for kk, vv in pp.items() if vv.shape[0] != dd[kk].shape[0]])
-  print("Total left: %d" % (len(dd)))
-
-  ''' Similar images between users '''
-  src = 'tdface_Register_mtcnn'
-  dst = 'tdface_Register_mtcnn_simi'
-  with open('tdface_Register_mtcnn.foo', 'r') as ff:
-      aa = ff.readlines()
-  for id, ii in tqdm(enumerate(aa), total=len(aa)):
-      first, second, simi = [jj.split(': ')[1] for jj in ii.strip().split(', ')]
-      dest_path = os.path.join(dst, '_'.join([str(id), first, second, simi]))
-      os.makedirs(dest_path, exist_ok=True)
-      for pp in os.listdir(os.path.join(src, first)):
-          src_path = os.path.join(src, first, pp)
-          shutil.copy(src_path, os.path.join(dest_path, first + '_' + pp))
-      for pp in os.listdir(os.path.join(src, second)):
-          src_path = os.path.join(src, second, pp)
-          shutil.copy(src_path, os.path.join(dest_path, second + '_' + pp))
-
-  ''' Pos & Neg dists '''
-  batch_size = 128
-  gg = ImageDataGenerator(rescale=1./255, preprocessing_function=lambda img: (img - 0.5) * 2)
-  tt = gg.flow_from_directory('./tdevals', target_size=(112, 112), batch_size=batch_size)
-  steps = int(np.ceil(tt.classes.shape[0] / batch_size))
-  embs = []
-  classes = []
-  for _ in tqdm(range(steps), total=steps):
-      aa, bb = tt.next()
-      emb = interp(aa)
-      embs.extend(emb)
-      classes.extend(np.argmax(bb, 1))
-  embs = np.array(embs)
-  classes = np.array(classes)
-  class_matrix = np.equal(np.expand_dims(classes, 0), np.expand_dims(classes, 1))
-  dists = np.dot(embs, embs.T)
-  pos_dists = np.where(class_matrix, dists, np.ones_like(dists))
-  neg_dists = np.where(np.logical_not(class_matrix), dists, np.zeros_like(dists))
-  (neg_dists.max(1) <= pos_dists.min(1)).sum()
-  ```
-  ```py
-  import glob2
-  def dest_test(aa, bb, model, reg_path="./tdface_Register_mtcnn"):
-      ees = []
-      for ii in [aa, bb]:
-          iee = glob2.glob(os.path.join(reg_path, ii, "*.jpg"))
-          iee = [imread(jj) for jj in iee]
-          ees.append(normalize(model.predict((np.array(iee) / 255. - 0.5) * 2)))
-      return np.dot(ees[0], ees[1].T)
-
-  with open('tdface_Register_mtcnn_0.7.foo', 'r') as ff:
-      aa = ff.readlines()
-  for id, ii in enumerate(aa):
-      first, second, simi = [jj.split(': ')[1] for jj in ii.strip().split(', ')]
-      dist = dest_test(first, second, model)
-      if dist < OUT_THREASH:
-          print(("first = %s, second = %s, simi = %s, model_simi = %f" % (first, second, simi, dist)))
-  ```
-  ```sh
-  cp ./face_image/2818/1586472495016.jpg ./face_image/4609/1586475252234.jpg ./face_image/3820/1586472950858.jpg ./face_image/4179/1586520054080.jpg ./face_image/2618/1586471583221.jpg ./face_image/6696/1586529149923.jpg ./face_image/5986/1586504872276.jpg ./face_image/1951/1586489518568.jpg ./face_image/17/1586511238696.jpg ./face_image/17/1586511110105.jpg ./face_image/17/1586511248992.jpg ./face_image/4233/1586482466485.jpg ./face_image/5500/1586493019872.jpg ./face_image/4884/1586474119164.jpg ./face_image/5932/1586471784905.jpg ./face_image/7107/1586575911740.jpg ./face_image/4221/1586512334133.jpg ./face_image/5395/1586578437529.jpg ./face_image/4204/1586506059923.jpg ./face_image/4053/1586477985553.jpg ./face_image/7168/1586579239307.jpg ./face_image/7168/1586489559660.jpg ./face_image/5477/1586512847480.jpg ./face_image/4912/1586489637333.jpg ./face_image/5551/1586502762688.jpg ./face_image/5928/1586579219121.jpg ./face_image/6388/1586513897953.jpg ./face_image/4992/1586471873460.jpg ./face_image/5934/1586492793214.jpg ./face_image/5983/1586490703112.jpg ./face_image/5219/1586492929098.jpg ./face_image/5203/1586487204198.jpg ./face_image/6099/1586490074263.jpg ./face_image/5557/1586490232722.jpg ./face_image/4067/1586491778846.jpg ./face_image/4156/1586512886040.jpg ./face_image/5935/1586492829221.jpg ./face_image/2735/1586513495061.jpg ./face_image/5264/1586557233625.jpg ./face_image/1770/1586470942329.jpg ./face_image/7084/1586514100804.jpg ./face_image/5833/1586497276529.jpg ./face_image/2200/1586577699180.jpg tdevals_none
-  ```
-***
-
-# Match model layers
+## Match model layers
   ```py
   # tt = keras.models.load_model('checkpoints/resnet101/TF_resnet101v2_E_sgdw_5e5_dr4_lr1e1_random0_arc32_E5_arc_BS512_emore_basic_agedb_30_epoch_20_batch_2000_0.973000.h5')
   tt = train.buildin_models('r100')
@@ -1818,284 +1692,6 @@
     31: (0.34065934065934067, 'conv_dw_5_relu', (14, 14, 256))
     34: (0.37362637362637363, 'conv_pw_5_relu', (14, 14, 256))
   }
-  ```
-***
-
-# EuclideanDense
-  ```py
-  class EuclideanDense(NormDense):
-      def call(self, inputs, **kwargs):
-          # Euclidean Distance
-          # ==> (xx - yy) ** 2 = xx ** 2 + yy ** 2 - 2 * (xx * yy)
-          # xx = np.arange(8).reshape(2, 4).astype('float')
-          # yy = np.arange(1, 17).reshape(4, 4).astype('float')
-          # aa = np.stack([((yy - ii) ** 2).sum(1) for ii in xx])
-          # bb = (xx ** 2).sum(1).reshape(-1, 1) + (yy ** 2).sum(1) - np.dot(xx, yy.T) * 2
-          # print(np.allclose(aa, bb))  # True
-          a2 = tf.reduce_sum(tf.square(inputs), axis=-1, keepdims=True)
-          b2 = tf.reduce_sum(tf.square(self.w), axis=-1)
-          ab = tf.matmul(inputs, tf.transpose(self.w))
-          # output = tf.sqrt(a2 + b2 - 2 * ab) * -1
-          # output = (a2 + b2 - 2 * ab) / 2 * -1
-          output = ab - (a2 + b2) / 2
-          return output
-  ```
-***
-
-# 人脸识别常用评价指标
-## 链接
-  - [QMUL-SurvFace: Surveillance Face Recognition Challenge](https://qmul-survface.github.io/protocols.html)
-  - [QMUL Surveillance Face Recognition Challenge @ ICCV2019 workshop RLQ](https://eval.ai/web/challenges/challenge-page/392/evaluation)
-  - [Surveillance Face Recognition Challenge](https://arxiv.org/pdf/1804.09691.pdf)
-## 基本概念
-  - **混淆矩阵的性能度量**
-    - **真正例 TP** True Positive, 预测值和真实值都为 1
-    - **真负例 TN** True Negative, 预测值与真实值都为 0
-    - **假正例 FP** False positive, 预测值为 1，真实值为 0
-    - **假负例 FN** False Negative, 预测值为 0，真实值为 1
-    - **真正例率 TPR = TP / (TP + FN)** True Positive Rate, 也称为召回率和灵敏性，正确识别的正例数据在实际正例数据中的百分比
-    - **假正例率 FPR = FP / (TN + FP)** False Positive Rate, 实际值是负例数据，预测错误的百分比
-    - **假负例率 FNR = FN / (TP + FN) = 1 - TPR** False Negative Rate
-    - **真负例率 TNR = TN / (TN + FP) = 1 - FPR** True Negative Rate
-    - **准确率 Accuracy = (TP + TN) / (TP + FN + FP + TN)**
-    - **精确度 Precision = TP / (TP + FP)**
-  - **人脸验证 Face Verification 性能度量**
-    - **NFA (FP)** 错误接受次数
-    - **NIRA (FP + TN)** 类间测试次数
-    - **NFR (FN)** 错误拒绝次数
-    - **NGRA (TP + FN)** 类内测试次数
-    - **错误接受率 FAR / FMR** False Acceptance / Match Rate, `不同人之间的相似度 > 给定阈值 T 的数量 / 实际所有不同人的数量 == NFA / NIRA == FP / (FP + TN) == FPR`
-      ```sh
-      FAR(t) = |{s >= t, where s ∈ U}| / |U|, where U￼ denotes the set of unmatched face image pairs.
-      ```
-    - **错误拒绝率 FRR / FNMR** False Rejection / Non-Match Rate, `相同人之间的相似度 < 给定阈值 T 的数量 / 实际所有相同人的数量 == NFR / NGRA == FN / (TP + FN) == FNR`
-      ```sh
-      FRR(t) = |{s < t, where s ∈ M}| / |M|, where M is the set of matched face image pairs.
-      ```
-    - **正确接受率 TAR / GAR** True / Genuine Acceptance Rate, `相同人之间的相似度 > 给定阈值 T 的数量 / 实际所有相同人的数量 == 1 - FRR == TPR​`
-    - **等错误率 EER** Equal Error Rate, 取阈值 `T` 时，使得 `FAR=FRR` 的 FAR 值
-  - **人脸认证 Face Indentification 1：N 识别**，数据集中包含 `注册库 gallery set` 与 `查询库 probe set`，其中查询库包含 `库中人脸 in-gallery probe items` 与  `库外人脸 out-of-gallery probe items`
-    - **FPIR / FAR** False Positive Identification Rate, 将库外的人脸错误识别为库中人脸的比例
-      ```sh
-      FPIR(t) = 错误次数 false alarm / 库外人脸总数 total number of un-mated retrieved probe
-      其中 r 为阈值
-      ```
-    - **FNIR** False Negative Identification Rate, 将库中的人脸识别错误，或识别为库外人脸的比例
-      ```sh
-      FNIR(t,r) = 错误次数 number of mated probe with lower matching score than thresold / 库中人脸总数 total number of mated retrieved probe
-      其中 r 为阈值，t 为 top / rank / searching attempts
-      ```
-    - **TPIR / DIR** True Positive Identification Rate / Detection and Identification Rate, 将库中的人脸识别正确的比例
-      ```sh
-      TPIR(t,r) = 1 - FNIR(t,r)
-      ```
-    - **TAR@FAR=0.01 / TPIR@FPIR=0.01** 表示在 `FAR/FPIR = 0.001` 时的 `TAR / TPIR` 值
-## Python 示例
-  - **python 计算 EER 示例** 使用 `bob.measure` 作为对比结果
-    ```py
-    from icecream import ic
-    pos_sims, neg_sims = np.random.normal(1, 1, 100), np.random.normal(0, 1, 2000)
-    pos_sorted, neg_sorted = np.sort(pos_sims), np.sort(neg_sims)
-    pos_num, neg_num = pos_sorted.shape[0], neg_sorted.shape[0]
-    for ii in range(pos_sorted.shape[0]):
-        thresh = pos_sorted[ii]
-        tpr = (pos_num - ii) / pos_num
-        frr = 1 - tpr
-        far = (neg_sorted > thresh).sum() / neg_num
-        if far < frr:
-            break
-        else:
-            err, err_thresh = far, thresh
-    ic(err, err_thresh)
-    # ic| err: 0.2935, err_thresh: 0.5190348191618015
-
-    import bob.measure
-    err_thresh = bob.measure.eer_threshold(neg_sims, pos_sims)
-    far, frr = bob.measure.farfrr(neg_sims, pos_sims, err_thresh)
-    ic(far, err_thresh)
-    # ic| far: 0.2935, err_thresh: 0.5189544119811565
-
-    from sklearn.metrics import roc_curve, auc
-    from scipy.optimize import brentq
-    from scipy.interpolate import interp1d
-    label = [1] * pos_sims.shape[0] + [0] * neg_sims.shape[0]
-    score = np.hstack([pos_sims, neg_sims])
-    fpr, tpr, _ = roc_curve(label, score)
-    roc_auc = auc(fpr,tpr)
-    eer = brentq(lambda x : 1. - x - interp1d(fpr, tpr)(x), 0., 1)
-    ic(eer)
-    # ic| eer: 0.293500000000161
-    ```
-  - **python 计算 tpir fpir 示例** 使用 `bob.measure` 作为对比结果
-    ```py
-    import bob.measure
-
-    in_gallery_num, out_gallery_num, gallery_id_num = 3000, 2000, 150
-    pos_sims = np.random.normal(1, 1, in_gallery_num) + 0.5
-    neg_sims = np.random.normal(0, 1, gallery_id_num * in_gallery_num).reshape(in_gallery_num, -1) - 0.5
-    non_gallery_sims = np.random.normal(-2, 1, gallery_id_num * out_gallery_num).reshape(out_gallery_num, -1)
-    print(pos_sims.shape, neg_sims.shape, non_gallery_sims.shape)
-    # (3000,) (3000, 150) (2000, 150)
-
-    correct_pos_cond = pos_sims > neg_sims.max(1)
-    non_gallery_sims_sorted = np.sort(non_gallery_sims.max(1))[::-1]
-    cmc_scores = list(zip(neg_sims, pos_sims.reshape(-1, 1))) + list(zip(non_gallery_sims, [None] * non_gallery_sims.shape[0]))
-    for far in [0.001, 0.01, 0.1]:
-        thresh = non_gallery_sims_sorted[max(int((non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
-        tpir = np.logical_and(correct_pos_cond, pos_sims > thresh).sum() / pos_sims.shape[0]
-        bob_thresh = bob.measure.far_threshold(non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
-        bob_tpir = bob.measure.detection_identification_rate(cmc_scores, threshold=bob_thresh, rank=1)
-        bob_far = bob.measure.false_alarm_rate(cmc_scores, threshold=bob_thresh)
-        print("far=%f, pr=%f, th=%f, bob_far=%f, bob_tpir=%f, bob_th=%f" %(far, tpir, thresh, bob_far, bob_tpir, bob_thresh))
-    # far=0.001000, pr=0.183000, th=2.342741, bob_far=0.001000, bob_tpir=0.183000, bob_th=2.342741
-    # far=0.010000, pr=0.257333, th=1.847653, bob_far=0.010000, bob_tpir=0.257333, bob_th=1.847653
-    # far=0.100000, pr=0.276000, th=1.178892, bob_far=0.100000, bob_tpir=0.276000, bob_th=1.178892
-
-    bob.measure.plot.detection_identification_curve(cmc_scores)
-    ```
-## Bob
-  - [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
-  - [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
-  - [Gitlab bob](https://gitlab.idiap.ch/bob)
-  ```sh
-  sudo apt-get install libblitz0-dev
-  pip install bob.blitz bob.core bob.io.base bob.math bob.measure
-
-  sudo apt install libgif-dev
-  pip install bob.db.ijbc
-
-  # bob_dbmanage.py ijbc download
-  mwget -n 20 https://www.idiap.ch/software/bob/databases/latest/ijbc.tar.bz2
-  tar xvf ijbc.tar.bz2 -C /opt/anaconda3/lib/python3.7/site-packages/bob/db/ijbc
-
-  sudo apt install libmatio-dev
-  pip install bob.io.matlab bob.learn.linear bob.sp bob.learn.activation bob.bio.base
-  ```
-  ```py
-  import bob.db.ijbc
-  db = bob.db.ijbc.Database()
-  ```
-  ```py
-  sys.path.append('workspace/samba/Keras_insightface/')
-  import IJB_evals
-  tt = IJB_evals.IJB_test(None, '/datasets/IJB_release/', 'IJBC', restore_embs='workspace/samba/Keras_insightface/IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz')
-  fars, tpirs, g1_cmc_scores, g2_cmc_scores = tt.run_model_test_1N()
-  IJB_evals.plot_dir_far_cmc_scores([(fars, tpirs)], names=["aa"])
-
-  ''' Gallery 1 '''
-  g1_neg_sims = np.array([ii[0] for ii in g1_cmc_scores[:9670]])
-  g1_pos_sims = np.array([ii[1][0] for ii in g1_cmc_scores[:9670]])
-  g1_non_gallery_sims = np.array([ii[0] for ii in g1_cmc_scores[9670:]])
-  print(g1_neg_sims.shape, g1_pos_sims.shape, g1_non_gallery_sims.shape)
-  # (9670, 1771) (9670,) (9923, 1772)
-
-  g1_correct_pos_cond = g1_pos_sims > g1_neg_sims.max(1)
-  g1_non_gallery_sims_sorted = np.sort(g1_non_gallery_sims.max(1))[::-1]
-  g1_threshes, g1_recalls = [], []
-  for far in fars:
-      # thresh = g1_non_gallery_sims_sorted[int(np.ceil(g1_non_gallery_sims_sorted.shape[0] * far))]
-      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
-      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
-      g1_threshes.append(thresh)
-      g1_recalls.append(recall)
-      # print("FAR = {:.10f} TPIR = {:.10f} th = {:.10f}".format(far, recall, thresh))
-
-  ''' Gallery 2 '''
-  g2_neg_sims = np.array([ii[0] for ii in g2_cmc_scores[:9923]])
-  g2_pos_sims = np.array([ii[1][0] for ii in g2_cmc_scores[:9923]])
-  g2_non_gallery_sims = np.array([ii[0] for ii in g2_cmc_scores[9923:]])
-  print(g2_neg_sims.shape, g2_pos_sims.shape, g2_non_gallery_sims.shape)
-  # (9923, 1758) (9923,) (9670, 1759)
-
-  g2_correct_pos_cond = g2_pos_sims > g2_neg_sims.max(1)
-  g2_non_gallery_sims_sorted = np.sort(g2_non_gallery_sims.max(1))[::-1]
-  g2_threshes, g2_recalls = [], []
-  for far in fars:
-      # thresh = g2_non_gallery_sims_sorted[int(np.ceil(g2_non_gallery_sims_sorted.shape[0] * far)) - 1]
-      thresh = g2_non_gallery_sims_sorted[max(int((g2_non_gallery_sims_sorted.shape[0]) * far) - 1, 0)]
-      recall = np.logical_and(g2_correct_pos_cond, g2_pos_sims > thresh).sum() / g2_pos_sims.shape[0]
-      g2_threshes.append(thresh)
-      g2_recalls.append(recall)
-
-  ''' Bob FAR thresh and DIR '''
-  for far in [10 ** (-ii) for ii in range(4, -1, -1)]:
-      thresh = g1_non_gallery_sims_sorted[max(int((g1_non_gallery_sims_sorted.shape[0]) * far)-1, 0)]
-      recall = np.logical_and(g1_correct_pos_cond, g1_pos_sims > thresh).sum() / g1_pos_sims.shape[0]
-      bob_thresh = bob.measure.far_threshold(g1_non_gallery_sims_sorted, [], far_value=far, is_sorted=True)
-        dir = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=bob_thresh, rank=1)
-      bob_far = bob.measure.false_alarm_rate(g1_cmc_scores, threshold=bob_thresh)
-      print("far=%f, pr=%f, th=%f, bob_th=%f, bob_far=%f, dir=%f" %(far, recall, thresh, bob_thresh, bob_far, dir))
-  # far=0.000100, pr=0.359359, th=0.841509, bob_th=0.841509, bob_far=0.000000, dir=0.359359
-  # far=0.001000, pr=0.824405, th=0.639982, bob_th=0.639982, bob_far=0.000907, dir=0.824405
-  # far=0.010000, pr=0.954188, th=0.412905, bob_th=0.412905, bob_far=0.009977, dir=0.954188
-  # far=0.100000, pr=0.969183, th=0.338687, bob_th=0.338687, bob_far=0.099970, dir=0.969183
-  # far=1.000000, pr=0.975698, th=0.185379, bob_th=0.185379, bob_far=1.000000, dir=0.975698
-
-  ''' Bob rank '''
-  for ii in [1, 5, 10]:
-      g1_top_k = bob.measure.detection_identification_rate(g1_cmc_scores, threshold=0, rank=ii)
-      g2_top_k = bob.measure.detection_identification_rate(g2_cmc_scores, threshold=0, rank=ii)
-      mean_top_k = bob.measure.detection_identification_rate(g1_cmc_scores + g2_cmc_scores, threshold=0, rank=ii)
-      print("[top%2d] g1=%f, g2=%f, mean=%f" % (ii, g1_top_k, g2_top_k, mean_top_k))
-  # [top 1] g1=0.975698, g2=0.958581, mean=0.967029
-  # [top 5] g1=0.983351, g2=0.972186, mean=0.977696
-  # [top10] g1=0.985212, g2=0.976418, mean=0.980758
-
-  ''' Plot comparing bob '''
-  import bob.measure
-  axes = bob.measure.plot.detection_identification_curve(g1_cmc_scores, far_values=fars, rank=1, logx=True)
-  axes[0].set_label("bob gallery 1")
-  aa = axes[0].get_ydata().copy()
-  axes = bob.measure.plot.detection_identification_curve(g2_cmc_scores, far_values=fars, rank=1, logx=True)
-  axes[0].set_label("bob gallery 2")
-  bb = axes[0].get_ydata().copy()
-  plt.plot(axes[0].get_xdata(), (aa + bb) / 2, label="bob mean")
-
-  plt.plot(fars, g1_recalls, lw=1, linestyle="--", label="gallery 1")
-  plt.plot(fars, g2_recalls, lw=1, linestyle="--", label="gallery 2")
-  plt.plot(fars, tpirs, lw=1, linestyle="--", label="mean")
-
-  plt.xlabel("False Alarm Rate")
-  plt.xlim([0.0001, 1])
-  plt.xscale("log")
-  plt.ylabel("Detection & Identification Rate (%)")
-  plt.ylim([0, 1])
-
-  plt.grid(linestyle="--", linewidth=1)
-  plt.legend()
-  plt.tight_layout()
-  ```
-***
-
-# cavaface.pytorch
-  ```py
-  from optimizer.lr_scheduler import CosineWarmupLR
-  aa = CosineWarmupLR(None, batches=100, epochs=16, base_lr=0.1, target_lr=1e-5, warmup_epochs=0, warmup_lr=0)
-  aa.last_iter = -1
-  xx, yy = range(100 * 32), []
-  for ii in xx:
-      aa.last_iter += 1
-      aa.get_lr()
-      yy.append(aa.learning_rate)
-  plt.plot(xx, yy)
-
-  targetlr = 1e-5
-  baselr = 0.1
-  niters = 100
-  warmup_iters = 0
-  learning_rate = lambda nn: targetlr + (baselr - targetlr) * (1 + np.cos(np.pi * (nn - warmup_iters) / (niters - warmup_iters))) / 2
-  xx = np.arange(1, 120)
-  plt.plot(xx, learning_rate(xx))
-  ```
-  ```py
-  import evals
-  from data_distiller import teacher_model_interf_wrapper
-  mm = teacher_model_interf_wrapper('../models/GhostNet_x1.3_Arcface_Epoch_24.pth')
-  for aa in [os.path.join("/datasets/ms1m-retinaface-t1", ii) for ii in ["lfw.bin", "cfp_fp.bin", "agedb_30.bin"]]:
-      evals.eval_callback(lambda imm: mm(imm * 128 + 127.5), aa).on_epoch_end()
-  # lfw evaluation max accuracy: 0.997333, thresh: 0.290534
-  # cfp_fp evaluation max accuracy: 0.975571, thresh: 0.176912
-  # agedb_30 evaluation max accuracy: 0.974667, thresh: 0.196453
   ```
 ***
 
@@ -2615,6 +2211,17 @@
   |             5 | False    |           1 | False       |        4.12497 |            48887.2 |
   |             1 | True     |           1 | False       |        8.06546 |            64461.5 |
 
+  | ghostnet_tf15 strides 1 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ----------------------- | -------- | ----------- | ----------- | -------------- | ------------------ |
+  | 2                       | True     | 4           | True        | 8.16576        | 46142.1            |
+  | 6                       | False    | 4           | True        | 4.19136        | 85322.3            |
+  | 3                       | True     | 4           | False       | 8.16576        | 110180.0           |
+  | 0                       | True     | 1           | True        | 8.16576        | 115203.0           |
+  | 7                       | False    | 4           | False       | 4.19136        | 126710.0           |
+  | 4                       | False    | 1           | True        | 4.19136        | 138926.0           |
+  | 5                       | False    | 1           | False       | 4.19136        | 192994.0           |
+  | 1                       | True     | 1           | False       | 8.16576        | 206180.0           |
+
   | se_mobilefacenet_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
   | ---------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
   |                     2 | True     |           4 | True        |        1.88518 |            18713.2 |
@@ -2669,89 +2276,4 @@
   |                      4 | False    |           1 | True        |        2.97391 |            41924.6 |
   |                      5 | False    |           1 | False       |        2.97391 |            43547.7 |
   |                      1 | True     |           1 | False       |        5.80292 |            53345.1 |
-***
-
-# AutoAugment and RandAugment
-## Tensorflow image random
-  ```py
-  import data
-  ds, steps_per_epoch = data.prepare_dataset('/datasets/faces_casia_112x112_folders/', random_status=0)
-  imms, labels = ds.as_numpy_iterator().next()
-
-  cc = (imms + 1) / 2
-  plt.imshow(np.vstack([np.hstack(cc[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(cc.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-
-  img = cc[4] * 255
-  random_status = 3
-  total = 10
-  aa = np.vstack([
-      np.hstack([tf.image.adjust_brightness(img, ii) for ii in arange(-12.75 * random_status, 12.75 * random_status, 12.75 * random_status * 2 / total)]),
-      np.hstack([tf.image.adjust_contrast(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
-      np.hstack([tf.image.adjust_saturation(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
-      np.hstack([tf.image.adjust_hue(img, ii) for ii in arange(1 - 0.02 * random_status, 1 + 0.02 * random_status, 0.02 * random_status * 2 / total)[:total]]),
-      np.hstack([tf.image.adjust_jpeg_quality(img / 255, ii) * 255 for ii in arange(80 - random_status * 5, 80 + random_status * 5, random_status * 5 * 2 / total)]),
-  ])
-  plt.imshow(aa / 255)
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-## RandAugment
-  - [Github tensorflow/models augment.py](https://github.com/tensorflow/models/blob/HEAD/official/vision/image_classification/augment.py)
-  ```py
-  sys.path.append("/home/leondgarse/workspace/tensorflow_models/official/vision/image_classification")
-  import augment
-
-  aa = augment.RandAugment(magnitude=5)
-  # ['AutoContrast', 'Equalize', 'Invert', 'Rotate', 'Posterize', 'Solarize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Cutout', 'SolarizeAdd']
-  aa.available_ops = ['AutoContrast', 'Equalize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
-  dd = np.stack([aa.distort(tf.image.random_flip_left_right(tf.convert_to_tensor(ii * 255))) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-
-  enlarge = 2
-  aa = augment.RandAugment(magnitude=5 * enlarge)
-  aa.available_ops = ['AutoContrast', 'Equalize', 'Posterize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
-  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-## AutoAugment
-  ```py
-  policy = [
-      [('Equalize', 0.8, 1), ('ShearY', 0.8, 4)],
-      [('Color', 0.4, 9), ('Equalize', 0.6, 3)],
-      [('Color', 0.2, 0), ('Equalize', 0.8, 8)],
-      [('Color', 0.6, 1), ('Equalize', 1.0, 2)],
-      [('Equalize', 1.0, 9), ('ShearY', 0.6, 3)],
-      [('Color', 0.4, 7), ('Equalize', 0.6, 0)],
-      [('Posterize', 0.4, 6), ('AutoContrast', 0.4, 7)],
-      [('ShearY', 0.8, 0), ('Color', 0.6, 4)],
-      [('Equalize', 0.8, 4), ('Equalize', 0.0, 8)],
-      [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
-  ]
-  aa = augment.AutoAugment()
-  aa.policies = policy
-  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-  ```py
-  import autoaugment
-  policy = autoaugment.ImageNetPolicy()
-  policy_func = lambda img: np.array(policy(tf.keras.preprocessing.image.array_to_img(img)), dtype=np.float32)
-
-  dd = np.stack([policy_func(tf.convert_to_tensor(ii)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
 ***

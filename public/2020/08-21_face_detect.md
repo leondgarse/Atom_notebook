@@ -10,6 +10,8 @@
   	- [Image show function](#image-show-function)
   	- [Face align landmarks](#face-align-landmarks)
   	- [人脸旋转角度与侧脸](#人脸旋转角度与侧脸)
+  	- [图像质量](#图像质量)
+  	- [Video test function](#video-test-function)
   - [MTCNN](#mtcnn)
   	- [facenet mtcnn](#facenet-mtcnn)
   	- [insightface mtcnn](#insightface-mtcnn)
@@ -35,6 +37,16 @@
   	- [Pytorch](#pytorch)
   	- [Keras](#keras)
   	- [TensorRT](#tensorrt)
+  - [口罩检测](#口罩检测)
+  	- [FaceMaskDetection 模型转化](#facemaskdetection-模型转化)
+  	- [FaceMaskDetection Keras](#facemaskdetection-keras)
+  	- [neuralet face mask detection](#neuralet-face-mask-detection)
+  	- [Blazeface](#blazeface)
+  - [Ultraface](#ultraface)
+  	- [ONNX to tflite](#onnx-to-tflite)
+  	- [Benchmark](#benchmark)
+  	- [tflite python](#tflite-python)
+  	- [Face detection video tests](#face-detection-video-tests)
 
   <!-- /TOC -->
 ***

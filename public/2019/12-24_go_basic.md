@@ -50,6 +50,9 @@
   	- [sort 接口](#sort-接口)
   	- [Web 服务器](#web-服务器)
   	- [Image 图片接口](#image-图片接口)
+  - [文件读写](#文件读写)
+  	- [读文件](#读文件)
+  	- [写文件](#写文件)
   - [并发](#并发)
   	- [Goroutine](#goroutine)
   	- [channel](#channel)
@@ -59,6 +62,7 @@
   	- [并行](#并行)
   	- [Leaky Buffer 示例](#leaky-buffer-示例)
   - [Panic 与 Recover](#panic-与-recover)
+  - [embed](#embed)
 
   <!-- /TOC -->
 ***
@@ -428,9 +432,9 @@
     cd ../hello
     go mod init testModule/hello
     go mod edit -replace=testModule/greetings=../greetings
-    # replace example.com/greetings => ../greetings
+    # replace testModule/greetings => ../greetings
     go mod tidy # Clean and get dependencies
-    # go: found example.com/greetings in example.com/greetings v0.0.0-00010101000000-000000000000
+    # go: found testModule/greetings in testModule/greetings v0.0.0-00010101000000-000000000000
 
     GO111MODULE=on go run .
     # map[Darrin:Great to see you, Darrin! Gladys:Hail, Gladys! Well met! Samantha:Great to see you, Samantha!]
@@ -470,7 +474,7 @@
     # === RUN   TestHelloEmpty
     # --- PASS: TestHelloEmpty (0.00s)
     # PASS
-    # ok  	example.com/greetings	0.001s
+    # ok  	testModule/greetings	0.001s
     ```
   - **编译与安装**
     ```sh
