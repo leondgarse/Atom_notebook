@@ -950,7 +950,7 @@
   - Install IBus
     ```shell
     # 中文
-    sudo apt-get install ibus ibus-pinyin
+    sudo apt-get install ibus ibus-libpinyin
 
     # 日本語
     sudo apt-get install ibus-anthy
@@ -991,6 +991,17 @@
     sudo vi /usr/share/ibus-anthy/setup/_config.py
     - SYMBOL_CHAR = chr(0x3042)
     + SYMBOL_CHAR = unichr(0x3042)
+    ```
+  - **Build ibus-pinyin from source**
+    ```sh
+    sudo apt remove ibus-pinyin
+    sudo apt install gnome-common libpyzy-dev
+
+    git clone https://github.com/ibus/ibus-pinyin.git
+    cd ibus-pinyin/
+    ./autogen.sh
+    make
+    sudo make install
     ```
 ## 触控板右键
   - gnome-tweak-tool

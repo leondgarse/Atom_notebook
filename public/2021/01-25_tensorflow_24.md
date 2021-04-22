@@ -87,6 +87,67 @@
   fig.tight_layout()
   ```
   ![](images/activations.svg)
+## Acon
+  - [Github nmaac/acon](https://github.com/nmaac/acon/blob/main/acon.py)
+  - [Activate or Not: Learning Customized Activation, CVPR 2021](https://arxiv.org/pdf/2009.04759.pdf)
+  ```py
+  def aconC(inputs, p1=1, p2=0, beta=1):
+      p1 = keras.layers.DepthwiseConv2D(1, use_bias=False, depthwise_initializer=tf.initializers.Constant(p1))(inputs)
+      p2 = keras.layers.DepthwiseConv2D(1, use_bias=False, depthwise_initializer=tf.initializers.Constant(p2))(inputs)
+      beta = keras.layers.DepthwiseConv2D(1, use_bias=False, depthwise_initializer=tf.initializers.Constant(beta))(p1)
+
+      return p1 * tf.nn.sigmoid(beta) + p2
+
+  def meta_aconC(inputs, radio=16):
+      nn = keras.layers.GlobalAveragePooling2D()(inputs)
+      nn = keras.layers.Dense(max(radio, inputs.shape[-1] // radio), use_bias=False)(nn)
+      nn = keras.layers.BatchNormalization()(nn)
+      nn = keras.layers.Dense(inputs.shape[-1], use_bias=False)(nn)
+      beta = keras.layers.BatchNormalization()(nn)
+
+      p1 = keras.layers.DepthwiseConv2D(1, use_bias=False)(inputs)
+      p2 = keras.layers.DepthwiseConv2D(1, use_bias=False)(inputs)
+      return p1 * tf.nn.sigmoid(beta) + p2
+  ```
+  ```py
+  fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+
+  xx = np.arange(-6, 8, 0.05)
+  axes[0].plot(xx, tf.nn.relu(xx), label='relu')
+  axes[0].plot(xx, tf.nn.swish(xx), label='swish')
+
+  xxx = xx.reshape([1, 1, 1, -1])
+  axes[0].plot(xx, np.ravel(aconC(xxx)), label='aconC swish, [1, 0, 1]')
+  axes[0].plot(xx, np.ravel(aconC(xxx, 1.3, -0.1, 1)), label='aconC [1.3, -0.1, 1]')
+  axes[0].plot(xx, np.ravel(aconC(xxx, 0.7, 0.1, 1)), label='aconC [0.7, 0.1, 1]')
+  axes[0].plot(xx, np.ravel(aconC(xxx, 1, 0, 20)), label='aconC relu, [1, 0, 20]')
+  axes[0].set_title("ACON-C activation function")
+
+  from scipy.misc import derivative
+  depriv = lambda xxx, p1, p2, beta: np.ravel(derivative(lambda xx: aconC(xx, p1, p2, beta), xxx))
+
+  xx = np.arange(-60, 60, 0.05)
+  xxx = xx.reshape([1, 1, 1, -1])
+  axes[1].plot(xx, depriv(xxx, 1, 0, 1), label='aconC swish, [1, 0, 1]')
+  axes[1].plot(xx, depriv(xxx, 1, 0, 2), label='aconC [1, 0, 2]')
+  axes[1].plot(xx, depriv(xxx, 1, 0, 0.1), label='aconC [1, 0, 0.1]')
+  axes[1].plot(xx, depriv(xxx, 1, 0, 20), label='aconC relu, [1, 0, 20]')
+  axes[0].plot(xx, np.ravel(aconC(xxx, 0, 1, 0)), label='aconC linear, [0, 1, 0]')
+  axes[1].set_title("The first derivatives with β")
+
+  xx = np.arange(-20, 20, 0.05)
+  xxx = xx.reshape([1, 1, 1, -1])
+  axes[2].plot(xx, depriv(xxx, 1, 0, 1), label='aconC swish, [1, 0, 1]')
+  axes[2].plot(xx, depriv(xxx, 1.3, -0.1, 1), label='aconC [1.3, -0.1, 1]')
+  axes[2].plot(xx, depriv(xxx, 0.7, 0.1, 1), label='aconC [0.7, 0.1, 1]')
+  axes[2].set_title("The first derivatives with p1&p2")
+
+  for ax in axes:
+      ax.legend(loc='upper left')
+      # ax.grid()
+  fig.tight_layout()
+  ```
+  ![](images/aconc_activation.svg)
 ## Replace PReLU with DepthwiseConv2D
   ```py
   '''
@@ -520,232 +581,6 @@
   ```
 ***
 
-# Replace UpSampling2D with Conv2DTranspose
-## Conv2DTranspose output shape
-  ```py
-  for strides in range(1, 4):
-      for kernel_size in range(1, 4):
-          aa = keras.layers.Conv2DTranspose(3, kernel_size, padding='same', strides=strides)
-          aa.build([1, 3, 3, 3])
-          print("[SAME] kernel_size: {}, strides: {}, shape: {}".format(kernel_size, strides, aa(tf.ones([1, 3, 3, 3], dtype='float32')).shape.as_list()))
-  # [SAME] kernel_size: 1, strides: 1, shape: [1, 3, 3, 3]
-  # [SAME] kernel_size: 2, strides: 1, shape: [1, 3, 3, 3]
-  # [SAME] kernel_size: 3, strides: 1, shape: [1, 3, 3, 3]
-  # [SAME] kernel_size: 1, strides: 2, shape: [1, 6, 6, 3]
-  # [SAME] kernel_size: 2, strides: 2, shape: [1, 6, 6, 3]
-  # [SAME] kernel_size: 3, strides: 2, shape: [1, 6, 6, 3]
-  # [SAME] kernel_size: 1, strides: 3, shape: [1, 9, 9, 3]
-  # [SAME] kernel_size: 2, strides: 3, shape: [1, 9, 9, 3]
-  # [SAME] kernel_size: 3, strides: 3, shape: [1, 9, 9, 3]
-
-  for strides in range(1, 4):
-      for kernel_size in range(1, 5):
-          aa = keras.layers.Conv2DTranspose(3, kernel_size, padding='valid', strides=strides)
-          aa.build([1, 3, 3, 3])
-          print("[VALID] kernel_size: {}, strides: {}, shape: {}".format(kernel_size, strides, aa(tf.ones([1, 3, 3, 3], dtype='float32')).shape.as_list()))
-  # [VALID] kernel_size: 1, strides: 1, shape: [1, 3, 3, 3]
-  # [VALID] kernel_size: 2, strides: 1, shape: [1, 4, 4, 3]
-  # [VALID] kernel_size: 3, strides: 1, shape: [1, 5, 5, 3]
-  # [VALID] kernel_size: 4, strides: 1, shape: [1, 6, 6, 3]
-  # [VALID] kernel_size: 1, strides: 2, shape: [1, 6, 6, 3]
-  # [VALID] kernel_size: 2, strides: 2, shape: [1, 6, 6, 3]
-  # [VALID] kernel_size: 3, strides: 2, shape: [1, 7, 7, 3]
-  # [VALID] kernel_size: 4, strides: 2, shape: [1, 8, 8, 3]
-  # [VALID] kernel_size: 1, strides: 3, shape: [1, 9, 9, 3]
-  # [VALID] kernel_size: 2, strides: 3, shape: [1, 9, 9, 3]
-  # [VALID] kernel_size: 3, strides: 3, shape: [1, 9, 9, 3]
-  # [VALID] kernel_size: 4, strides: 3, shape: [1, 10, 10, 3]
-  ```
-## Nearest interpolation
-  - **Image methods**
-    ```py
-    imsize = 3
-    x, y = np.ogrid[:imsize, :imsize]
-    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(imsize + imsize)
-    plt.imshow(img, interpolation='none')
-
-    import tensorflow.keras.backend as K
-    iaa = tf.image.resize(img, (6, 6), method='nearest')
-    ibb = K.resize_images(tf.expand_dims(tf.cast(img, 'float32'), 0), 2, 2, K.image_data_format(), interpolation='nearest')
-    ```
-  - **UpSampling2D**
-    ```py
-    aa = keras.layers.UpSampling2D((2, 2), interpolation='nearest')
-    icc = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
-
-    print(np.allclose(iaa, icc))
-    # True
-    ```
-  - **tf.nn.conv2d_transpose**
-    ```py
-    def nearest_upsample_weights(factor, number_of_classes=3):
-        filter_size = 2 * factor - factor % 2
-        weights = np.zeros((filter_size, filter_size, number_of_classes, number_of_classes), dtype=np.float32)
-        upsample_kernel = np.zeros([filter_size, filter_size])
-        upsample_kernel[1:factor + 1, 1:factor + 1] = 1
-
-        for i in range(number_of_classes):
-            weights[:, :, i, i] = upsample_kernel
-        return weights
-
-    channel, factor = 3, 2
-    idd = tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME')
-    print(np.allclose(iaa, idd))
-    # True
-
-    # Output shape can be different values
-    channel, factor = 3, 3
-    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME').shape)
-    # (1, 9, 9, 3)
-    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor - 1, img.shape[1] * factor - 1, channel], strides=factor, padding='SAME').shape)
-    # (1, 8, 8, 3)
-    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor - 2, img.shape[1] * factor - 2, channel], strides=factor, padding='SAME').shape)
-    # (1, 7, 7, 3)
-    ```
-  - **Conv2DTranspose**
-    ```py
-    bb = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
-    bb.build([None, None, None, channel])
-    bb.set_weights([nearest_upsample_weights(factor, channel)])
-    iee = bb(tf.expand_dims(img.astype('float32'), 0)).numpy()[0]
-    print(np.allclose(iaa, iee))
-    # True
-    ```
-## Bilinear
-  - [pytorch_bilinear_conv_transpose.py](https://gist.github.com/mjstevens777/9d6771c45f444843f9e3dce6a401b183)
-  - [Upsampling and Image Segmentation with Tensorflow and TF-Slim](http://warmspringwinds.github.io/tensorflow/tf-slim/2016/11/22/upsampling-and-image-segmentation-with-tensorflow-and-tf-slim/)
-  - **UpSampling2D**
-    ```py
-    imsize = 3
-    x, y = np.ogrid[:imsize, :imsize]
-    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(imsize + imsize)
-    plt.imshow(img, interpolation='none')
-
-    channel, factor = 3, 3
-    iaa = tf.image.resize(img, (img.shape[0] * factor, img.shape[1] * factor), method='bilinear')
-
-    aa = keras.layers.UpSampling2D((factor, factor), interpolation='bilinear')
-    ibb = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
-    print(np.allclose(iaa, ibb))
-    # True
-    ```
-  - **Pytorch BilinearConvTranspose2d**
-    ```py
-    import torch
-    import torch.nn as nn
-
-    class BilinearConvTranspose2d(nn.ConvTranspose2d):
-        def __init__(self, channels, stride, groups=1):
-            if isinstance(stride, int):
-                stride = (stride, stride)
-
-            kernel_size = (2 * stride[0] - stride[0] % 2, 2 * stride[1] - stride[1] % 2)
-            # padding = (stride[0] - 1, stride[1] - 1)
-            padding = 1
-            super().__init__(channels, channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups)
-
-        def reset_parameters(self):
-            nn.init.constant(self.bias, 0)
-            nn.init.constant(self.weight, 0)
-            bilinear_kernel = self.bilinear_kernel(self.stride)
-            for i in range(self.in_channels):
-                j = i if self.groups == 1 else 0
-                self.weight.data[i, j] = bilinear_kernel
-
-        @staticmethod
-        def bilinear_kernel(stride):
-            num_dims = len(stride)
-
-            shape = (1,) * num_dims
-            bilinear_kernel = torch.ones(*shape)
-
-            # The bilinear kernel is separable in its spatial dimensions
-            # Build up the kernel channel by channel
-            for channel in range(num_dims):
-                channel_stride = stride[channel]
-                kernel_size = 2 * channel_stride - channel_stride % 2
-                # e.g. with stride = 4
-                # delta = [-3, -2, -1, 0, 1, 2, 3]
-                # channel_filter = [0.25, 0.5, 0.75, 1.0, 0.75, 0.5, 0.25]
-                # delta = torch.arange(1 - channel_stride, channel_stride)
-                delta = torch.arange(0, kernel_size)
-                delta = delta - (channel_stride - 0.5) if channel_stride % 2 == 0 else delta - (channel_stride - 1)
-                channel_filter = (1 - torch.abs(delta / float(channel_stride)))
-                # Apply the channel filter to the current channel
-                shape = [1] * num_dims
-                shape[channel] = kernel_size
-                bilinear_kernel = bilinear_kernel * channel_filter.view(shape)
-            return bilinear_kernel
-
-    aa = BilinearConvTranspose2d(channel, factor)
-    cc = aa(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
-    icc = cc.detach().numpy()[0].transpose(1, 2, 0)
-    print(np.allclose(iaa, icc))
-    # False
-    ```
-  - **tf.nn.conv2d_transpose**
-    ```py
-    # This is same with pytorch bilinear kernel
-    def upsample_filt(size):
-        factor = (size + 1) // 2
-        center = factor - 1 if size % 2 == 1 else factor - 0.5
-        og = np.ogrid[:size, :size]
-        return (1 - abs(og[0] - center) / factor) * (1 - abs(og[1] - center) / factor)
-
-    def bilinear_upsample_weights(factor, number_of_classes=3):
-        filter_size = 2 * factor - factor % 2
-        weights = np.zeros((filter_size, filter_size, number_of_classes, number_of_classes), dtype=np.float32)
-        upsample_kernel = upsample_filt(filter_size)
-
-        for i in range(number_of_classes):
-            weights[:, :, i, i] = upsample_kernel
-        return weights
-
-    idd = tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), bilinear_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME')[0]
-    print(np.allclose(icc, idd))
-    # True
-    ```
-  - **Conv2DTranspose**
-    ```py
-    aa = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
-    aa.build([None, None, None, channel])
-    aa.set_weights([bilinear_upsample_weights(factor, channel)])
-    iee = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
-    ```
-  - **Plot**
-    ```py
-    fig, axes = plt.subplots(1, 6, figsize=(18, 3))
-    imgs = [img, iaa, ibb, icc, idd, iee]
-    names = ["Orignal", "tf.image.resize", "UpSampling2D", "Pytorch ConvTranspose2d", "tf.nn.conv2d_transpose", "TF Conv2DTranspose"]
-    for ax, imm, nn in zip(axes, imgs, names):
-        ax.imshow(imm)
-        ax.axis('off')
-        ax.set_title(nn)
-    plt.tight_layout()
-    ```
-    ```py
-    new_rows = ((rows - 1) * strides[0] + kernel_size[0] - 2 * padding[0] + output_padding[0])
-    new_cols = ((cols - 1) * strides[1] + kernel_size[1] - 2 * padding[1] + output_padding[1])
-    ```
-## Clone model
-  ```py
-  def convert_UpSampling2D_layer(layer):
-      print(layer.name)
-      if isinstance(layer, keras.layers.UpSampling2D):
-          print(">>>> Convert UpSampling2D <<<<")
-          channel = layer.input.shape[-1]
-          factor = 2
-          aa = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
-          aa.build(layer.input.shape)
-          aa.set_weights([bilinear_upsample_weights(factor, number_of_classes=channel)])
-          return aa
-      return layer
-
-  mm = keras.models.load_model('aa.h5', compile=False)
-  mmn = keras.models.clone_model(mm, clone_function=convert_UpSampling2D_layer)
-  ```
-***
-
 # Float16 mixed precision
 ## Basic test
   ```py
@@ -863,6 +698,24 @@
           return layer
       return keras.models.clone_model(model, clone_function=do_convert_to_mixed_float16)
   ```
+  ```py
+  def convert_mixed_float16_to_float32(model):
+      policy = keras.mixed_precision.Policy('mixed_float16')
+      policy_config = keras.utils.serialize_keras_object(policy)
+      from tensorflow.keras.layers import InputLayer, Activation
+      from tensorflow.keras.activations import linear
+
+      def do_convert_to_float32(layer):
+          if not isinstance(layer, InputLayer) and not (isinstance(layer, Activation) and layer.activation == linear):
+              aa = layer.get_config()
+              aa.update({'dtype': "float32"})
+              bb = layer.__class__.from_config(aa)
+              bb.build(layer.input_shape)
+              bb.set_weights(layer.get_weights())
+              return bb
+          return layer
+      return keras.models.clone_model(model, clone_function=do_convert_to_float32)
+  ```
 ***
 
 # XLA Accelerated Linear Algebra
@@ -873,7 +726,7 @@
   @tf.function(jit_compile=True)
   ```
   ```sh
-  $ TF_XLA_FLAGS=--tf_xla_auto_jit=2
+  $ TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
   ```
 ***
 
@@ -1176,7 +1029,8 @@
     ```
 ***
 
-# Multi GPU
+# Tensorflow Horovod and Distribute
+## Multi GPU
   ```py
   tf.debugging.set_log_device_placement(True)
 
@@ -1240,9 +1094,6 @@
   with ss.scope():
       ss.run(step_fn, args=(np.ones([2, 112, 112, 3]),))
   ```
-***
-
-# Tensorflow Horovod and Distribute
 ## Install horovod
   - [NVIDIA Collective Communications Library (NCCL) Download Page](https://developer.nvidia.com/nccl/nccl-download)
   - [Horovod on GPU](https://github.com/horovod/horovod/blob/master/docs/gpus.rst)
@@ -1433,178 +1284,7 @@
   | horovod, cuda 0,1 | 128 * 2    | 397ms/step     |              |
 ***
 
-# Distillation
-## 链接
-  - [知识蒸馏简述（一）](https://zhuanlan.zhihu.com/p/92166184)
-## MNIST example
-  - [Github keras-team/keras-io knowledge_distillation.py](https://github.com/keras-team/keras-io/blob/master/examples/vision/knowledge_distillation.py)
-  ```py
-  import tensorflow as tf
-  from tensorflow import keras
-  from tensorflow.keras import layers
-  import numpy as np
-
-  # Create the teacher
-  teacher = keras.Sequential(
-      [
-          layers.Conv2D(256, (3, 3), strides=(2, 2), padding="same"),
-          layers.LeakyReLU(alpha=0.2),
-          layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1), padding="same"),
-          layers.Conv2D(512, (3, 3), strides=(2, 2), padding="same"),
-          layers.Flatten(),
-          layers.Dense(10),
-      ],
-      name="teacher",
-  )
-
-  # Create the student
-  student = keras.Sequential(
-      [
-          layers.Conv2D(16, (3, 3), strides=(2, 2), padding="same"),
-          layers.LeakyReLU(alpha=0.2),
-          layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1), padding="same"),
-          layers.Conv2D(32, (3, 3), strides=(2, 2), padding="same"),
-          layers.Flatten(),
-          layers.Dense(10),
-      ],
-      name="student",
-  )
-
-  # Prepare the train and test dataset.
-  batch_size = 64
-  # (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-  # x_train, x_test = np.reshape(x_train, (-1, 28, 28, 1)), np.reshape(x_test, (-1, 28, 28, 1))
-  (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-
-  # Normalize data
-  x_train = x_train.astype("float32") / 255.0
-  x_test = x_test.astype("float32") / 255.0
-
-  # Train teacher as usual
-  teacher.compile(
-      optimizer=keras.optimizers.Adam(),
-      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-      metrics=[keras.metrics.SparseCategoricalAccuracy()],
-  )
-
-  # Train and evaluate teacher on data.
-  teacher.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
-  teacher.evaluate(x_test, y_test)
-
-  def create_distiller_model(teacher, student, clone=True):
-      if clone:
-          teacher_copy = keras.models.clone_model(teacher)
-          student_copy = keras.models.clone_model(student)
-      else:
-          teacher_copy, student_copy = teacher, student
-
-      teacher_copy.trainable = False
-      student_copy.trainable = True
-      inputs = teacher_copy.inputs[0]
-      student_output = student_copy(inputs)
-      teacher_output = teacher_copy(inputs)
-      mm = keras.models.Model(inputs, keras.layers.Concatenate()([student_output, teacher_output]))
-      return student_copy, mm
-
-  class DistillerLoss(keras.losses.Loss):
-      def __init__(self, student_loss_fn, distillation_loss_fn, alpha=0.1, temperature=10, **kwargs):
-          super(DistillerLoss, self).__init__(**kwargs)
-          self.student_loss_fn, self.distillation_loss_fn = student_loss_fn, distillation_loss_fn
-          self.alpha, self.temperature = alpha, temperature
-
-      def call(self, y_true, y_pred):
-          student_output, teacher_output = tf.split(y_pred, 2, axis=-1)
-          student_loss = self.student_loss_fn(y_true, student_output)
-          distillation_loss = self.distillation_loss_fn(
-              tf.nn.softmax(teacher_output / self.temperature, axis=1),
-              tf.nn.softmax(student_output / self.temperature, axis=1),
-          )
-          loss = self.alpha * student_loss + (1 - self.alpha) * distillation_loss
-          return loss
-
-  def distiller_accuracy(y_true, y_pred):
-      student_output, _ = tf.split(y_pred, 2, axis=-1)
-      return keras.metrics.sparse_categorical_accuracy(y_true, student_output)
-
-  distiller_loss = DistillerLoss(
-      student_loss_fn=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-      distillation_loss_fn=keras.losses.KLDivergence(),
-      alpha=0.1,
-      # temperature=100,
-      temperature=10,
-  )
-
-  student_copy, mm = create_distiller_model(teacher, student)
-  mm.compile(optimizer=keras.optimizers.Adam(), loss=distiller_loss, metrics=[distiller_accuracy])
-  mm.summary()
-  mm.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
-
-  mm.evaluate(x_test, y_test)
-  student_copy.compile(metrics=["accuracy"])
-  student_copy.evaluate(x_test, y_test)
-
-  # Train student scratch
-  student_scratch = keras.models.clone_model(student)
-  student_scratch.compile(
-      optimizer=keras.optimizers.Adam(),
-      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-      metrics=[keras.metrics.SparseCategoricalAccuracy()],
-  )
-
-  student_scratch.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
-  student_scratch.evaluate(x_test, y_test)
-  ```
-## Embedding
-  ```py
-  def tf_imread(file_path):
-      img = tf.io.read_file(file_path)
-      img = tf.image.decode_jpeg(img, channels=3) # [0, 255]
-      img = tf.image.convert_image_dtype(img, tf.float32) # [0, 1]
-      return img
-
-  data_path = "faces_casia_112x112_folders_shuffle_label_embs.pkl"
-  batch_size = 64
-  aa = np.load(data_path, allow_pickle=True)
-  image_names, image_classes, embeddings = aa['image_names'], aa['image_classes'], aa['embeddings']
-  classes = np.max(image_classes) + 1
-  print(">>>> Image length: %d, Image class length: %d, embeddings: %s" % (len(image_names), len(image_classes), np.shape(embeddings)))
-  # >>>> Image length: 490623, Image class length: 490623, embeddings: (490623, 256)
-
-  AUTOTUNE = tf.data.experimental.AUTOTUNE
-  dss = tf.data.Dataset.from_tensor_slices((image_names, image_classes, embeddings))
-  ds = dss.map(lambda imm, label, emb: (tf_imread(imm), (tf.one_hot(label, depth=classes, dtype=tf.int32), emb)), num_parallel_calls=AUTOTUNE)
-
-  ds = ds.batch(batch_size)  # Use batch --> map has slightly effect on dataset reading time, but harm the randomness
-  ds = ds.map(lambda xx, yy: ((xx * 2) - 1, yy))
-  ds = ds.prefetch(buffer_size=AUTOTUNE)
-
-  xx = tf.keras.applications.MobileNetV2(include_top=False, weights=None)
-  xx.trainable = True
-  inputs = keras.layers.Input(shape=(112, 112, 3))
-  nn = xx(inputs)
-  nn = keras.layers.GlobalAveragePooling2D()(nn)
-  nn = keras.layers.BatchNormalization()(nn)
-  # nn = layers.Dropout(0)(nn)
-  embedding = keras.layers.Dense(256, name="embeddings")(nn)
-  logits = keras.layers.Dense(classes, activation='softmax', name="logits")(embedding)
-
-  model = keras.models.Model(inputs, [logits, embedding])
-
-  def distiller_loss(true_emb_normed, pred_emb):
-      pred_emb_normed = tf.nn.l2_normalize(pred_emb, axis=-1)
-      # loss = tf.reduce_sum(tf.square(true_emb_normed - pred_emb_normed), axis=-1)
-      loss = 1 - tf.reduce_sum(pred_emb_normed * true_emb_normed, axis=-1)
-      return loss
-
-  model.compile(optimizer='adam', loss=[keras.losses.categorical_crossentropy, distiller_loss], loss_weights=[1, 7])
-  # model.compile(optimizer='adam', loss=[keras.losses.sparse_categorical_crossentropy, keras.losses.mse], metrics=['accuracy', 'mae'])
-  model.summary()
-  model.fit(ds)
-  ```
-***
-
 # Attention
-## Keras attention layers
   - [遍地开花的 Attention ，你真的懂吗？](https://developer.aliyun.com/article/713354)
   - [综述---图像处理中的注意力机制](https://blog.csdn.net/xys430381_1/article/details/89323444)
   - [全连接的图卷积网络(GCN)和self-attention这些机制有什么区别联系](https://www.zhihu.com/question/366088445/answer/1023290162)
@@ -1740,58 +1420,372 @@
   benchmark(tf.data.Dataset.range(2).interleave(lambda xx: aa.next(), num_parallel_calls=AUTOTUNE).batch(128))
   ```
 ***
-
-# Learning rate
-  - **keras.optimizers.schedules.LearningRateSchedule**
+# EfficientNetV2
   ```py
-  from tensorflow.python.keras import backend as K
+  import tensorflow_datasets as tfds
+  dataset, info = tfds.load("oxford_iiit_pet:3.*.*", with_info=True)
+  num_classes = info.features['label'].num_classes
 
-  class lr_sch(keras.optimizers.schedules.LearningRateSchedule):
-      def __init__(self, init_lr=0.1):
-          super(lr_sch, self).__init__()
-          self.init_lr = init_lr
-      def __call__(self, global_step:int):
-          self.global_step = tf.cast(global_step, dtype=tf.float32)
-          self.lr = self.init_lr / self.global_step
-          tf.print("global_step:", self.global_step, "lr:", self.lr)
-          # self.global_step = K.get_value(global_step)
-          return self.lr
+  def load_image_data(datapoint, target_shape=(128, 128), randomness=True):
+      input_image = tf.image.resize(datapoint['image'], target_shape)
+      label = datapoint['label']
+      # input_mask = tf.image.resize(datapoint['segmentation_mask'], target_shape)
 
-  import tensorflow as tf
-  mnist = tf.keras.datasets.mnist
+      if randomness and tf.random.uniform(()) > 0.5:
+          input_image = tf.image.flip_left_right(input_image)
+          # input_mask = tf.image.flip_left_right(input_mask)
 
-  (x_train, y_train), (x_test, y_test) = mnist.load_data()
-  x_train, x_test = x_train / 255.0, x_test / 255.0
-  x_train, x_test = np.expand_dims(x_train, -1), np.expand_dims(x_test, -1)
+      input_image = tf.cast(input_image, tf.float32) / 255.0
+      # input_mask -= 1
 
-  model = tf.keras.models.Sequential([
-    tf.keras.layers.InputLayer(input_shape=[28,28, 1]),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(512, activation=tf.nn.relu),
-    # tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.Dense(10, activation=tf.nn.softmax)
-  ])
+      return input_image, label
 
-  optimizer = keras.optimizers.Adam(learning_rate=lr_sch(0.1))
-  model.compile(optimizer=optimizer,
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
+  TRAIN_LENGTH = info.splits['train'].num_examples
+  BATCH_SIZE = 64
+  BUFFER_SIZE = 1000
+  STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
-  model.fit(x_train, y_train, epochs=5)
-  model.evaluate(x_test, y_test)
-  # [0.0712303157694405, 0.9791]
+  train = dataset['train'].map(load_image_data, num_parallel_calls=tf.data.AUTOTUNE)
+  test = dataset['test'].map(lambda xx: load_image_data(xx, randomness=False))
 
-  np.argmax(model.predict(x_test[:1]))
+  train_dataset = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+  train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+  test_dataset = test.batch(BATCH_SIZE)
+
+  aa, bb = train_dataset.as_numpy_iterator().next()
+  plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+***
+# Image segmentation
+  - [Tensorflow tutorials image segmentation](https://www.tensorflow.org/tutorials/images/segmentation)
+  ```sh
+  pip install pydot graphviz
+  sudo apt install python3-graphviz python3-pydot
   ```
   ```py
-  from myCallbacks import CosineLrScheduler
-  epochs = 50
-  first_restart_step=16
-  aa = CosineLrScheduler(0.1, first_restart_step=first_restart_step, lr_min=1e-5, warmup=1, m_mul=0.5)
-  cc = [[aa.on_epoch_begin(ii)] * 50 for ii in range(0, epochs)]
-  bb = CosineLrScheduler(0.1, first_restart_step=first_restart_step * 5000, lr_min=1e-5, warmup=50, m_mul=0.5)
-  dd = [bb.on_train_batch_begin(ii) for ii in range(0, epochs * 5000, 100)]
-  plt.plot(range(0, epochs * 5000, 100), np.ravel(cc))
-  plt.plot(range(0, epochs * 5000, 100), dd)
+  import tensorflow_datasets as tfds
+  dataset, info = tfds.load("oxford_iiit_pet:3.*.*", with_info=True)
+
+  def load_image_data(datapoint, randomness=False):
+      input_image = tf.image.resize(datapoint['image'], (128, 128))
+      input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+
+      if randomness and tf.random.uniform(()) > 0.5:
+          input_image = tf.image.flip_left_right(input_image)
+          input_mask = tf.image.flip_left_right(input_mask)
+
+      input_image = tf.cast(input_image, tf.float32) / 255.0
+      input_mask -= 1
+
+      return input_image, input_mask
+
+  TRAIN_LENGTH = info.splits['train'].num_examples
+  BATCH_SIZE = 64
+  BUFFER_SIZE = 1000
+
+  train = dataset['train'].map(lambda xx: load_image_data(xx, randomness=True), num_parallel_calls=tf.data.AUTOTUNE)
+  test = dataset['test'].map(load_image_data)
+
+  train_dataset = train.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+  train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+  test_dataset = test.batch(BATCH_SIZE)
+  ```
+  ```py
+  def show_images_masks(images, masks, predicts=None):
+      if predicts is None:
+          predicts = [None] * len(images)
+          columns = 2
+      else:
+          columns = 3
+      fig, axes = plt.subplots(len(images), columns, figsize=(columns * 3, len(images) * 3))
+      axes = axes if len(images) > 1 else [axes]
+
+      titles = ['Input Image', 'True Mask', 'Predicted Mask']
+      for image, mask, predict, row_axes in zip(images, masks, predicts, axes):
+          row_axes[0].imshow(image)
+          row_axes[1].imshow(mask)
+          if predict is not None:
+              row_axes[2].imshow(predict)
+          for ax, tt in zip(row_axes, titles):
+              ax.set_title(tt)
+              ax.set_axis_off()
+
+      fig.tight_layout()
+      return fig, axes
+
+  image, mask = train.as_numpy_iterator().next()
+  fig, axes = show_images_masks([image], [mask])
+  ```
+  ```py
+  def upsample(inputs, filters, kernel_size, norm_type='batchnorm', apply_dropout=False):
+      initializer = tf.random_normal_initializer(0., 0.02)
+
+      nn = tf.keras.layers.Conv2DTranspose(filters, kernel_size, strides=2, padding='same', kernel_initializer=initializer, use_bias=False)(inputs)
+      if norm_type.lower() == 'batchnorm':
+          nn = tf.keras.layers.BatchNormalization()(nn)
+      if apply_dropout:
+          nn = tf.keras.layers.Dropout(0.5)(nn)
+      nn = tf.keras.layers.ReLU()(nn)
+      return nn
+
+  def unet_model(input_shape=(128, 128, 3), output_channels=3):
+      base_model = tf.keras.applications.MobileNetV2(input_shape=input_shape, include_top=False)
+      base_model.trainable = False
+
+      # Down sampling, Use the activations of these layers
+      layer_names = [
+          'block_1_expand_relu',   # 64x64
+          'block_3_expand_relu',   # 32x32
+          'block_6_expand_relu',   # 16x16
+          'block_13_expand_relu',  # 8x8
+          'block_16_project',      # 4x4
+      ]
+      skip_conns = [base_model.get_layer(name).output for name in layer_names]
+
+      # Up sampling and establishing the skip connections
+      nn = skip_conns[-1]
+      up_filters = [512, 256, 128, 64]
+      up_kernels = [3, 3, 3, 3]
+      for up_filter, up_kernel, skip_conn in zip(up_filters, up_kernels, reversed(skip_conns[:-1])):
+          nn = upsample(nn, up_filter, up_kernel)
+          nn = tf.keras.layers.Concatenate()([nn, skip_conn])
+
+      # This is the last layer of the model, 64x64 -> 128x128
+      nn = tf.keras.layers.Conv2DTranspose(output_channels, 3, strides=2, padding='same')(nn)
+      return tf.keras.Model(inputs=base_model.inputs[0], outputs=nn)
+
+  model = unet_model(output_channels=3)
+  model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+
+  tf.keras.utils.plot_model(model, show_shapes=True)
+  pred = model(np.expand_dims(image, 0)).numpy()[0]
+  pred = np.argmax(pred, axis=-1)
+  fig, axes = show_images_masks([image], [mask], [pred])
+
+  image, mask = train.as_numpy_iterator().next()
+  image, mask = np.expand_dims(image, 0), np.expand_dims(mask, 0)
+  show_result = keras.callbacks.LambdaCallback(on_epoch_end=lambda epoch, logs=None: show_images_masks(image, mask, np.argmax(model(image), axis=-1))[0].savefig('pred_epoch_{}.png'.format(epoch)))
+  history = model.fit(train_dataset, epochs=20, validation_data=test_dataset, callbacks=[show_result])
+  ```
+  ```py
+  plt.figure()
+  plt.plot(history.history['loss'], 'r', label='Training loss')
+  plt.plot(history.history['val_loss'], 'bo', label='Validation loss')
+  plt.title('Training and Validation Loss')
+  plt.xlabel('Epoch')
+  plt.ylabel('Loss Value')
+  plt.ylim([0, 1])
+  plt.legend()
+  plt.show()
+
+  images, masks = train_dataset.as_numpy_iterator().next()
+  preds = model(images).numpy()
+  preds = np.argmax(preds, axis=-1)
+  fig, axes = show_images_masks(images[:5], masks[:5], preds[:5])
+  ```
+***
+# SAM
+  - [Sharpness-Aware Minimization for Efficiently Improving Generalization](https://arxiv.org/pdf/2010.01412.pdf)
+  - [Keras SAM (Sharpness-Aware Minimization)](https://qiita.com/T-STAR/items/8c3afe3a116a8fc08429)
+  - [Colab SAM_tests.ipynb](https://colab.research.google.com/drive/1AqaRjRY7TirAG4GYGEea13KeI4vhkX-t?usp=sharing)
+  ```py
+  def train_step(self, data):
+      # These are the only transformations `Model.fit` applies to user-input
+      # data when a `tf.data.Dataset` is provided.
+      data = data_adapter.expand_1d(data)
+      x, y, sample_weight = data_adapter.unpack_x_y_sample_weight(data)
+      # Run forward pass.
+      with backprop.GradientTape() as tape:
+        y_pred = self(x, training=True)
+        loss = self.compiled_loss(
+            y, y_pred, sample_weight, regularization_losses=self.losses)
+      # Run backwards pass.
+      self.optimizer.minimize(loss, self.trainable_variables, tape=tape)
+      self.compiled_metrics.update_state(y, y_pred, sample_weight)
+      # Collect metrics to return
+      return_metrics = {}
+      for metric in self.metrics:
+        result = metric.result()
+        if isinstance(result, dict):
+          return_metrics.update(result)
+        else:
+          return_metrics[metric.name] = result
+      return return_metrics
+
+  class SAMModel(tf.keras.models.Model):
+      def __init__(self, *args, rho=0.05, **kwargs):
+          super().__init__( *args, **kwargs)
+          self.rho = tf.constant(rho, dtype=tf.float32)
+
+      def train_step(self,data):
+          x, y = data
+
+          # 1st step
+          with tf.GradientTape() as tape:
+              y_pred = self(x, training=True)
+              loss = self.compiled_loss(y, y_pred, regularization_losses=self.losses)
+
+          trainable_vars = self.trainable_variables
+          gradients = tape.gradient(loss, trainable_vars)
+
+          norm = tf.linalg.global_norm(gradients)
+          scale = self.rho / (norm + 1e-12)
+          e_w_list = []
+          for v, grad in zip(trainable_vars, gradients):
+              e_w = grad * scale
+              v.assign_add(e_w)
+              e_w_list.append(e_w)
+
+          # 2nd step
+          with tf.GradientTape() as tape:
+              y_pred_adv = self(x, training=True)
+              loss_adv = self.compiled_loss(y, y_pred_adv, regularization_losses=self.losses)
+          gradients_adv = tape.gradient(loss_adv, trainable_vars)
+          for v, e_w in zip(trainable_vars, e_w_list):
+              v.assign_sub(e_w)
+
+          # optimize
+          self.optimizer.apply_gradients(zip(gradients_adv, trainable_vars))
+
+          self.compiled_metrics.update_state(y, y_pred)
+          return_metrics = {}
+          for metric in self.metrics:
+            result = metric.result()
+            if isinstance(result, dict):
+              return_metrics.update(result)
+            else:
+              return_metrics[metric.name] = result
+          return return_metrics
+  ```
+  ```py
+  keras.mixed_precision.set_global_policy("mixed_float16")
+
+  (train_images, train_labels), (test_images, test_labels) = keras.datasets.cifar10.load_data()
+
+  # Normalize pixel values to be between 0 and 1
+  train_images, test_images = train_images / 255.0, test_images / 255.0
+  train_labels_oh = tf.one_hot(tf.squeeze(train_labels), depth=10, dtype='uint8')
+  test_labels_oh = tf.one_hot(tf.squeeze(test_labels), depth=10, dtype='uint8')
+  print(train_images.shape, test_images.shape, train_labels_oh.shape, test_labels_oh.shape)
+
+  num_classes = 10
+  model = keras.applications.ResNet50(include_top=False, input_shape=(32, 32, 3))
+  inputs = model.inputs[0]
+  nn = model.outputs[0]
+  nn = keras.layers.GlobalAveragePooling2D()(nn)
+  nn = keras.layers.Activation("linear", dtype="float32")(nn)
+  nn = keras.layers.Dense(num_classes, kernel_regularizer=keras.regularizers.l2(0.0005), activation="softmax", name="predictions", dtype="float32")(nn)
+  # model = keras.models.Model(inputs, nn)
+  model = SAMModel(inputs, nn)
+
+  from tensorflow.keras.callbacks import LearningRateScheduler
+
+  def exp_scheduler(epoch, lr_base=0.256, decay_step=2.4, decay_rate=0.97, lr_min=0, warmup=10):
+      if epoch < warmup:
+          lr = (lr_base - lr_min) * (epoch + 1) / (warmup + 1)
+      else:
+          lr = lr_base * decay_rate ** ((epoch - warmup) / decay_step)
+          lr = lr if lr > lr_min else lr_min
+      print("Learning rate for iter {} is {}".format(epoch + 1, lr))
+      return lr
+
+  lr_scheduler = LearningRateScheduler(lambda epoch: exp_scheduler(epoch, lr_base=0.01, decay_step=1, decay_rate=0.9, warmup=4))
+
+  # optmizer = keras.optimizers.SGD(momentum=0.9, global_clipnorm=5.0)
+  optmizer = keras.optimizers.SGD(momentum=0.9)
+  model.compile(loss="categorical_crossentropy", optimizer=optmizer, metrics=["accuracy"])
+  history = model.fit(train_images, train_labels_oh, epochs=50, validation_data=(test_images, test_labels_oh), callbacks=[lr_scheduler])
+
+  hhs = {kk: np.array(vv, "float").tolist() for kk, vv in history.history.items()}
+  with open("xxx.json", "w") as ff:
+      json.dump(hhs, ff)
+  ```
+  ```py
+  def plot_hists(hists, names=None):
+      import os
+      import json
+      import matplotlib.pyplot as plt
+
+      fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+      for id, hist in enumerate(hists):
+          if isinstance(hist, str):
+              with open(hist, "r") as ff:
+                  hist = json.load(ff)
+          name = names[id] if names != None else os.path.splitext(os.path.basename(hist))[0]
+
+          axes[0].plot(hist["loss"], label=name + " loss")
+          color = axes[0].lines[-1].get_color()
+          axes[0].plot(hist["val_loss"], label=name + " val_loss", color=color, linestyle="--")
+          axes[1].plot(hist["accuracy"], label=name + " accuracy")
+          color = axes[1].lines[-1].get_color()
+          axes[1].plot(hist["val_accuracy"], label=name + " val_accuracy", color=color, linestyle="--")
+          axes[2].plot(hist["lr"], label=name + " lr")
+      for ax in axes:
+          ax.legend()
+          # ax.grid()
+      fig.tight_layout()
+      return fig
+
+  aa = [
+      "resnet50_cifar10_baseline.json",
+      "resnet50_cifar10_sam.json",
+      "resnet50_cifar10_sd_05.json",
+      "resnet50_cifar10_sam_sd_05.json",
+      "resnet50_cifar10_sd_08.json",
+      "resnet50_cifar10_sam_sd_08.json",
+      "resnet50_cifar10_sam_sgd_look_ahead.json",
+      "resnet50_cifar10_sam_sd_08_radam.json",
+      "resnet50_cifar10_sam_sd_05_radam_exp_lr.json",
+  ]
+  plot_hists(aa, ['baseline', "SAM", 'SD_05', "SAM_SD_05", 'SD_08', "SAM_SD_08", "SAM_SGD_LA", "SAM_SD_08_RADAM", "SAM_SD_05_RADAM"])
+  ```
+  ![](images/resnet50_cifar10_sam_sd.svg)
+***
+# Stochastic Depth
+  - [Deep Networks with Stochastic Depth](https://arxiv.org/pdf/1603.09382.pdf)
+  - [tfa.layers.StochasticDepth](https://www.tensorflow.org/addons/api_docs/python/tfa/layers/StochasticDepth)
+  ```py
+  def replace_add_with_stochastic_depth(model, survivals=(1, 0.8)):
+      from tensorflow_addons.layers import StochasticDepth
+
+      add_layers = [ii.name for ii in model.layers if isinstance(ii, keras.layers.Add)]
+      total_adds = len(add_layers)
+      if isinstance(survivals, float):
+          survivals = [survivals] * total_adds
+      elif isinstance(survivals, (list, tuple)) and len(survivals) == 2:
+          start, end = survivals
+          survivals = [start + (end - start) * ii / (total_adds - 1) for ii in range(total_adds)]
+      survivals_dict = dict(zip(add_layers, survivals))
+
+      def __replace_add_with_stochastic_depth__(layer):
+          if isinstance(layer, keras.layers.Add):
+              layer_name = layer.name
+              new_layer_name = layer_name.replace('_add', '_stochastic_depth')
+              survival_probability = survivals_dict[layer_name]
+              if survival_probability < 1:
+                  print("Converting:", layer_name, "-->", new_layer_name, ", survival_probability:", survival_probability)
+                  return StochasticDepth(survival_probability, name=new_layer_name)
+              else:
+                  return layer
+          return layer
+      return keras.models.clone_model(model, clone_function=__replace_add_with_stochastic_depth__)
+
+  def replace_stochastic_depth_with_add(model, drop_survival=False):
+      from tensorflow_addons.layers import StochasticDepth
+
+      def __replace_stochastic_depth_with_add__(layer):
+          if isinstance(layer, StochasticDepth):
+              layer_name = layer.name
+              new_layer_name = layer_name.replace('_stochastic_depth', '_lambda')
+              survival = layer.survival_probability
+              print("Converting:", layer_name, "-->", new_layer_name, ", survival_probability:", survival)
+              if drop_survival or not survival < 1:
+                  return keras.layers.Add(name=new_layer_name)
+              else:
+                  return keras.layers.Lambda(lambda xx: xx[0] + xx[1] * survival, name=new_layer_name)
+          return layer
+      return keras.models.clone_model(model, clone_function=__replace_stochastic_depth_with_add__)
   ```
 ***

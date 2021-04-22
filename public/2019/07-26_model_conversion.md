@@ -52,7 +52,15 @@
   	- [inspect_checkpoint](#inspectcheckpoint)
   	- [Insightface Checkpoints to SavedModel](#insightface-checkpoints-to-savedmodel)
   - [Keras h5 to pb](#keras-h5-to-pb)
-  - [TF15 to TF13](#tf15-to-tf13)
+  - [TF2 to TF1](#tf2-to-tf1)
+  - [Pytorch](#pytorch)
+  	- [Torch model inference](#torch-model-inference)
+  	- [Save and load entire model](#save-and-load-entire-model)
+  - [Replace UpSampling2D with Conv2DTranspose](#replace-upsampling2d-with-conv2dtranspose)
+  	- [Conv2DTranspose output shape](#conv2dtranspose-output-shape)
+  	- [Nearest interpolation](#nearest-interpolation)
+  	- [Bilinear](#bilinear)
+  	- [Clone model](#clone-model)
 
   <!-- /TOC -->
 ***
@@ -1846,5 +1854,231 @@
 
   mm = Torch_model_interf('aa.pth')
   mm(np.ones([1, 112, 112, 3])).shape
+  ```
+***
+
+# Replace UpSampling2D with Conv2DTranspose
+## Conv2DTranspose output shape
+  ```py
+  for strides in range(1, 4):
+      for kernel_size in range(1, 4):
+          aa = keras.layers.Conv2DTranspose(3, kernel_size, padding='same', strides=strides)
+          aa.build([1, 3, 3, 3])
+          print("[SAME] kernel_size: {}, strides: {}, shape: {}".format(kernel_size, strides, aa(tf.ones([1, 3, 3, 3], dtype='float32')).shape.as_list()))
+  # [SAME] kernel_size: 1, strides: 1, shape: [1, 3, 3, 3]
+  # [SAME] kernel_size: 2, strides: 1, shape: [1, 3, 3, 3]
+  # [SAME] kernel_size: 3, strides: 1, shape: [1, 3, 3, 3]
+  # [SAME] kernel_size: 1, strides: 2, shape: [1, 6, 6, 3]
+  # [SAME] kernel_size: 2, strides: 2, shape: [1, 6, 6, 3]
+  # [SAME] kernel_size: 3, strides: 2, shape: [1, 6, 6, 3]
+  # [SAME] kernel_size: 1, strides: 3, shape: [1, 9, 9, 3]
+  # [SAME] kernel_size: 2, strides: 3, shape: [1, 9, 9, 3]
+  # [SAME] kernel_size: 3, strides: 3, shape: [1, 9, 9, 3]
+
+  for strides in range(1, 4):
+      for kernel_size in range(1, 5):
+          aa = keras.layers.Conv2DTranspose(3, kernel_size, padding='valid', strides=strides)
+          aa.build([1, 3, 3, 3])
+          print("[VALID] kernel_size: {}, strides: {}, shape: {}".format(kernel_size, strides, aa(tf.ones([1, 3, 3, 3], dtype='float32')).shape.as_list()))
+  # [VALID] kernel_size: 1, strides: 1, shape: [1, 3, 3, 3]
+  # [VALID] kernel_size: 2, strides: 1, shape: [1, 4, 4, 3]
+  # [VALID] kernel_size: 3, strides: 1, shape: [1, 5, 5, 3]
+  # [VALID] kernel_size: 4, strides: 1, shape: [1, 6, 6, 3]
+  # [VALID] kernel_size: 1, strides: 2, shape: [1, 6, 6, 3]
+  # [VALID] kernel_size: 2, strides: 2, shape: [1, 6, 6, 3]
+  # [VALID] kernel_size: 3, strides: 2, shape: [1, 7, 7, 3]
+  # [VALID] kernel_size: 4, strides: 2, shape: [1, 8, 8, 3]
+  # [VALID] kernel_size: 1, strides: 3, shape: [1, 9, 9, 3]
+  # [VALID] kernel_size: 2, strides: 3, shape: [1, 9, 9, 3]
+  # [VALID] kernel_size: 3, strides: 3, shape: [1, 9, 9, 3]
+  # [VALID] kernel_size: 4, strides: 3, shape: [1, 10, 10, 3]
+  ```
+## Nearest interpolation
+  - **Image methods**
+    ```py
+    imsize = 3
+    x, y = np.ogrid[:imsize, :imsize]
+    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(imsize + imsize)
+    plt.imshow(img, interpolation='none')
+
+    import tensorflow.keras.backend as K
+    iaa = tf.image.resize(img, (6, 6), method='nearest')
+    ibb = K.resize_images(tf.expand_dims(tf.cast(img, 'float32'), 0), 2, 2, K.image_data_format(), interpolation='nearest')
+    ```
+  - **UpSampling2D**
+    ```py
+    aa = keras.layers.UpSampling2D((2, 2), interpolation='nearest')
+    icc = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
+
+    print(np.allclose(iaa, icc))
+    # True
+    ```
+  - **tf.nn.conv2d_transpose**
+    ```py
+    def nearest_upsample_weights(factor, number_of_classes=3):
+        filter_size = 2 * factor - factor % 2
+        weights = np.zeros((filter_size, filter_size, number_of_classes, number_of_classes), dtype=np.float32)
+        upsample_kernel = np.zeros([filter_size, filter_size])
+        upsample_kernel[1:factor + 1, 1:factor + 1] = 1
+
+        for i in range(number_of_classes):
+            weights[:, :, i, i] = upsample_kernel
+        return weights
+
+    channel, factor = 3, 2
+    idd = tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME')
+    print(np.allclose(iaa, idd))
+    # True
+
+    # Output shape can be different values
+    channel, factor = 3, 3
+    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME').shape)
+    # (1, 9, 9, 3)
+    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor - 1, img.shape[1] * factor - 1, channel], strides=factor, padding='SAME').shape)
+    # (1, 8, 8, 3)
+    print(tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), nearest_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor - 2, img.shape[1] * factor - 2, channel], strides=factor, padding='SAME').shape)
+    # (1, 7, 7, 3)
+    ```
+  - **Conv2DTranspose**
+    ```py
+    bb = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
+    bb.build([None, None, None, channel])
+    bb.set_weights([nearest_upsample_weights(factor, channel)])
+    iee = bb(tf.expand_dims(img.astype('float32'), 0)).numpy()[0]
+    print(np.allclose(iaa, iee))
+    # True
+    ```
+## Bilinear
+  - [pytorch_bilinear_conv_transpose.py](https://gist.github.com/mjstevens777/9d6771c45f444843f9e3dce6a401b183)
+  - [Upsampling and Image Segmentation with Tensorflow and TF-Slim](http://warmspringwinds.github.io/tensorflow/tf-slim/2016/11/22/upsampling-and-image-segmentation-with-tensorflow-and-tf-slim/)
+  - **UpSampling2D**
+    ```py
+    imsize = 3
+    x, y = np.ogrid[:imsize, :imsize]
+    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(imsize + imsize)
+    plt.imshow(img, interpolation='none')
+
+    channel, factor = 3, 3
+    iaa = tf.image.resize(img, (img.shape[0] * factor, img.shape[1] * factor), method='bilinear')
+
+    aa = keras.layers.UpSampling2D((factor, factor), interpolation='bilinear')
+    ibb = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
+    print(np.allclose(iaa, ibb))
+    # True
+    ```
+  - **Pytorch BilinearConvTranspose2d**
+    ```py
+    import torch
+    import torch.nn as nn
+
+    class BilinearConvTranspose2d(nn.ConvTranspose2d):
+        def __init__(self, channels, stride, groups=1):
+            if isinstance(stride, int):
+                stride = (stride, stride)
+
+            kernel_size = (2 * stride[0] - stride[0] % 2, 2 * stride[1] - stride[1] % 2)
+            # padding = (stride[0] - 1, stride[1] - 1)
+            padding = 1
+            super().__init__(channels, channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups)
+
+        def reset_parameters(self):
+            nn.init.constant(self.bias, 0)
+            nn.init.constant(self.weight, 0)
+            bilinear_kernel = self.bilinear_kernel(self.stride)
+            for i in range(self.in_channels):
+                j = i if self.groups == 1 else 0
+                self.weight.data[i, j] = bilinear_kernel
+
+        @staticmethod
+        def bilinear_kernel(stride):
+            num_dims = len(stride)
+
+            shape = (1,) * num_dims
+            bilinear_kernel = torch.ones(*shape)
+
+            # The bilinear kernel is separable in its spatial dimensions
+            # Build up the kernel channel by channel
+            for channel in range(num_dims):
+                channel_stride = stride[channel]
+                kernel_size = 2 * channel_stride - channel_stride % 2
+                # e.g. with stride = 4
+                # delta = [-3, -2, -1, 0, 1, 2, 3]
+                # channel_filter = [0.25, 0.5, 0.75, 1.0, 0.75, 0.5, 0.25]
+                # delta = torch.arange(1 - channel_stride, channel_stride)
+                delta = torch.arange(0, kernel_size)
+                delta = delta - (channel_stride - 0.5) if channel_stride % 2 == 0 else delta - (channel_stride - 1)
+                channel_filter = (1 - torch.abs(delta / float(channel_stride)))
+                # Apply the channel filter to the current channel
+                shape = [1] * num_dims
+                shape[channel] = kernel_size
+                bilinear_kernel = bilinear_kernel * channel_filter.view(shape)
+            return bilinear_kernel
+
+    aa = BilinearConvTranspose2d(channel, factor)
+    cc = aa(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+    icc = cc.detach().numpy()[0].transpose(1, 2, 0)
+    print(np.allclose(iaa, icc))
+    # False
+    ```
+  - **tf.nn.conv2d_transpose**
+    ```py
+    # This is same with pytorch bilinear kernel
+    def upsample_filt(size):
+        factor = (size + 1) // 2
+        center = factor - 1 if size % 2 == 1 else factor - 0.5
+        og = np.ogrid[:size, :size]
+        return (1 - abs(og[0] - center) / factor) * (1 - abs(og[1] - center) / factor)
+
+    def bilinear_upsample_weights(factor, number_of_classes=3):
+        filter_size = 2 * factor - factor % 2
+        weights = np.zeros((filter_size, filter_size, number_of_classes, number_of_classes), dtype=np.float32)
+        upsample_kernel = upsample_filt(filter_size)
+
+        for i in range(number_of_classes):
+            weights[:, :, i, i] = upsample_kernel
+        return weights
+
+    idd = tf.nn.conv2d_transpose(tf.expand_dims(tf.cast(img, 'float32'), 0), bilinear_upsample_weights(factor, channel), output_shape=[1, img.shape[0] * factor, img.shape[1] * factor, channel], strides=factor, padding='SAME')[0]
+    print(np.allclose(icc, idd))
+    # True
+    ```
+  - **Conv2DTranspose**
+    ```py
+    aa = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
+    aa.build([None, None, None, channel])
+    aa.set_weights([bilinear_upsample_weights(factor, channel)])
+    iee = aa(tf.expand_dims(tf.cast(img, 'float32'), 0)).numpy()[0]
+    ```
+  - **Plot**
+    ```py
+    fig, axes = plt.subplots(1, 6, figsize=(18, 3))
+    imgs = [img, iaa, ibb, icc, idd, iee]
+    names = ["Orignal", "tf.image.resize", "UpSampling2D", "Pytorch ConvTranspose2d", "tf.nn.conv2d_transpose", "TF Conv2DTranspose"]
+    for ax, imm, nn in zip(axes, imgs, names):
+        ax.imshow(imm)
+        ax.axis('off')
+        ax.set_title(nn)
+    plt.tight_layout()
+    ```
+    ```py
+    new_rows = ((rows - 1) * strides[0] + kernel_size[0] - 2 * padding[0] + output_padding[0])
+    new_cols = ((cols - 1) * strides[1] + kernel_size[1] - 2 * padding[1] + output_padding[1])
+    ```
+## Clone model
+  ```py
+  def convert_UpSampling2D_layer(layer):
+      print(layer.name)
+      if isinstance(layer, keras.layers.UpSampling2D):
+          print(">>>> Convert UpSampling2D <<<<")
+          channel = layer.input.shape[-1]
+          factor = 2
+          aa = keras.layers.Conv2DTranspose(channel, 2 * factor - factor % 2, padding='same', strides=factor, use_bias=False)
+          aa.build(layer.input.shape)
+          aa.set_weights([bilinear_upsample_weights(factor, number_of_classes=channel)])
+          return aa
+      return layer
+
+  mm = keras.models.load_model('aa.h5', compile=False)
+  mmn = keras.models.clone_model(mm, clone_function=convert_UpSampling2D_layer)
   ```
 ***

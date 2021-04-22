@@ -777,6 +777,44 @@
 
     bob.measure.plot.detection_identification_curve(cmc_scores)
     ```
+  - **Plot EERs**
+    ```py
+    from sklearn.metrics import roc_curve, auc
+    from scipy.optimize import brentq
+    from scipy.interpolate import interp1d
+
+    def create_fpr_tpr_eer():
+        pos_sims, neg_sims = np.random.normal(1, 1, 100), np.random.normal(0, 1, 2000)
+
+        label = [1] * pos_sims.shape[0] + [0] * neg_sims.shape[0]
+        score = np.hstack([pos_sims, neg_sims])
+        fpr, tpr, _ = roc_curve(label, score)
+        roc_auc = auc(fpr, tpr)
+        eer = brentq(lambda xx : 1. - xx - interp1d(fpr, tpr)(xx), 0., 1)
+        return fpr, tpr, roc_auc, eer
+
+    def plot_eers(eer_items, names):
+        fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+
+        for ax, [fpr, tpr, roc_auc, eer], name in zip(axes, eer_items, names):
+            ax.plot(fpr, tpr, lw=1, label="ROC")
+            ax.plot([0, 1], [1, 0])
+            ax.fill_between(fpr, tpr, alpha=0.3, color=ax.lines[0].get_color(), label="AUC=%0.2f" % (roc_auc))
+            ax.plot([eer, eer], [0, 1 - eer], linestyle='--', color=ax.lines[1].get_color(), label='EER=%0.4f' % (eer))
+            ax.legend(loc='upper right')
+
+            ax.set_xlim([0, 1])
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylim([0, 1])
+            ax.set_ylabel("True Positive Rate")
+            ax.set_title(name)
+
+        fig.tight_layout()
+        return fig
+
+    plot_eers([create_fpr_tpr_eer(), create_fpr_tpr_eer()], ["Method a", "Method b"])
+    ```
+    ![](images/plot_eers.svg)
 ## Bob
   - [bob.measure 4.1.0](https://www.cnpython.com/pypi/bobmeasure)
   - [Docs » Bob’s Metric Routines » User Guide](https://pythonhosted.org/bob/temp/bob.measure/doc/guide.html#overview)
@@ -970,6 +1008,12 @@
   axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, on_batch False", **pp)
 
   axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 5e-4, on_batch False", **pp)
+
+  hist_path = "checkpoints/"
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="zero padding, l2 1e-3", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 1e-3", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="zero padding, l2 5e-4", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_5e4_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 5e-4", **pp)
 
 
   hist_path = "checkpoints/resnet34/"
@@ -1487,6 +1531,171 @@
 ***
 
 # Distillation
+## MNIST example
+  - [Github keras-team/keras-io knowledge_distillation.py](https://github.com/keras-team/keras-io/blob/master/examples/vision/knowledge_distillation.py)
+  ```py
+  import tensorflow as tf
+  from tensorflow import keras
+  from tensorflow.keras import layers
+  import numpy as np
+
+  # Create the teacher
+  teacher = keras.Sequential(
+      [
+          layers.Conv2D(256, (3, 3), strides=(2, 2), padding="same"),
+          layers.LeakyReLU(alpha=0.2),
+          layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1), padding="same"),
+          layers.Conv2D(512, (3, 3), strides=(2, 2), padding="same"),
+          layers.Flatten(),
+          layers.Dense(10),
+      ],
+      name="teacher",
+  )
+
+  # Create the student
+  student = keras.Sequential(
+      [
+          layers.Conv2D(16, (3, 3), strides=(2, 2), padding="same"),
+          layers.LeakyReLU(alpha=0.2),
+          layers.MaxPooling2D(pool_size=(2, 2), strides=(1, 1), padding="same"),
+          layers.Conv2D(32, (3, 3), strides=(2, 2), padding="same"),
+          layers.Flatten(),
+          layers.Dense(10),
+      ],
+      name="student",
+  )
+
+  # Prepare the train and test dataset.
+  batch_size = 64
+  # (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+  # x_train, x_test = np.reshape(x_train, (-1, 28, 28, 1)), np.reshape(x_test, (-1, 28, 28, 1))
+  (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+
+  # Normalize data
+  x_train = x_train.astype("float32") / 255.0
+  x_test = x_test.astype("float32") / 255.0
+
+  # Train teacher as usual
+  teacher.compile(
+      optimizer=keras.optimizers.Adam(),
+      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+      metrics=[keras.metrics.SparseCategoricalAccuracy()],
+  )
+
+  # Train and evaluate teacher on data.
+  teacher.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
+  teacher.evaluate(x_test, y_test)
+
+  def create_distiller_model(teacher, student, clone=True):
+      if clone:
+          teacher_copy = keras.models.clone_model(teacher)
+          student_copy = keras.models.clone_model(student)
+      else:
+          teacher_copy, student_copy = teacher, student
+
+      teacher_copy.trainable = False
+      student_copy.trainable = True
+      inputs = teacher_copy.inputs[0]
+      student_output = student_copy(inputs)
+      teacher_output = teacher_copy(inputs)
+      mm = keras.models.Model(inputs, keras.layers.Concatenate()([student_output, teacher_output]))
+      return student_copy, mm
+
+  class DistillerLoss(keras.losses.Loss):
+      def __init__(self, student_loss_fn, distillation_loss_fn, alpha=0.1, temperature=10, **kwargs):
+          super(DistillerLoss, self).__init__(**kwargs)
+          self.student_loss_fn, self.distillation_loss_fn = student_loss_fn, distillation_loss_fn
+          self.alpha, self.temperature = alpha, temperature
+
+      def call(self, y_true, y_pred):
+          student_output, teacher_output = tf.split(y_pred, 2, axis=-1)
+          student_loss = self.student_loss_fn(y_true, student_output)
+          distillation_loss = self.distillation_loss_fn(
+              tf.nn.softmax(teacher_output / self.temperature, axis=1),
+              tf.nn.softmax(student_output / self.temperature, axis=1),
+          )
+          loss = self.alpha * student_loss + (1 - self.alpha) * distillation_loss
+          return loss
+
+  def distiller_accuracy(y_true, y_pred):
+      student_output, _ = tf.split(y_pred, 2, axis=-1)
+      return keras.metrics.sparse_categorical_accuracy(y_true, student_output)
+
+  distiller_loss = DistillerLoss(
+      student_loss_fn=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+      distillation_loss_fn=keras.losses.KLDivergence(),
+      alpha=0.1,
+      # temperature=100,
+      temperature=10,
+  )
+
+  student_copy, mm = create_distiller_model(teacher, student)
+  mm.compile(optimizer=keras.optimizers.Adam(), loss=distiller_loss, metrics=[distiller_accuracy])
+  mm.summary()
+  mm.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
+
+  mm.evaluate(x_test, y_test)
+  student_copy.compile(metrics=["accuracy"])
+  student_copy.evaluate(x_test, y_test)
+
+  # Train student scratch
+  student_scratch = keras.models.clone_model(student)
+  student_scratch.compile(
+      optimizer=keras.optimizers.Adam(),
+      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+      metrics=[keras.metrics.SparseCategoricalAccuracy()],
+  )
+
+  student_scratch.fit(x_train, y_train, epochs=15, validation_data=(x_test, y_test))
+  student_scratch.evaluate(x_test, y_test)
+  ```
+## Distillation using teacher embedding value
+  ```py
+  def tf_imread(file_path):
+      img = tf.io.read_file(file_path)
+      img = tf.image.decode_jpeg(img, channels=3) # [0, 255]
+      img = tf.image.convert_image_dtype(img, tf.float32) # [0, 1]
+      return img
+
+  data_path = "faces_casia_112x112_folders_shuffle_label_embs.pkl"
+  batch_size = 64
+  aa = np.load(data_path, allow_pickle=True)
+  image_names, image_classes, embeddings = aa['image_names'], aa['image_classes'], aa['embeddings']
+  classes = np.max(image_classes) + 1
+  print(">>>> Image length: %d, Image class length: %d, embeddings: %s" % (len(image_names), len(image_classes), np.shape(embeddings)))
+  # >>>> Image length: 490623, Image class length: 490623, embeddings: (490623, 256)
+
+  AUTOTUNE = tf.data.experimental.AUTOTUNE
+  dss = tf.data.Dataset.from_tensor_slices((image_names, image_classes, embeddings))
+  ds = dss.map(lambda imm, label, emb: (tf_imread(imm), (tf.one_hot(label, depth=classes, dtype=tf.int32), emb)), num_parallel_calls=AUTOTUNE)
+
+  ds = ds.batch(batch_size)  # Use batch --> map has slightly effect on dataset reading time, but harm the randomness
+  ds = ds.map(lambda xx, yy: ((xx * 2) - 1, yy))
+  ds = ds.prefetch(buffer_size=AUTOTUNE)
+
+  xx = tf.keras.applications.MobileNetV2(include_top=False, weights=None)
+  xx.trainable = True
+  inputs = keras.layers.Input(shape=(112, 112, 3))
+  nn = xx(inputs)
+  nn = keras.layers.GlobalAveragePooling2D()(nn)
+  nn = keras.layers.BatchNormalization()(nn)
+  # nn = layers.Dropout(0)(nn)
+  embedding = keras.layers.Dense(256, name="embeddings")(nn)
+  logits = keras.layers.Dense(classes, activation='softmax', name="logits")(embedding)
+
+  model = keras.models.Model(inputs, [logits, embedding])
+
+  def distiller_loss(true_emb_normed, pred_emb):
+      pred_emb_normed = tf.nn.l2_normalize(pred_emb, axis=-1)
+      # loss = tf.reduce_sum(tf.square(true_emb_normed - pred_emb_normed), axis=-1)
+      loss = 1 - tf.reduce_sum(pred_emb_normed * true_emb_normed, axis=-1)
+      return loss
+
+  model.compile(optimizer='adam', loss=[keras.losses.categorical_crossentropy, distiller_loss], loss_weights=[1, 7])
+  # model.compile(optimizer='adam', loss=[keras.losses.sparse_categorical_crossentropy, keras.losses.mse], metrics=['accuracy', 'mae'])
+  model.summary()
+  model.fit(ds)
+  ```
 ## Basic distillation
   ```py
   hist_path = "checkpoints/mobilenet_distillation/"
