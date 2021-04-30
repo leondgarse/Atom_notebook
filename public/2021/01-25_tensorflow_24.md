@@ -681,13 +681,15 @@
   | Resnet50   | cifar10, 128 | 128       | True    | False | 128                   | 122           |
 ## Convert float32 model to mixed float16
   ```py
-  def convert_to_mixed_float16(model):
+  def convert_to_mixed_float16(model, convert_batch_norm=True):
       policy = keras.mixed_precision.Policy('mixed_float16')
       policy_config = keras.utils.serialize_keras_object(policy)
       from tensorflow.keras.layers import InputLayer, Activation
       from tensorflow.keras.activations import linear
 
       def do_convert_to_mixed_float16(layer):
+          if not convert_batch_norm and isinstance(layer, keras.layers.BatchNormalization):
+              return layer
           if not isinstance(layer, InputLayer) and not (isinstance(layer, Activation) and layer.activation == linear):
               aa = layer.get_config()
               aa.update({'dtype': policy_config})
@@ -700,8 +702,6 @@
   ```
   ```py
   def convert_mixed_float16_to_float32(model):
-      policy = keras.mixed_precision.Policy('mixed_float16')
-      policy_config = keras.utils.serialize_keras_object(policy)
       from tensorflow.keras.layers import InputLayer, Activation
       from tensorflow.keras.activations import linear
 
@@ -715,6 +715,24 @@
               return bb
           return layer
       return keras.models.clone_model(model, clone_function=do_convert_to_float32)
+  ```
+  ```py
+  def convert_bn_mixed_float16_to_float32(model):
+      policy = keras.mixed_precision.Policy('mixed_float16')
+      policy_config = keras.utils.serialize_keras_object(policy)
+      from tensorflow.keras.layers import InputLayer, Activation
+      from tensorflow.keras.activations import linear
+
+      def do_convert_bn_to_float32(layer):
+          if isinstance(layer, keras.layers.BatchNormalization):
+              aa = layer.get_config()
+              aa.update({'dtype': "float32"})
+              bb = layer.__class__.from_config(aa)
+              bb.build(layer.input_shape)
+              bb.set_weights(layer.get_weights())
+              return bb
+          return layer
+      return keras.models.clone_model(model, clone_function=do_convert_bn_to_float32)
   ```
 ***
 
@@ -1789,3 +1807,140 @@
       return keras.models.clone_model(model, clone_function=__replace_stochastic_depth_with_add__)
   ```
 ***
+# Pytorch float16
+  ```py
+  import torch
+  import time
+  import torch.nn as nn
+  import numpy as np
+  from torchvision import datasets, transforms
+  from tqdm import tqdm
+
+
+  class TestResNet(nn.Module):
+      def __init__(self, input=32, num_classes=10):
+          super(TestResNet, self).__init__()
+          self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, bias=False)
+          self.flatten = nn.Flatten()
+          conv_out_shape = int(np.ceil(input / 2)) - 3
+          self.linear = nn.Linear(64 * conv_out_shape * conv_out_shape, num_classes)
+          self.softmax = nn.Softmax(dim=-1)
+
+      def forward(self, x):
+          out = self.conv1(x)
+          out = self.flatten(out)
+          out = self.linear(out)
+          out = self.softmax(out)
+          return out
+
+
+  def load_cifar10(batch_size=512, image_shape=(32, 32)):
+      train_transforms = transforms.Compose([transforms.Resize(image_shape), transforms.ToTensor()])
+      trainset = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transforms)
+      train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
+      total = trainset.data.shape[0]
+      steps_per_epoch = int(np.ceil(total / batch_size))
+      return train_loader, steps_per_epoch
+
+
+  def run_test(input_shape=(32, 32), batch_size=512, use_fp16=False, epochs=2):
+      train_loader, steps_per_epoch = load_cifar10(batch_size=batch_size, image_shape=input_shape)
+
+      device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+      model = TestResNet(input=input_shape[0], num_classes=10).to(device)
+      if use_fp16:
+          model = model.half()
+
+      optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+      criterion = nn.CrossEntropyLoss()
+      for epoch in range(epochs):
+          since = time.time()
+          for inputs, labels in tqdm(train_loader, "Epoch {}/{}".format(epoch + 1, epochs), total=steps_per_epoch):
+              inputs = inputs.to(device).half() if use_fp16 else inputs.to(device)
+              labels = labels.to(device)
+              optimizer.zero_grad()
+              outputs = model(inputs)
+              loss = criterion(outputs, labels)
+              loss.backward()
+              optimizer.step()
+
+          total_time = time.time() - since
+          print(">>>> Total time: %.4fs, mean: %.4fms" % (total_time, total_time * 1000 / steps_per_epoch))
+
+
+  if __name__ == "__main__":
+      import sys
+      import argparse
+
+      parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+      parser.add_argument("-b", "--batch_size", type=int, default=512, help="Batch size")
+      parser.add_argument("-i", "--input_shape", type=int, default=32, help="Input shape")
+      parser.add_argument("-f", "--use_fp16", action="store_true", help="Use fp16")
+      parser.add_argument("-e", "--epochs", type=int, default=2, help="Epochs")
+
+      args = parser.parse_known_args(sys.argv[1:])[0]
+      run_test((args.input_shape, args.input_shape), args.batch_size, args.use_fp16, args.epochs)
+  ```
+
+  | input_shape | batch_size | use_fp16 | first epoch (ms/step) | second epoch (ms/step) |
+  | ----------- | ---------- | -------- | --------------------- | ---------------------- |
+  | 112         | 512        | False    | 84.5125               | 78.9935                |
+  | 112         | 512        | True     | 75.3213               | 76.9712                |
+  | 224         | 512        | False    | 228.2185              | 215.2186               |
+  | 224         | 512        | True     | 228.9982              | 254.9154               |
+***
+# Word2Vec
+```py
+dd = {ii : np.stack([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[0].numpy() for jj in range(1000)]) for ii in range(8)}
+cc = {ii: pd.value_counts(dd[ii].flatten()).to_dict() for ii in dd}
+print(cc[0])
+# {0: 864, 1: 715, 2: 569, 3: 481, 4: 389, 5: 371, 6: 314, 7: 297}
+print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[1].numpy()[0][0] for jj in range(1000)]) for ii in range(8)})
+# {0: 0.99967235, 1: 0.7245632, 2: 0.5737029, 3: 0.47004792, 4: 0.3987442, 5: 0.34728608, 6: 0.3084587, 7: 0.27554017}
+print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[2].numpy() for jj in range(1000)]) for ii in range(8)})
+# {0: 0.59829926, 1: 0.59250146, 2: 0.59380203, 3: 0.59515625, 4: 0.5941352, 5: 0.60234785, 6: 0.5936593, 7: 0.5999326}
+
+pairs, labels = tf.keras.preprocessing.sequence.skipgrams([1, 2, 3, 4, 5, 1, 6, 7], vocabulary_size=8, window_size=2, negative_samples=4)
+# list(zip(pairs, labels))
+pairs, labels = np.array(pairs), np.array(labels)
+negs, poses = pairs[labels == 0], pairs[labels == 1]
+poses = [tuple(ii) for ii in poses]
+neg_in_pos = np.sum([tuple(ii) in poses for ii in negs])
+print(neg_in_pos, neg_in_pos / negs.shape[0])
+# 62 0.5961538461538461
+
+rr_contexts = np.array(contexts)[:, :, 0]
+rr = [rr_contexts[ii][0] in rr_contexts[ii][1:] for ii in range(rr_contexts.shape[0])]
+print("Total negatives containing positive:", np.sum(rr), "ratio:", np.sum(rr) / rr_contexts.shape[0])
+# Total negatives containing positive: 2226 ratio: 0.03430843685459758
+print("Sample:", rr_contexts[np.array(rr)][:5].tolist())
+# Sample: [[1, 3, 0, 73, 1], [1, 1, 2, 47, 625], [4, 9, 717, 11, 4], [8, 15, 37, 26, 8], [1, 97, 1, 4, 120]]
+
+ff = np.logical_not(rr)
+dataset = tf.data.Dataset.from_tensor_slices(((targets[ff], contexts[ff]), labels[ff]))
+
+targets, contexts, labels = np.array(targets), np.array(contexts), np.array(labels)
+dd = pd.DataFrame({"targets": targets.tolist(), "pos": contexts[:, 0, 0].tolist(), "neg": contexts[:, 1:, 0].tolist()})
+cc = dd.groupby('targets').apply(lambda ii: np.sum([jj in ii['pos'].values for jj in np.concatenate(ii['neg'].values)]))
+print("Total negatives pairs containing positive pairs:", cc.sum(), "ratio:", cc.sum() / dd.shape[0])
+# Total negatives pairs containing positive pairs: 38660 ratio: 0.5953095887035925
+
+checkpoint = tf.train.Checkpoint(embedding=tf.Variable(word2vec.get_layer('w2v_embedding').get_weights()[0]))
+checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+```
+```py
+unigrams = [0.99967235, 0.7245632, 0.5737029, 0.47004792, 0.3987442, 0.34728608, 0.3084587, 0.27554017]
+sample_func = lambda ii: tf.nn.fixed_unigram_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, unigrams=unigrams)
+dd = {ii : np.stack([sample_func(ii)[0].numpy() for jj in range(1000)]) for ii in range(8)}
+```
+```py
+import data
+image_classes_rule = data.ImageClassesRule_map('/datasets/ILSVRC2012_img_train')
+ds, steps_per_epoch = data.prepare_dataset('/datasets/ILSVRC2012_img_train', image_names_reg = "*/*", image_classes_rule=image_classes_rule, img_shape=(224, 224, 3))
+
+aa, bb = ds.as_numpy_iterator().next()
+aa = (aa + 1) / 2
+plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
+print([image_classes_rule.indices_2_classes[ii] for ii in bb.argmax(-1)][:10])
+# ['n02493793', 'n04204347', 'n01981276', 'n02027492', 'n03937543', 'n03743016', 'n04344873', 'n03590841', 'n04423845', 'n03720891']
+```

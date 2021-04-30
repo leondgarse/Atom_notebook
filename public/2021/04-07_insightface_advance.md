@@ -178,6 +178,7 @@
 ***
 
 # Backbones
+## BoTNet
   **BoTNet50 on MS1MV3**
   ```py
   import json
@@ -216,6 +217,7 @@
   ]
   _ = choose_accuracy(aa, skip_name_len=len("TT_botnet50_"))
   ```
+## GhostNet
   **GhostNet on MS1MV3**
   ```py
   import json
@@ -288,7 +290,8 @@
   | sgdw_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist          | 0.9965   | 0.957857 |   0.966    |      45 |
   | sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_hist        | 0.996667 | 0.960429 |   0.968667 |      45 |
   ```
-  **Mobilenet ArcFace and CurricularFace on Emore**
+## MobileNet
+  - **Mobilenet ArcFace and CurricularFace on Emore**
   ```py
   import json
   hist_path = "checkpoints/"
@@ -339,7 +342,7 @@
   ]
   _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_GDC_emb512_"))
   ```
-  **Mobilenet randaug**
+  - **Mobilenet randaug**
   ```py
   import json
   hist_path = "checkpoints/"
@@ -382,7 +385,7 @@
   TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_random2_E16_arc_hist.json
   TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_E48_arc_trip_64_E16_arc_hist.json
   ```
-  **Mobilenet CurricularFace on CASIA**
+  - **Mobilenet CurricularFace on CASIA**
   ```py
   hist_path = "checkpoints/mobilenet_casia_tests/"
   pp = {}
@@ -397,7 +400,7 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_false_usebias_true_hist.json", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb256_E_curricular_bs400_scale_true_usebias_true_hist.json", **pp)
   ```
-  **Mobilenet scale and use_bias on CASIA**
+  - **Mobilenet scale and use_bias on CASIA**
   ```py
   hist_path = "checkpoints/"
   pp = {}
@@ -423,6 +426,47 @@
   ]
   _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_emb512_GDC_dr04_arc_bs512_"))
   ```
+## MobileNet swish PReLU
+  ```py
+  import json
+  hist_path = "checkpoints/"
+  pp = {}
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "center_embedding_loss", "triplet_embedding_loss", "lr"]
+  # pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "triplet_embedding_loss", "lr", "arcface_loss", "regular_loss"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="basic relu", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_true_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="relu scale_true_bias_true", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_prelu_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="PReLU", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="swish GDC", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_E_emb512_arc_dr04_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="swish E", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GAP_emb512_arc_dr0_l2_5e4_bs512_emore_sgd_scale_true_bias_false_cos16_batch_random_0_lrmin_1e4_tmul_2_float16_hist.json", fig_label="swish GAP", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_fixed_float16_hist.json", fig_label="swish ms1m, dr0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr4_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_fixed_float16_hist.json", fig_label="swish ms1m, dr4", **pp)
+  ```
+## Resnet
+```py
+import json
+hist_path = "checkpoints/"
+pp = {}
+pp["customs"] = plot.EVALS_NAME + ['lr']
+pp["epochs"] = [5, 5, 7, 33]
+pp["skip_epochs"] = 2
+names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_hist.json", fig_label="botnet50 relu", names=names, **pp)
+pp["axes"] = axes
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist.json", fig_label="resnet101v2 10 warmup", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_hist.json", fig_label="resnet101v2 1 warmup", **pp)
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias", **pp)
+```
 ***
 
 # AutoAugment and RandAugment
@@ -569,6 +613,8 @@
 | TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                    | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
 | TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                            | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
 | TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11        | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
+| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_46_batch_2000_0.978833_IJBB_11               | 0.395618 | 0.897955 | 0.943622 | 0.962707 | 0.973515 | 0.983544 |
+| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_basic_agedb_30_epoch_50_IJBB_11                                 | 0.369815 | 0.895618 | 0.944109 | 0.961733 | 0.973612 | 0.983642 |
 
 
 |                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |

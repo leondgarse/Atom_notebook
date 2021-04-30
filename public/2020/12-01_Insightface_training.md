@@ -397,6 +397,25 @@
   #  [0.0, 0.0, 0.0, 0.0, 0.0]]
   ```
   ```py
+  inputs = tf.ones([1, 5, 5, 1])
+  conv_valid = tf.keras.layers.Conv2D(1, 3, strides=2, padding='valid', use_bias=False, kernel_initializer='ones')
+  conv_same = tf.keras.layers.Conv2D(1, 3, strides=2, padding='same', use_bias=False, kernel_initializer='ones')
+  pad = keras.layers.ZeroPadding2D(padding=1)
+  print(conv_same(inputs).numpy()[0, :, :, 0].astype('int').tolist())
+  # [[4, 6, 4], [6, 9, 6], [4, 6, 4]]
+  print(conv_valid(pad(inputs)).numpy()[0, :, :, 0].astype('int').tolist())
+  # [[4, 6, 4], [6, 9, 6], [4, 6, 4]]
+
+  inputs = tf.ones([1, 9, 9, 1])
+  conv_valid = tf.keras.layers.Conv2D(1, 7, strides=2, padding='valid', use_bias=False, kernel_initializer='ones')
+  conv_same = tf.keras.layers.Conv2D(1, 7, strides=2, padding='same', use_bias=False, kernel_initializer='ones')
+  pad = keras.layers.ZeroPadding2D(padding=3)
+  print(conv_same(inputs).numpy()[0, :, :, 0].astype('int').tolist())
+  # [[16, 24, 28, 24, 16], [24, 36, 42, 36, 24], [28, 42, 49, 42, 28], [24, 36, 42, 36, 24], [16, 24, 28, 24, 16]]
+  print(conv_valid(pad(inputs)).numpy()[0, :, :, 0].astype('int').tolist())
+  # [[16, 24, 28, 24, 16], [24, 36, 42, 36, 24], [28, 42, 49, 42, 28], [24, 36, 42, 36, 24], [16, 24, 28, 24, 16]]
+  ```
+  ```py
   data = mx.symbol.Variable("data", shape=(1, 1, 3, 3))
   ww = mx.symbol.Variable("ww", shape=(1, 1, 2, 2))
   cc = mx.sym.Convolution(data=data, weight=ww, no_bias=True, kernel=(2, 2), stride=(2, 2), num_filter=1, pad=(1, 1))
