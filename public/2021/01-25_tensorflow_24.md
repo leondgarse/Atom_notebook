@@ -1890,57 +1890,326 @@
   | 224         | 512        | True     | 228.9982              | 254.9154               |
 ***
 # Word2Vec
-```py
-dd = {ii : np.stack([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[0].numpy() for jj in range(1000)]) for ii in range(8)}
-cc = {ii: pd.value_counts(dd[ii].flatten()).to_dict() for ii in dd}
-print(cc[0])
-# {0: 864, 1: 715, 2: 569, 3: 481, 4: 389, 5: 371, 6: 314, 7: 297}
-print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[1].numpy()[0][0] for jj in range(1000)]) for ii in range(8)})
-# {0: 0.99967235, 1: 0.7245632, 2: 0.5737029, 3: 0.47004792, 4: 0.3987442, 5: 0.34728608, 6: 0.3084587, 7: 0.27554017}
-print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[2].numpy() for jj in range(1000)]) for ii in range(8)})
-# {0: 0.59829926, 1: 0.59250146, 2: 0.59380203, 3: 0.59515625, 4: 0.5941352, 5: 0.60234785, 6: 0.5936593, 7: 0.5999326}
+  ```py
+  dd = {ii : np.stack([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[0].numpy() for jj in range(1000)]) for ii in range(8)}
+  cc = {ii: pd.value_counts(dd[ii].flatten()).to_dict() for ii in dd}
+  print(cc[0])
+  # {0: 864, 1: 715, 2: 569, 3: 481, 4: 389, 5: 371, 6: 314, 7: 297}
+  print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[1].numpy()[0][0] for jj in range(1000)]) for ii in range(8)})
+  # {0: 0.99967235, 1: 0.7245632, 2: 0.5737029, 3: 0.47004792, 4: 0.3987442, 5: 0.34728608, 6: 0.3084587, 7: 0.27554017}
+  print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[2].numpy() for jj in range(1000)]) for ii in range(8)})
+  # {0: 0.59829926, 1: 0.59250146, 2: 0.59380203, 3: 0.59515625, 4: 0.5941352, 5: 0.60234785, 6: 0.5936593, 7: 0.5999326}
 
-pairs, labels = tf.keras.preprocessing.sequence.skipgrams([1, 2, 3, 4, 5, 1, 6, 7], vocabulary_size=8, window_size=2, negative_samples=4)
-# list(zip(pairs, labels))
-pairs, labels = np.array(pairs), np.array(labels)
-negs, poses = pairs[labels == 0], pairs[labels == 1]
-poses = [tuple(ii) for ii in poses]
-neg_in_pos = np.sum([tuple(ii) in poses for ii in negs])
-print(neg_in_pos, neg_in_pos / negs.shape[0])
-# 62 0.5961538461538461
+  pairs, labels = tf.keras.preprocessing.sequence.skipgrams([1, 2, 3, 4, 5, 1, 6, 7], vocabulary_size=8, window_size=2, negative_samples=4)
+  # list(zip(pairs, labels))
+  pairs, labels = np.array(pairs), np.array(labels)
+  negs, poses = pairs[labels == 0], pairs[labels == 1]
+  poses = [tuple(ii) for ii in poses]
+  neg_in_pos = np.sum([tuple(ii) in poses for ii in negs])
+  print(neg_in_pos, neg_in_pos / negs.shape[0])
+  # 62 0.5961538461538461
 
-rr_contexts = np.array(contexts)[:, :, 0]
-rr = [rr_contexts[ii][0] in rr_contexts[ii][1:] for ii in range(rr_contexts.shape[0])]
-print("Total negatives containing positive:", np.sum(rr), "ratio:", np.sum(rr) / rr_contexts.shape[0])
-# Total negatives containing positive: 2226 ratio: 0.03430843685459758
-print("Sample:", rr_contexts[np.array(rr)][:5].tolist())
-# Sample: [[1, 3, 0, 73, 1], [1, 1, 2, 47, 625], [4, 9, 717, 11, 4], [8, 15, 37, 26, 8], [1, 97, 1, 4, 120]]
+  rr_contexts = np.array(contexts)[:, :, 0]
+  rr = [rr_contexts[ii][0] in rr_contexts[ii][1:] for ii in range(rr_contexts.shape[0])]
+  print("Total negatives containing positive:", np.sum(rr), "ratio:", np.sum(rr) / rr_contexts.shape[0])
+  # Total negatives containing positive: 2226 ratio: 0.03430843685459758
+  print("Sample:", rr_contexts[np.array(rr)][:5].tolist())
+  # Sample: [[1, 3, 0, 73, 1], [1, 1, 2, 47, 625], [4, 9, 717, 11, 4], [8, 15, 37, 26, 8], [1, 97, 1, 4, 120]]
 
-ff = np.logical_not(rr)
-dataset = tf.data.Dataset.from_tensor_slices(((targets[ff], contexts[ff]), labels[ff]))
+  ff = np.logical_not(rr)
+  dataset = tf.data.Dataset.from_tensor_slices(((targets[ff], contexts[ff]), labels[ff]))
 
-targets, contexts, labels = np.array(targets), np.array(contexts), np.array(labels)
-dd = pd.DataFrame({"targets": targets.tolist(), "pos": contexts[:, 0, 0].tolist(), "neg": contexts[:, 1:, 0].tolist()})
-cc = dd.groupby('targets').apply(lambda ii: np.sum([jj in ii['pos'].values for jj in np.concatenate(ii['neg'].values)]))
-print("Total negatives pairs containing positive pairs:", cc.sum(), "ratio:", cc.sum() / dd.shape[0])
-# Total negatives pairs containing positive pairs: 38660 ratio: 0.5953095887035925
+  targets, contexts, labels = np.array(targets), np.array(contexts), np.array(labels)
+  dd = pd.DataFrame({"targets": targets.tolist(), "pos": contexts[:, 0, 0].tolist(), "neg": contexts[:, 1:, 0].tolist()})
+  cc = dd.groupby('targets').apply(lambda ii: np.sum([jj in ii['pos'].values for jj in np.concatenate(ii['neg'].values)]))
+  print("Total negatives pairs containing positive pairs:", cc.sum(), "ratio:", cc.sum() / dd.shape[0])
+  # Total negatives pairs containing positive pairs: 38660 ratio: 0.5953095887035925
 
-checkpoint = tf.train.Checkpoint(embedding=tf.Variable(word2vec.get_layer('w2v_embedding').get_weights()[0]))
-checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+  checkpoint = tf.train.Checkpoint(embedding=tf.Variable(word2vec.get_layer('w2v_embedding').get_weights()[0]))
+  checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+  ```
+  ```py
+  unigrams = [0.99967235, 0.7245632, 0.5737029, 0.47004792, 0.3987442, 0.34728608, 0.3084587, 0.27554017]
+  sample_func = lambda ii: tf.nn.fixed_unigram_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, unigrams=unigrams)
+  dd = {ii : np.stack([sample_func(ii)[0].numpy() for jj in range(1000)]) for ii in range(8)}
 ```
-```py
-unigrams = [0.99967235, 0.7245632, 0.5737029, 0.47004792, 0.3987442, 0.34728608, 0.3084587, 0.27554017]
-sample_func = lambda ii: tf.nn.fixed_unigram_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, unigrams=unigrams)
-dd = {ii : np.stack([sample_func(ii)[0].numpy() for jj in range(1000)]) for ii in range(8)}
-```
-```py
-import data
-image_classes_rule = data.ImageClassesRule_map('/datasets/ILSVRC2012_img_train')
-ds, steps_per_epoch = data.prepare_dataset('/datasets/ILSVRC2012_img_train', image_names_reg = "*/*", image_classes_rule=image_classes_rule, img_shape=(224, 224, 3))
+# Imagenet
+  ```py
+  sys.path.append('/home/tdtest/workspace/Keras_insightface/')
+  import data, models, myCallbacks
+  input_shape=(64, 64, 3)
+  image_classes_rule = data.ImageClassesRule_map('/datasets/ILSVRC2012_img_train')
+  ds, steps_per_epoch = data.prepare_dataset('/datasets/ILSVRC2012_img_train', image_names_reg = "*/*", image_classes_rule=image_classes_rule, img_shape=input_shape, batch_size=512)
 
-aa, bb = ds.as_numpy_iterator().next()
-aa = (aa + 1) / 2
-plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
-print([image_classes_rule.indices_2_classes[ii] for ii in bb.argmax(-1)][:10])
-# ['n02493793', 'n04204347', 'n01981276', 'n02027492', 'n03937543', 'n03743016', 'n04344873', 'n03590841', 'n04423845', 'n03720891']
-```
+  # aa, bb = ds.as_numpy_iterator().next()
+  # aa = (aa + 1) / 2
+  # plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
+  # plt.axis('off')
+  # plt.tight_layout()
+  # print([image_classes_rule.indices_2_classes[ii] for ii in bb.argmax(-1)][:10])
+  # ['n02493793', 'n04204347', 'n01981276', 'n02027492', 'n03937543', 'n03743016', 'n04344873', 'n03590841', 'n04423845', 'n03720891']
+
+  model = keras.applications.ResNet50V2(input_shape=input_shape, weights=None)
+  model = models.add_l2_regularizer_2_model(model, weight_decay=5e-4, apply_to_batch_normal=False)
+  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
+  # callbacks = myCallbacks.basic_callbacks(checkpoint="keras_checkpoints.h5", lr=0.1, lr_decay=0.1, lr_min=1e-5, lr_decay_steps=[20, 30, 40])
+  lr_schduler = myCallbacks.CosineLrScheduler(0.1, first_restart_step=16, m_mul=0.5, t_mul=2.0, lr_min=1e-05, warmup=0, steps_per_epoch=steps_per_epoch)
+  callbacks = [lr_schduler]
+
+  model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=['acc'])
+  model.fit(ds, epochs=50, verbose=1, callbacks=callbacks, initial_epoch=0, steps_per_epoch=steps_per_epoch, use_multiprocessing=True, workers=4)
+  ```
+# BiT
+  - [Colabs big_transfer_tf2.ipynb](https://colab.research.google.com/github/google-research/big_transfer/blob/master/colabs/big_transfer_tf2.ipynb)
+  - [tfhub bit/m-r50x1](https://tfhub.dev/google/bit/m-r50x1/imagenet21k_classification/1)
+  ```py
+  def add_name_prefix(name, prefix=None):
+    return prefix + "/" + name if prefix else name
+
+  class StandardizedConv2D(tf.keras.layers.Conv2D):
+    """Implements the abs/1903.10520 technique (see go/dune-gn).
+    You can simply replace any Conv2D with this one to use re-parametrized
+    convolution operation in which the kernels are standardized before conv.
+    Note that it does not come with extra learnable scale/bias parameters,
+    as those used in "Weight normalization" (abs/1602.07868). This does not
+    matter if combined with BN/GN/..., but it would matter if the convolution
+    was used standalone.
+    Author: Lucas Beyer
+    """
+
+    def build(self, input_shape):
+      super(StandardizedConv2D, self).build(input_shape)
+      # Wrap a standardization around the conv OP.
+      default_conv_op = self._convolution_op
+
+      def standardized_conv_op(inputs, kernel):
+        # Kernel has shape HWIO, normalize over HWI
+        mean, var = tf.nn.moments(kernel, axes=[0, 1, 2], keepdims=True)
+        # Author code uses std + 1e-5
+        return default_conv_op(inputs, (kernel - mean) / tf.sqrt(var + 1e-10))
+
+      self._convolution_op = standardized_conv_op
+      self.built = True
+
+  class PaddingFromKernelSize(tf.keras.layers.Layer):
+    """Layer that adds padding to an image taking into a given kernel size."""
+
+    def __init__(self, kernel_size, **kwargs):
+      super(PaddingFromKernelSize, self).__init__(**kwargs)
+      self.kernel_size = kernel_size
+      pad_total = kernel_size - 1
+      self._pad_beg = pad_total // 2
+      self._pad_end = pad_total - self._pad_beg
+
+    def compute_output_shape(self, input_shape):
+      batch_size, height, width, channels = tf.TensorShape(input_shape).as_list()
+      if height is not None:
+        height = height + self._pad_beg + self._pad_end
+      if width is not None:
+        width = width + self._pad_beg + self._pad_end
+      return tf.TensorShape((batch_size, height, width, channels))
+
+    def call(self, x):
+      padding = [
+          [0, 0],
+          [self._pad_beg, self._pad_end],
+          [self._pad_beg, self._pad_end],
+          [0, 0]]
+      return tf.pad(x, padding)
+
+    def get_config(self):
+      config = super(PaddingFromKernelSize, self).get_config()
+      config.update({"kernel_size": self.kernel_size})
+      return config
+
+    @classmethod
+    def from_config(cls, config):
+      return cls(**config)
+
+  class BottleneckV2Unit(tf.keras.layers.Layer):
+    """Implements a standard ResNet's unit (version 2).
+    """
+
+    def __init__(self, num_filters, stride=1, **kwargs):
+      """Initializer.
+      Args:
+        num_filters: number of filters in the bottleneck.
+        stride: specifies block's stride.
+        **kwargs: other tf.keras.layers.Layer keyword arguments.
+      """
+      super(BottleneckV2Unit, self).__init__(**kwargs)
+      self._num_filters = num_filters
+      self._stride = stride
+
+      self._proj = None
+      self._unit_a = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+      ])
+      self._unit_a_conv = StandardizedConv2D(
+          filters=num_filters,
+          kernel_size=1,
+          use_bias=False,
+          padding="VALID",
+          trainable=self.trainable,)
+
+      self._unit_b = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+          PaddingFromKernelSize(kernel_size=3),
+          StandardizedConv2D(
+              filters=num_filters,
+              kernel_size=3,
+              strides=stride,
+              use_bias=False,
+              padding="VALID",
+              trainable=self.trainable,)
+      ])
+
+      self._unit_c = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+          StandardizedConv2D(
+              filters=4 * num_filters,
+              kernel_size=1,
+              use_bias=False,
+              padding="VALID",
+              trainable=self.trainable)
+      ])
+
+    def build(self, input_shape):
+      input_shape = tf.TensorShape(input_shape).as_list()
+
+      # Add projection layer if necessary.
+      if (self._stride > 1) or (4 * self._num_filters != input_shape[-1]):
+        self._proj = StandardizedConv2D(
+            filters=4 * self._num_filters,
+            kernel_size=1,
+            strides=self._stride,
+            use_bias=False,
+            padding="VALID",
+            trainable=self.trainable)
+      self.built = True
+
+    def compute_output_shape(self, input_shape):
+      current_shape = self._unit_a.compute_output_shape(input_shape)
+      current_shape = self._unit_a_conv.compute_output_shape(current_shape)
+      current_shape = self._unit_b.compute_output_shape(current_shape)
+      current_shape = self._unit_c.compute_output_shape(current_shape)
+      return current_shape
+
+    def call(self, x):
+      x_shortcut = x
+      # Unit "a".
+      x = self._unit_a(x)
+      if self._proj is not None:
+        x_shortcut = self._proj(x)
+      x = self._unit_a_conv(x)
+      # Unit "b".
+      x = self._unit_b(x)
+      # Unit "c".
+      x = self._unit_c(x)
+
+      return x + x_shortcut
+
+    def get_config(self):
+      config = super(BottleneckV2Unit, self).get_config()
+      config.update({"num_filters": self._num_filters, "stride": self._stride})
+      return config
+
+    @classmethod
+    def from_config(cls, config):
+      return cls(**config)
+  ```
+  ```py
+  from tensorflow.keras.layers import ReLU
+  import tensorflow_addons.layers.normalizations as normalization
+
+  num_units = (3, 4, 6, 3)
+  num_outputs = 1000
+  filters_factor = 4
+  strides = (1, 2, 2, 2)
+  trainable = False
+
+  num_blocks = len(num_units)
+  num_filters = tuple(16 * filters_factor * 2**b for b in range(num_blocks))
+
+  def create_root_block(num_filters, conv_size=7, conv_stride=2, pool_size=3, pool_stride=2):
+      layers = [
+          PaddingFromKernelSize(conv_size),
+          StandardizedConv2D(filters=num_filters, kernel_size=conv_size, strides=conv_stride, trainable=trainable, use_bias=False, name="standardized_conv2d"),
+          PaddingFromKernelSize(pool_size),
+          tf.keras.layers.MaxPool2D(pool_size=pool_size, strides=pool_stride, padding="valid")
+      ]
+      return tf.keras.Sequential(layers, name="root_block")
+
+  def create_block(num_units, num_filters, stride, name):
+      layers = []
+      for i in range(1, num_units + 1):
+          layers.append(BottleneckV2Unit(num_filters=num_filters, stride=(stride if i == 1 else 1), name=name + "_unit%02d" % i))
+      return tf.keras.Sequential(layers, name=name)
+
+  root = create_root_block(num_filters=num_filters[0])
+  blocks = []
+  for b, (f, u, s) in enumerate(zip(num_filters, num_units, strides), 1):
+      n = "block{}".format(b)
+      blocks.append(create_block(num_units=u, num_filters=f, stride=s, name=n))
+
+  pre_head = [
+      normalization.GroupNormalization(name="group_norm"),
+      ReLU(),
+      tf.keras.layers.GlobalAveragePooling2D()
+  ]
+
+  xx = keras.Input([None, None, 3])
+  nn = root(xx)
+  for block in blocks:
+      nn = block(nn)
+  for layer in pre_head:
+      nn = layer(nn)
+  dd = keras.models.Model(xx, nn)
+
+  mm = keras.models.load_model('../module_cache/4ff8fefe176c863be939e3880dfa769989df4e32')
+  mm.save_weights('aa.h5')
+
+  dd.load_weights('aa.h5')
+  dd.save('dd.h5', include_optimizer=False)
+  ```
+  ```py
+  from tensorflow.keras.layers import ReLU
+  import tensorflow_addons.layers.normalizations as normalization
+
+  num_units = (3, 4, 6, 3)
+  num_outputs = 1000
+  filters_factor = 4
+  strides = (1, 2, 2, 2)
+  trainable = False
+
+  num_blocks = len(num_units)
+  num_filters = tuple(16 * filters_factor * 2**b for b in range(num_blocks))
+
+  xx = keras.Input([None, None, 3])
+  nn = PaddingFromKernelSize(7)(xx)
+  nn = StandardizedConv2D(filters=num_filters[0], kernel_size=7, strides=2, trainable=trainable, use_bias=False, name="standardized_conv2d")(nn)
+  nn = PaddingFromKernelSize(3)(nn)
+  nn = tf.keras.layers.MaxPool2D(pool_size=3, strides=2, padding="valid")(nn)
+
+  for bb, (ff, uu, ss) in enumerate(zip(num_filters, num_units, strides), 1):
+      name = "block{}".format(bb)
+      # create_block(num_units=u, num_filters=f, stride=s, name=n)
+      for ii in range(1, uu + 1):
+          nn = BottleneckV2Unit(num_filters=ff, stride=(ss if ii == 1 else 1), name=name + "_unit%02d" % ii)(nn)
+
+  nn = normalization.GroupNormalization(name="group_norm")(nn)
+  nn = ReLU()(nn)
+  nn = tf.keras.layers.GlobalAveragePooling2D()(nn)
+
+  dd = keras.models.Model(xx, nn)
+
+  mm = keras.models.load_model('../module_cache/4ff8fefe176c863be939e3880dfa769989df4e32')
+  mm.save_weights('aa.h5')
+
+  dd.load_weights('aa.h5')
+  dd.save('dd.h5', include_optimizer=False)
+  ```
+***

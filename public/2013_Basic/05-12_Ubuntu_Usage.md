@@ -2081,6 +2081,22 @@
 
   sudo edge -d T3 -a 172.3.0.101 -c n2n -k test -Efr -l n2n.udpfile.com:10086
   ```
+  ```sh
+  $ sudo vi /etc/supervisor/conf.d/n2n_edge.conf
+  [program:n2n_edge]
+  command=/usr/local/sbin/edge -d T3 -a 172.3.0.101 -c n2n -k test -Efr -l n2n.udpfile.com:10086
+  autorestart = true
+  autostart = true
+  startsecs = 5    
+  startretries = 3
+  user = root
+  stdout_logfile_maxbytes = 20MB  
+  stdout_logfile_backups = 20    
+  stdout_logfile = /var/log/n2n_edge.log
+
+  $ sudo service supervisor restart
+  $ sudo supervisorctl
+  ```
 ## md5sum sha256sum
   - 查看文件 MD5 / SHA256 值
     ```sh
