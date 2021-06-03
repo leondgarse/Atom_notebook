@@ -449,22 +449,33 @@
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_fixed_float16_hist.json", fig_label="swish ms1m, dr0", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr4_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_fixed_float16_hist.json", fig_label="swish ms1m, dr4", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="swish ms1m, dr4, orign bnm bne", **pp)
   ```
 ## MobileNet distill
 ```py
 hist_path = "checkpoints/mobilenet_distillation/"
 pp = {}
-pp["epochs"] = [5, 5, 10, 10, 60]
+pp["epochs"] = [5, 5, 10, 10, 10, 10]
 pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
-names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001])]
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", names=names, **pp)
+names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001, 1e-4])]
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", names=names, **pp, fig_label='Mobilenet, without pointwise, distill emore')
 pp["axes"] = axes
 
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill emore')
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3')
+
 hist_path = "checkpoints/"
+pp["epochs"] = [5, 5, 7, 33]
+names = [""] * 3 + ["ArcFace Scale 64, learning rate 0.05"]
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", names=names, **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr')
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr, swish')
+
 axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist.json", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist.json", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp)
 ```
 ## Resnet
 ```py
@@ -487,6 +498,26 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50v2_pad_same_conv_no_bias_
 
 axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 swish", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 relu, basic", **pp)
+```
+```py
+hist_path = "checkpoints/"
+pp = {}
+pp["customs"] = plot.EVALS_NAME + ['lr']
+pp["epochs"] = [5, 5, 7, 33]
+pp["skip_epochs"] = 3
+names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+# axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet50v2, swish, first conv 3, strides 1", names=names, **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2, relu", names=names, **pp)
+pp["axes"] = axes
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet101v2, swish, first conv 3, strides 1", **pp)
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_m_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_m", **pp)
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, sgdw", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2, bnm09_bne1e4", **pp)
 ```
 ***
 
@@ -618,45 +649,58 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_
 | glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |
 | GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |
 
-|                                                                                                                                                                            |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_15_0.970000_IJBB_11                         | 0.344888 | 0.864752 | 0.920156 | 0.951315 | 0.969912 | 0.984129 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_basic_agedb_30_epoch_15_batch_4000_0.971500_IJBB_11 |  0.39075 | 0.822785 | 0.911879 | 0.951607 | 0.974586 | 0.988413 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_E17_arc_basic_agedb_30_epoch_4_0.970333_IJBB_11     | 0.372055 | 0.849757 | 0.920351 | 0.952386 |  0.97186 | 0.986076 |
-| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_49_batch_2000_0.970000_IJBB_11                     | 0.337001 | 0.856573 | 0.922006 |  0.95297 |  0.97147 | 0.983544 |
-| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_E50_LH_sgd_lr25e3_float16_basic_agedb_30_epoch_14_batch_4000_0.971000_IJBB_11         | 0.342162 | 0.863778 | 0.923466 | 0.953749 | 0.970886 |  0.98296 |
-| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_E50_sgd_lr25e3_float16_basic_agedb_30_epoch_14_batch_2000_0.971000_IJBB_11            | 0.346641 | 0.857157 | 0.922687 | 0.954041 | 0.970691 | 0.983155 |
-| TT_ghostnet_strides_1_prelu_25_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_47_0.980000_IJBB_11                   | 0.360467 | 0.879065 | 0.931159 | 0.957644 |  0.97186 | 0.985102 |
-| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11           | 0.327069 | 0.887244 | 0.932425 |  0.95482 | 0.972541 |  0.98481 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBB_11                          | 0.360759 | 0.899318 | 0.941967 | 0.960273 | 0.972444 | 0.984129 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_48_batch_4000_0.978833_IJBB_11  | 0.317235 | 0.896981 | 0.941675 | 0.960954 | 0.971762 | 0.983836 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_50_batch_2000_0.979000_IJBB_11  | 0.313632 | 0.898832 | 0.941675 | 0.960759 | 0.971957 | 0.984031 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                    | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                            | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
-| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11        | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
-| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_46_batch_2000_0.978833_IJBB_11               | 0.395618 | 0.897955 | 0.943622 | 0.962707 | 0.973515 | 0.983544 |
-| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_basic_agedb_30_epoch_50_IJBB_11                                 | 0.369815 | 0.895618 | 0.944109 | 0.961733 | 0.973612 | 0.983642 |
-| TT_botnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_47_batch_4000_0.978833_IJBB_11                       | 0.322687 | 0.896592 | 0.942551 | 0.961538 | 0.975463 |  0.98481 |
-| TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_46_batch_2000_0.979667_IJBB_11              | 0.346056 | 0.900487 | 0.944693 | 0.963291 | 0.973515 | 0.985005 |
-| TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_48_batch_2000_0.976667_IJBB_11               | 0.284713 | 0.890068 | 0.941675 | 0.961149 | 0.973126 | 0.983057 |
-| TT_resnet50v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_IJBB_11                                                      | 0.278968 | 0.891431 | 0.940409 | 0.959786 | 0.972055 | 0.982084 |
-| TT_resnet50v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_44_0.977667_IJBB_11                     | 0.301168 |  0.88705 | 0.938559 | 0.959591 | 0.972055 | 0.984226 |
-| TT_resnet101v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_44_0.980333_IJBB_11                    | 0.315482 | 0.908471 | 0.945278 | 0.961733 | 0.973807 | 0.984226 |
+|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_15_0.970000_IJBB_11                               | 0.344888 | 0.864752 | 0.920156 | 0.951315 | 0.969912 | 0.984129 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_basic_agedb_30_epoch_15_batch_4000_0.971500_IJBB_11       |  0.39075 | 0.822785 | 0.911879 | 0.951607 | 0.974586 | 0.988413 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_E48_arc_trip_E17_arc_basic_agedb_30_epoch_4_0.970333_IJBB_11           | 0.372055 | 0.849757 | 0.920351 | 0.952386 |  0.97186 | 0.986076 |
+| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_49_batch_2000_0.970000_IJBB_11                           | 0.337001 | 0.856573 | 0.922006 |  0.95297 |  0.97147 | 0.983544 |
+| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_E50_LH_sgd_lr25e3_float16_basic_agedb_30_epoch_14_batch_4000_0.971000_IJBB_11               | 0.342162 | 0.863778 | 0.923466 | 0.953749 | 0.970886 |  0.98296 |
+| TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_E50_sgd_lr25e3_float16_basic_agedb_30_epoch_14_batch_2000_0.971000_IJBB_11                  | 0.346641 | 0.857157 | 0.922687 | 0.954041 | 0.970691 | 0.983155 |
+| TT_ghostnet_strides_1_prelu_25_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_47_0.980000_IJBB_11                         | 0.360467 | 0.879065 | 0.931159 | 0.957644 |  0.97186 | 0.985102 |
+| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                 | 0.327069 | 0.887244 | 0.932425 |  0.95482 | 0.972541 |  0.98481 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBB_11                                | 0.360759 | 0.899318 | 0.941967 | 0.960273 | 0.972444 | 0.984129 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_48_batch_4000_0.978833_IJBB_11        | 0.317235 | 0.896981 | 0.941675 | 0.960954 | 0.971762 | 0.983836 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_conv_no_bias_basic_agedb_30_epoch_50_batch_2000_0.979000_IJBB_11        | 0.313632 | 0.898832 | 0.941675 | 0.960759 | 0.971957 | 0.984031 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_randaug_basic_agedb_30_epoch_47_0.979333_IJBB_11                          | 0.381694 | 0.894547 | 0.941967 | 0.963875 | 0.975657 | 0.984615 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBB_11                                  | 0.384226 |  0.89591 | 0.940019 | 0.958325 | 0.973126 | 0.984323 |
+| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11              | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
+| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_46_batch_2000_0.978833_IJBB_11                     | 0.395618 | 0.897955 | 0.943622 | 0.962707 | 0.973515 | 0.983544 |
+| TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_basic_agedb_30_epoch_50_IJBB_11                                       | 0.369815 | 0.895618 | 0.944109 | 0.961733 | 0.973612 | 0.983642 |
+| TT_botnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_47_batch_4000_0.978833_IJBB_11                             | 0.322687 | 0.896592 | 0.942551 | 0.961538 | 0.975463 |  0.98481 |
+| TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_46_batch_2000_0.979667_IJBB_11                    | 0.346056 | 0.900487 | 0.944693 | 0.963291 | 0.973515 | 0.985005 |
+| TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_48_batch_2000_0.976667_IJBB_11                     | 0.284713 | 0.890068 | 0.941675 | 0.961149 | 0.973126 | 0.983057 |
+| TT_resnet50v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_IJBB_11                                                            | 0.278968 | 0.891431 | 0.940409 | 0.959786 | 0.972055 | 0.982084 |
+| TT_resnet50v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_44_0.977667_IJBB_11                           | 0.301168 |  0.88705 | 0.938559 | 0.959591 | 0.972055 | 0.984226 |
+| TT_resnet101v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_basic_agedb_30_epoch_44_0.980333_IJBB_11                          | 0.315482 | 0.908471 | 0.945278 | 0.961733 | 0.973807 | 0.984226 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_48_0.973500_IJBB_11                                                    | 0.370886 | 0.849172 | 0.917332 |  0.94927 | 0.971373 | 0.986465 |
+| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBB_11                                              | 0.380721 |  0.85258 |  0.91889 | 0.951412 | 0.972833 | 0.986465 |
+| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBB_11  |  0.40224 | 0.916943 | 0.949951 |  0.96446 | 0.976728 |  0.98666 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                                           | 0.371373 | 0.880039 |  0.93593 |  0.96037 | 0.974294 | 0.984323 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                                      | 0.351899 | 0.880234 |  0.93408 | 0.958715 | 0.973612 | 0.984907 |
+| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBB_11 | 0.397371 | 0.914606 | 0.952483 | 0.967381 | 0.978773 | 0.987439 |
 
 
-|                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBC_11                                    | 0.716981 | 0.886077 | 0.938743 | 0.960986 | 0.977604 | 0.987933 |
-| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBC_11                                    | 0.774608 | 0.890985 | 0.939357 | 0.960986 | 0.977144 | 0.987779 |
-| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBC_11                                           | 0.741423 | 0.848699 | 0.911745 | 0.951629 | 0.974127 |  0.98737 |
-| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBC_11                                           | 0.848545 | 0.896457 | 0.935573 | 0.961651 | 0.977706 | 0.990438 |
-| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBC_11                              | 0.817406 | 0.889656 | 0.934499 |  0.96119 | 0.977451 | 0.988495 |
-| TT_ghostnet_strides_1_prelu_25_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_47_0.980000_IJBC_11         | 0.873038 | 0.921563 |  0.94943 | 0.967684 | 0.979189 | 0.989569 |
-| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |
-| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBC_11                | 0.880043 | 0.934499 | 0.955924 | 0.970241 | 0.980161 | 0.988597 |
-| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBC_11                  |   0.8894 | 0.933834 |  0.95577 | 0.970292 | 0.981439 | 0.988546 |
+
+|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
+| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBC_11                                                    | 0.716981 | 0.886077 | 0.938743 | 0.960986 | 0.977604 | 0.987933 |
+| TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBC_11                                                    | 0.774608 | 0.890985 | 0.939357 | 0.960986 | 0.977144 | 0.987779 |
+| keras_mobilenet_emore_adamw_5e5_soft_baseline_before_arc_E80_BTO_E2_arc_sgdw_basic_agedb_30_epoch_119_0.959333_IJBC_11                                                           | 0.741423 | 0.848699 | 0.911745 | 0.951629 | 0.974127 |  0.98737 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBC_11                                                           | 0.848545 | 0.896457 | 0.935573 | 0.961651 | 0.977706 | 0.990438 |
+| TT_ghostnet_prelu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_basic_agedb_30_epoch_46_0.969333_IJBC_11                                              | 0.817406 | 0.889656 | 0.934499 |  0.96119 | 0.977451 | 0.988495 |
+| TT_ghostnet_strides_1_prelu_25_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_47_0.980000_IJBC_11                         | 0.873038 | 0.921563 |  0.94943 | 0.967684 | 0.979189 | 0.989569 |
+| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11                 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |
+| TT_botnet50_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_restart_3_bias_false_basic_agedb_30_epoch_16_0.978167_IJBC_11                                | 0.880043 | 0.934499 | 0.955924 | 0.970241 | 0.980161 | 0.988597 |
+| TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_3_bias_false_conv_no_bias_tmul_2_basic_agedb_30_epoch_48_0.979667_IJBC_11                                  |   0.8894 | 0.933834 |  0.95577 | 0.970292 | 0.981439 | 0.988546 |
+| TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_48_0.973500_IJBC_11                                                    |  0.85013 |  0.90249 | 0.937925 | 0.961906 |  0.97924 | 0.990438 |
+| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11                                              | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |
+| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |
+| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |
 
 ***
 
@@ -696,4 +740,192 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_
   tt = ghostnet.GhostNet([112, 112])
   summary(tt, (3, 112, 112))
   ```
+  ```py
+  import mxnet as mx
+  from tqdm import tqdm
+
+  def load_mx_rec(rec_path, PICK_FIRST=-1):
+      save_path = os.path.join(rec_path, "imgs")
+      if not os.path.exists(save_path):
+          os.makedirs(save_path)
+
+      idx_path = os.path.join(rec_path, "train.idx")
+      bin_path = os.path.join(rec_path, "train.rec")
+      imgrec = mx.recordio.MXIndexedRecordIO(idx_path, bin_path, 'r')
+      img_info = imgrec.read_idx(0)
+      header,_ = mx.recordio.unpack(img_info)
+      max_idx = int(header.label[0])
+      pre_label, image_idx = -1, 0
+      for idx in tqdm(range(1, max_idx if PICK_FIRST == -1 else PICK_FIRST)):
+          img_info = imgrec.read_idx(idx)
+          header, img = mx.recordio.unpack(img_info)
+          # label = int(header.label)
+          label = int(header.label if isinstance(header.label, float) else header.label[0]) + max_idx
+
+          if label != pre_label:
+              image_idx = 0
+              pre_label = label
+
+          label_path = os.path.join(save_path, "0_" + str(label))
+          if not os.path.exists(label_path):
+              os.makedirs(label_path)
+          with open(os.path.join(label_path, '{}.jpg'.format(image_idx)), "wb") as ff:
+              ff.write(img)
+          image_idx += 1
+  ```
+  ```py
+  with open('retina_clean.txt', 'r') as ff:
+      aa = ff.readlines()
+  dd = {}
+  for ii in aa:
+      ii = ii.strip()
+      kk, vv = os.path.dirname(ii), int(os.path.splitext(os.path.basename(ii))[0])
+      dd.setdefault(kk, []).append(vv)
+
+  PATH = '/datasets/ms1m-retinaface-t1/imgs/'
+  print(sum([ii in dd for ii in os.listdir(PATH)]))
+  # 92317
+
+  rr = []
+  for kk, vv in dd.items():
+      cc = [int(os.path.splitext(ii)[0]) for ii in os.listdir(os.path.join(PATH, kk))]
+      rr.append([ii in cc for ii in vv])
+  print(sum([sum(ii) for ii in rr]))
+  # 5096068
+
+  rr = []
+  for kk, vv in dd.items():
+      cc = [int(os.path.splitext(ii)[0]) for ii in os.listdir(os.path.join(PATH, kk))]
+      rr.append([ii in cc for ii in vv])
+  print(sum([sum(ii) for ii in rr]))
+  # 5096068
+
+  tt = []
+  for ii in os.listdir(PATH):
+      vv = dd.get(ii, [])
+      tt.append([int(os.path.splitext(jj)[0]) in vv for jj in os.listdir(os.path.join(PATH, ii))])
+  cc = [(id, sum(ii), len(ii)) for id, ii in enumerate(tt) if False in ii]
+  print(len(cc))
+  # 37730
+
+  from tqdm import tqdm
+  target = "/datasets/ms1m-retinaface-t1-cleaned_112x112_folders"
+  if not os.path.exists(target):
+      os.makedirs(target)
+  for id, (kk, vv) in tqdm(enumerate(dd.items())):
+      image_source = os.path.join(PATH, kk)
+      image_target = os.path.join(target, str(id))
+      if not os.path.exists(image_target):
+          os.makedirs(image_target)
+      for ii in vv:
+          image_name = str(ii) + ".jpg"
+          os.rename(os.path.join(image_source, image_name), os.path.join(image_target, image_name))
+          # print(os.rename(os.path.join(image_source, image_name), os.path.join(image_target, image_name)))
+
+  for ii in os.listdir(PATH):
+      if len(os.listdir(os.path.join(PATH, ii))) == 0:
+          os.removedirs(os.path.join(PATH, ii))
+  ```
+# MLP
+```py
+sys.path.append('../Keras_mlp/')
+import mlp_mixer
+bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=512, dropout=0.4, classifier_activation=None)
+
+embedding = keras.layers.BatchNormalization()(bb.outputs[0])
+embedding_fp32 = keras.layers.Activation("linear", dtype="float32", name="embedding")(embedding)
+basic_model = keras.models.Model(bb.inputs[0], embedding_fp32)
+
+bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=0)
+out = keras.layers.Reshape((7, 7, 512))(bb.outputs[0])
+basic_model = keras.models.Model(bb.inputs[0], out)
+basic_model = models.buildin_models(basic_model, output_layer='GDC')
+```
+```py
+sys.path.append('../Keras_mlp/')
+import res_mlp
+bb = res_mlp.ResMLP(input_shape=(112, 112, 3), num_blocks=8, patch_size=16, hidden_dim=512, mlp_dim=512 * 4, num_classes=512, dropout=0.4, classifier_activation=None)
+```
+# mixup
+```py
+def mixup(self, batch_size, alpha, image, label):
+    """Applies Mixup regularization to a batch of images and labels.
+
+    [1] Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz
+      Mixup: Beyond Empirical Risk Minimization.
+      ICLR'18, https://arxiv.org/abs/1710.09412
+
+    Arguments:
+      batch_size: The input batch size for images and labels.
+      alpha: Float that controls the strength of Mixup regularization.
+      image: a Tensor of batched images.
+      label: a Tensor of batch labels.
+
+    Returns:
+      A new dict of features with updated images and labels with the same
+      dimensions as the input with Mixup regularization applied.
+    """
+    mix_weight = tf.distributions.Beta(alpha, alpha).sample([batch_size, 1])
+    mix_weight = tf.maximum(mix_weight, 1. - mix_weight)
+    img_weight = tf.cast(tf.reshape(mix_weight, [batch_size, 1, 1, 1]), image.dtype)
+    # Mixup on a single batch is implemented by taking a weighted sum with the
+    # same batch in reverse.
+    image = image * img_weight + image[::-1] * (1. - img_weight)
+    label_weight = tf.cast(mix_weight, label.dtype)
+    label = label * label_weight + label[::-1] * (1 - label_weight)
+    return image, label
+```
+# EfficientnetV2
+```sh
+cd automl/efficientnetv2/
+CUDA_VISIBLE_DEVICES='1' python infer.py --model_name=efficientnetv2-s --model_dir='efficientnetv2-s-21k' --mode='tf2bm' --dataset_cfg=imagenet21k
+```
+```py
+model_type, dataset = 's', "imagenet21k"
+if dataset == "imagenet21k":
+    classes, dropout, load_model_suffix, save_model_suffix = 21843, 1e-6, "-21k", "-21k"
+else:
+    classes, dropout, load_model_suffix, save_model_suffix = 1000, 0.2, "", "-imagenet"
+
+sys.path.append('automl/efficientnetv2')
+import infer, effnetv2_model
+config = infer.get_config('efficientnetv2-{}'.format(model_type), dataset)
+model = effnetv2_model.EffNetV2Model('efficientnetv2-{}'.format(model_type), config.model)
+len(model(tf.ones([1, 224, 224, 3]), False))
+# ckpt = tf.train.latest_checkpoint('models/efficientnetv2-{}{}'.format(model_type, load_model_suffix))
+ckpt = tf.train.latest_checkpoint('automl/efficientnetv2/efficientnetv2-{}{}'.format(model_type, load_model_suffix))
+model.load_weights(ckpt)
+model.save_weights('aa.h5')
+
+sys.path.append("Keras_efficientnet_v2_test")
+import convert.effnetv2_model
+mm = convert.effnetv2_model.EffNetV2Model('efficientnetv2-{}'.format(model_type), num_classes=classes)
+len(mm(tf.ones([1, 224, 224, 3]), False))
+mm.load_weights('aa.h5')
+
+inputs = keras.Input([224, 224, 3])
+tt = keras.models.Model(inputs, mm.call(inputs, training=False))
+tt.save('bb.h5')
+
+from Keras_efficientnet_v2_test import efficientnet_v2
+# For ImageNet21k, dropout_rate=0.000001, survival_prob=1.0
+keras_model = efficientnet_v2.EfficientNetV2(model_type=model_type, survivals=None, dropout=dropout, classes=classes, classifier_activation=None)
+keras_model.load_weights('bb.h5')
+
+orign_out = model(tf.ones([1, 224, 224, 3]))[0]
+converted_out = keras_model(tf.ones([1, 224, 224, 3]))
+print(f'{np.allclose(orign_out.numpy(), converted_out.numpy()) = }')
+# np.allclose(orign_out.numpy(), converted_out.numpy()) = True
+
+keras_model.save('models/efficientnetv2-{}{}.h5'.format(model_type, save_model_suffix))
+keras.models.Model(keras_model.inputs[0], keras_model.layers[-4].output).save('models/efficientnetv2-{}{}-notop.h5'.format(model_type, save_model_suffix))
+```
+```py
+automl.efficientnetv2.infer.create_model('efficientnetv2-s', 'imagenet21k')._mconfig['blocks_args']
+automl.efficientnetv2.infer.create_model('efficientnetv2-m', 'imagenet21k')._mconfig['blocks_args']
+automl.efficientnetv2.infer.create_model('efficientnetv2-l', 'imagenet21k')._mconfig['blocks_args']
+
+aa = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in tt.layers])
+bb = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in keras_model.layers])
+```
 ***
