@@ -323,7 +323,7 @@
   - [Goproxy China](https://goproxy.cn/)
   - [Go Modules Wiki](https://github.com/golang/go/wiki/Modules)
   - [When should I use the replace directive?](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive)
-  - **go.mod**
+  - **go.mod 一般结构**
     ```sh
     module example.com/hello
 
@@ -2236,6 +2236,29 @@
     - **接收者** 可以通过赋值语句的第二个参数来测试 channel 是否被关闭，`v, ok := <-ch`，channel 关闭时 `ok == false`
     - 向一个已经关闭的 channel 发送数据会引起 panic
     - 通常情况下无需关闭 channel，只有在需要告诉接收者没有更多的数据的时候才有必要进行关闭，如中断一个 `range`
+    ```go
+    package main
+
+    import "fmt"
+
+    type T int
+
+    func IsClosed(ch <-chan T) bool {
+        select {
+        case <-ch:
+            return true
+        default:
+            return false
+        }
+    }
+
+    func main() {
+        c := make(chan T)
+        fmt.Println(IsClosed(c)) // false
+        close(c)
+        fmt.Println(IsClosed(c)) // true
+    }
+    ```
   - **range 循环接收** `for i := range c` 会不断从 channel 接收值，直到被 `close` 关闭
     ```go
     func fibonacci(n int, c chan int) {
@@ -2741,5 +2764,19 @@
   	data, _ := ff.ReadFile("hello.go")
   	fmt.Println(string(data))
   }
+  ```
+***
+
+# Gitlab
+  - [Go proxy for GitLab](https://docs.gitlab.com/ee/user/packages/go_proxy/#enable-the-go-proxy)
+  ```sh
+  sudo gitlab-ctl reconfigure
+  sudo gitlab-rails console
+  Feature.enable(:go_proxy)
+  ```
+  ```sh
+  GONOSUMDB='gitlab.com/leondgarse/hello-gitlab' go get gitlab.com/leondgarse/hello-gitlab
+
+  GONOSUMDB='gitlab.com/leondgarse/hello-gitlab' go mod tidy
   ```
 ***

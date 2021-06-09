@@ -2417,6 +2417,17 @@
   |                   5 | False    |           1 | False       |         4.8435 |             113140 |
   |                   1 | True     |           1 | False       |        9.40449 |             131299 |
 
+  | efficientnet_v2_b0_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | -----------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |                       2 | True     |           4 | True        |        11.6389 |            21174.5 |
+  |                       6 | False    |           4 | True        |        5.85982 |            31703.3 |
+  |                       7 | False    |           4 | False       |        5.85982 |            47199.7 |
+  |                       3 | True     |           4 | False       |        11.6389 |            56060.6 |
+  |                       0 | True     |           1 | True        |        11.6389 |            67446.9 |
+  |                       4 | False    |           1 | True        |        5.85982 |            76922.5 |
+  |                       5 | False    |           1 | False       |        5.85982 |            83302.8 |
+  |                       1 | True     |           1 | False       |        11.6389 |             118491 |
+
   | efficientnetb1_tf15 | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
   | -------------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
   |                   2 | True     |           4 | True        |        14.4268 |            31881.2 |
@@ -2504,4 +2515,15 @@
   |                      4 | False    |           1 | True        |        2.97391 |            41924.6 |
   |                      5 | False    |           1 | False       |        2.97391 |            43547.7 |
   |                      1 | True     |           1 | False       |        5.80292 |            53345.1 |
+
+  | mobilenet_swish | use_fp16 | num_threads | use_xnnpack | model_size(MB) | inference_time(μs) |
+  | ---------------:|:-------- | -----------:|:----------- | --------------:| ------------------:|
+  |               2 | True     |           4 | True        |        12.1898 |            18975.5 |
+  |               6 | False    |           4 | True        |        6.14882 |            27722.2 |
+  |               7 | False    |           4 | False       |        6.14882 |            41331.8 |
+  |               3 | True     |           4 | False       |        12.1898 |            47131.2 |
+  |               0 | True     |           1 | True        |        12.1898 |            60520.8 |
+  |               4 | False    |           1 | True        |        6.14882 |            64091.3 |
+  |               5 | False    |           1 | False       |        6.14882 |            72242.8 |
+  |               1 | True     |           1 | False       |        12.1898 |             107735 |
 ***

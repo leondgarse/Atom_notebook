@@ -1438,44 +1438,6 @@
   benchmark(tf.data.Dataset.range(2).interleave(lambda xx: aa.next(), num_parallel_calls=AUTOTUNE).batch(128))
   ```
 ***
-# EfficientNetV2
-  ```py
-  import tensorflow_datasets as tfds
-  dataset, info = tfds.load("oxford_iiit_pet:3.*.*", with_info=True)
-  num_classes = info.features['label'].num_classes
-
-  def load_image_data(datapoint, target_shape=(128, 128), randomness=True):
-      input_image = tf.image.resize(datapoint['image'], target_shape)
-      label = datapoint['label']
-      # input_mask = tf.image.resize(datapoint['segmentation_mask'], target_shape)
-
-      if randomness and tf.random.uniform(()) > 0.5:
-          input_image = tf.image.flip_left_right(input_image)
-          # input_mask = tf.image.flip_left_right(input_mask)
-
-      input_image = tf.cast(input_image, tf.float32) / 255.0
-      # input_mask -= 1
-
-      return input_image, label
-
-  TRAIN_LENGTH = info.splits['train'].num_examples
-  BATCH_SIZE = 64
-  BUFFER_SIZE = 1000
-  STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
-
-  train = dataset['train'].map(load_image_data, num_parallel_calls=tf.data.AUTOTUNE)
-  test = dataset['test'].map(lambda xx: load_image_data(xx, randomness=False))
-
-  train_dataset = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
-  train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-  test_dataset = test.batch(BATCH_SIZE)
-
-  aa, bb = train_dataset.as_numpy_iterator().next()
-  plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-***
 # Image segmentation
   - [Tensorflow tutorials image segmentation](https://www.tensorflow.org/tutorials/images/segmentation)
   ```sh
@@ -1932,7 +1894,7 @@
   unigrams = [0.99967235, 0.7245632, 0.5737029, 0.47004792, 0.3987442, 0.34728608, 0.3084587, 0.27554017]
   sample_func = lambda ii: tf.nn.fixed_unigram_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, unigrams=unigrams)
   dd = {ii : np.stack([sample_func(ii)[0].numpy() for jj in range(1000)]) for ii in range(8)}
-```
+  ```
 # Imagenet
   ```py
   sys.path.append('/home/tdtest/workspace/Keras_insightface/')
@@ -2211,5 +2173,85 @@
 
   dd.load_weights('aa.h5')
   dd.save('dd.h5', include_optimizer=False)
+  ```
+# Tape
+  ```py
+  (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+  x_train, x_test = tf.expand_dims(x_train, -1) / 255, tf.expand_dims(x_test, -1) / 255
+  train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(10000).batch(32)
+  test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)
+
+  class MyModel(keras.models.Model):
+      def __init__(self, **kwargs):
+          super(MyModel, self).__init__(**kwargs)
+          self.conv = keras.layers.Conv2D(32, 3)
+          self.flatten = keras.layers.Flatten()
+          self.dense = keras.layers.Dense(10)
+      def call(self, xx):
+          xx = self.conv(xx)
+          xx = self.flatten(xx)
+          xx = self.dense(xx)
+          return xx
+
+      @tf.function
+      def train_step(self, data):
+          images, labels = data
+          with tf.GradientTape() as tape:
+              predictions = self(images, training=True)
+              loss = self.compiled_loss(labels, predictions)
+          gradients = tape.gradient(loss, self.trainable_variables)
+          self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+          return {"loss": loss, "predictions": predictions}
+
+      @tf.function
+      def test_step(self, data):
+          images, labels = data
+          predictions = self(images, training=False)
+          loss = self.compiled_loss(labels, predictions)
+          return {"loss": loss, "predictions": predictions}
+
+  model = MyModel()
+  loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+  optimizer = tf.keras.optimizers.Adam()
+  model.compile(loss=loss_object, optimizer=optimizer)
+
+  # Metrics
+  train_loss = tf.keras.metrics.Mean(name='train_loss')
+  train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+  test_loss = tf.keras.metrics.Mean(name='test_loss')
+  test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')
+
+  # fit: model.fit(train_ds, validation_data=test_ds, epochs=10)
+  EPOCHS = 10
+  for epoch in range(EPOCHS):
+      start = time.time()
+      train_loss.reset_states()
+      train_accuracy.reset_states()
+      train_loss.reset_states()
+      test_accuracy.reset_states()
+      for batch_n, (images, labels) in enumerate(train_ds):
+          logs = model.train_step([images, labels])
+          train_loss.update_state(logs['loss'])
+          train_accuracy.update_state(labels, logs['predictions'])
+          if batch_n % 100 == 0:
+              print(f"Epoch {epoch+1} Batch {batch_n} Loss {logs['loss']:.4f}")
+
+      for test_images, test_labels in test_ds:
+          logs = model.test_step([test_images, test_labels])
+          test_loss.update_state(logs['loss'])
+          test_accuracy.update_state(test_labels, logs['predictions'])
+
+      # if (epoch + 1) % 5 == 0:
+      #     model.save_weights(checkpoint_prefix.format(epoch=epoch))
+
+      print(
+          f'Epoch {epoch + 1}, '
+          f'Loss: {train_loss.result()}, '
+          f'Accuracy: {train_accuracy.result() * 100}, '
+          f'Test Loss: {test_loss.result()}, '
+          f'Test Accuracy: {test_accuracy.result() * 100}'
+      )
+      print(f'Time taken for 1 epoch {time.time() - start:.2f} sec')
+      print("_" * 80)
   ```
 ***

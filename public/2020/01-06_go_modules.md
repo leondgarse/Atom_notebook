@@ -1709,3 +1709,37 @@
     # +#cgo LDFLAGS: -ltensorflowlite_c -lm -llog
     ```
 ***
+
+# Set
+  - [Github deckarep/golang-set](https://github.com/deckarep/golang-set)
+  ```go
+  import (
+      "github.com/deckarep/golang-set"
+      "fmt"
+  )
+
+  type YourType struct {
+  	Name string
+  }
+
+  set := mapset.NewSetFromSlice([]interface{}{
+      &YourType{Name: "Alise"},
+      &YourType{Name: "Bob"},
+      &YourType{Name: "John"},
+      &YourType{Name: "Nick"},
+  })
+
+  var found *YourType
+  it := set.Iterator()
+
+  for elem := range it.C {
+      if elem.(*YourType).Name == "John" {
+          found = elem.(*YourType)
+          it.Stop()
+      }
+  }
+
+  fmt.Printf("Found %+v\n", found)
+  // Found &{Name:John}
+  ```
+***

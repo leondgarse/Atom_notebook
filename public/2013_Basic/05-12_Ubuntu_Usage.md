@@ -1394,13 +1394,18 @@
 
     # 添加 socks5 转发规则
     sudo vi /etc/privoxy/config
-    # 1337         forward-socks5t   /               127.0.0.1:8080 .
+    # 1389         forward-socks5t   /               127.0.0.1:8080 .
+
+    # 跳过本地地址
+    # 1400         forward         192.168.*.*/     .
+    # 1401         forward            10.*.*.*/     .
+    # 1402         forward           127.*.*.*/     .
     ```
     privoxy 默认使用端口 `8118`，发送到该端口的 `http` / `https` 请求转发到指定的 `sockes5` 端口
     ```sh
     # /etc/privoxy/config
-    783 listen-address  127.0.0.1:8118
-    784 listen-address  [::1]:8118
+    781 listen-address  127.0.0.1:8118
+    782 listen-address  [::1]:8118
     ```
     启动 privoxy 服务，配置 http / https 代理，可以通过 `Settings` -> `Network` -> `Network Proxy` -> `Manual` 配置系统全局代理
     ```sh
@@ -1434,6 +1439,14 @@
     # log
     sudo cat /var/log/squid/access.log
     ```
+  - **clash** [Github Dreamacro/clash](https://github.com/Dreamacro/clash)
+    ```sh
+    go install github.com/Dreamacro/clash@latest
+    clash # Run to download ~/.config/clash/Country.mmdb
+    curl https://sspool.herokuapp.com/clash/config > ~/.config/clash/config.yaml
+    clash
+    ```
+    - [clash settings](http://clash.razord.top/#/settings)
 ## Github 访问
   - 通过 [IP Address Lookup](https://www.ipaddress.com/ip-lookup) 获取 `github.global.ssl.fastly.net` / `github.com` IP 地址
   - 修改 `/etc/hosts` 添加地址映射

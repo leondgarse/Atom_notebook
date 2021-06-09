@@ -453,72 +453,92 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="swish ms1m, dr4, orign bnm bne", **pp)
   ```
 ## MobileNet distill
-```py
-hist_path = "checkpoints/mobilenet_distillation/"
-pp = {}
-pp["epochs"] = [5, 5, 10, 10, 10, 10]
-pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
-names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001, 1e-4])]
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", names=names, **pp, fig_label='Mobilenet, without pointwise, distill emore')
-pp["axes"] = axes
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 10, 10]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001, 1e-4])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", names=names, **pp, fig_label='Mobilenet, without pointwise, distill emore')
+  pp["axes"] = axes
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill emore')
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3')
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill emore')
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3')
 
-hist_path = "checkpoints/"
-pp["epochs"] = [5, 5, 7, 33]
-names = [""] * 3 + ["ArcFace Scale 64, learning rate 0.05"]
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", names=names, **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr')
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr, swish')
+  hist_path = "checkpoints/"
+  pp["epochs"] = [5, 5, 7, 33]
+  names = [""] * 3 + ["ArcFace Scale 64, learning rate 0.05"]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", names=names, **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr')
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr, swish')
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist.json", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist.json", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp)
-```
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp)
+  ```
 ## Resnet
-```py
-import json
-hist_path = "checkpoints/"
-pp = {}
-pp["customs"] = plot.EVALS_NAME + ['lr']
-pp["epochs"] = [5, 5, 7, 33]
-pp["skip_epochs"] = 3
-names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_hist.json", fig_label="botnet50 relu, no bias, shortcut act none, tmul 2", names=names, **pp)
-pp["axes"] = axes
+  ```py
+  import json
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50_relu_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_hist.json", fig_label="botnet50 relu, no bias, shortcut act none, tmul 2", names=names, **pp)
+  pp["axes"] = axes
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist.json", fig_label="resnet101v2 1 warmup", **pp)
-# axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_hist.json", fig_label="resnet101v2 10 warmup", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist.json", fig_label="resnet101v2 1 warmup", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_2_hist.json", fig_label="resnet101v2 10 warmup", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="botnet50v2 conv_no_bias, strides 1", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_botnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="botnet50v2 conv_no_bias, strides 1", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 swish", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 relu, basic", **pp)
-```
-```py
-hist_path = "checkpoints/"
-pp = {}
-pp["customs"] = plot.EVALS_NAME + ['lr']
-pp["epochs"] = [5, 5, 7, 33]
-pp["skip_epochs"] = 3
-names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-# axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet50v2, swish, first conv 3, strides 1", names=names, **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2, relu", names=names, **pp)
-pp["axes"] = axes
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 swish", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 relu, basic", **pp)
+  ```
+## EfficientNetV2
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2, relu", names=names, **pp)
+  pp["axes"] = axes
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet101v2, swish, first conv 3, strides 1", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet101v2, swish, first conv 3, strides 1", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_m_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_m", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet50v2, swish, first conv 3, strides 1", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish, cleaned", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, sgdw", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2", **pp)
-axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2, bnm09_bne1e4", **pp)
-```
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_m_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_m", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, sgdw", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="ebv2_b0, SGD, l2, bnm09_bne1e4", **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME + ['lr', 'triplet_embedding_loss']
+  pp["epochs"] = [17]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([64], [0.025])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_hist.json", fig_label="arc_base", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_hist.json", fig_label="curr", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_hist.json", fig_label="arc_SD", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist.json", fig_label="arc_trip64", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist.json", fig_label="arc_trip64, cleaned", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_hist.json", fig_label="curr_trip64, cleaned", **pp)
+  ```
 ***
 
 # AutoAugment and RandAugment
@@ -679,8 +699,13 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_
 | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                                           | 0.371373 | 0.880039 |  0.93593 |  0.96037 | 0.974294 | 0.984323 |
 | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 |
 | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                                      | 0.351899 | 0.880234 |  0.93408 | 0.958715 | 0.973612 | 0.984907 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_16_0.978500_IJBB_11                               | 0.380526 |  0.83038 | 0.924927 |  0.95813 | 0.976923 |  0.98851 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_basic_agedb_30_epoch_17_0.976333_IJBB_11                                     | 0.374586 | 0.883447 | 0.936319 | 0.959104 | 0.974391 | 0.983252 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_17_0.977833_IJBB_11                       | 0.365823 | 0.813145 | 0.924635 | 0.959202 | 0.978384 | 0.989192 |
+| TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_basic_agedb_30_epoch_17_0.977333_IJBB_11                      | 0.344693 | 0.814314 | 0.924732 | 0.961052 | 0.980331 | 0.988997 |
 | TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBB_11 | 0.397371 | 0.914606 | 0.952483 | 0.967381 | 0.978773 | 0.987439 |
-
+| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBB_11                                                        | 0.385589 | 0.915871 | 0.950828 | 0.965141 | 0.976923 | 0.985784 |
+| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_46_batch_4000_0.984167_IJBB_11                                                     |  0.38705 | 0.908471 | 0.949951 | 0.965239 | 0.976728 | 0.985492 |
 
 
 |                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
@@ -701,7 +726,7 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_
 | TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |
 | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |
 | TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |
-
+| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |
 ***
 
 # cavaface.pytorch
@@ -827,105 +852,218 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_ebv2_b0_swish_GDC_arc_emb512_dr0_
           os.removedirs(os.path.join(PATH, ii))
   ```
 # MLP
-```py
-sys.path.append('../Keras_mlp/')
-import mlp_mixer
-bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=512, dropout=0.4, classifier_activation=None)
+  ```py
+  sys.path.append('../Keras_mlp/')
+  import mlp_mixer
+  bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=512, dropout=0.4, classifier_activation=None)
 
-embedding = keras.layers.BatchNormalization()(bb.outputs[0])
-embedding_fp32 = keras.layers.Activation("linear", dtype="float32", name="embedding")(embedding)
-basic_model = keras.models.Model(bb.inputs[0], embedding_fp32)
+  embedding = keras.layers.BatchNormalization()(bb.outputs[0])
+  embedding_fp32 = keras.layers.Activation("linear", dtype="float32", name="embedding")(embedding)
+  basic_model = keras.models.Model(bb.inputs[0], embedding_fp32)
 
-bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=0)
-out = keras.layers.Reshape((7, 7, 512))(bb.outputs[0])
-basic_model = keras.models.Model(bb.inputs[0], out)
-basic_model = models.buildin_models(basic_model, output_layer='GDC')
-```
-```py
-sys.path.append('../Keras_mlp/')
-import res_mlp
-bb = res_mlp.ResMLP(input_shape=(112, 112, 3), num_blocks=8, patch_size=16, hidden_dim=512, mlp_dim=512 * 4, num_classes=512, dropout=0.4, classifier_activation=None)
-```
+  bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=0)
+  out = keras.layers.Reshape((7, 7, 512))(bb.outputs[0])
+  basic_model = keras.models.Model(bb.inputs[0], out)
+  basic_model = models.buildin_models(basic_model, output_layer='GDC')
+  ```
+  ```py
+  sys.path.append('../Keras_mlp/')
+  import res_mlp
+  bb = res_mlp.ResMLP(input_shape=(112, 112, 3), num_blocks=8, patch_size=16, hidden_dim=512, mlp_dim=512 * 4, num_classes=512, dropout=0.4, classifier_activation=None)
+  ```
 # mixup
-```py
-def mixup(self, batch_size, alpha, image, label):
-    """Applies Mixup regularization to a batch of images and labels.
+  ```py
+  def mixup(self, batch_size, alpha, image, label):
+      """Applies Mixup regularization to a batch of images and labels.
 
-    [1] Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz
-      Mixup: Beyond Empirical Risk Minimization.
-      ICLR'18, https://arxiv.org/abs/1710.09412
+      [1] Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz
+        Mixup: Beyond Empirical Risk Minimization.
+        ICLR'18, https://arxiv.org/abs/1710.09412
 
-    Arguments:
-      batch_size: The input batch size for images and labels.
-      alpha: Float that controls the strength of Mixup regularization.
-      image: a Tensor of batched images.
-      label: a Tensor of batch labels.
+      Arguments:
+        batch_size: The input batch size for images and labels.
+        alpha: Float that controls the strength of Mixup regularization.
+        image: a Tensor of batched images.
+        label: a Tensor of batch labels.
 
-    Returns:
-      A new dict of features with updated images and labels with the same
-      dimensions as the input with Mixup regularization applied.
-    """
-    mix_weight = tf.distributions.Beta(alpha, alpha).sample([batch_size, 1])
-    mix_weight = tf.maximum(mix_weight, 1. - mix_weight)
-    img_weight = tf.cast(tf.reshape(mix_weight, [batch_size, 1, 1, 1]), image.dtype)
-    # Mixup on a single batch is implemented by taking a weighted sum with the
-    # same batch in reverse.
-    image = image * img_weight + image[::-1] * (1. - img_weight)
-    label_weight = tf.cast(mix_weight, label.dtype)
-    label = label * label_weight + label[::-1] * (1 - label_weight)
-    return image, label
-```
+      Returns:
+        A new dict of features with updated images and labels with the same
+        dimensions as the input with Mixup regularization applied.
+      """
+      mix_weight = tf.distributions.Beta(alpha, alpha).sample([batch_size, 1])
+      mix_weight = tf.maximum(mix_weight, 1. - mix_weight)
+      img_weight = tf.cast(tf.reshape(mix_weight, [batch_size, 1, 1, 1]), image.dtype)
+      # Mixup on a single batch is implemented by taking a weighted sum with the
+      # same batch in reverse.
+      image = image * img_weight + image[::-1] * (1. - img_weight)
+      label_weight = tf.cast(mix_weight, label.dtype)
+      label = label * label_weight + label[::-1] * (1 - label_weight)
+      return image, label
+  ```
 # EfficientnetV2
-```sh
-cd automl/efficientnetv2/
-CUDA_VISIBLE_DEVICES='1' python infer.py --model_name=efficientnetv2-s --model_dir='efficientnetv2-s-21k' --mode='tf2bm' --dataset_cfg=imagenet21k
-```
-```py
-model_type, dataset = 's', "imagenet21k"
-if dataset == "imagenet21k":
-    classes, dropout, load_model_suffix, save_model_suffix = 21843, 1e-6, "-21k", "-21k"
-else:
-    classes, dropout, load_model_suffix, save_model_suffix = 1000, 0.2, "", "-imagenet"
+  ```sh
+  cd automl/efficientnetv2/
+  CUDA_VISIBLE_DEVICES='1' python infer.py --model_name=efficientnetv2-s --model_dir='efficientnetv2-s-21k' --mode='tf2bm' --dataset_cfg=imagenet21k
+  ```
+  ```py
+  infer.get_config('efficientnetv2-s', 'imagenet21k')["model"]['blocks_args']
+  infer.get_config('efficientnetv2-m', 'imagenet21k')["model"]['blocks_args']
+  infer.get_config('efficientnetv2-l', 'imagenet21k')["model"]['blocks_args']
 
-sys.path.append('automl/efficientnetv2')
-import infer, effnetv2_model
-config = infer.get_config('efficientnetv2-{}'.format(model_type), dataset)
-model = effnetv2_model.EffNetV2Model('efficientnetv2-{}'.format(model_type), config.model)
-len(model(tf.ones([1, 224, 224, 3]), False))
-# ckpt = tf.train.latest_checkpoint('models/efficientnetv2-{}{}'.format(model_type, load_model_suffix))
-ckpt = tf.train.latest_checkpoint('automl/efficientnetv2/efficientnetv2-{}{}'.format(model_type, load_model_suffix))
-model.load_weights(ckpt)
-model.save_weights('aa.h5')
+  aa = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in tt.layers])
+  bb = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in keras_model.layers])
+  ```
+***
 
-sys.path.append("Keras_efficientnet_v2_test")
-import convert.effnetv2_model
-mm = convert.effnetv2_model.EffNetV2Model('efficientnetv2-{}'.format(model_type), num_classes=classes)
-len(mm(tf.ones([1, 224, 224, 3]), False))
-mm.load_weights('aa.h5')
+# Fuse Conv2D and BatchNorm
+## Basic fuse layer test
+  ```py
+  def fuse_conv_bn(conv_layer, bn_layer):
+      # BatchNormalization returns: gamma * (batch - self.moving_mean) / sqrt(self.moving_var + epsilon) + beta
+      # --> conv_w_new = gamma * conv_w / np.sqrt(var + epsilon)
+      # --> conv_b_new = gamma * (conv_b - mean) / sqrt(var + epsilon) + beta
+      batch_std = tf.sqrt(bn_layer.moving_variance + bn_layer.epsilon)
+      if isinstance(conv_layer, keras.layers.DepthwiseConv2D):
+          ww = tf.transpose(conv_layer.depthwise_kernel, [0, 1, 3, 2]) * bn_layer.gamma / batch_std
+          ww = tf.transpose(ww, [0, 1, 3, 2])
+      else:
+          ww = conv_layer.kernel * bn_layer.gamma / batch_std
 
-inputs = keras.Input([224, 224, 3])
-tt = keras.models.Model(inputs, mm.call(inputs, training=False))
-tt.save('bb.h5')
+      if conv_layer.use_bias:
+          bias = bn_layer.gamma * (conv_layer.bias - bn_layer.moving_mean) / batch_std + bn_layer.beta
+      else:
+          bias = bn_layer.gamma * (-1 * bn_layer.moving_mean) / batch_std + bn_layer.beta
 
-from Keras_efficientnet_v2_test import efficientnet_v2
-# For ImageNet21k, dropout_rate=0.000001, survival_prob=1.0
-keras_model = efficientnet_v2.EfficientNetV2(model_type=model_type, survivals=None, dropout=dropout, classes=classes, classifier_activation=None)
-keras_model.load_weights('bb.h5')
+      cc = conv_layer.get_config()
+      cc['use_bias'] = True
+      fused_conv_bn = conv_layer.__class__.from_config(cc)
+      fused_conv_bn.build(conv_layer.input_shape)
+      fused_conv_bn.set_weights([ww, bias])
+      return fused_conv_bn
 
-orign_out = model(tf.ones([1, 224, 224, 3]))[0]
-converted_out = keras_model(tf.ones([1, 224, 224, 3]))
-print(f'{np.allclose(orign_out.numpy(), converted_out.numpy()) = }')
-# np.allclose(orign_out.numpy(), converted_out.numpy()) = True
+  input_shape = (224, 224, 3)
+  mm = keras.models.Sequential([
+      keras.layers.InputLayer(input_shape),
+      keras.layers.Conv2D(64, 7, use_bias=False),
+      keras.layers.BatchNormalization(axis=-1),
+  ])
+  # Random set BatchNormalization weights
+  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
 
-keras_model.save('models/efficientnetv2-{}{}.h5'.format(model_type, save_model_suffix))
-keras.models.Model(keras_model.inputs[0], keras_model.layers[-4].output).save('models/efficientnetv2-{}{}-notop.h5'.format(model_type, save_model_suffix))
-```
-```py
-automl.efficientnetv2.infer.create_model('efficientnetv2-s', 'imagenet21k')._mconfig['blocks_args']
-automl.efficientnetv2.infer.create_model('efficientnetv2-m', 'imagenet21k')._mconfig['blocks_args']
-automl.efficientnetv2.infer.create_model('efficientnetv2-l', 'imagenet21k')._mconfig['blocks_args']
+  inputs = tf.ones([1, * input_shape])
+  orign_out = mm(inputs)
 
-aa = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in tt.layers])
-bb = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in keras_model.layers])
-```
+  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
+  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
+  fused_out = fused_conv_bn(inputs)
+  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
+  # allclose: True
+  ```
+  ```py
+  input_shape = (56, 56, 64)
+  mm = keras.models.Sequential([
+      keras.layers.InputLayer(input_shape),
+      keras.layers.DepthwiseConv2D((7, 7), use_bias=False),
+      keras.layers.BatchNormalization(axis=-1),
+  ])
+  # Random set BatchNormalization weights
+  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
+
+  inputs = tf.ones([1, * input_shape])
+  orign_out = mm(inputs)
+
+  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
+  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
+  fused_out = fused_conv_bn(inputs)
+  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
+  # allclose: True
+  ```
+## Fuse layers in model
+  ```py
+  import json
+
+  def convert_to_fused_conv_bn_model(model):
+      """ Check bn layers with conv layer input """
+      model_config = json.loads(model.to_json())
+      ee = {layer['name']: layer for layer in model_config['config']['layers']}
+      fuse_convs, fuse_bns = [], []
+      conv_names = ["Conv2D", "DepthwiseConv2D"]
+      for layer in model_config['config']['layers']:
+          if layer['class_name'] == "BatchNormalization" and len(layer["inbound_nodes"]) == 1:
+              input_node = layer["inbound_nodes"][0][0]
+              if isinstance(input_node, list) and ee.get(input_node[0], {"class_name": None})['class_name'] in conv_names:
+                  fuse_convs.append(input_node[0])
+                  fuse_bns.append(layer['name'])
+      print(f">>>> {len(fuse_convs) = }, {len(fuse_bns) = }")
+      # len(fuse_convs) = 53, len(fuse_bns) = 53
+
+      """ Create new model config """
+      layers = []
+      fused_bn_dict = dict(zip(fuse_bns, fuse_convs))
+      fused_conv_dict = dict(zip(fuse_convs, fuse_bns))
+      for layer in model_config['config']['layers']:
+          if layer["name"] in fuse_convs:
+              print(">>>> Fuse conv bn:", layer["name"])
+              layer["config"]["use_bias"] = True
+          elif layer["name"] in fuse_bns:
+              continue
+
+          if len(layer["inbound_nodes"]) != 0:
+              for ii in layer["inbound_nodes"][0]:
+                  if isinstance(ii, list) and ii[0] in fused_bn_dict:
+                      print(">>>> Replace inbound_nodes: {}, {} --> {}".format(layer["name"], ii[0], fused_bn_dict[ii[0]]))
+                      ii[0] = fused_bn_dict[ii[0]]
+          layers.append(layer)
+      model_config['config']['layers'] = layers
+      new_model = keras.models.model_from_json(json.dumps(model_config))
+
+      """ New model set layer weights by layer names """
+      for layer in new_model.layers:
+          if layer.name in fuse_bns:  # This should not happen
+              continue
+
+          orign_layer = model.get_layer(layer.name)
+          if layer.name in fused_conv_dict:
+              orign_bn_layer = model.get_layer(fused_conv_dict[layer.name])
+              print(">>>> Fuse conv bn", layer.name, orign_bn_layer.name)
+              conv_bn = fuse_conv_bn(orign_layer, orign_bn_layer)
+              layer.set_weights(conv_bn.get_weights())
+          else:
+              layer.set_weights(orign_layer.get_weights())
+      return new_model
+
+  """ Verification """
+  model = keras.applications.ResNet50(input_shape=(224, 224, 3))
+  new_model = convert_to_fused_conv_bn_model(model)
+
+  inputs = tf.ones((1, *model.input_shape[1:]))
+  orign_out = model(inputs).numpy()
+  fused_out = new_model(inputs).numpy()
+  print(f'{np.allclose(orign_out, fused_out, atol=1e-9) = }')
+  # np.allclose(orign_out, fused_out, atol=1e-9) = True
+
+  %timeit model(inputs)
+  # 69.6 ms ± 209 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
+  # 29.7 ms ± 172 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  %timeit new_model(inputs)
+  # 49.7 ms ± 185 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
+  # 16.8 ms ± 126 µs per loop (mean ± std. dev. of 7 runs, 100 loops each) # GPU
+  ```
+  ```py
+  import models
+  model = keras.models.load_model('./checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333.h5')
+  model = models.convert_mixed_float16_to_float32(model)  # Don't use float16 when converting
+  new_model = convert_to_fused_conv_bn_model(model)
+
+  inputs = tf.ones((1, *model.input_shape[1:]))
+  orign_out = model(inputs).numpy()
+  fused_out = new_model(inputs).numpy()
+  print(f'{np.allclose(orign_out, fused_out, atol=1e-5) = }')
+  # np.allclose(orign_out, fused_out, atol=1e-5) = True
+
+  %timeit model(inputs)
+  # 47.6 ms ± 240 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  %timeit new_model(inputs)
+  # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  ```
 ***

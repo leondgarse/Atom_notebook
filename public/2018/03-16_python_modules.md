@@ -7,8 +7,8 @@
   - [___2018 - 03 - 16 Python Modules___](#2018-03-16-python-modules)
   - [目录](#目录)
   - [python 执行 shell 命令](#python-执行-shell-命令)
-    - [os 模块](#os-模块)
-    - [subprocess 模块](#subprocess-模块)
+  	- [os 模块](#os-模块)
+  	- [subprocess 模块](#subprocess-模块)
   - [argparse 解析参数](#argparse-解析参数)
   	- [argparse 典型格式](#argparse-典型格式)
   	- [parse known args 跳过不能识别的参数](#parse-known-args-跳过不能识别的参数)
@@ -29,11 +29,25 @@
   	- [threading](#threading)
   	- [多线程下载](#多线程下载)
   	- [joblib](#joblib)
+  	- [线程锁](#线程锁)
+  - [ThreadPoolExecutor 线程池 ProcessPoolExecutor 进程池](#threadpoolexecutor-线程池-processpoolexecutor-进程池)
   - [xml 解析](#xml-解析)
   	- [xml 文本](#xml-文本)
   	- [minidom](#minidom)
   	- [lxml](#lxml)
   	- [ElementTree](#elementtree)
+  - [crontab](#crontab)
+  	- [安装](#安装)
+  	- [添加 crontab 任务](#添加-crontab-任务)
+  	- [删除 crontab 任务](#删除-crontab-任务)
+  - [Color print](#color-print)
+  - [排列组合](#排列组合)
+  - [Icecream](#icecream)
+  - [Typing 类型标注](#typing-类型标注)
+  - [Python and cpp](#python-and-cpp)
+  	- [Cython and pypy](#cython-and-pypy)
+  	- [cpp calling python](#cpp-calling-python)
+  	- [cpp calling python with module](#cpp-calling-python-with-module)
 
   <!-- /TOC -->
 ***
@@ -1300,29 +1314,182 @@
 ***
 
 # Typing 类型标注
-- [typing --- 类型标注支持](https://docs.python.org/zh-cn/3.8/library/typing.html)
-- [Mypy: Optional Static Typing for Python](https://github.com/python/mypy)
-- **格式**
-  - 传入参数通过 **参数名:类型** 的形式声明参数的类型
-  - 返回结果通过 **->结果类型** 的形式声明结果的类型
-  ```py
-  def greeting(name: str) -> str:
-      return 'Hello ' + name
-  ```
-- **类型别名** 通过将类型分配给别名来定义，可用于简化复杂类型签名
-  ```py
-  from typing import List
-  Vector = List[float]
+  - [typing --- 类型标注支持](https://docs.python.org/zh-cn/3.8/library/typing.html)
+  - [Mypy: Optional Static Typing for Python](https://github.com/python/mypy)
+  - **格式**
+    - 传入参数通过 **参数名:类型** 的形式声明参数的类型
+    - 返回结果通过 **->结果类型** 的形式声明结果的类型
+    ```py
+    def greeting(name: str) -> str:
+        return 'Hello ' + name
+    ```
+  - **类型别名** 通过将类型分配给别名来定义，可用于简化复杂类型签名
+    ```py
+    from typing import List
+    Vector = List[float]
 
-  def scale(scalar: float, vector: Vector) -> Vector:
-      return [scalar * num for num in vector]
+    def scale(scalar: float, vector: Vector) -> Vector:
+        return [scalar * num for num in vector]
 
-  # typechecks; a list of floats qualifies as a Vector.
-  new_vector = scale(2.0, [1.0, -4.2, 5.4])
+    # typechecks; a list of floats qualifies as a Vector.
+    new_vector = scale(2.0, [1.0, -4.2, 5.4])
+    ```
+  - **常用类型**
+    - 基本类型 `int / long / float / bool / str` - 整型 / 长整型 / 浮点型 / 布尔型 / 字符串类型
+    - 泛型 `List / Tuple / Dict / Set` - 列表 / 元组 / 字典 / 集合
+    - `Iterable / Mapping / Callable / Generics`
+    - 任意类型 `Any`
+***
+
+# Python and cpp
+## Cython and pypy
+  - **Install**
+    ```sh
+    # Cython
+    pip install cython
+
+    # pypy3
+    sudo apt install pypy3
+    conda create -c conda-forge  -n pypy pypy3
+    conda activate pypy
+    pypy3 -m pip install glob2 pandas tqdm scikit-image scikit-learn ipython
+    ```
+  - **test_pypy.py**
+    ```py
+    import time
+
+    def test_loop():
+        start_time = time.time()
+        total = 0
+        for i in range(1, 10000):
+            for j in range(1, 10000):
+                total += i + j
+        end_time = time.time()
+        print(f"Result: {total}, Time took: {end_time-start_time:.2f}s")
+
+    if __name__ == "__main__":
+        test_loop()
+    ```
+  - **Test results**
+    ```sh
+    python test_pypy.py
+    # Result: 999800010000, Time took: 5.97s
+
+    cython test_pypy.py -3 --embed
+    g++ test_pypy.c `pkg-config --cflags --libs python3-embed`
+    ./a.out
+    # Result: 999800010000, Time took: 5.80s
+
+    pypy3 test_pypy.py
+    # Result: 999800010000, Time took: 0.14s
+    ```
+  - **test_loop.cpp**
+    ```cpp
+    #include <iostream>
+    #include <sys/time.h>
+
+    static inline uint64_t getTimeInUs() {
+        uint64_t time;
+        struct timeval tv;
+        gettimeofday(&tv, nullptr);
+        time = static_cast<uint64_t>(tv.tv_sec) * 1e6 + tv.tv_usec;
+        return time;
+    }
+
+    int main() {
+        unsigned long start_time = getTimeInUs();
+        long total = 0;
+        for (int ii = 1; ii < 10000; ii++) {
+            for (int jj = 1; jj < 10000; jj++) {
+                total += ii + jj;
+            }
+        }
+        unsigned long end_time = getTimeInUs();
+        double off_time = (end_time - start_time) / 1e6;
+        std::printf("Result: %ld, Time took: %.2fs\n", total, off_time);
+    }
+    ```
+    ```sh
+    g++ test_loop.cpp -o test_loop && ./test_loop
+    # Result: 999800010000, Time took: 0.18s
+    ```
+## cpp calling python
+  ```py
+  #define PY_SSIZE_T_CLEAN
+  #include <Python.h>
+
+  int main(int argc, char *argv[]) {
+      (void)argc;
+      wchar_t *program = Py_DecodeLocale(argv[1], NULL);
+      if (program == NULL) {
+          fprintf(stderr, "Fatal error: cannot decode argv[1]\n");
+          exit(1);
+      }
+      Py_SetProgramName(program);
+      Py_Initialize();
+      PyRun_SimpleString(argv[1]);
+      if (Py_FinalizeEx() < 0) {
+          exit(120);
+      }
+      PyMem_RawFree(program);
+      return 0;
+  }
   ```
-- **常用类型**
-  - 基本类型 `int / long / float / bool / str` - 整型 / 长整型 / 浮点型 / 布尔型 / 字符串类型
-  - 泛型 `List / Tuple / Dict / Set` - 列表 / 元组 / 字典 / 集合
-  - `Iterable / Mapping / Callable / Generics`
-  - 任意类型 `Any`
+  ```sh
+  g++ basic_print.cpp `pkg-config --cflags --libs python3-embed` && ./a.out 'print("hello cython")'
+  # hello cython
+  ```
+## cpp calling python with module
+  **greating_module.py**
+  ```py
+  def greating_function(a):
+      print("hello python")
+      return a + 1
+  ```
+  **test_greating_module.cpp**
+  ```cpp
+  #include <Python.h>
+  // #include "track.h"
+
+  int great_function_from_python(int a) {
+      int res;
+      PyObject *pModule,*pFunc;
+      PyObject *pArgs, *pValue;
+
+      PyRun_SimpleString("import sys");
+      PyRun_SimpleString("sys.path.append('./')");//若python文件在c++工程下
+
+      /* import */
+      PyRun_SimpleString("import sys");
+      pModule = PyImport_ImportModule("greating_module");
+      if (!pModule) {
+          printf("Can not open python file!\n");
+          return -1;
+      }
+
+      /* great_module.great_function */
+      pFunc = PyObject_GetAttrString(pModule, "greating_function");
+
+      /* build args */
+      pArgs = PyTuple_New(1);
+      PyTuple_SET_ITEM(pArgs,0, PyLong_FromLong(a));
+
+      /* call */
+      pValue = PyObject_CallObject(pFunc, pArgs);
+
+      res = PyLong_AsLong(pValue);
+      return res;
+  }
+
+  int main(int argc, char *argv[]) {
+      Py_Initialize();
+      printf("%d\n",great_function_from_python(2));
+      Py_Finalize();
+  }
+  ```
+  ```sh
+  g++ test_greating_module.cpp `pkg-config --cflags --libs python3-embed` && ./a.out
+  # hello python
+  # 3
+  ```
 ***
