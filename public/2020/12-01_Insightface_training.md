@@ -1009,30 +1009,31 @@
   ```py
   hist_path = "checkpoints/resnet34/"
   pp = {}
-  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "regular_loss"]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
   pp["epochs"] = [1, 19, 10, 50]
+  pp["skip_epochs"] = 20
   names = ["Warmup", "Arcfacelose learning rate 0.1", "Arcfacelose learning rate 0.01", "Arcfacelose learning rate 0.001"]
   axes, pre = plot.hist_plot_split(hist_path + "mxnet_r34_wdm1_new.json", fig_label="Original MXNet", names=names, **pp)
   pp["axes"] = axes
   # axes, pre = plot.hist_plot_split(hist_path + "TF_resnet50_MXNET_E_sgdw_5e4_dr0.4_wdm10_soft_E10_arc_casia_hist.json", **pp)
 
-  axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGD baseline", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGDW 5e-4", **pp)
+  # axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGD baseline", **pp)
+  # axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist.json", fig_label="TF SGDW 5e-4", **pp)
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist.json", fig_label="TF SGDW 1e-3", **pp)
 
   axes, pre = plot.hist_plot_split(hist_path + "NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg.json", fig_label="TF SGD, l2 5e-4", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3", **pp, save="resnet34_casia.svg")
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3", **pp)
 
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, output 10", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, on_batch False", **pp)
+  # axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, output 10", **pp)
+  # axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 1e-3, on_batch_norm False", **pp)
 
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 5e-4, on_batch False", **pp)
+  # axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="TF SGD, l2 5e-4, on_batch_norm False", **pp)
 
   hist_path = "checkpoints/"
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="zero padding, l2 1e-3", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 1e-3", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_5e4_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="zero padding, l2 5e-4", **pp)
-  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_5e4_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 5e-4", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 1e-3, on_batch_norm True", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="zero padding, l2 1e-3, on_batch_norm True", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 1e-3, on_batch_norm True, bias_true_scale_false", **pp)
+  axes, pre = plot.hist_plot_split(hist_path + "resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_5e4_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json", fig_label="pad_same, l2 5e-4, on_batch_norm True, bias_true_scale_false", **pp)
 
 
   hist_path = "checkpoints/resnet34/"
@@ -1046,22 +1047,30 @@
       hist_path + "resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
       hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
       hist_path + "resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_pad_same_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
+      hist_path + "resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_5e4_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist.json",
   ]
   _ = choose_accuracy(aa)
   ```
   ![](images/resnet34_casia.svg)
 
-  |                                                                                           |      lfw |   cfp_fp |   agedb_30 |   epoch |
-  |:------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
-  | mxnet_r34_wdm1_new                                                                        | 0.99433  | 0.94271  |   0.94483  |      27 |
-  | NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist             | 0.991333 | 0.907714 |   0.923667 |      14 |
-  | NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist        | 0.993167 | 0.943286 |   0.940333 |      23 |
-  | NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist                | 0.993333 | 0.950857 |   0.947    |      34 |
-  | NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg | 0.9945   | 0.941857 |   0.941667 |      22 |
-  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist           | 0.993833 | 0.949    |   0.9475   |      34 |
-  | resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist             | 0.993333 | 0.947429 |   0.941667 |      35 |
-  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist     | 0.993833 | 0.945286 |   0.943833 |      31 |
-  | resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist     | 0.994833 | 0.943143 |   0.9415   |      24 |
+  |                                                                                                                     |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:--------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | mxnet_r34_wdm1_new                                                                                                  | 0.99433  | 0.94271  |   0.94483  |      27 |
+  | NNNN_resnet34_MXNET_E_baseline_SGD_lr1e1_random0_arcT4_32_E5_BS512_casia_hist                                       | 0.991333 | 0.907714 |   0.923667 |      14 |
+  | NNNN_resnet34_MXNET_E_sgdw_5e4_dr4_lr1e1_wdm1_random0_arcT4_32_E5_BS512_casia_hist                                  | 0.993167 | 0.943286 |   0.940333 |      23 |
+  | NNNN_resnet34_MXNET_E_SGDW_1e3_lr1e1_random0_arc_S32_E1_BS512_casia_4_hist                                          | 0.993333 | 0.950857 |   0.947    |      34 |
+  | NNNN_resnet34_MXNET_E_REG_BN_SGD_5e4_lr1e1_random0_arcT4_S32_E1_BS512_casia_3_hist_no_reg                           | 0.9945   | 0.941857 |   0.941667 |      22 |
+  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_lr1e1_random0_arc_S32_E1_BS512_casia_hist                                     | 0.993833 | 0.949    |   0.9475   |      34 |
+  | resnet34_MXNET_E_SGD_REG_1e3_out_10_lr1e1_random0_arc_S32_E1_BS512_casia_hist                                       | 0.993333 | 0.947429 |   0.941667 |      35 |
+  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist                               | 0.993833 | 0.945286 |   0.943833 |      31 |
+  | resnet34_MXNET_E_SGD_REG_5e4_on_batch_false_lr1e1_random0_arc_S32_E1_BS512_casia_hist                               | 0.994833 | 0.943143 |   0.9415   |      24 |
+  | resnet34_pad_same_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist                       | 0.994333 | 0.95     |   0.949833 |      32 |
+  | resnet34_MXNET_E_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist                                | 0.994667 | 0.949143 |   0.9495   |      35 |
+  | resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_1e3_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist | 0.9935   | 0.949429 |   0.950167 |      33 |
+  | resnet34_pad_same_MXNET_E_bias_true_scale_false_SGD_REG_5e4_on_batch_true_lr1e1_random0_arc_S32_E1_BS512_casia_hist | 0.993167 | 0.941286 |   0.942167 |      22 |
 
   | Backbone    | Optimizer | wd   | l2_reg | lfw,cfp_fp,agedb_30,epoch              |
   | ----------- | --------- | ---- | ------ | -------------------------------------- |
@@ -1489,6 +1498,8 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_ls1_emb256_bs400_hist.json", fig_label="Mobilenet, emb256, dr0, bs400, ls 0.1", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_base_nesterov_ls1_emb256_bs400_hist.json", fig_label="Mobilenet, emb256, dr0, bs400, nesterov True, ls 0.1", **pp, save="mobilenet_casia_bs400_sgdw.svg")
 
+  from plot import choose_accuracy
+  hist_path = "checkpoints/mobilenet_casia_tests/"
   aa = [
       hist_path + "TT_mobilenet_base_bs400_hist.json",
       hist_path + "TT_mobilenet_base_emb512_dr0_bs400_hist.json",
@@ -1499,7 +1510,7 @@
       hist_path + "TT_mobilenet_base_nesterov_ls1_emb256_bs400_hist.json",
   ]
 
-  choose_accuracy(aa)
+  _ = choose_accuracy(aa)
   ```
   ![](images/mobilenet_casia_bs400_sgdw.svg)
 
@@ -1512,6 +1523,37 @@
   | 512 | 0.4     | True     | 0   | 0.9828,40     | 0.8673,42     | **0.8810**,31 |
   | 256 | 0       | False    | 0.1 | 0.9793,35     | 0.8503,39     | 0.8553,30     |
   | 256 | 0       | True     | 0.1 | 0.9788,30     | 0.8511,39     | 0.8560,31     |
+## Mobilenet scale and use_bias on CASIA
+  ```py
+  hist_path = "checkpoints/mobilenet_casia_tests/"
+  pp = {}
+  pp["epochs"] = [5, 5, 30]
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr"]
+  # pp["customs"] = plot.EVALS_NAME + [ii+"_thresh" for ii in plot.EVALS_NAME]
+  names = ["ArcFace Scale 16", "ArcFace Scale 32", "ArcFace Scale 64"]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json", **pp)
+
+  from plot import choose_accuracy
+  hist_path = "checkpoints/mobilenet_casia_tests/"
+  aa = [
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_false_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_false_bias_true_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_false_cos30_casia_hist.json",
+      hist_path + "TT_mobilenet_emb512_GDC_dr04_arc_bs512_scale_true_bias_true_cos30_casia_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_emb512_GDC_dr04_arc_bs512_"))
+  ```
+  |                                         |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:----------------------------------------|---------:|---------:|-----------:|--------:|
+  | scale_false_bias_false_cos30_casia_hist | 0.977167 | 0.810143 |   0.873167 |      38 |
+  | scale_false_bias_true_cos30_casia_hist  | 0.9785   | 0.797286 |   0.865333 |      29 |
+  | scale_true_bias_false_cos30_casia_hist  | 0.978167 | 0.816429 |   0.869833 |      36 |
+  | scale_true_bias_true_cos30_casia_hist   | 0.977833 | 0.811571 |   0.873333 |      30 |
 ## Sub center Result
   ```py
   hist_path = "checkpoints/mobilenet_casia_tests/"
@@ -1528,7 +1570,8 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_topk1_BTNO_bs400_hist.json", fig_label='topk3->1, wdm1, bottleneckOnly', pre_item=pre, **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_topk1_BTNO_init_E40_bs400_hist.json", fig_label='topk3->1, wdm1, bottleneckOnly, init_epoch40', pre_item=pre, **pp, save="mobilenet_casia_bs400_subcenter_sgdw.svg")
 
-  import json
+  from plot import choose_accuracy
+  hist_path = "checkpoints/mobilenet_casia_tests/"
   aa = [hist_path + "TT_mobilenet_base_bs400_hist.json",
       hist_path + "TT_mobilenet_topk_bs400_hist.json",
       hist_path + "TT_mobilenet_topk1_bs400_hist.json",
@@ -1536,7 +1579,7 @@
       hist_path + "TT_mobilenet_topk1_BTNO_init_E40_bs400_hist.json",
   ]
 
-  choose_accuracy(aa)
+  _ = choose_accuracy(aa)
   ```
   ![](images/mobilenet_casia_bs400_subcenter_sgdw.svg)
 
@@ -1735,6 +1778,8 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_64_emb512_dr4_adamw_lr1e3_arcT4_bs400_r100_hist.json", fig_label="Mobilenet, emb512, dr0.4, distill 64, bs400, arcT4, adamw, Teacher r100", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_distill_64_emb512_dr4_arcT4_bs400_r100_hist.json", fig_label="Mobilenet, emb512, dr0.4, distill 64, bs400, arcT4, Teacher r100", **pp, save="mobilenet_casia_bs400_subcenter_distill.svg")
 
+  from plot import choose_accuracy
+  hist_path = "checkpoints/mobilenet_distillation/"
   aa = [
       hist_path + "TT_mobilenet_base_emb512_dr0_bs400_hist.json",
       hist_path + "TT_mobilenet_base_emb512_dr4_bs400_hist.json",
@@ -1747,7 +1792,7 @@
       hist_path + "TT_mobilenet_distill_128_emb256_dr04_arc_bs400_r100_hist.json",
   ]
 
-  choose_accuracy(aa)
+  _ = choose_accuracy(aa)
   ```
   ![](images/mobilenet_casia_bs400_subcenter_distill.svg)
 
@@ -1850,11 +1895,57 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd1e3_bs400_r100_ms1m_fp16_hist.json", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_hist.json", **pp, save="mobilenet_emore_glint_distillation_arc_sgdw.svg")
-
-  TT_mobilenet_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist
-  TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_emore_fp16_hist
   ```
   ![](images/mobilenet_emore_glint_distillation_arc_sgdw.svg)
+## Distillation with arcface on MS1MV3 float16
+  ```py
+  hist_path = "checkpoints/mobilenet_distillation/"
+  pp = {}
+  pp["epochs"] = [5, 5, 10, 10, 10, 10]
+  pp["skip_epochs"] = 20
+  pp["customs"] = ["cfp_fp", "agedb_30", "lfw", "lr", "distill_embedding_loss"]
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64, 64, 64], [0.1, 0.1, 0.1, 0.01, 0.001, 1e-4])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json", names=names, **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3')
+  pp["axes"] = axes
+
+  pp["epochs"] = [5, 5, 7, 33]
+  names = [""] * 3 + ["ArcFace Scale 64, learning rate 0.05"]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", names=names, **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr')
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp, fig_label='Mobilenet, with pointwise, distill ms1mv3, cosine lr, swish')
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist.json", **pp, fig_label="GDC_l2_5e4_bs400")
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist.json", **pp, fig_label="GDC_wd5e4_bs400")
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist.json", **pp, fig_label="E_dr04_wd5e4_bs400, constant")
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist.json", **pp, fig_label="E_dr04_l2_5e4_bs400, cosine")
+  axes, _ = plot.hist_plot_split(hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist.json", **pp, fig_label="E_dr04_l2_5e4_bs512, cosine")
+  ```
+  ```py
+  from plot import choose_accuracy
+  hist_path = "checkpoints/mobilenet_distillation/"
+  aa = [
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json",
+      hist_path + "TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist.json",
+      hist_path + "TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist.json",
+  ]
+  _ = choose_accuracy(aa, skip_name_len=len("TT_mobilenet_"))
+  ```
+  |                                                                                    |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:-----------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_hist              | 0.997    | 0.964    |   0.972833 |      44 |
+  | pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist       | 0.9975   | 0.964571 |   0.9735   |      47 |
+  | swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_hist | 0.997333 | 0.969    |   0.975333 |      49 |
+  | pointwise_distill_128_arc_emb512_GDC_l2_5e4_bs400_r100_ms1m_fp16_hist              | 0.996667 | 0.959429 |   0.9715   |      47 |
+  | pointwise_distill_128_arc_emb512_GDC_wd5e4_bs400_r100_ms1m_fp16_hist               | 0.997    | 0.958    |   0.969333 |      45 |
+  | pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist            | 0.996833 | 0.958429 |   0.9695   |      45 |
+  | pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist       | 0.997    | 0.958429 |   0.972167 |      49 |
+  | pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist      | 0.996833 | 0.955714 |   0.969667 |      44 |
 ## Match model layers
   ```py
   # tt = keras.models.load_model('checkpoints/resnet101/TF_resnet101v2_E_sgdw_5e5_dr4_lr1e1_random0_arc32_E5_arc_BS512_emore_basic_agedb_30_epoch_20_batch_2000_0.973000.h5')
