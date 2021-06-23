@@ -1946,6 +1946,19 @@
   | pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_2_hist            | 0.996833 | 0.958429 |   0.9695   |      45 |
   | pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs400_r100_ms1m_fp16_cosin_hist       | 0.997    | 0.958429 |   0.972167 |      49 |
   | pointwise_distill_128_arc_emb512_dr04_l2_5e4_bs512_r100_ms1m_fp16_cosine_hist      | 0.996833 | 0.955714 |   0.969667 |      44 |
+
+  |                                                                                                                                     |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+  |:----------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+  | TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_48_0.973500_IJBB_11       | 0.370886 | 0.849172 | 0.917332 |  0.94927 | 0.971373 | 0.986465 |
+  | TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBB_11 | 0.380721 |  0.85258 |  0.91889 | 0.951412 | 0.972833 | 0.986465 |
+
+  |                                                                                                                                     |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+  |:----------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+  | TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_26_batch_10000_0.972500_IJBC_11       | 0.716981 | 0.886077 | 0.938743 | 0.960986 | 0.977604 | 0.987933 |
+  | TT_mobilenet_pointwise_distill_128_emb512_dr04_arc_bs400_r100_glint_fp16_basic_agedb_30_epoch_22_batch_10000_0.972000_IJBC_11       | 0.774608 | 0.890985 | 0.939357 | 0.960986 | 0.977144 | 0.987779 |
+  | TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs400_r100_ms1m_fp16_basic_agedb_30_epoch_45_0.972833_IJBC_11              | 0.848545 | 0.896457 | 0.935573 | 0.961651 | 0.977706 | 0.990438 |
+  | TT_mobilenet_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_48_0.973500_IJBC_11       |  0.85013 |  0.90249 | 0.937925 | 0.961906 |  0.97924 | 0.990438 |
+  | TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11 | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |
 ## Match model layers
   ```py
   # tt = keras.models.load_model('checkpoints/resnet101/TF_resnet101v2_E_sgdw_5e5_dr4_lr1e1_random0_arc32_E5_arc_BS512_emore_basic_agedb_30_epoch_20_batch_2000_0.973000.h5')

@@ -729,6 +729,18 @@
     ```
     ![](images/faces_autoaugment.jpg)
 ## Arcface loss
+  - Results by using `MS1M-IBUG(MS1M-V1)`
+
+    | Method           | m1   | m2   | m3   | LFW   | CFP-FP | AgeDB-30 |
+    | ---------------- | ---- | ---- | ---- | ----- | ------ | -------- |
+    | W&F Norm Softmax | 1    | 0    | 0    | 99.28 | 88.50  | 95.13    |
+    | SphereFace       | 1.5  | 0    | 0    | 99.76 | 94.17  | 97.30    |
+    | CosineFace       | 1    | 0    | 0.35 | 99.80 | 94.4   | 97.91    |
+    | ArcFace          | 1    | 0.5  | 0    | 99.83 | 94.04  | 98.08    |
+    | Combined Margin  | 1.2  | 0.4  | 0    | 99.80 | 94.08  | 98.05    |
+    | Combined Margin  | 1.1  | 0    | 0.35 | 99.81 | 94.50  | 98.08    |
+    | Combined Margin  | 1    | 0.3  | 0.2  | 99.83 | 94.51  | 98.13    |
+    | Combined Margin  | 0.9  | 0.4  | 0.15 | 99.83 | 94.20  | 98.16    |
   - **Mxnet Insigntface Arcface loss**
     ```py
     def plot_arc_trans(margin_list, new_fig=True):
@@ -756,6 +768,8 @@
         "Combined Margin_2": [1.1, 0, 0.35],
         "Combined Margin_3": [1, 0.3, 0.2],
         "Combined Margin_4": [0.9, 0.4, 0.15],
+        "Combined Margin_5": [1.2, 0.3, 0],
+        "Combined Margin_6": [0.8, 0.5, 0],
     }
     plot_arc_trans(list(insightface_results.values()))
     ```
@@ -783,13 +797,13 @@
 
     fig = plt.figure()
     ax = plt.subplot(2, 2, 1)
-    plot_arc_trans([[ii, 0.4, 0.15] for ii in [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]], new_fig=False)
+    plot_arc_trans([[ii, 0.5, 0] for ii in [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]], new_fig=False)
     plt.title('Margin 1')
     ax = plt.subplot(2, 2, 2)
-    plot_arc_trans([[1.0, ii, 0.15] for ii in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]], new_fig=False)
+    plot_arc_trans([[1.0, ii, 0] for ii in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]], new_fig=False)
     plt.title('Margin 2')
     ax = plt.subplot(2, 2, 3)
-    plot_arc_trans([[1.0, 0.4, ii] for ii in [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]], new_fig=False)
+    plot_arc_trans([[1.0, 0.5, ii] for ii in [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]], new_fig=False)
     plt.title('Margin 3')
     ax = plt.subplot(2, 2, 4)
     plot_arc_trans(list(insightface_results.values()), new_fig=False)
