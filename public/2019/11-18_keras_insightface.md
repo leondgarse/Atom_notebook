@@ -773,7 +773,7 @@
     }
     plot_arc_trans(list(insightface_results.values()))
     ```
-    ![](images/arcface_loss_mxnet_insightface.png)
+    ![](images/arcface_loss_mxnet_insightface.svg)
   - **Modified Arcface loss** 限制转化后的值不能大于原值
     ```py
     def plot_arc_trans(margin_list, new_fig=True):
