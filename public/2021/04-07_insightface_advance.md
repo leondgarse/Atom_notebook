@@ -621,6 +621,13 @@
   ]
   _ = choose_accuracy(aa, skip_name_len=len("TT_"))
   ```
+  | Datasets          | backbone                                                                              | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp  | lfw   |
+  | ----------------- | ------------------------------------------------------------------------------------- | ----------- | ----------- | ------- | ------- | ----- |
+  | MS1MV3-Arcface    | r50-fp16                                                                              | 94.79       | 96.46       | 98.35   | 98.96   | 99.83 |
+  | Glint360k-Cosface | r50-fp16-0.1                                                                          | 95.61       | 96.97       | 98.38   | 99.20   | 99.83 |
+  | MS1MV3-Arcface    | se_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist | 95.0759     | 96.6252     | 98.4    | 98.9714 | 99.83 |
+  | MS1MV3-Arcface    | r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist    | 94.6106     | 96.4463     | 98.4333 | 98.9571 | 99.83 |
+
   |                                                                                                                                |      lfw |   cfp_fp |   agedb_30 |   epoch |
   |:-------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
   | resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist                     | 0.998167 | 0.984    |   0.9785   |      46 |
@@ -699,16 +706,16 @@
   hist_path = "checkpoints/"
   pp = {}
   pp["customs"] = plot.EVALS_NAME[1:] + ['lr', 'triplet_embedding_loss']
-  pp["epochs"] = [5, 5, 7]
-  pp["skip_epochs"] = 0
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 13
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="randaug_100, cleaned", **pp)
   pp["axes"] = axes
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, cleaned", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="randaug_cutout, cleaned", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M3_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M3, cleaned", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M4, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M3_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M3, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M4, cleaned", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, mixup, cleaned", **pp)
 
   axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, nesterov, cleaned", **pp)
@@ -756,32 +763,45 @@
   ./IJB_evals.py -P IJB_result/TT_efv2_*E50*IJBB* /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
   ./IJB_evals.py -P IJB_result/TT_efv2_*IJBC* /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt
   ```
-  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                                               | 0.371373 | 0.880039 |  0.93593 |  0.96037 | 0.974294 | 0.984323 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                                  | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                                          | 0.351899 | 0.880234 | 0.93408  | 0.958715 | 0.973612 | 0.984907 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBB_11                              | 0.37147  | 0.883934 | 0.935443 | 0.957254 | 0.972833 | 0.984323 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11                           | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 | 0.98481  |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBB_11                                 | 0.385005 | 0.883934 | 0.934372 | 0.958617 | 0.973515 | 0.983836 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_basic_agedb_30_epoch_15_0.975500_IJBB_11                                     | 0.335054 | 0.875365 | 0.934859 | 0.959883 | 0.973905 | 0.984518 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_basic_agedb_30_epoch_17_0.976000_IJBB_11                                       | 0.381305 | 0.871178 | 0.932717 | 0.960273 | 0.975073 | 0.984615 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_16_0.978500_IJBB_11                                   | 0.380526 | 0.83038  | 0.924927 | 0.95813  | 0.976923 | 0.98851  |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_basic_agedb_30_epoch_17_0.976333_IJBB_11                                         | 0.374586 | 0.883447 | 0.936319 | 0.959104 | 0.974391 | 0.983252 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_17_0.977833_IJBB_11                           | 0.365823 | 0.813145 | 0.924635 | 0.959202 | 0.978384 | 0.989192 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBB_11        | 0.337683 | 0.821519 | 0.921811 | 0.958033 | 0.979649 | 0.988997 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBB_11 | 0.375463 | 0.823466 | 0.92483  | 0.959591 | 0.979065 | 0.988997 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_basic_agedb_30_epoch_17_0.977833_IJBB_11                    | 0.360662 | 0.823466 | 0.922006 | 0.95813 | 0.978578 | 0.989094 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_basic_agedb_30_epoch_17_0.977333_IJBB_11                          | 0.344693 | 0.814314 | 0.924732 | 0.961052 | 0.980331 | 0.988997 |
 
-  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                                  | 0.869305 | 0.921511 | 0.951935 | 0.969781 | 0.98149  | 0.988751 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                              | 0.884287 | 0.926471 | 0.951015 | 0.968758 | 0.98057  | 0.988853 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                           | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBC_11                                 | 0.876413 | 0.924733 | 0.950759 | 0.969423 | 0.980979 | 0.989058 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBC_11        | 0.736565 | 0.894156 | 0.943294 | 0.968911 | 0.98466  | 0.991972 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBC_11 | 0.806207 | 0.894411 | 0.943141 | 0.97019  | 0.984558 | 0.992381 |
+  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                                               | 0.371373 | 0.880039 |  0.93593 | 0.96037  | 0.974294 | 0.984323 |          |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                                  | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 | 0.992391 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                                          | 0.351899 | 0.880234 | 0.93408  | 0.958715 | 0.973612 | 0.984907 | 0.991727 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11                        | 0.38296  | 0.870399 | 0.932911 | 0.95852  | 0.973612 | 0.983155 | 0.991932 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBB_11                              | 0.33369  | 0.885005 | 0.93369  | 0.956378 | 0.972639 | 0.983544 | 0.991878 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.974333_IJBB_11                                 | 0.350828 | 0.757254 | 0.913729 | 0.957157 | 0.973807 | 0.985297 | 0.992829 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBB_11                              | 0.37147  | 0.883934 | 0.935443 | 0.957254 | 0.972833 | 0.984323 | 0.991655 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11                           | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 | 0.98481  | 0.991726 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBB_11                                 | 0.385005 | 0.883934 | 0.934372 | 0.958617 | 0.973515 | 0.983836 | 0.991745 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_basic_agedb_30_epoch_15_0.975500_IJBB_11                                     | 0.335054 | 0.875365 | 0.934859 | 0.959883 | 0.973905 | 0.984518 | 0.992127 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_basic_agedb_30_epoch_17_0.976000_IJBB_11                                       | 0.381305 | 0.871178 | 0.932717 | 0.960273 | 0.975073 | 0.984615 | 0.992523 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_16_0.978500_IJBB_11                                   | 0.380526 | 0.83038  | 0.924927 | 0.95813  | 0.976923 | 0.98851  | 0.993972 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_basic_agedb_30_epoch_17_0.976333_IJBB_11                                         | 0.374586 | 0.883447 | 0.936319 | 0.959104 | 0.974391 | 0.983252 | 0.99155  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_17_0.977833_IJBB_11                           | 0.365823 | 0.813145 | 0.924635 | 0.959202 | 0.978384 | 0.989192 | 0.994198 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBB_11        | 0.337683 | 0.821519 | 0.921811 | 0.958033 | 0.979649 | 0.988997 | 0.9943   |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBB_11 | 0.375463 | 0.823466 | 0.92483  | 0.959591 | 0.979065 | 0.988997 | 0.994654 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_basic_agedb_30_epoch_17_0.977833_IJBB_11                    | 0.360662 | 0.823466 | 0.922006 | 0.95813  | 0.978578 | 0.989094 | 0.994044 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_basic_agedb_30_epoch_17_0.977333_IJBB_11                          | 0.344693 | 0.814314 | 0.924732 | 0.961052 | 0.980331 | 0.988997 | 0.994089 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_basic_agedb_30_epoch_16_0.976833_IJBB_11                   | 0.355209 | 0.874781 | 0.936806 | 0.958812 | 0.974489 | 0.984031 | 0.991466 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_2_basic_agedb_30_epoch_16_0.978000_IJBB_11                 | 0.383544 | 0.876339 | 0.936417 | 0.959299 | 0.974294 | 0.983252 | 0.991152 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBB_11                | 0.317235 | 0.87926  | 0.933982 | 0.957936 | 0.974976 | 0.985881 | 0.992409 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_64_basic_agedb_30_epoch_16_0.976833_IJBB_11        | 0.398053 | 0.828822 | 0.910321 | 0.955307 | 0.978092 | 0.988413 | 0.994661 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_basic_agedb_30_epoch_14_0.972333_IJBB_11     | 0.355696 | 0.623759 | 0.772249 | 0.858909 | 0.92483  | 0.969328 | 0.987304 |
+
+  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                                  | 0.869305 | 0.921511 | 0.951935 | 0.969781 | 0.98149  | 0.988751 | 0.99441  |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBC_11                              | 0.877333 | 0.924068 | 0.950862 | 0.968298 | 0.980825 | 0.988649 | 0.993996 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                        | 0.858107 | 0.919108 | 0.951373 | 0.969065 | 0.980161 | 0.988597 | 0.994375 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                              | 0.884287 | 0.926471 | 0.951015 | 0.968758 | 0.98057  | 0.988853 | 0.994079 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                           | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 | 0.994152 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBC_11                                 | 0.876413 | 0.924733 | 0.950759 | 0.969423 | 0.980979 | 0.989058 | 0.994322 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBC_11        | 0.736565 | 0.894156 | 0.943294 | 0.968911 | 0.98466  | 0.991972 | 0.99578  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBC_11 | 0.806207 | 0.894411 | 0.943141 | 0.97019  | 0.984558 | 0.992381 | 0.996228 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBC_11                | 0.882548 | 0.925398 | 0.951935 | 0.969218 | 0.981592 | 0.989569 | 0.994229 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_basic_agedb_30_epoch_16_0.976833_IJBC_11     | 0.803395 | 0.872475 | 0.932454 | 0.965946 | 0.983791 | 0.991665 | 0.995959 |
 ## Finetune EfficientNetV2
   ```py
   hist_path = "checkpoints/efficientnet_v2/"
@@ -805,6 +825,29 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_hist.json", fig_label="arc_trip_random_2, cleaned", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_hist.json", fig_label="arc_trip_randaug_100_no_shear, cleaned", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist.json", fig_label="arc_trip_randaug_100_no_shear_cutout, cleaned", **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/efficientnet_v2/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[1:] + ['lr', 'triplet_embedding_loss']
+  pp["epochs"] = [17]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([64], [0.025])]
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_hist.json", fig_label="randaug_cutout E50, arc_base, cleaned", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_2_hist.json", fig_label="random 0, lr_min 1e-5, arc scattter", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_hist.json", fig_label="random 0, arc_M5", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_mixup_hist.json", fig_label="random 0, mixup", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M6_mixup_hist.json", fig_label="random 0, mixup, M6", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_hist.json", fig_label="random 0, arc_Arctrip_05_64", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_hist.json", fig_label="random 0, arc_Arctrip_035_64", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_035_64_SGD_LA", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_05_64_SGD_LA", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_hist.json", fig_label="random 0, arc_ada_margin_05", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_hist.json", fig_label="random 0, arc_ada_margin_035", **pp)
   ```
   ```py
   from plot import choose_accuracy
@@ -839,6 +882,8 @@
   | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_hist                    | 0.997833 | 0.983429 |   0.977833 |      15 |
   | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_hist        | 0.998333 | 0.981    |   0.978    |      15 |
   | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist | 0.9975   | 0.983    |   0.9775   |      15 |
+  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_hist                   | 0.9975   | 0.977143 |   0.976833 |      15 |
+
 ***
 
 # AutoAugment and RandAugment
@@ -958,7 +1003,31 @@
   ```
 ***
 
-# IJB Results
+# MXNet Pytorch Results
+```sh
+./IJB_evals.py -P IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBB.npz IJB_result/iresnet50_IJBB.npz IJB_result/r100-arcface-msfdrop75_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB.npz IJB_result/MS1MV2-ResNet100-Arcface_IJBB.npz /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
+
+./IJB_evals.py -P "IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC.npz", "IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz", "IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBC_11.npz", "/datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt"
+```
+
+- **MXNet MS1MV3**
+| Datasets       | backbone   | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
+| -------------- | ---------- | ----------- | ----------- | ------- | ------ | ----- |
+| MS1MV3-Arcface | r18-fp16   | 92.07       | 94.66       | 97.77   | 97.73  | 99.77 |
+| MS1MV3-Arcface | r34-fp16   | 94.10       | 95.90       | 98.10   | 98.67  | 99.80 |
+| MS1MV3-Arcface | r50-fp16   | 94.79       | 96.46       | 98.35   | 98.96  | 99.83 |
+| MS1MV3-Arcface | r100-fp16  | 95.31       | 96.81       | 98.48   | 99.06  | 99.85 |
+| MS1MV3-Arcface | r2060-fp16 | 95.34       | 97.11       | 98.67   | 99.24  | 99.87 |
+
+- **MXNet Glint360k**
+| Datasets          | backbone      | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
+| ----------------- | ------------- | ----------- | ----------- | ------- | ------ | ----- |
+| Glint360k-Cosface | r18-fp16-0.1  | 93.16       | 95.33       | 97.72   | 97.73  | 99.77 |
+| Glint360k-Cosface | r34-fp16-0.1  | 95.16       | 96.56       | 98.33   | 98.78  | 99.82 |
+| Glint360k-Cosface | r50-fp16-0.1  | 95.61       | 96.97       | 98.38   | 99.20  | 99.83 |
+| Glint360k-Cosface | r100-fp16-0.1 | 95.88       | 97.32       | 98.48   | 99.29  | 99.82 |
+
+- **cavaface.pytorch**
 | Backbone             | Dataset   | Head           | Loss     | Flops/Params  | Megaface(Id/ver@1e-6) | IJBC(tar@far=1e-4) |
 | -------------------- | --------- | -------------- | -------- | ------------- | --------------------- | ------------------ |
 | AttentionNet-IRSE-92 | MS1MV3    | MV-AM          | Softmax  | 17.63G/55.42M | 99.1356/99.3999       | 96.56              |
@@ -972,16 +1041,19 @@
 | IR-100               | Glint360k | Arcface        | Softmax  | 24.18G/65.5M  | 99.2964/98.8792       | 97.19              |
 | IR-100               | Glint360k | CosFace        | Softmax  | 24.18G/65.5M  | 99.2625/99.1812       | 97.40              |
 
-|                                                                      |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |
-|:-------------------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
-| MS1MV2-ResNet100-Arcface_IJBB_N0D1F1                                 |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |
-| r100-arcface-msfdrop75_IJBB                                          |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB                     |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB             | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB                     |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB             |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBB                                  |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |
+- **IJBB**
+|                                                         |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |          AUC |
+|:------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
+| GhostNet_x1.3_Arcface_Epoch_24_IJBB                     |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |     0.993646 |
+| MS1MV2-ResNet100-Arcface_IJBB                           |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |     0.993771 |
+| r100-arcface-msfdrop75_IJBB                             |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |     0.995144 |
+| glint360k_iresnet50_IJBB                                |     0.436611 |     0.926972 |     0.957157 |     0.970691 |     0.979065 |     0.986855 |     0.993991 |
+| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB        |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |     0.993649 |
+| glint360k_r100FC_1.0_fp16_cosface8GPU_mode_average_IJBB | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |     0.993612 |
+| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB        |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 | **0.995287** |
+| glint360k_r100FC_0.1_fp16_cosface8GPU_mode_average_IJBB |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |     0.995285 |
 
+- **Keras IJBB**
 |                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
 | TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBB_11                                              | 0.380721 |  0.85258 |  0.91889 | 0.951412 | 0.972833 | 0.986465 |
@@ -994,19 +1066,20 @@
 | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBB_11                                                        | 0.385589 | 0.915871 | 0.950828 | 0.965141 | 0.976923 | 0.985784 |
 | TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBB_11                                       | 0.390944 | 0.924537 | 0.954333 | 0.967868 | 0.979747 | 0.987244 |
 
-|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 |
-| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11                                              | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |
-| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11                 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                       | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 |
-| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBC_11              | 0.897735 | 0.936493 | 0.959145 | 0.973411 | 0.983075 | 0.989262 |
-| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |
-| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |
-| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |
-| TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |
+- **IJBC**
+|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 | 0.995874 |
+| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 | 0.995519 |
+| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11                                              | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |          |
+| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11                 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |          |
+| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |          |
+| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                       | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 |          |
+| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBC_11              | 0.897735 | 0.936493 | 0.959145 | 0.973411 | 0.983075 | 0.989262 |          |
+| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |          |
+| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |          |
+| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |          |
+| TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |          |
 ***
 
 # cavaface.pytorch

@@ -985,6 +985,10 @@
 ## ResNeSt101
   - **Nadam + softmax E25 -> bottleneckOnly E4 -> Arcface -> Triplet**
     ```py
+    import models
+    mm = models.buildin_models('resnest101', output_layer='GDC', dropout=0.4, add_pointwise_conv=True)
+    ```
+    ```py
     hist_path = "checkpoints/resnet101/"
     customs = ["lfw", "agedb_30", "cfp_fp"]
     epochs = [25, 4, 35, 10, 10, 10, 10, 10]

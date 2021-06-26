@@ -760,7 +760,6 @@
         plt.tight_layout()
 
     insightface_results = {
-        "W&F Norm Softmax": [1, 0, 0],
         "SphereFace": [1.5, 0, 0],
         "CosineFace": [1, 0, 0.35],
         "ArcFace": [1, 0.5, 0],
@@ -778,21 +777,22 @@
     ```py
     def plot_arc_trans(margin_list, new_fig=True):
         xx = np.arange(-1, 1, 0.01)
-        y_true = tf.ones_like(xx)
         if new_fig:
             fig = plt.figure()
         for margin1, margin2, margin3 in margin_list:
-            threshold = np.cos((np.pi - margin2) / margin1)
-            y_pred_vals = xx[tf.cast(y_true, dtype=tf.bool)]
-            theta = tf.cos(tf.acos(y_pred_vals) * margin1 + margin2) - margin3
-            # theta_valid = tf.where(y_pred_vals > threshold, theta, y_pred_vals - threshold - 1)
-            theta_valid = tf.where(y_pred_vals > threshold, theta, (-1 - margin3) * 2 - theta)
-            theta_one_hot = (theta_valid - y_pred_vals) * y_true
-            arcface_logits = (theta_one_hot + xx).numpy()
-            plt.plot(xx, arcface_logits, label="Margin1, 2, 3 [{}, {}, {}]".format(margin1, margin2, margin3))
+            threshold = tf.cos((np.pi - margin2) / margin1)
+            theta = tf.cos(tf.acos(xx) * margin1 + margin2) - margin3
+            theta_valid = tf.where(xx > threshold, theta, (-1 - margin3) * 2 - theta).numpy()
+
+            lines = plt.plot(xx, theta_valid, label="Margin1, 2, 3 [{}, {}, {}]".format(margin1, margin2, margin3))
+            curr_color = lines[0].get_color()
+            alpha = xx - theta
+            alpha_max_pos = np.argmax(alpha)
+            plt.plot([xx[alpha_max_pos], xx[alpha_max_pos]], [xx[alpha_max_pos], theta_valid[alpha_max_pos]], c=curr_color)
+            plt.text(xx[alpha_max_pos], theta_valid[alpha_max_pos], "({:.2f}, {:.2f}) margin {:.2f}".format(xx[alpha_max_pos], theta_valid[alpha_max_pos], alpha[alpha_max_pos]), c=curr_color)
         plt.plot(xx, xx, label="Original")
         plt.legend()
-        plt.grid()
+        # plt.grid()
         plt.tight_layout()
 
     fig = plt.figure()
@@ -800,7 +800,7 @@
     plot_arc_trans([[ii, 0.5, 0] for ii in [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]], new_fig=False)
     plt.title('Margin 1')
     ax = plt.subplot(2, 2, 2)
-    plot_arc_trans([[1.0, ii, 0] for ii in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]], new_fig=False)
+    plot_arc_trans([[1.0, ii, 0] for ii in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]], new_fig=False)
     plt.title('Margin 2')
     ax = plt.subplot(2, 2, 3)
     plot_arc_trans([[1.0, 0.5, ii] for ii in [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]], new_fig=False)

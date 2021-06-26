@@ -1311,7 +1311,7 @@
   - [3W字长文带你轻松入门视觉transformer](https://zhuanlan.zhihu.com/p/308301901)
   - `keras.layers.Attention` a.k.a. Luong-style attention.
   - `keras.layers.AdditiveAttention` a.k.a. Bahdanau-style attention. [Eager 执行环境与 Keras 定义 RNN 模型使用注意力机制为图片命名标题](https://github.com/leondgarse/Atom_notebook/blob/master/public/2018/09-06_tensorflow_tutotials.md#eager-%E6%89%A7%E8%A1%8C%E7%8E%AF%E5%A2%83%E4%B8%8E-keras-%E5%AE%9A%E4%B9%89-rnn-%E6%A8%A1%E5%9E%8B%E4%BD%BF%E7%94%A8%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E4%B8%BA%E5%9B%BE%E7%89%87%E5%91%BD%E5%90%8D%E6%A0%87%E9%A2%98)
-  - `keras.layers.MultiHeadAttention` multi-headed attention based on "Attention is all you Need"
+  - `keras.layers.MultiHeadAttention` multi-headed scaled dot-product attention based on "Attention is all you Need"
   - [Github Keras Attention Augmented Convolutions](https://github.com/titu1994/keras-attention-augmented-convs)
 ***
 
@@ -2255,3 +2255,194 @@
       print("_" * 80)
   ```
 ***
+
+# Transformer
+## 位置编码 Positional encoding
+  ```sh
+  PE(pos, 2i) = sin(pos / 10000 ** (2i / d_model))
+  PE(pos, 2i + 1) = cos(pos / 10000 ** (2i / d_model))
+  ```
+  ```py
+  def positional_encoding(position, d_model):
+      """
+      position, d_model = 50, 512
+      d_model_range = np.expand_dims(np.arange(d_model), 0) --> [0, 1, 2, 3,..., 509, 510, 511]
+      (2 * (d_model_range // 2)) / np.float32(d_model) --> [0, 0, 2, 2,..., 508, 510, 510] / 512
+      np.power(1e4, (2 * (d_model_range // 2)) / np.float32(d_model)) --> ~ [1, 1, ..., 1e4, 1e4]
+      angle_rads --> ~ [1, 1, ..., 1e-4, 1e-4]
+      angle_rads --> [angle_rads * 0, angle_rads * 1, angle_rads * 2, ..., angle_rads * 49]
+      [sin] angle_rads[0] --> [0]
+      [sin] angle_rads[1] --> ~[sin(1), sin(1), ..., 0, 0]
+      [cos] angle_rads[0] --> [1]
+      [cos] angle_rads[1] --> ~[cos(1), cos(1), ..., 1, 1]
+      """
+      d_model_range = np.expand_dims(np.arange(d_model), 0)
+      angle_rads = 1 / np.power(1e4, (2 * (d_model_range // 2)) / np.float32(d_model))
+      angle_rads = np.expand_dims(np.arange(position), 1) * angle_rads
+
+      # 将 sin 应用于数组中的偶数索引（indices）；2i
+      angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+      # 将 cos 应用于数组中的奇数索引；2i+1
+      angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+
+      pos_encoding = np.expand_dims(angle_rads, 0)
+      return tf.cast(pos_encoding, dtype=tf.float32)
+
+  pos_encoding = positional_encoding(50, 512)
+  print(f'{pos_encoding.shape = }') # pos_encoding.shape = TensorShape([1, 50, 512])
+  plt.pcolormesh(pos_encoding[0], cmap='RdBu')
+  plt.xlabel('Depth')
+  plt.xlim((0, 512))
+  plt.ylabel('Position')
+  plt.colorbar()
+  ```
+  ![](images/position_encoding_colormesh.svg)
+  ```py
+  for ii in range(0, 50, 10):
+      plt.plot(pos_encoding[0, ii, ::2], label="sin, {}".format(ii))
+      plt.plot(pos_encoding[0, ii, 1::2], label="cos, {}".format(ii))
+  plt.legend()
+  plt.title("Position values")
+  ```
+  ![](images/position_encoding_position_values.svg)
+  ```py
+  print((pos_encoding.numpy()[0] ** 2).sum(1))
+  # [256] * 50
+
+  print(np.dot(pos_encoding.numpy()[0], pos_encoding.numpy()[0, 0]))
+  # [256.      249.10211 231.73363 211.74947 196.68826 189.59668 188.2482 187.86502 184.96516 179.45654 173.78973 170.35315 169.44649 169.34525
+  #  168.0597  165.0636  161.53304 159.08392 158.2816  158.24513 157.57397 155.64383 153.08748 151.10722 150.33557 150.30371 149.94781 148.61731
+  #  146.63585 144.93758 144.17035 144.1174  143.94557 143.00458 141.41406 139.9111  139.13742 139.0499  138.99149 138.32632 137.02701 135.67337
+  #  134.88887 134.7587  134.77036 134.31155 133.24333 132.01273 131.21637 131.03839]
+
+  for ii in range(0, 50, 10):
+      plt.plot(np.dot(pos_encoding.numpy()[0], pos_encoding.numpy()[0, ii]), label=str(ii))
+  plt.legend()
+  plt.title("Dists between values")
+  plt.xlabel('position id')
+  plt.ylabel('dist')
+  ```
+  ![](images/position_encoding_dist_values.svg)
+## Scaled dot product attention
+  - 点积注意力被缩小了深度的平方根倍。这样做是因为对于较大的深度值，点积的大小会增大，从而推动 softmax 函数往仅有很小的梯度的方向靠拢，导致了一种很硬的（hard）softmax。
+  ```py
+  def scaled_dot_product_attention(q, k, v, mask):
+      """计算注意力权重。
+      q, k, v 必须具有匹配的前置维度。
+      k, v 必须有匹配的倒数第二个维度，例如：seq_len_k = seq_len_v。
+      虽然 mask 根据其类型（填充或前瞻）有不同的形状，
+      但是 mask 必须能进行广播转换以便求和。
+
+      参数:
+        q: 请求的形状 == (..., seq_len_q, depth)
+        k: 主键的形状 == (..., seq_len_k, depth)
+        v: 数值的形状 == (..., seq_len_v, depth_v)
+        mask: Float 张量，其形状能转换成
+              (..., seq_len_q, seq_len_k)。默认为None。
+
+      返回值:
+        输出，注意力权重
+      """
+      matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+
+      # 缩放 matmul_qk
+      dk = tf.cast(tf.shape(k)[-1], tf.float32)
+      scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+      # 将 mask 加入到缩放的张量上。
+      if mask is not None:
+          scaled_attention_logits += (mask * -1e9)  
+
+      # softmax 在最后一个轴（seq_len_k）上归一化，因此分数相加等于1。
+      attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+      output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+      return output, attention_weights
+  ```
+  ```py
+  temp_k = tf.expand_dims([1., 2, 3, 4], 1)
+  temp_v = tf.expand_dims([1., 2, 3, 4], 1)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(tf.constant([[5.]]), temp_k, temp_v, None)))
+  # Output: [[3.9932165]], Attention: [[0.0000003  0.00004509 0.00669255 0.9932621 ]]
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(tf.constant([[50.]]), temp_k, temp_v, None)))
+  # Output: [[4.]], Attention: [[0. 0. 0. 1.]]
+
+  temp_k = tf.constant([[10, 0, 0], [0, 10, 0], [0, 0, 10], [0, 0, 10]], dtype=tf.float32)  # (4, 3)
+  temp_v = tf.constant([[1, 0], [10, 0], [100, 5], [1000, 6]], dtype=tf.float32)  # (4, 2)
+
+  # 这条 `请求（query）符合第二个`主键（key）`，因此返回了第二个`数值（value）`。
+  temp_q = tf.constant([[0, 10, 0]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[10.  0.]], Attention: [[0. 1. 0. 0.]]
+
+  # 这条请求符合重复出现的主键（第三第四个），因此，对所有的相关数值取了平均。
+  temp_q = tf.constant([[0, 0, 10]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[550.    5.5]], Attention: [[0.  0.  0.5 0.5]]
+
+  # 这条请求符合第一和第二条主键，因此，对它们的数值去了平均。
+  temp_q = tf.constant([[10, 10, 0]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[5.5 0. ]], Attention: [[0.5 0.5 0.  0. ]]
+
+  temp_q = tf.constant([[0, 0, 10], [0, 10, 0], [10, 10, 0]], dtype=tf.float32)  # (3, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[550.    5.5] [ 10.    0. ] [  5.5   0. ]], Attention: [[0.  0.  0.5 0.5] [0.  1.  0.  0. ] [0.5 0.5 0.  0. ]]
+  ```
+## 多头注意力 Multi-head attention
+多头注意力由四部分组成：
+
+线性层并分拆成多头。
+按比缩放的点积注意力。
+多头及联。
+最后一层线性层。
+每个多头注意力块有三个输入：Q（请求）、K（主键）、V（数值）。这些输入经过线性（Dense）层，并分拆成多头。
+
+将上面定义的 scaled_dot_product_attention 函数应用于每个头（进行了广播（broadcasted）以提高效率）。注意力这步必须使用一个恰当的 mask。然后将每个头的注意力输出连接起来（用tf.transpose 和 tf.reshape），并放入最后的 Dense 层。
+
+Q、K、和 V 被拆分到了多个头，而非单个的注意力头，因为多头允许模型共同注意来自不同表示空间的不同位置的信息。在分拆后，每个头部的维度减少，因此总的计算成本与有着全部维度的单个注意力头相同。
+```py
+query: Query `Tensor` of shape `[B, T, dim]`
+value: Value `Tensor` of shape `[B, S, dim]`
+key: Optional key `Tensor` of shape `[B, S, dim]`
+attention_mask: a boolean mask of shape `[B, T, S]`
+attention_output: The result of the computation, of shape [B, T, E] where `T` is for target sequence shapes and `E` is the query input last dimension
+
+N = `num_attention_heads`
+H = `size_per_head`
+`query` = [B, T, N ,H]
+`key` = [B, S, N, H]
+`value` = [B, S, N, H]
+```
+```py
+from tensorflow.python.ops import math_ops
+from tensorflow.python.ops import special_math_ops
+from icecream import ic
+inputs = keras.layers.Input([14, 16, 1024])
+
+nn = keras.layers.MultiHeadAttention(num_heads=4, key_dim=128)
+ic(nn(inputs, inputs).shape.as_list())
+# ic| nn(inputs, inputs).shape.as_list(): [None, 14, 16, 1024]
+
+query = nn._query_dense(inputs)
+key = nn._key_dense(inputs)
+value = nn._value_dense(inputs)
+ic(query.shape.as_list(), key.shape.as_list(), value.shape.as_list())
+# ic| query.shape.as_list(): [None, 14, 16, 4, 128]
+
+# attention_output, attention_scores = nn._compute_attention(query, key, value)
+query = math_ops.multiply(query, 1.0 / math.sqrt(float(nn._key_dim)))
+# 'afgde,abcde->adbcfg', 'bhHWd,bhPQd->bhHWPQ' == 'afgde,adbce->afgdbc'
+attention_scores = special_math_ops.einsum(nn._dot_product_equation, key, query)
+ic(attention_scores.shape.as_list())
+# ic| attention_scores.shape.as_list(): [None, 4, 14, 16, 14, 16]
+
+attention_scores = nn._masked_softmax(attention_scores, None)
+attention_scores_dropout = nn._dropout_layer(attention_scores, training=False)
+attention_output = special_math_ops.einsum(nn._combine_equation, attention_scores_dropout, value)
+ic(attention_output.shape.as_list())
+# ic| attention_output.shape.as_list(): [None, 14, 16, 4, 128]
+
+attention_output = nn._output_dense(attention_output)
+ic(attention_output.shape.as_list())
+# ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
+```
