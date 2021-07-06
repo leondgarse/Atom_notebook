@@ -709,17 +709,25 @@
   pp["epochs"] = [5, 5, 7, 33]
   pp["skip_epochs"] = 13
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="randaug_100, cleaned", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, cleaned", **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="randaug_100, cleaned", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="randaug_cutout, cleaned", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M3_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M3, cleaned", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M4, cleaned", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, mixup, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, mixup, cleaned", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, nesterov, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, nesterov, cleaned", **pp)
   axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, lookahead, cleaned", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, cleaned", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, lookahead, cleaned", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, lookahead", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, lookahead", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, lookahead, ipc 10", **pp)
 
   axes, _ = plot.hist_plot_split("checkpoints/efficientnet_v2/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random 0, cleaned", **pp)
   ```
@@ -744,19 +752,19 @@
   ]
   _ = choose_accuracy(aa)
   ```
-  |                                                                                                                                                  |      lfw |   cfp_fp |   agedb_30 |   epoch |
-  |:-------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
-  | TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist                                                                          | 0.997833 | 0.960429 |   0.9785   |      16 |
-  | TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist                                                                     | 0.998167 | 0.974857 |   0.982167 |      47 |
-  | TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist                                                                        | 0.997667 | 0.981    |   0.981    |      48 |
-  | TT_efv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist                                                                  | 0.997333 | 0.975571 |   0.977833 |      15 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist                                                              | 0.995833 | 0.953429 |   0.964    |      48 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_hist                                                               | 0.997167 | 0.974857 |   0.976    |      48 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_hist                                                  | 0.997167 | 0.975429 |   0.975    |      47 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_hist                                          | 0.9975   | 0.975714 |   0.976333 |      49 |
-  | TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist                              | 0.997333 | 0.972429 |   0.976333 |      48 |
-  | TT_efv2_b0_swish_GDC_arc_M3_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist                              | 0.996833 | 0.973571 |   0.974333 |      47 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist                                 | 0.997833 | 0.973571 |   0.974333 |      46 |
+  |                                                                                                                                                      |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:-----------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist                                                                              | 0.997833 | 0.960429 |   0.9785   |      16 |
+  | TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist                                                                         | 0.998167 | 0.974857 |   0.982167 |      47 |
+  | TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist                                                                            | 0.997667 | 0.981    |   0.981    |      48 |
+  | TT_efv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist                                                                      | 0.997333 | 0.975571 |   0.977833 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgdw_wd_5e4_bs512_ms1m_cos16_batch_float16_hist                                                                  | 0.995833 | 0.953429 |   0.964    |      48 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_hist                                                                   | 0.997167 | 0.974857 |   0.976    |      48 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_hist                                                      | 0.997167 | 0.975429 |   0.975    |      47 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_hist                                              | 0.9975   | 0.975714 |   0.976333 |      49 |
+  | TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist                                  | 0.997333 | 0.972429 |   0.976333 |      48 |
+  | TT_efv2_b0_swish_GDC_arc_M3_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist                                  | 0.996833 | 0.973571 |   0.974333 |      47 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist                                     | 0.997833 | 0.973571 |   0.974333 |      46 |
 
   ```sh
   ./IJB_evals.py -P IJB_result/TT_efv2_*epoch_5*IJBB* IJB_result/TT_efv2_*epoch_4*IJBB* /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
@@ -764,44 +772,66 @@
   ./IJB_evals.py -P IJB_result/TT_efv2_*IJBC* /datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt
   ```
 
-  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
-  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                                               | 0.371373 | 0.880039 |  0.93593 | 0.96037  | 0.974294 | 0.984323 |          |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                                  | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 | 0.992391 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                                          | 0.351899 | 0.880234 | 0.93408  | 0.958715 | 0.973612 | 0.984907 | 0.991727 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11                        | 0.38296  | 0.870399 | 0.932911 | 0.95852  | 0.973612 | 0.983155 | 0.991932 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBB_11                              | 0.33369  | 0.885005 | 0.93369  | 0.956378 | 0.972639 | 0.983544 | 0.991878 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.974333_IJBB_11                                 | 0.350828 | 0.757254 | 0.913729 | 0.957157 | 0.973807 | 0.985297 | 0.992829 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBB_11                              | 0.37147  | 0.883934 | 0.935443 | 0.957254 | 0.972833 | 0.984323 | 0.991655 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11                           | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 | 0.98481  | 0.991726 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBB_11                                 | 0.385005 | 0.883934 | 0.934372 | 0.958617 | 0.973515 | 0.983836 | 0.991745 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_basic_agedb_30_epoch_15_0.975500_IJBB_11                                     | 0.335054 | 0.875365 | 0.934859 | 0.959883 | 0.973905 | 0.984518 | 0.992127 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_basic_agedb_30_epoch_17_0.976000_IJBB_11                                       | 0.381305 | 0.871178 | 0.932717 | 0.960273 | 0.975073 | 0.984615 | 0.992523 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_16_0.978500_IJBB_11                                   | 0.380526 | 0.83038  | 0.924927 | 0.95813  | 0.976923 | 0.98851  | 0.993972 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_basic_agedb_30_epoch_17_0.976333_IJBB_11                                         | 0.374586 | 0.883447 | 0.936319 | 0.959104 | 0.974391 | 0.983252 | 0.99155  |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_17_0.977833_IJBB_11                           | 0.365823 | 0.813145 | 0.924635 | 0.959202 | 0.978384 | 0.989192 | 0.994198 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBB_11        | 0.337683 | 0.821519 | 0.921811 | 0.958033 | 0.979649 | 0.988997 | 0.9943   |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBB_11 | 0.375463 | 0.823466 | 0.92483  | 0.959591 | 0.979065 | 0.988997 | 0.994654 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_basic_agedb_30_epoch_17_0.977833_IJBB_11                    | 0.360662 | 0.823466 | 0.922006 | 0.95813  | 0.978578 | 0.989094 | 0.994044 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_basic_agedb_30_epoch_17_0.977333_IJBB_11                          | 0.344693 | 0.814314 | 0.924732 | 0.961052 | 0.980331 | 0.988997 | 0.994089 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_basic_agedb_30_epoch_16_0.976833_IJBB_11                   | 0.355209 | 0.874781 | 0.936806 | 0.958812 | 0.974489 | 0.984031 | 0.991466 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_2_basic_agedb_30_epoch_16_0.978000_IJBB_11                 | 0.383544 | 0.876339 | 0.936417 | 0.959299 | 0.974294 | 0.983252 | 0.991152 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBB_11                | 0.317235 | 0.87926  | 0.933982 | 0.957936 | 0.974976 | 0.985881 | 0.992409 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_64_basic_agedb_30_epoch_16_0.976833_IJBB_11        | 0.398053 | 0.828822 | 0.910321 | 0.955307 | 0.978092 | 0.988413 | 0.994661 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_basic_agedb_30_epoch_14_0.972333_IJBB_11     | 0.355696 | 0.623759 | 0.772249 | 0.858909 | 0.92483  | 0.969328 | 0.987304 |
+  |                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                           | 0.371373 | 0.880039 |  0.93593 |  0.96037 | 0.974294 | 0.984323 |          |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 | 0.992391 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                      | 0.351899 | 0.880234 |  0.93408 | 0.958715 | 0.973612 | 0.984907 | 0.991727 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11    |  0.38296 | 0.870399 | 0.932911 |  0.95852 | 0.973612 | 0.983155 | 0.991932 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBB_11          |  0.33369 | 0.885005 |  0.93369 | 0.956378 | 0.972639 | 0.983544 | 0.991878 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.974333_IJBB_11             | 0.350828 | 0.757254 | 0.913729 | 0.957157 | 0.973807 | 0.985297 | 0.992829 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBB_11          |  0.37147 | 0.883934 | 0.935443 | 0.957254 | 0.972833 | 0.984323 | 0.991655 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11       | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 |  0.98481 | 0.991726 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBB_11             | 0.385005 | 0.883934 | 0.934372 | 0.958617 | 0.973515 | 0.983836 | 0.991745 |
+  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.975500_IJBB_11    | 0.380428 | 0.868744 | 0.931159 | 0.958423 | 0.974391 | 0.986173 | 0.993756 |
+  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11 | 0.382278 | 0.860954 | 0.932035 | 0.958715 | 0.975365 |  0.98666 | 0.994307 |
+  | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBB_11         | 0.338559 | 0.864849 | 0.930282 |  0.95852 | 0.976241 | 0.986368 |  0.99383 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977000_IJBB_11            | 0.38111  | 0.879649 | 0.936806 | 0.959981 | 0.974781 | 0.984031 | 0.992172 |
+  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977500_IJBB_11            | 0.374684 | 0.862999 | 0.933009 | 0.958812 | 0.97556  | 0.987829 | 0.99461  |
 
-  |                                                                                                                                                                                      |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
-  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                                  | 0.869305 | 0.921511 | 0.951935 | 0.969781 | 0.98149  | 0.988751 | 0.99441  |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBC_11                              | 0.877333 | 0.924068 | 0.950862 | 0.968298 | 0.980825 | 0.988649 | 0.993996 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                        | 0.858107 | 0.919108 | 0.951373 | 0.969065 | 0.980161 | 0.988597 | 0.994375 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                              | 0.884287 | 0.926471 | 0.951015 | 0.968758 | 0.98057  | 0.988853 | 0.994079 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                           | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 | 0.994152 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBC_11                                 | 0.876413 | 0.924733 | 0.950759 | 0.969423 | 0.980979 | 0.989058 | 0.994322 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBC_11        | 0.736565 | 0.894156 | 0.943294 | 0.968911 | 0.98466  | 0.991972 | 0.99578  |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBC_11 | 0.806207 | 0.894411 | 0.943141 | 0.97019  | 0.984558 | 0.992381 | 0.996228 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBC_11                | 0.882548 | 0.925398 | 0.951935 | 0.969218 | 0.981592 | 0.989569 | 0.994229 |
-  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_basic_agedb_30_epoch_16_0.976833_IJBC_11     | 0.803395 | 0.872475 | 0.932454 | 0.965946 | 0.983791 | 0.991665 | 0.995959 |
+
+  |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_basic_agedb_30_epoch_15_0.975500_IJBB_11                                            | 0.335054 | 0.875365 | 0.934859 | 0.959883 | 0.973905 | 0.984518 | 0.992127 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_basic_agedb_30_epoch_17_0.976000_IJBB_11                                              | 0.381305 | 0.871178 | 0.932717 | 0.960273 | 0.975073 | 0.984615 | 0.992523 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_16_0.978500_IJBB_11                                          | 0.380526 | 0.83038  | 0.924927 | 0.95813  | 0.976923 | 0.98851  | 0.993972 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_basic_agedb_30_epoch_17_0.976333_IJBB_11                                                | 0.374586 | 0.883447 | 0.936319 | 0.959104 | 0.974391 | 0.983252 | 0.99155  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_basic_agedb_30_epoch_17_0.977833_IJBB_11                                  | 0.365823 | 0.813145 | 0.924635 | 0.959202 | 0.978384 | 0.989192 | 0.994198 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBB_11               | 0.337683 | 0.821519 | 0.921811 | 0.958033 | 0.979649 | 0.988997 | 0.9943   |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBB_11        | 0.375463 | 0.823466 | 0.92483  | 0.959591 | 0.979065 | 0.988997 | 0.994654 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_basic_agedb_30_epoch_17_0.977833_IJBB_11                           | 0.360662 | 0.823466 | 0.922006 | 0.95813  | 0.978578 | 0.989094 | 0.994044 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_basic_agedb_30_epoch_17_0.977333_IJBB_11                                 | 0.344693 | 0.814314 | 0.924732 | 0.961052 | 0.980331 | 0.988997 | 0.994089 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_basic_agedb_30_epoch_16_0.976833_IJBB_11                          | 0.355209 | 0.874781 | 0.936806 | 0.958812 | 0.974489 | 0.984031 | 0.991466 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_2_basic_agedb_30_epoch_16_0.978000_IJBB_11                        | 0.383544 | 0.876339 | 0.936417 | 0.959299 | 0.974294 | 0.983252 | 0.991152 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBB_11                       | 0.317235 | 0.87926  | 0.933982 | 0.957936 | 0.974976 | 0.985881 | 0.992409 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_basic_agedb_30_epoch_16_0.976833_IJBB_11            | 0.398053 | 0.828822 | 0.910321 | 0.955307 | 0.978092 | 0.988413 | 0.994661 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_basic_agedb_30_epoch_15_0.978500_IJBB_11           | 0.341675 | 0.833204 | 0.924148 | 0.957644 | 0.97887  | 0.988802 | 0.994248 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_basic_agedb_30_epoch_16_0.979500_IJBB_11    | 0.370399 | 0.838364 |  0.92814 | 0.959104 | 0.978384 | 0.988315 | 0.993953 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_basic_agedb_30_epoch_14_0.972333_IJBB_11            | 0.355696 | 0.623759 | 0.772249 | 0.858909 | 0.92483  | 0.969328 | 0.987304 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_basic_agedb_30_epoch_17_0.974833_IJBB_11           | 0.375268 | 0.777799 | 0.856183 | 0.906329 | 0.943525 | 0.973807 | 0.98798  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_ranger_lrbase_1e3_basic_agedb_30_epoch_13_0.978667_IJBB_11     | 0.34333  | 0.875073 | 0.933301 | 0.959104 | 0.973807 | 0.984129 | 0.991442 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_radam_lrbase_1e3_basic_agedb_30_epoch_17_0.976667_IJBB_11      | 0.375755 | 0.866407 | 0.931451 | 0.957838 | 0.97371  | 0.983836 | 0.99186  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M1_basic_agedb_30_epoch_16_0.977667_IJBB_11                       | 0.368452 | 0.88335  | 0.935443 | 0.958325 | 0.974878 | 0.98481  | 0.991652 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_basic_agedb_30_epoch_17_0.977333_IJBB_11 | 0.369718 | 0.877215 | 0.937877 | 0.960565 | 0.975657 | 0.985979 | 0.992154 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000_IJBB_11        | 0.324927 |  0.8815  | 0.938462 | 0.959494 | 0.975463 | 0.984615 | 0.991511 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_basic_agedb_30_epoch_12_0.978333_IJBB_11                       | 0.339435 | 0.869815 | 0.931938 | 0.959007 | 0.976047 | 0.986465 | 0.992172 |
+
+
+  |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                                         | 0.869305 | 0.921511 | 0.951935 | 0.969781 | 0.98149  | 0.988751 | 0.99441  |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBC_11                                     | 0.877333 | 0.924068 | 0.950862 | 0.968298 | 0.980825 | 0.988649 | 0.993996 |
+  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                               | 0.858107 | 0.919108 | 0.951373 | 0.969065 | 0.980161 | 0.988597 | 0.994375 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                                     | 0.884287 | 0.926471 | 0.951015 | 0.968758 | 0.98057  | 0.988853 | 0.994079 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                                  | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 | 0.994152 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBC_11                                        | 0.876413 | 0.924733 | 0.950759 | 0.969423 | 0.980979 | 0.989058 | 0.994322 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBC_11               | 0.736565 | 0.894156 | 0.943294 | 0.968911 | 0.98466  | 0.991972 | 0.99578  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBC_11        | 0.806207 | 0.894411 | 0.943141 | 0.97019  | 0.984558 | 0.992381 | 0.996228 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_basic_agedb_30_epoch_15_0.978833_IJBC_11                       | 0.882548 | 0.925398 | 0.951935 | 0.969218 | 0.981592 | 0.989569 | 0.994229 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_basic_agedb_30_epoch_16_0.976833_IJBC_11            | 0.803395 | 0.872475 | 0.932454 | 0.965946 | 0.983791 | 0.991665 | 0.995959 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_basic_agedb_30_epoch_17_0.977333_IJBC_11 | 0.880247 | 0.927596 | 0.953214 | 0.970548 | 0.982359 | 0.989773 | 0.994434 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000_IJBC_11 | 0.883571 | 0.924426 |  0.95352 | 0.969934 | 0.981541 | 0.989058 | 0.99409 |
+
 ## Finetune EfficientNetV2
   ```py
   hist_path = "checkpoints/efficientnet_v2/"
@@ -827,6 +857,8 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist.json", fig_label="arc_trip_randaug_100_no_shear_cutout, cleaned", **pp)
   ```
   ```py
+
+
   hist_path = "checkpoints/efficientnet_v2/"
   pp = {}
   pp["customs"] = plot.EVALS_NAME[1:] + ['lr', 'triplet_embedding_loss']
@@ -841,13 +873,25 @@
   # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_mixup_hist.json", fig_label="random 0, mixup", **pp)
   # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M6_mixup_hist.json", fig_label="random 0, mixup, M6", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_hist.json", fig_label="random 0, arc_Arctrip_05_64", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_hist.json", fig_label="random 0, arc_Arctrip_035_64", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_035_64_SGD_LA", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_05_64_SGD_LA", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_ranger_lrbase_1e3_hist.json", fig_label="arc_M5_ranger_lrbase_1e3", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_radam_lrbase_1e3_hist.json", fig_label="arc_M5_radam_lrbase_1e3", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M1_hist.json", fig_label="arc_M1", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_hist.json", fig_label="random 0, arc_ada_margin_05", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_hist.json", fig_label="random 0, arc_ada_margin_035", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_hist.json", fig_label="random 0, arc_Arctrip_05_64", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_05_64_SGD_LA", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_hist.json", fig_label="random 0, arc_Arctrip_035_64", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_hist.json", fig_label="random 0, arc_Arctrip_035_64_SGD_LA", **pp)
+
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_05_hist.json", fig_label="random 0, arc_ada_margin_05", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_hist.json", fig_label="random 0, arc_ada_margin_035", **pp)
+
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_hist.json", fig_label="sphere, lr_base 1e-3", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_hist.json", fig_label="arc_M5_randaug_cutout, lr_base 1e-3", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_2_hist.json", fig_label="sphere", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_2_hist.json", fig_label="arc_M5_randaug_cutout", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_hist.json", fig_label="arc_M5_SGD_LA_randaug_cutout", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_softmax_LS_Arctrip_035_1_SGD_LA_hist.json", fig_label="softmax_LS_Arctrip_035_1_SGD_LA", **pp)
   ```
   ```py
   from plot import choose_accuracy
@@ -865,24 +909,52 @@
       hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_hist.json",
       hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_hist.json",
       hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist.json",
+
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_ranger_lrbase_1e3_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_radam_lrbase_1e3_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M1_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_SGD_LA_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_2_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_2_hist.json",
+      "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_softmax_LS_Arctrip_035_1_SGD_LA_hist.json",
   ]
-  _ = choose_accuracy(aa, skip_name_len=len("TT_efv2_"))
+  _ = choose_accuracy(aa)
+
+  TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='0' ./IJB_evals.py -m checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_basic_agedb_30_epoch_17_0.977333.h5 -d /datasets/IJB_release
+  TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='0' ./IJB_evals.py -m checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000.h5 -d /datasets/IJB_release
+  TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_basic_agedb_30_epoch_12_0.978333.h5 -d /datasets/IJB_release
   ```
-  |                                                                                                                                          |      lfw |   cfp_fp |   agedb_30 |   epoch |
-  |:-----------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_hist                                     | 0.997333 | 0.972    |   0.9755   |      14 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_hist                                         | 0.997    | 0.973429 |   0.976333 |      16 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_hist                                       | 0.997167 | 0.974    |   0.976    |      16 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist                                   | 0.997667 | 0.981143 |   0.9785   |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist                           | 0.998    | 0.982714 |   0.977833 |      14 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_hist                          | 0.997833 | 0.983286 |   0.977333 |      16 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_hist                                 | 0.998167 | 0.975857 |   0.976167 |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_SD_hist                              | 0.9975   | 0.973857 |   0.975167 |      16 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_hist                 | 0.997833 | 0.981714 |   0.974167 |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_hist                    | 0.997833 | 0.983429 |   0.977833 |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_hist        | 0.998333 | 0.981    |   0.978    |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist | 0.9975   | 0.983    |   0.9775   |      15 |
-  | b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_hist                   | 0.9975   | 0.977143 |   0.976833 |      15 |
+  |                                                                                                                                                            |      lfw |   cfp_fp |   agedb_30 |   epoch |
+  |:-----------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_base_hist                                               | 0.997333 | 0.972    |   0.9755   |      14 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_curr_hist                                                   | 0.997    | 0.973429 |   0.976333 |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_SD_hist                                                 | 0.997167 | 0.974    |   0.976    |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist                                             | 0.997667 | 0.981143 |   0.9785   |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip64_hist                                     | 0.998    | 0.982714 |   0.977833 |      14 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_trip64_hist                                    | 0.997833 | 0.983286 |   0.977333 |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_hist                                           | 0.998167 | 0.975857 |   0.976167 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_curr_SD_hist                                        | 0.9975   | 0.973857 |   0.975167 |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_hist                           | 0.997833 | 0.981714 |   0.974167 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_random_2_hist                              | 0.997833 | 0.983429 |   0.977833 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_hist                  | 0.998333 | 0.981    |   0.978    |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_hist           | 0.9975   | 0.983    |   0.9775   |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_hist                             | 0.9975   | 0.977143 |   0.976833 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_ranger_lrbase_1e3_hist        | 0.997667 | 0.977143 |   0.978667 |      12 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_radam_lrbase_1e3_hist         | 0.997167 | 0.973286 |   0.976667 |      13 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_SGD_LA_hist        | 0.997667 | 0.978857 |   0.978333 |      14 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_035_64_SGD_LA_hist       | 0.997667 | 0.982286 |   0.9795   |      14 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_ada_margin_035_hist              | 0.997833 | 0.975714 |   0.974833 |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_hist                          | 0.997667 | 0.98     |   0.978333 |      11 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_hist           | 0.9975   | 0.980714 |   0.979    |      12 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_hist    | 0.9975   | 0.980000 |   0.977333 |      16 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_2_hist                        | 0.998167 | 0.979571 |   0.970667 |      15 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_2_hist         | 0.9975   | 0.978714 |   0.977167 |      14 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_softmax_LS_Arctrip_035_1_SGD_LA_hist | 0.997833 | 0.981714 |   0.9775   |      16 |
 
 ***
 
@@ -1364,7 +1436,204 @@
   aa = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in tt.layers])
   bb = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in keras_model.layers])
   ```
-# insightface
+# insightface recognition
+  - **Save to jit and onnx model**
+    ```py
+    !cd insightface/recognition/arcface_torch
+
+    import torch
+    from torchsummary import summary
+    from backbones import iresnet50, iresnet100
+
+    model_path = "../../../models/partial_fc_pytorch/glint360k_cosface_r50_fp16_0.1/backbone.pth"
+    model_dir = os.path.dirname(os.path.dirname(model_path))
+    pth_model_name = os.path.basename(os.path.dirname(model_path)) + ".pth"
+    onnx_model_name = os.path.basename(os.path.dirname(model_path)) + ".onnx"
+    pth_save_path = os.path.join(model_dir, pth_model_name)
+    onnx_save_path = os.path.join(model_dir, onnx_model_name)
+    print(f"{model_path = } {model_dir = }")
+
+    model = iresnet50() if "r50" in model_path else iresnet100()
+    weight = torch.load(model_path, map_location=torch.device('cpu'))
+    model.load_state_dict(weight)
+    model.eval()
+    summary(model, (3, 112, 112))
+
+    dummy_input = torch.randn(10, 3, 112, 112)
+    # Default is training=torch.onnx.TrainingMode.EVAL, will fuse conv and batchnorm layers
+    # torch.onnx.export(model, dummy_input, onnx_save_path, verbose=False, keep_initializers_as_inputs=True)
+    # torch.onnx.export(model, dummy_input, onnx_save_path, verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.TRAINING)
+    torch.onnx.export(model, dummy_input, onnx_save_path, verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, do_constant_folding=True)
+    print(f"Saved onnx: {onnx_save_path = }")
+
+    traced_cell = torch.jit.trace(model, (dummy_input))
+    torch.jit.save(traced_cell, pth_save_path)
+    print(f"Saved jit pth: {pth_save_path = }")
+
+    aa = torch.jit.load(pth_save_path)
+    ```
+  - **onnx to keras**
+    ```sh
+    git clone https://github.com/gmalivenko/onnx2keras.git
+    cd onnx2keras
+    vi /opt/anaconda3/lib/python3.8/site-packages/onnx2keras/converter.py
+    - 203             1: 3,
+    + 203             1: -1,
+
+    pip install .
+    cd -
+    ```
+    ```py
+    import onnx
+    from onnx2keras import onnx_to_keras
+
+    # Load ONNX model
+    onnx_model_file = 'glint360k_cosface_r50_fp16_0.1.onnx'
+    onnx_model = onnx.load(onnx_model_file)
+    k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], name_policy="renumerate", change_ordering=True)
+    k_model.save(os.path.splitext(onnx_model_file)[0] + "_channel_last.h5")
+    ```
+  - **keras model load weights**
+    ```py
+    import models
+    import torch
+
+    torch_model_path = '../models/partial_fc_pytorch/glint360k_cosface_r50_fp16_0.1.pth'
+    torch_model = torch.jit.load(torch_model_path)
+    model_type = "r50" if "r50" in torch_model_path else "r100"
+    mm = models.buildin_models(model_type, dropout=0, emb_shape=512, output_layer='E', bn_momentum=0.9, bn_epsilon=1e-5, use_bias=True, scale=True, activation='PReLU')
+
+    torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+    print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+    keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+    print("torch_model total_parameters :", np.sum(list(keras_params.values())))
+
+    input_output_rr = {
+        "conv1" : "0_conv",
+        'bn1': '0_bn',
+        'prelu': '0_PReLU',
+        "bn2": "E_batchnorm",
+        "fc": "E_dense",
+        "features": "pre_embedding",
+    }
+    stack_rr = {"layer{}".format(ii): "stack{}_".format(ii) for ii in range(1, 5)}
+    block_rr = {"{}".format(ii): "block{}_".format(ii + 1) for ii in range(30)}
+    layer_rr = {
+        "bn1": "1_bn",
+        "conv1": "1_conv",
+        "bn2": "2_bn",
+        "prelu": "2_PReLU",
+        "conv2": "2_conv",
+        "bn3": "3_bn",
+        "downsample.0": "shortcut_conv",
+        "downsample.1": "shortcut_bn",
+    }
+
+    def match_layer_name(torch_layer_name):
+        splitted_name = torch_layer_name.split('.')
+        if splitted_name[0] in input_output_rr:
+             return input_output_rr[splitted_name[0]]
+        else:
+            stack_nn, block_nn = splitted_name[0], splitted_name[1]
+            if len(splitted_name) == 5: # 'layer1.0.downsample.0.weight'
+                layer_nn = ".".join(splitted_name[2:4])
+            else:
+                layer_nn = splitted_name[2]
+            return "".join([stack_rr[stack_nn], block_rr[block_nn], layer_rr[layer_nn]])
+
+    aa = torch_model.state_dict()
+    bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+    cc = set(bb.values())
+    print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+
+    # dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else 1].shape) for kk, vv in bb.items()}
+
+    tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
+    for kk, vv in bb.items():
+        torch_weight = aa[kk].detach().numpy()
+        torch_weight_type = kk.split(".")[-1]
+        if torch_weight_type == "num_batches_tracked":
+            continue
+
+        tf_layer = mm.get_layer(vv)
+        tf_weights = tf_layer.get_weights()
+        tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+        print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+        if tf_weight_pos == 0:
+            if isinstance(tf_layer, keras.layers.Conv2D):
+                torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+            elif isinstance(tf_layer, keras.layers.BatchNormalization):
+                torch_weight = torch_weight
+            elif isinstance(tf_layer, keras.layers.PReLU):
+                torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+            elif isinstance(tf_layer, keras.layers.Dense):
+                # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+                torch_weight = torch_weight.reshape(512, 512, 7, 7).transpose([2, 3, 1, 0]).reshape(-1, 512)
+
+        tf_weights[tf_weight_pos] = torch_weight
+        tf_layer.set_weights(tf_weights)
+
+    save_path = os.path.splitext(torch_model_path)[0] + ".h5"
+    mm.save(save_path)
+    print("Saved model:", save_path)
+
+    torch_out = torch_model(torch.from_numpy(np.ones([1, 3, 112, 112], dtype='float32'))).detach().numpy()
+    keras_out = mm(np.ones([1, 112, 112, 3], dtype='float32'))
+    print(f"{np.allclose(torch_out, keras_out, atol=1e-3) = }")
+    ```
+  - **Evaluating**
+    ```sh
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='0' ./IJB_evals.py -m ../models/partial_fc_pytorch/glint360k_cosface_r100_fp16_0.1.h5 -d /datasets/IJB_release/ -s IJBC
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='0' ./IJB_evals.py -m ../models/partial_fc_pytorch/partial_fc_glint360k_r50.h5 -d /datasets/IJB_release/ -s IJBC
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='0' ./IJB_evals.py -m ../models/partial_fc_pytorch/ms1mv3_arcface_r50_fp16.h5 -d /datasets/IJB_release/ -s IJBC
+
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m ../models/partial_fc_pytorch/glint360k_cosface_r50_fp16_0.1.h5 -d /datasets/IJB_release/ -s IJBC
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m ../models/partial_fc_pytorch/ms1mv3_arcface_r100_fp16.h5 -d /datasets/IJB_release/ -s IJBC
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='1' ./IJB_evals.py -m ../models/partial_fc_pytorch/partial_fc_glint360k_r100.h5 -d /datasets/IJB_release/ -s IJBC
+
+    TF_CPP_MIN_LOG_LEVEL=3 CUDA_VISIBLE_DEVICES='1' ./evals.py -m ../models/partial_fc_pytorch/partial_fc_glint360k_r100.h5 -t /datasets/celeb_deepglint/lfw.bin /datasets/celeb_deepglint/cfp_fp.bin /datasets/celeb_deepglint/agedb_30.bin
+    ```
+    | Datasets          | backbone     | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
+    | ----------------- | ------------ | ----------- | ----------- | ------- | ------ | ----- |
+    | MS1MV3-Arcface    | r34-fp16     | 94.10       | 95.90       | 98.10   | 98.67  | 99.80 |
+    | Glint360k-Cosface | r34-fp16-0.1 | 95.16       | 96.56       | 98.33   | 98.78  | 99.82 |
+    | MS1MV3-Arcface    | r18-fp16     | 92.07       | 94.66       | 97.77   | 97.73  | 99.77 |
+    | Glint360k-Cosface | r18-fp16-0.1 | 93.16       | 95.33       | 97.72   | 97.73  | 99.77 |
+
+    | model                           | lfw      | cfp_fp   | agedb_30 | IJBB     | IJBC     |
+    | ------------------------------- | -------- | -------- | -------- | -------- | -------- |
+    | glint360k_cosface_r18_fp16_0.1  | 0.997500 | 0.977143 | 0.976500 | 0.936806 | 0.9533   |
+    | glint360k_cosface_r34_fp16_0.1  | 0.998167 | 0.987000 | 0.982833 | 0.951801 | 0.9656   |
+    | ms1mv3_arcface_r50_fp16         | 0.998667 | 0.989143 | 0.983500 | 0.950049 | 0.964463 |
+    | glint360k_cosface_r50_fp16_0.1  | 0.998333 | 0.991429 | 0.983000 | 0.958228 | 0.969832 |
+    | partial_fc_glint360k_r50        | 0.998333 | 0.991000 | 0.983500 | 0.957157 | 0.970292 |
+    | ms1mv3_arcface_r100_fp16        | 0.998500 | 0.990143 | 0.984333 | 0.95482  | 0.968042 |
+    | glint360k_cosface_r100_fp16_0.1 | 0.998333 | 0.992143 | 0.984333 | 0.961928 | 0.973155 |
+    | partial_fc_glint360k_r100       | 0.998500 | 0.992286 | 0.985167 | 0.962512 | 0.974689 |
+
+    |                                         |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+    |:--------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+    | glint360k_cosface_r18_fp16_0.1_IJBB_11  |  0.40224 | 0.893574 | 0.936806 | 0.959202 | 0.976534 | 0.986952 |  0.99489 |
+    | glint360k_cosface_r34_fp16_0.1_IJBB_11  | 0.416748 | 0.917819 | 0.951801 | 0.968257 | 0.979552 | 0.989484 | 0.994851 |
+    | ms1mv3_arcface_r50_fp16_IJBB_11         | 0.383642 | 0.913535 | 0.950049 | 0.966018 | 0.978676 | 0.986563 | 0.993787 |
+    | glint360k_cosface_r50_fp16_0.1_IJBB_11  | 0.452872 | 0.926095 | 0.958228 | 0.969912 | 0.981402 | 0.989484 | 0.994999 |
+    | partial_fc_glint360k_r50_IJBB_11        | 0.436611 | 0.926972 | 0.957157 | 0.970691 | 0.979065 | 0.986855 | 0.993991 |
+    | ms1mv3_arcface_r100_fp16_IJBB_11        | 0.402045 | 0.921032 |  0.95482 | 0.969231 | 0.978384 |  0.98705 | 0.993661 |
+    | glint360k_cosface_r100_fp16_0.1_IJBB_11 |  0.46962 | 0.926193 | 0.961928 | 0.972444 | 0.981792 | 0.989289 | 0.994904 |
+    | partial_fc_glint360k_r100_IJBB_11       | 0.438169 | 0.935443 | 0.962512 | 0.972249 | 0.979649 | 0.987439 | 0.993628 |
+
+    |                                         |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+    |:--------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+    | ms1mv3_arcface_r50_fp16_IJBC_11         | 0.900343 | 0.947947 | 0.964463 | 0.976223 | 0.985427 | 0.991359 | 0.995856 |
+    | glint360k_cosface_r50_fp16_0.1_IJBC_11  | 0.914762 | 0.956128 | 0.969832 | 0.979751 | 0.987063 | 0.992841 | 0.996581 |
+    | partial_fc_glint360k_r50_IJBC_11        | 0.912001 | 0.956026 | 0.970292 | 0.980212 | 0.986143 | 0.991717 | 0.995828 |
+    | ms1mv3_arcface_r100_fp16_IJBC_11        | 0.909802 |  0.95306 | 0.968042 | 0.978831 | 0.985376 | 0.991665 | 0.995768 |
+    | glint360k_cosface_r100_fp16_0.1_IJBC_11 | 0.905763 | 0.958787 | 0.973155 | 0.981899 | 0.987319 | 0.992381 | 0.996522 |
+    | partial_fc_glint360k_r100_IJBC_11       | 0.877947 | 0.962622 | 0.974689 | 0.981643 |  0.98691 | 0.991768 | 0.995767 |
+# insightface scrfd
   ```py
   !pip install -U insightface onnxruntime onnx-simplifier mmcv-full terminaltables pycocotools
 
@@ -1431,6 +1700,603 @@
         output_names=,
     )
   ```
+# Resnest
+  ```py
+  from torchsummary import summary
+  import torch
+
+  from resnest.torch import resnest50
+  net = resnest50(pretrained=False)
+  summary(net, (3, 224, 224))
+
+  xx = torch.randn(10, 3, 224, 224)
+  torch.onnx.export(net, xx, "resnest50.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
+  ```
+# Volo fold unfold
+  - [Github sail-sg/volo](https://github.com/sail-sg/volo)
+    ```py
+    import torch
+    from torchsummary import summary
+    from models import volo
+
+    net = volo.volo_d1()
+    net.eval()
+
+    summary(net, (3, 224, 224))
+    traced_cell = torch.jit.trace(net, (torch.randn(10, 3, 224, 224)))
+    torch.jit.save(traced_cell, 'd1.pth')
+
+    # RuntimeError: Exporting the operator col2im to ONNX opset version 13 is not supported.
+    # torch.onnx.export(net, torch.randn(10, 3, 224, 224), "d1.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, do_constant_folding=True, opset_version=13)
+    ```
+  - **PyTorch fold and unfold**
+    ```py
+    import torch
+    from torch import nn
+
+    aa = np.arange(128, dtype='float32').reshape(1, 8, 4, 4)  # NCHW
+    inputs = torch.from_numpy(aa)
+
+    fold_params = dict(kernel_size=3, dilation=1, padding=1, stride=2)
+    fold = nn.Fold(output_size=inputs.shape[2:4], **fold_params)
+    unfold = nn.Unfold(**fold_params)
+
+    # Then for any (supported) input tensor the following equality holds:
+    # fold(unfold(inputs)) == divisor * inputs
+    # where divisor is a tensor that depends only on the shape and dtype of the input:
+    input_ones = torch.ones(inputs.shape, dtype=inputs.dtype)
+    divisor = fold(unfold(input_ones))  # Overlapped area will be > 1
+
+    aa_unfold = unfold(inputs)
+    aa_fold = fold(aa_unfold)
+    print(f"{divisor.shape = }, {aa_unfold.shape = }, {aa_fold.shape = }")
+    # divisor.shape = torch.Size([1, 8, 4, 4]), aa_unfold.shape = torch.Size([1, 72, 4]), aa_fold.shape = torch.Size([1, 8, 4, 4])
+    print(f"{np.allclose(fold(unfold(inputs)), divisor * inputs) = }")
+    # np.allclose(fold(unfold(inputs)), divisor * inputs) = True
+    print(f"{np.allclose(fold(unfold(inputs) * 2), divisor * 2 * inputs) = }")
+    # np.allclose(fold(unfold(inputs) * 2), divisor * 2 * inputs) = True
+
+    aa_unfold_2 = aa_unfold.reshape([1, 8, 9, 4]).permute(0, 3, 2, 1) # [1, 4, 9, 8]
+    attn = torch.from_numpy(np.arange(4 * 9 * 9, dtype="float32").reshape(1, 4, 9, 9))
+    aa_unfold_3 = attn @ aa_unfold_2 # [1, 4, 9, 8]
+    aa_unfold_3 = aa_unfold_3.permute(0, 3, 2, 1).reshape(1, 72, 4) # [1, 72, 4]
+    aa_fold_3 = fold(aa_unfold_3)
+
+    divisor_unfold_2 = unfold(input_ones)
+
+    divisor_2 = (divisor * attn) * inputs
+    ```
+  - **PyTorch fold and unfold and conv2d**
+    ```py
+    inp = torch.randn(1, 3, 10, 12)
+    w = torch.randn(2, 3, 4, 5)
+
+    inp_unf = torch.nn.functional.unfold(inp, (4, 5)) # [1, 60, 56]
+    inp_unf = inp_unf.transpose(1, 2) # [1, 56, 60]
+    ww = w.view(w.size(0), -1).t()  # [60, 2]
+    out_unf = inp_unf.matmul(ww)  # [1, 56, 2]
+    out_unf = out_unf.transpose(1, 2) # ([1, 2, 56]
+    out = torch.nn.functional.fold(out_unf, (7, 8), (1, 1)) # [1, 2, 7, 8]
+
+    print(f"{np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = }")
+    # np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = True
+    ```
+    ```py
+    inp = torch.randn(1, 3, 10, 12)
+    w = torch.randn(2, 3, 4, 5)
+
+    inp_unf = torch.nn.functional.unfold(inp, (4, 5), stride=2, padding=1) # [1, 60, 56]
+    inp_unf = inp_unf.transpose(1, 2) # [1, 56, 60]
+    ww = w.view(w.size(0), -1).t()  # [60, 2]
+    out_unf = inp_unf.matmul(ww)  # [1, 56, 2]
+    out_unf = out_unf.transpose(1, 2) # ([1, 2, 56]
+    out = torch.nn.functional.fold(out_unf, (7, 8), (1, 1), stride=2, padding=1) # [1, 2, 7, 8]
+
+    conv_out = torch.nn.functional.conv2d(inp, w, stride=2, padding=1)
+    print(f"{np.allclose(, out, atol=1e-6) = }")
+    # np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = True
+    ```
+    ```py
+    inp = torch.randn(1, 192, 28, 28)
+    w = torch.randn(192 * 9, 192, 3, 3)
+
+    inp_unf = torch.nn.functional.unfold(inp, (3, 3), stride=2, padding=1) # [1, 1728, 196]
+    inp_unf = inp_unf.transpose(1, 2) # [1, 196, 1728]
+    ww = w.view(w.size(0), -1).t()  # [1728, 54]
+    out_unf = inp_unf.matmul(ww)  # [1, 196, 54]
+    out_unf = out_unf.transpose(1, 2) # ([1, 54, 196]
+    out = torch.nn.functional.fold(out_unf, (28, 28), (3, 3), stride=2, padding=1) # [1, 6, 28, 28]
+
+    conv_out = torch.nn.functional.conv2d(inp, w, stride=2, padding=1) # (1, 54, 14, 14)
+    print(f"{np.allclose(conv_out, out, atol=1e-6) = }")
+    # np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = True
+    ```
+  - **Unfold**
+    ```py
+    image = imread('../../test_images/Anthony_Hopkins_0002.jpg')
+    aa = np.expand_dims(image.astype("float32"), 0)
+    cc = nn.Unfold(kernel_size=3, padding=1, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2)).permute(0, 2, 1)
+
+    bb = keras.layers.ZeroPadding2D(1)(aa)
+    bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID')
+
+    torch_stack = cc.numpy()[0].reshape(125, 125, 27).transpose(2, 0, 1) / 255 # RRR...GGG...BBB...
+    tf_stack = bb.numpy()[0].transpose(2, 0, 1) / 255  # RGBRGB...
+    plt.imshow(np.vstack([np.hstack(torch_stack), np.hstack(tf_stack)]))
+
+    print(f"{np.allclose(torch_stack[0], tf_stack[0], atol=1e-7) = }")
+    # np.allclose(torch_stack[0], tf_stack[0], atol=1e-7) = True
+    tf_picked_stack = tf_stack[np.hstack([np.arange(0, 27, 3), np.arange(1, 27, 3), np.arange(2, 27, 3)])] # RRR...GGG...BBB...
+    print(f"{np.allclose(tf_picked_stack, torch_stack, atol=1e-7) = }")
+    # np.allclose(tf_picked_stack, torch_stack, atol=1e-7) = True
+    ```
+    ```py
+    import torch
+    from torch import nn
+
+    aa = np.arange(128, dtype='float32').reshape(1, 4, 4, 8)
+    unfold_cc = nn.Unfold(kernel_size=3, padding=1, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2)).permute(0, 2, 1)
+    print(f"{unfold_cc.shape = }") # unfold_cc.shape = torch.Size([1, 4, 72])
+
+    bb = keras.layers.ZeroPadding2D(1)(aa)
+    bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID')
+    dd = bb.numpy()
+
+    tf_dd = dd[:, :, :, np.hstack([np.arange(ii, 72, 8) for ii in range(8)])]
+    print(f"{np.allclose(tf_dd, unfold_cc.reshape(*tf_dd.shape), atol=1e-7) = }")
+    # np.allclose(tf_dd, unfold_cc.reshape(*tf_dd.shape), atol=1e-7) = True
+    ```
+  - **Fold**
+  ```py
+  import torch
+  import torch.nn.functional as F
+
+  ff = np.arange(2 * 2 * 18, dtype='float32').reshape(1, 2, 2, 18)
+
+  torch_ff = torch.from_numpy(ff).reshape(-1, 4, ff.shape[-1]).permute(0, 2, 1)
+  fold_cc = F.fold(torch_ff, output_size=(4, 4), kernel_size=3, padding=1, stride=2).permute(0, 2, 3, 1)
+  torch_fold_cc = fold_cc.numpy()
+  print(f"{torch_fold_cc.shape = }")  # fold_cc.shape = (1, 4, 4, 8)
+
+  folder_filter = tf.ones([3, 3, 8, 72]) / 72
+  dd = tf.nn.conv2d_transpose(ff, folder_filter, [1, 4, 4, 8], 2, padding='SAME') # [1, 4, 4, 8]
+  ```
+  ```py
+  images = np.random.random((10, 28, 28, 3)).astype(np.float32)
+  PATCH_WIDTH, PATCH_HEIGHT = 3, 3
+
+  def extract_patches(x,):
+      ksizes = [1, PATCH_WIDTH, PATCH_HEIGHT, 1]
+      strides = [1, 16, 16, 1]
+      rates = [1, 1, 1, 1]
+      padding = 'SAME'
+      return tf.image.extract_patches(x, ksizes, strides, rates, padding)
+
+  def extract_patches_inverse(x, y, tape):
+      _x = tf.zeros_like(x)
+      _y = extract_patches(_x)
+      grad = tape.gradient(_y, _x)
+      # Divide by grad, to "average" together the overlapping patches
+      # otherwise they would simply sum up
+      return tape.gradient(_y, _x, output_gradients=y)
+
+  with tf.GradientTape(persistent=True) as tape:
+      tf_images = tf.convert_to_tensor(images)
+      tape.watch(tf_images)
+      patches = extract_patches(tf_images)
+      inv = extract_patches_inverse(tf_images, patches, tape)
+  ```
+  - **PyTorch and TF**
+  ```py
+  kernel_size, padding, stride, num_heads, embed_dim = 3, 1, 2, 6, 192
+  aa = np.ones([1, 28, 28, 192], dtype="float32")
+  ww, hh = int(np.ceil(aa.shape[1] / stride)), int(np.ceil(aa.shape[2] / stride)) # 14, 14
+  attn = np.random.uniform(size=[1, ww, hh, kernel_size ** 4 * num_heads]).astype("float32")
+  qk_scale = np.sqrt(embed_dim // num_heads)
+
+  """ PyTorch unfold """
+  import torch
+  import torch.nn.functional as F
+  from torch import nn
+
+  inputs = torch.from_numpy(aa) # B, C, H, W
+
+  # vv = nn.Linear(aa.shape[-1], embed_dim, bias=False)(inputs).permute(0, 3, 1, 2)  # [1, 384, 28, 28]
+  torch_unfold = inputs.permute(0, 3, 1, 2)
+  unfold = nn.Unfold(kernel_size=kernel_size, padding=padding, stride=stride)
+  torch_unfold = unfold(torch_unfold) # [1, 3456, 196]
+  F.unfold(torch_unfold, kernel_size, dilation=1, padding=padding, stride=stride)
+
+  vv = torch_unfold.reshape(1, num_heads, embed_dim // num_heads, kernel_size * kernel_size, ww * hh) # [1, 6, 64, 9, 196]
+  vv = vv.permute(0, 1, 4, 3, 2)  # B,H,N,kxk,C/H [1, 6, 196, 9, 64]
+
+  """ PyTorch attention """
+  # attn = nn.AvgPool2d(kernel_size=stride, stride=stride, ceil_mode=True)(inputs.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)  # [1, 14, 14, 192]
+  torch_attn = torch.from_numpy(attn)
+  torch_attn = torch_attn.reshape(1, ww * hh, num_heads, kernel_size * kernel_size, kernel_size * kernel_size).permute(0, 2, 1, 3, 4)  #
+  torch_attn = torch_attn / qk_scale
+  torch_attn = torch_attn.softmax(dim=-1) # [1, 6, 196, 9, 9]
+
+  """ PyTorch fold """
+  torch_before_fold_1 = (torch_attn @ vv)  # [1, 6, 196, 9, 64]
+  torch_before_fold_1 = torch_before_fold_1.permute(0, 1, 4, 3, 2)  # [1, 6, 64, 9, 196]
+  torch_before_fold = torch_before_fold_1.reshape(1, embed_dim * kernel_size * kernel_size, hh * ww) # [1, 3456, 196]
+  # 196 == ceil(aa.shape[1] / stride) * ceil(aa.shape[2] / stride), 1728 == 192 * kernel_size * kernel_size
+  xx = F.fold(torch_before_fold, output_size=aa.shape[1:3], kernel_size=kernel_size, padding=padding, stride=stride)  # [1, 384, 28, 28]
+  xx = xx.permute(0, 2, 3, 1) # [1, 28, 28, 384]
+  torch_out = xx.numpy()
+
+
+  """ TF unfold """
+  from tensorflow.keras import layers
+
+  num_head, strides = num_heads, stride
+  # bb = layers.Dense(embed_dim, use_bias=False)(aa)
+  bb = keras.layers.ZeroPadding2D(1)(aa)
+  bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID') # [1, 14, 14, 1728]
+
+  torch_cc = torch_unfold.permute(0, 2, 1).reshape(*bb.shape)
+  print(f"{np.allclose(torch_cc[0, :, :, 0], bb[0, :, :, 0]) = }")
+  # np.allclose(torch_cc[0, :, :, 0], bb[0, :, :, 0]) = True
+  tf_dd = bb.numpy()[:, :, :, np.hstack([np.arange(ii, bb.shape[-1], aa.shape[-1]) for ii in range(aa.shape[-1])])] # RGBRGB... --> RR...GG...BB...
+  print(f"{np.allclose(torch_cc, tf_dd, atol=1e-7) = }")
+  # np.allclose(torch_cc, tf_dd, atol=1e-7) = True
+
+  # bb = tf.reshape(bb, [bb.shape[0], -1, bb.shape[-1]]) # [1, 196, 1728]
+  # bb = tf.reshape(bb, [-1, ww, hh, num_head, embed_dim // num_head, kernel_size * kernel_size]) # [1, 14, 14, 6, 32, 9]
+  bb = tf.reshape(tf_dd, [-1, ww, hh, num_head, embed_dim padding=// num_head, kernel_size * kernel_size]) # [1, 14, 14, 6, 32, 9]
+
+  """ TF attention """
+  # attn = keras.layers.AveragePooling2D(pool_size=stride, strides=stride)(aa) # [1, 14, 14, 192]
+  # attn = layers.Dense(kernel_size ** 4 * num_heads)(attn) # [1, 14, 14, 486]
+  tf_attn = tf.reshape(attn, (-1, ww, hh, num_head, kernel_size * kernel_size, kernel_size * kernel_size)) / qk_scale # [1, 14, 14, 6, 9, 9]
+  attention_weights = tf.nn.softmax(tf_attn, axis=-1)  # [1, 14, 14, 6, 9, 9]
+  print(f"{np.allclose(torch_attn.permute(0, 2, 1, 3, 4).reshape(*attention_weights.shape), attention_weights) = }")
+  # np.allclose(torch_attn.permute(0, 2, 1, 3, 4).reshape(*attention_weights.shape), attention_weights) = True
+
+  """ TF fold """
+  tf_before_fold_1 = tf.matmul(attention_weights, bb, transpose_b=True)  # [1, 14, 14, 6, 9, 32],  The last two dimensions [9, 9] @ [9, 32] --> [9, 32]
+  tf_before_fold_1 = tf.transpose(tf_before_fold_1, [0, 1, 2, 3, 5, 4]) # [1, 14, 14, 6, 32, 9]
+  tf_before_fold = tf.reshape(tf_before_fold_1, [-1, ww, hh, embed_dim * kernel_size * kernel_size]) # [1, 14, 14, 1728]
+  print(f"{np.allclose(torch_before_fold.permute(0, 2, 1).reshape(*tf_before_fold.shape), tf_before_fold) = }")
+  # np.allclose(torch_before_fold.permute(0, 2, 1).reshape(*tf_before_fold.shape), tf_before_fold) = True
+
+  folder_filter = tf.ones([3, 3, aa.shape[-1], tf_before_fold.shape[-1]]) / tf_before_fold.shape[-1]
+  dd = tf.nn.conv2d_transpose(tf_before_fold, folder_filter, [1, ww * stride, hh * stride, aa.shape[-1]], stride) # [1, 28, 28, 192]
+  tf_out = dd.numpy()
+
+  print(f"{torch_out.shape = }, {torch_out.max() = }, {torch_out.min() = }, {torch_out.mean() = }, {torch_out.sum() = }")
+  # torch_out.shape = (1, 28, 28, 192), torch_out.max() = 4.0000005, torch_out.min() = 0.43712577, torch_out.mean() = 2.0750084, torch_out.sum() = 312346.88
+  print(f"{tf_out.shape = }, {tf_out.max() = }, {tf_out.min() = }, {tf_out.mean() = }, {tf_out.sum() = }")
+  # tf_out.shape = (1, 28, 28, 192), tf_out.max() = 3.9999993, tf_out.min() = 0.44550508, tf_out.mean() = 2.040912, tf_out.sum() = 307214.38
+  ```
+  ```py
+  def image_to_patches(image, patch_height, patch_width):
+      # resize image so that it's dimensions are dividable by patch_height and patch_width
+      image_height = tf.cast(tf.shape(image)[0], dtype=tf.float32)
+      image_width = tf.cast(tf.shape(image)[1], dtype=tf.float32)
+      height = tf.cast(tf.ceil(image_height / patch_height) * patch_height, dtype=tf.int32)
+      width = tf.cast(tf.ceil(image_width / patch_width) * patch_width, dtype=tf.int32)
+
+      num_rows = height // patch_height
+      num_cols = width // patch_width
+      # make zero-padding
+      image = tf.squeeze(tf.image.resize_image_with_crop_or_pad(image, height, width))
+
+      # get slices along the 0-th axis
+      image = tf.reshape(image, [num_rows, patch_height, width, -1])
+      # h/patch_h, w, patch_h, c
+      image = tf.transpose(image, [0, 2, 1, 3])
+      # get slices along the 1-st axis
+      # h/patch_h, w/patch_w, patch_w,patch_h, c
+      image = tf.reshape(image, [num_rows, num_cols, patch_width, patch_height, -1])
+      # num_patches, patch_w, patch_h, c
+      image = tf.reshape(image, [num_rows * num_cols, patch_width, patch_height, -1])
+      # num_patches, patch_h, patch_w, c
+      return tf.transpose(image, [0, 2, 1, 3])
+  ```
+  ```py
+  c = 3
+  h = 1024
+  p = 32
+
+  image = tf.ones([h,h,c])
+  patch_size = [1,p,p,1]
+  patches = tf.image.extract_patches([image], patch_size, patch_size, [1, 1, 1, 1], 'VALID')  # [1, 32, 32, 3072]
+  print(f"{patches.shape = }")
+  patches = tf.reshape(patches, [h, p, p, c]) # [1024, 32, 32, 3]
+  print(f"{patches.shape = }")
+  reconstructed = tf.reshape(patches, [1, h, h, c]) # [1, 1024, 1024, 3]
+  print(f"{reconstructed.shape = }")
+  rec_new = tf.nn.space_to_depth(reconstructed,p) # [1, 32, 32, 3072]
+  print(f"{rec_new.shape = }")
+  rec_new = tf.reshape(rec_new,[h,h,c]) # [1024, 1024, 3]
+  print(f"{rec_new.shape = }")
+  ```
+  ```py
+  kernel_size, padding, stride, num_heads = 3, 1, 2, 6
+  aa = np.ones([1, 28, 28, 192], dtype="float32")
+
+  """ PyTorch unfold """
+  from torch import nn
+
+  vv = torch.from_numpy(aa).permute(0, 3, 1, 2) # B, C, H, W
+
+  unfold = nn.Unfold(kernel_size=kernel_size, padding=padding, stride=stride)
+  vv = unfold(vv) # [1, 1728, 196]
+
+  ww, hh = int(np.ceil(aa.shape[1] / stride)), int(np.ceil(aa.shape[2] / stride)) # 14, 14
+  vv = vv.reshape(1, num_heads, aa.shape[-1] // num_heads, kernel_size * kernel_size, ww * hh) # [1, 6, 32, 9, 196]
+  vv = vv.permute(0, 1, 4, 3, 2)  # B,H,N,kxk,C/H [1, 6, 196, 9, 32]
+
+  """ PyTorch fold """
+  attn = torch.ones([1, 6, 196, 9, 9])
+  xx = (attn @ vv)  # [1, 6, 196, 9, 32]
+  xx = xx.permute(0, 1, 4, 3, 2)  # [1, 6, 32, 9, 196]
+  xx = xx.reshape(1, aa.shape[-1] * kernel_size * kernel_size, hh * ww) # [1, 1728, 196]
+  # 196 == ceil(aa.shape[1] / stride) * ceil(aa.shape[2] / stride), 1728 == 192 * kernel_size * kernel_size
+  x = F.fold(xx, output_size=aa.shape[1:3], kernel_size=kernel_size, padding=padding, stride=stride)  # [1, 192, 28, 28]
+  xx = xx.permute(0, 2, 3, 1) # [1, 28, 28, 192]
+  ```
+# Volo load torch weights
+  ```py
+  import torch
+  from torchsummary import summary
+
+  sys.path.append('../volo')
+  import models.volo as torch_volo
+
+  model_path = "../models/volo/d1_224_84.2.pth.tar"
+  model_type = "volo_" + os.path.basename(model_path).split("_")[0]
+  input_shape = int(os.path.basename(model_path).split("_")[1])
+  print(f">>>> {model_path = }, {model_type = }, {input_shape = }")
+
+  torch_model = getattr(torch_volo, model_type)(img_size=input_shape)
+  torch_model.eval()
+
+  summary(torch_model, (3, input_shape, input_shape))
+
+  from utils import load_pretrained_weights
+  load_pretrained_weights(torch_model, model_path, use_ema=False, strict=True, num_classes=1000)
+
+  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  import volo
+  mm = getattr(volo, model_type)(input_shape=(input_shape, input_shape, 3), classfiers=2, num_classes=1000)
+  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
+  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
+
+  input_output_rr = {
+      "patch_embed.conv.0" : "stem_1_conv",
+      'patch_embed.conv.1': 'stem_1_bn',
+      'patch_embed.conv.3': 'stem_2_conv',
+      "patch_embed.conv.4": "stem_2_bn",
+      "patch_embed.conv.6": "stem_3_conv",
+      "patch_embed.conv.7": "stem_3_bn",
+      "patch_embed.proj": "stem_patch_conv",
+      "norm": "pre_out_LN",
+      "head": "token_head",
+      "aux_head": "aux_head",
+      "cls_token": "class_token",
+      "pos_embed": "stack_0_positional",
+      "network.1.proj": "stack_0_downsample",
+  }
+  network_stack_rr = {'0': 'stack0_', '2': 'stack1_', '3': 'stack2_', '4': 'stack3_'}
+  network_block_rr = {"{}".format(ii): "block{}_".format(ii) for ii in range(30)}
+  layer_rr = {
+      "norm1": "LN",
+      "attn.v": "attn_v",
+      "attn.q": "attn_q",
+      "attn.kv": "attn_kv",
+      "attn.qkv": "attn_qkv",
+      "attn.attn": "attn_attn",
+      "attn.proj": "attn_out",
+      "norm2": "mlp_LN",
+      "mlp.fc1": "mlp_dense_1",
+      "mlp.fc2": "mlp_dense_2",
+  }
+  post_network_block_rr = {"0": "classfiers0_", "1": "classfiers1_"}
+
+  def match_layer_name(torch_layer_name):
+      splitted_name = torch_layer_name.split('.')
+      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
+      if layer_name in input_output_rr:
+           return input_output_rr[layer_name]
+      elif splitted_name[0] == "network":
+          stack_nn, block_nn = splitted_name[1], splitted_name[2]
+          layer_nn = ".".join(splitted_name[3:-1])
+          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], layer_rr[layer_nn]])
+      elif splitted_name[0] == "post_network":
+          block_nn = splitted_name[1]
+          layer_nn = ".".join(splitted_name[2:-1])
+          return "".join([post_network_block_rr[block_nn], layer_rr[layer_nn]])
+      else:
+          return None
+
+  aa = torch_model.state_dict()
+  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+  cc = set(bb.values())
+  print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
+  # torch layers not contained in TF: []
+
+  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
+  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
+  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
+  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
+
+  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3, "pos_embed": 0, "cls_token": 0}
+  for kk, vv in bb.items():
+      torch_weight = aa[kk].detach().numpy()
+      torch_weight_type = kk.split(".")[-1]
+      if torch_weight_type == "num_batches_tracked":
+          continue
+
+      tf_layer = mm.get_layer(vv)
+      tf_weights = tf_layer.get_weights()
+      tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+      if tf_weight_pos == 0:
+          if isinstance(tf_layer, keras.layers.Conv2D):
+              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+          elif isinstance(tf_layer, keras.layers.BatchNormalization):
+              torch_weight = torch_weight
+          elif isinstance(tf_layer, keras.layers.PReLU):
+              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+          elif isinstance(tf_layer, keras.layers.Dense):
+              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+              torch_weight = torch_weight.T
+
+      tf_weights[tf_weight_pos] = torch_weight
+      tf_layer.set_weights(tf_weights)
+
+  save_path = os.path.basename(model_path).replace(".pth.tar", ".h5")
+  mm.save(save_path)
+  print("Saved model:", save_path)
+
+  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
+  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  print(f"{np.allclose(torch_out, keras_out, atol=5e-3) = }")
+  ```
+  ```py
+  import volo
+  index = 1
+  model_paths = [
+      "../models/volo/d1_224_84.2.h5",
+      "../models/volo/d1_384_85.2.h5",
+      "../models/volo/d2_224_85.2.h5",
+      "../models/volo/d2_384_86.0.h5",
+      "../models/volo/d3_224_85.4.h5",
+      "../models/volo/d3_448_86.3.h5",
+      "../models/volo/d4_224_85.7.h5",
+      "../models/volo/d4_448_86.79.h5",
+      "../models/volo/d5_224_86.10.h5",
+      "../models/volo/d5_512_87.07.h5",
+  ]
+  model_path = model_paths[index]
+  model_type = "volo_" + os.path.basename(model_path).split("_")[0]
+  input_shape = int(os.path.basename(model_path).split("_")[1])
+  print(f">>>> {model_path = }, {model_type = }, {input_shape = }")
+
+  mm = getattr(volo, model_type)(input_shape=(input_shape, input_shape, 3), classfiers=2, num_classes=1000)
+  mm.load_weights(model_path)
+
+  bb = keras.models.load_model(model_path)
+
+  keras_out_1 = bb(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  keras_out_2 = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  assert np.allclose(keras_out_1, keras_out_2, atol=1e-7)
+  print(f">>>> {np.allclose(keras_out_1, keras_out_2, atol=1e-7) = }")
+  mm.save(model_path)
+  ```
+  ```py
+  index = 0
+  model_paths = [
+      "../models/volo/d1_224_84.2.pth.tar",
+      "../models/volo/d1_384_85.2.pth.tar",
+      "../models/volo/d2_224_85.2.pth.tar",
+      "../models/volo/d2_384_86.0.pth.tar",
+      "../models/volo/d3_224_85.4.pth.tar",
+      "../models/volo/d3_448_86.3.pth.tar",
+      "../models/volo/d4_224_85.7.pth.tar",
+      "../models/volo/d4_448_86.79.pth.tar",
+      "../models/volo/d5_224_86.10.pth.tar",
+      "../models/volo/d5_512_87.07.pth.tar",
+  ]
+
+  model_path = model_paths[index]
+  model_type = "volo_" + os.path.basename(model_path).split("_")[0]
+  input_shape = int(os.path.basename(model_path).split("_")[1])
+  keras_model_path = model_path.replace(".pth.tar", ".h5")
+  print(f">>>> {model_path = }, {keras_model_path = }, {model_type = }, {input_shape = }")
+
+  import torch
+  sys.path.append('../volo')
+  import models.volo as torch_volo
+  from utils import load_pretrained_weights
+  torch_model = getattr(torch_volo, model_type)(img_size=input_shape)
+  torch_model.eval()
+  load_pretrained_weights(torch_model, model_path, use_ema=False, strict=True, num_classes=1000)
+
+  import volo
+  mm = keras.models.load_model(keras_model_path)
+
+  inputs = np.random.uniform(size=(1, input_shape, input_shape, 3)).astype("float32")
+  torch_out = torch_model(torch.from_numpy(inputs).permute(0, 3, 1, 2)).detach().numpy()
+  keras_out = mm(inputs).numpy()
+  print(f"{(np.abs(torch_out - keras_out) < 1e-3).sum() / keras_out.shape[-1] = }")
+  print(f"{(np.abs(torch_out - keras_out) < 5e-3).sum() / keras_out.shape[-1] = }")
+  print(f"{(np.abs(torch_out - keras_out) < 1e-2).sum() / keras_out.shape[-1] = }")
+  print(f"{(np.abs(torch_out - keras_out) < 5e-2).sum() / keras_out.shape[-1] = }")
+  ```
+# Volo check
+- **PyTorch**
+```py
+torch_aa = torch.from_numpy(np.ones([1, 3, 224, 224], dtype='float32'))
+outlooker = torch_model.network[0][0]
+oa = outlooker.attn
+torch_before_attn = outlooker.norm1(torch_model.forward_embeddings(torch_aa))
+torch_attn = (oa.attn(oa.pool(torch_before_attn.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)).reshape([1, 196, 6, 9, 9]).permute(0, 2, 1, 3, 4) * oa.scale).softmax(-1)
+
+torch_vv = oa.unfold(oa.v(torch_before_attn).permute(0, 3, 1, 2)).reshape([1, 6, 32, 9, 196]).permute(0, 1, 4, 3, 2)
+
+torch_before_fold = (torch_attn @ torch_vv).permute(0, 1, 4, 3, 2).reshape(1, 1728, 196)
+torch_fold = torch.nn.functional.fold(torch_before_fold, output_size=(28, 28), kernel_size=3, padding=1, stride=2)
+```
+```py
+
+```
+- **TF**
+```py
+tf_aa = tf.ones((1, 224, 224, 3))
+tf_vv = keras.models.Model(mm.inputs[0], mm.get_layer('tf.reshape').output)(tf_aa)
+tf_attn = keras.models.Model(mm.inputs[0], mm.get_layer('tf.nn.softmax').output)(tf_aa)
+tf_before_fold = tf.reshape(tf.matmul(tf_vv, tf_attn, transpose_b=True), [-1, 196, 1728])
+tf_fold = mm.get_layer('torch_fold')(tf_before_fold)
+
+print(f"{np.allclose(tf_vv, torch_vv.permute(0, 2, 1, 4, 3).detach(), atol=1e-2) = }")
+print(f"{np.allclose(tf_attn, torch_attn.permute(0, 2, 1, 3, 4).detach(), atol=1e-3) = }")
+print(f"{np.allclose(tf_before_fold, torch_before_fold.permute(0, 2, 1).detach(), atol=1e-2) = }")
+print(f"{np.allclose(tf_fold, torch_fold.permute(0, 2, 3, 1).detach(), atol=1e-2) = }")
+```
+```py
+torch_outlooker_out = torch_model.network[0][0](torch_model.forward_embeddings(torch_aa)).detach()
+tf_block_0_out = keras.models.Model(mm.inputs[0], mm.get_layer('add_1').output)(tf_aa)
+print(f"{np.allclose(torch_outlooker_out, tf_block_0_out, atol=5e-2) = }")
+
+torch_network_out = torch_model.forward_tokens(torch_model.forward_embeddings(torch_aa)).detach().numpy()
+tf_stack_out = keras.models.Model(mm.inputs[0], mm.get_layer('tf.reshape_40').output)(tf_aa).numpy()
+print(f"{np.allclose(torch_network_out, tf_stack_out, atol=4e-1) = }, {(np.abs(torch_network_out - tf_stack_out) > 5e-2).sum() = }")
+# np.allclose(torch_network_out, tf_stack_out, atol=4e-1) = True, (np.abs(torch_network_out - tf_stack_out) > 5e-2).sum() = 686
+
+torch_xx = torch_model.norm(torch_model.forward_cls(torch_model.forward_tokens(torch_model.forward_embeddings(torch_aa))))
+tf_xx = keras.models.Model(mm.inputs[0], mm.get_layer('pre_out_LN').output)(tf_aa).numpy()
+print(f"{np.allclose(torch_xx.detach().numpy(), tf_xx, atol=1e-2) = }")
+
+x_cls = torch_model.head(torch_xx[:, 0])
+x_aux = torch_model.aux_head(x[:, 1:])
+
+x_cls + 0.5 * x_aux.max(1)[0]
+```
+# PyTorch fold and unfold
+```py
+F.fold(torch.from_numpy(np.arange(36).reshape(1, 9, 4).astype('float32')), output_size=(4, 4), kernel_size=3, padding=1, stride=2)
+# [[[[16. 33. 17. 21.] [34. 70. 36. 44.] [18. 37. 19. 23.] [30. 61. 31. 35.]]]]
+F.fold(torch.from_numpy(np.arange(36).reshape(1, 9, 4).astype('float32')), output_size=(2, 2), kernel_size=3, padding=1, stride=1)
+# [[[[ 38.  54.] [ 86. 102.]]]]
+```
+```py
+import torch
+from torch import nn
+fold = nn.Fold(output_size=(4, 5), kernel_size=(2, 2))
+input = torch.randn(1, 3 * 2 * 2, 12)
+output = fold(input)
+output.size()
+```
 ***
 
 # IJB to bins
@@ -1850,3 +2716,24 @@
   # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
   ```
 ***
+```py
+pos = np.arange(-1, 1, 0.01)
+neg = 1 - pos
+
+margin = 0.5
+arc = np.cos(np.arccos(pos) + margin)
+
+margin = 0.35
+ada = np.cos(np.arccos(pos) + np.maximum(neg, 0) + margin)
+
+margin = 0.35
+cosf = pos - margin
+
+plt.plot(pos, pos, label="original")
+plt.plot(pos, arc, label="arc")
+plt.plot(pos, ada, label="ada")
+plt.plot(pos, cosf, label="cosf")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+```
