@@ -1,3 +1,6 @@
+# ___2021 - 07 - 06 Transformer___
+***
+
 # Attention
   - [遍地开花的 Attention ，你真的懂吗？](https://developer.aliyun.com/article/713354)
   - [综述---图像处理中的注意力机制](https://blog.csdn.net/xys430381_1/article/details/89323444)
@@ -9,6 +12,179 @@
   - `keras.layers.AdditiveAttention` a.k.a. Bahdanau-style attention. [Eager 执行环境与 Keras 定义 RNN 模型使用注意力机制为图片命名标题](https://github.com/leondgarse/Atom_notebook/blob/master/public/2018/09-06_tensorflow_tutotials.md#eager-%E6%89%A7%E8%A1%8C%E7%8E%AF%E5%A2%83%E4%B8%8E-keras-%E5%AE%9A%E4%B9%89-rnn-%E6%A8%A1%E5%9E%8B%E4%BD%BF%E7%94%A8%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E4%B8%BA%E5%9B%BE%E7%89%87%E5%91%BD%E5%90%8D%E6%A0%87%E9%A2%98)
   - `keras.layers.MultiHeadAttention` multi-headed scaled dot-product attention based on "Attention is all you Need"
   - [Github Keras Attention Augmented Convolutions](https://github.com/titu1994/keras-attention-augmented-convs)
+***
+
+# BotNet
+  - [aravindsrinivas/botnet.py](https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2)
+  - [leondgarse/botnet.py](https://gist.github.com/leondgarse/351dba9457c5a36516aea3ce1950ac74)
+  - **botnet MHSA**
+    ```py
+    from icecream import ic
+    inputs = keras.layers.Input([14, 16, 1024])
+    featuremap = inputs
+
+    print(botnet.MHSA(featuremap, 512, pos_enc_type='relative', heads=4).shape)
+    # (None, 14, 16, 512)
+
+    q = botnet.group_pointwise(featuremap, proj_factor=1, name='q_proj', heads=4, target_dimension=512)
+    k = botnet.group_pointwise(featuremap, proj_factor=1, name='k_proj', heads=4, target_dimension=512)
+    v = botnet.group_pointwise(featuremap, proj_factor=1, name='v_proj', heads=4, target_dimension=512)
+
+    ic(q.shape.as_list(), k.shape.as_list(), v.shape.as_list())
+    # q.shape.as_list(): [None, 4, 14, 16, 128]
+    print(botnet.relpos_self_attention(q=q, k=k, v=v, relative=True, fold_heads=True).shape)
+    # (None, 14, 16, 512)
+
+    relative, fold_heads = True, True
+    bs, heads, h, w, dim = q.shape
+    int_dim = int(dim)
+    q = q * (dim ** -0.5) # scaled dot-product
+    logits = tf.einsum('bhHWd,bhPQd->bhHWPQ', q, k)
+    if relative:
+        logits += botnet.relative_logits(q)
+    # weights = tf.reshape(logits, [-1, heads, h, w, h * w])
+    # weights = tf.nn.softmax(weights)
+    # weights = tf.reshape(weights, [-1, heads, h, w, h, w])
+    weights = tf.nn.softmax(logits)
+    attn_out = tf.einsum('bhHWPQ,bhPQd->bHWhd', weights, v)
+    if fold_heads:
+        attn_out = tf.reshape(attn_out, [-1, h, w, heads * dim])
+    ic(attn_out.shape.as_list())
+    # ic| attn_out.shape.as_list(): [None, 14, 16, 512]
+    ```
+  - **relative_logits**
+    ```py
+    def rel_to_abs(x):
+        """
+        Converts relative indexing to absolute.
+        Input: [bs, heads, h, w, 2*w - 1]
+        Output: [bs, heads, h, w, w]
+        """
+        bs, heads, h, w, dim = x.shape
+        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
+        x = tf.concat([x, col_pad], axis=-1)
+        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
+        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
+        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
+        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
+        final_x = final_x[:, :, :, :w, w-1:]
+        return final_x
+
+
+    def relative_logits_1d(*, q, rel_k, transpose_mask):
+        """
+        Compute relative logits along one dimenion.
+        `q`: [bs, heads, height, width, dim]
+        `rel_k`: [2*width - 1, dim]
+        """
+        bs, heads, h, w, dim = q.shape
+        # rel_logits = tf.einsum('bhxyd,md->bhxym', q, rel_k)
+        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
+        rel_logits = rel_to_abs(rel_logits)
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        return rel_logits
+
+
+    def relative_logits(q):
+        bs, heads, h, w, dim = q.shape
+        stddev = dim ** -0.5
+        rel_emb_w = tf.compat.v1.get_variable('r_width', shape=(2*w - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
+        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
+
+        # Relative logits in height dimension.
+        rel_emb_h = tf.compat.v1.get_variable('r_height', shape=(2*h - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
+        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
+        return rel_logits_h + rel_logits_w
+    ```
+    ```py
+    aa = tf.convert_to_tensor(np.arange(45).reshape(1, 1, 3, 3, 5))
+    rel_to_abs(aa)
+    print(aa[0, 0].numpy())
+    # [[[ 0  1  2  3  4]
+    #   [ 5  6  7  8  9]
+    #   [10 11 12 13 14]]
+    #  [[15 16 17 18 19]
+    #   [20 21 22 23 24]
+    #   [25 26 27 28 29]]
+    #  [[30 31 32 33 34]
+    #   [35 36 37 38 39]
+    #   [40 41 42 43 44]]]
+    print(rel_to_abs(aa)[0, 0].numpy())
+    # [[[ 2  3  4]
+    #   [ 6  7  8]
+    #   [10 11 12]]
+    #  [[17 18 19]
+    #   [21 22 23]
+    #   [25 26 27]]
+    #  [[32 33 34]
+    #   [36 37 38]
+    #   [40 41 42]]]
+    ```
+  - **keras.layers.MultiHeadAttention**
+    ```py
+    from tensorflow.python.ops import math_ops
+    from tensorflow.python.ops import special_math_ops
+    from icecream import ic
+    inputs = keras.layers.Input([14, 16, 1024])
+
+    nn = keras.layers.MultiHeadAttention(num_heads=4, key_dim=128)
+    ic(nn(inputs, inputs).shape.as_list())
+    # ic| nn(inputs, inputs).shape.as_list(): [None, 14, 16, 1024]
+
+    query = nn._query_dense(inputs)
+    key = nn._key_dense(inputs)
+    value = nn._value_dense(inputs)
+    ic(query.shape.as_list(), key.shape.as_list(), value.shape.as_list())
+    # ic| query.shape.as_list(): [None, 14, 16, 4, 128]
+
+    # attention_output, attention_scores = nn._compute_attention(query, key, value)
+    query = math_ops.multiply(query, 1.0 / math.sqrt(float(nn._key_dim)))
+    # 'afgde,abcde->adbcfg', 'bhHWd,bhPQd->bhHWPQ' == 'afgde,adbce->afgdbc'
+    attention_scores = special_math_ops.einsum(nn._dot_product_equation, key, query)
+    ic(attention_scores.shape.as_list())
+    # ic| attention_scores.shape.as_list(): [None, 4, 14, 16, 14, 16]
+
+    if relative:
+        query = tf.transpose(query, [0, 3, 1, 2, 4])
+        attention_scores += relative_logits(query)
+    attention_scores = nn._masked_softmax(attention_scores, None)
+    attention_scores_dropout = nn._dropout_layer(attention_scores, training=False)
+    attention_output = special_math_ops.einsum(nn._combine_equation, attention_scores_dropout, value)
+    ic(attention_output.shape.as_list())
+    # ic| attention_output.shape.as_list(): [None, 14, 16, 4, 128]
+
+    attention_output = nn._output_dense(attention_output)
+    ic(attention_output.shape.as_list())
+    # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
+    ```
+    ```py
+    def rel_to_abs(x):
+        bs, heads, h, w, dim = x.shape
+        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
+        x = tf.concat([x, col_pad], axis=-1)
+        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
+        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
+        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
+        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
+        final_x = final_x[:, :, :, :w, w-1:]
+        return final_x
+
+    def relative_logits_1d(*, q, rel_k, transpose_mask):
+        bs, heads, h, w, dim = q.shape
+        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
+        rel_logits = rel_to_abs(rel_logits)
+        rel_logits = tf.expand_dims(rel_logits, axis=3)
+        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
+        rel_logits = tf.transpose(rel_logits, transpose_mask)
+        return rel_logits
+
+    def relative_logits(q):
+        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
+        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
+        return rel_logits_h + rel_logits_w
+    ```
 ***
 
 # Word2Vec
@@ -609,64 +785,63 @@
 ***
 
 # VOLO
-## Volo fold unfold
-  - [Github sail-sg/volo](https://github.com/sail-sg/volo)
+## PyTorch fold and unfold and conv2d
+  - [torch.nn.Unfold](https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html)
+  - Torch `unfold --> fold` will cumulative sum values on overlapped areas.
     ```py
     import torch
-    from torchsummary import summary
-    from models import volo
+    import torch.nn.functional as F
+    aa = torch.arange(16, dtype=torch.float32).reshape(1, 1, 4, 4)  # NCHW
+    bb = F.unfold(aa, 3, padding=1, stride=2)
+    print(f"{bb.shape = }")
+    # bb.shape = torch.Size([1, 9, 4])
+    print(bb[0].reshape(3, 3, 2, 2).permute(2, 0, 3, 1).reshape(6, 6).numpy())
+    # [[ 0.  0.  0.  0.  0.  0.]
+    #  [ 0.  0.  1.  1.  2.  3.]
+    #  [ 0.  4.  5.  5.  6.  7.]
+    #  [ 0.  4.  5.  5.  6.  7.]
+    #  [ 0.  8.  9.  9. 10. 11.]
+    #  [ 0. 12. 13. 13. 14. 15.]]
+    print(F.fold(bb, (4, 4), 3, padding=1, stride=2)[0, 0].numpy())
+    # [[ 0.  2.  2.  3.]
+    #  [ 8. 20. 12. 14.]
+    #  [ 8. 18. 10. 11.]
+    #  [12. 26. 14. 15.]]
+    print(F.fold(bb, (3, 3), 3, padding=1, stride=2)[0, 0].numpy())
+    # [[ 0.  2.  2.]
+    #  [ 8. 20. 12.]
+    #  [ 8. 18. 10.]]
 
-    net = volo.volo_d1()
-    net.eval()
-
-    summary(net, (3, 224, 224))
-    traced_cell = torch.jit.trace(net, (torch.randn(10, 3, 224, 224)))
-    torch.jit.save(traced_cell, 'd1.pth')
-
-    # RuntimeError: Exporting the operator col2im to ONNX opset version 13 is not supported.
-    # torch.onnx.export(net, torch.randn(10, 3, 224, 224), "d1.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, do_constant_folding=True, opset_version=13)
-    ```
-  - **PyTorch fold and unfold**
-    ```py
-    import torch
     from torch import nn
-
-    aa = np.arange(128, dtype='float32').reshape(1, 8, 4, 4)  # NCHW
-    inputs = torch.from_numpy(aa)
-
+    inputs = torch.arange(128, dtype=torch.float32).reshape(1, 8, 4, 4)  # NCHW
     fold_params = dict(kernel_size=3, dilation=1, padding=1, stride=2)
     fold = nn.Fold(output_size=inputs.shape[2:4], **fold_params)
     unfold = nn.Unfold(**fold_params)
 
-    # Then for any (supported) input tensor the following equality holds:
-    # fold(unfold(inputs)) == divisor * inputs
-    # where divisor is a tensor that depends only on the shape and dtype of the input:
-    input_ones = torch.ones(inputs.shape, dtype=inputs.dtype)
-    divisor = fold(unfold(input_ones))  # Overlapped area will be > 1
-
-    aa_unfold = unfold(inputs)
-    aa_fold = fold(aa_unfold)
-    print(f"{divisor.shape = }, {aa_unfold.shape = }, {aa_fold.shape = }")
-    # divisor.shape = torch.Size([1, 8, 4, 4]), aa_unfold.shape = torch.Size([1, 72, 4]), aa_fold.shape = torch.Size([1, 8, 4, 4])
+    divisor = fold(unfold(torch.ones_like(inputs)))  # Overlapped area will be > 1
     print(f"{np.allclose(fold(unfold(inputs)), divisor * inputs) = }")
     # np.allclose(fold(unfold(inputs)), divisor * inputs) = True
-    print(f"{np.allclose(fold(unfold(inputs) * 2), divisor * 2 * inputs) = }")
-    # np.allclose(fold(unfold(inputs) * 2), divisor * 2 * inputs) = True
-
-    aa_unfold_2 = aa_unfold.reshape([1, 8, 9, 4]).permute(0, 3, 2, 1) # [1, 4, 9, 8]
-    attn = torch.from_numpy(np.arange(4 * 9 * 9, dtype="float32").reshape(1, 4, 9, 9))
-    aa_unfold_3 = attn @ aa_unfold_2 # [1, 4, 9, 8]
-    aa_unfold_3 = aa_unfold_3.permute(0, 3, 2, 1).reshape(1, 72, 4) # [1, 72, 4]
-    aa_fold_3 = fold(aa_unfold_3)
-
-    divisor_unfold_2 = unfold(input_ones)
-
-    divisor_2 = (divisor * attn) * inputs
     ```
-  - **PyTorch fold and unfold and conv2d**
+    ![](images/fold_unfold.png)
+  - Result by `tf.image.extract_patches`
+    ```py
+    aa = np.arange(16, dtype="float32").reshape(1, 4, 4, 1)
+    bb = tf.pad(aa, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    cc = tf.image.extract_patches(bb, [1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding="VALID").numpy()
+    print(f"{cc.shape = }")
+    # cc.shape = (1, 2, 2, 9)
+    print(cc[0].reshape(2, 2, 3, 3).transpose(0, 2, 1, 3).reshape(6, 6))
+    # [[ 0.  0.  0.  0.  0.  0.]
+    #  [ 0.  0.  1.  1.  2.  3.]
+    #  [ 0.  4.  5.  5.  6.  7.]
+    #  [ 0.  4.  5.  5.  6.  7.]
+    #  [ 0.  8.  9.  9. 10. 11.]
+    #  [ 0. 12. 13. 13. 14. 15.]]
+    ```
+  - Torch `unfold --> matmul --> fold` is equal to `conv2d` if no overlap. [ ??? ]
     ```py
     inp = torch.randn(1, 3, 10, 12)
-    w = torch.randn(2, 3, 4, 5)
+    w = torch.randn(2, 3, 4, 5) # [output_channel, input_channel, kernel_size_1, kernel_size_2]
 
     inp_unf = torch.nn.functional.unfold(inp, (4, 5)) # [1, 60, 56]
     inp_unf = inp_unf.transpose(1, 2) # [1, 56, 60]
@@ -680,132 +855,402 @@
     ```
     ```py
     inp = torch.randn(1, 3, 10, 12)
-    w = torch.randn(2, 3, 4, 5)
+    w = torch.randn(2, 3, 4, 5) # [output_channel, input_channel, kernel_size_1, kernel_size_2]
 
-    inp_unf = torch.nn.functional.unfold(inp, (4, 5), stride=2, padding=1) # [1, 60, 56]
-    inp_unf = inp_unf.transpose(1, 2) # [1, 56, 60]
+    inp_unf = torch.nn.functional.unfold(inp, (4, 5), stride=2, padding=1) # [1, 60, 25]
+    inp_unf = inp_unf.transpose(1, 2) # [1, 25, 60]
     ww = w.view(w.size(0), -1).t()  # [60, 2]
-    out_unf = inp_unf.matmul(ww)  # [1, 56, 2]
-    out_unf = out_unf.transpose(1, 2) # ([1, 2, 56]
+    out_unf = inp_unf.matmul(ww)  # [1, 25, 2]
+    out_unf = out_unf.transpose(1, 2) # ([1, 2, 25]
     out = torch.nn.functional.fold(out_unf, (7, 8), (1, 1), stride=2, padding=1) # [1, 2, 7, 8]
 
     conv_out = torch.nn.functional.conv2d(inp, w, stride=2, padding=1)
-    print(f"{np.allclose(, out, atol=1e-6) = }")
-    # np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = True
+    print(f"{out.shape = }, {conv_out.shape = }")
+    # out.shape = torch.Size([1, 2, 7, 8]), conv_out.shape = torch.Size([1, 2, 5, 5])
+    ```
+## TF extract patches and Torch unfold
+  - **extract_patches output shape**
+    ```py
+    tf.pad(tf.ones([1, 28, 28, 72]), [[0, 0], [1, 1], [1, 1], [0, 0]]).shape
+    # TensorShape([1, 30, 30, 72])
     ```
     ```py
-    inp = torch.randn(1, 192, 28, 28)
-    w = torch.randn(192 * 9, 192, 3, 3)
+    img = np.random.uniform(size=[1, 28, 28, 192])
+    kernel_size, strides = 4, 4
+    patches = tf.image.extract_patches(img, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 7, 7, 3072]) --> 4 * 7 == 28
 
-    inp_unf = torch.nn.functional.unfold(inp, (3, 3), stride=2, padding=1) # [1, 1728, 196]
-    inp_unf = inp_unf.transpose(1, 2) # [1, 196, 1728]
-    ww = w.view(w.size(0), -1).t()  # [1728, 54]
-    out_unf = inp_unf.matmul(ww)  # [1, 196, 54]
-    out_unf = out_unf.transpose(1, 2) # ([1, 54, 196]
-    out = torch.nn.functional.fold(out_unf, (28, 28), (3, 3), stride=2, padding=1) # [1, 6, 28, 28]
+    img2 = tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    print(f"{img2.shape = }")
+    # img2.shape = TensorShape([1, 30, 30, 192])
+    kernel_size, strides = 3, 3
 
-    conv_out = torch.nn.functional.conv2d(inp, w, stride=2, padding=1) # (1, 54, 14, 14)
-    print(f"{np.allclose(conv_out, out, atol=1e-6) = }")
-    # np.allclose(torch.nn.functional.conv2d(inp, w), out, atol=1e-6) = True
+    patches = tf.image.extract_patches(img2, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 10, 10, 1728])  --> 3 * 10 == 30
+
+    kernel_size = [1, 3, 3, 1]
+    strides = [1, 2, 2, 1]
+    print(f"{tf.image.extract_patches(tf.ones([1, 27, 27, 3]), kernel_size, strides, [1, 1, 1, 1], padding='VALID').shape = }")
+    # [1, 13, 13, 27] --> np.ceil(27 / 2) - 1 == 13
+    print(f"{tf.image.extract_patches(tf.ones([1, 28, 28, 3]), kernel_size, strides, [1, 1, 1, 1], padding='VALID').shape = }")
+    # [1, 13, 13, 27] --> np.ceil(28 / 2) - 1 == 13
+    print(f"{tf.image.extract_patches(tf.ones([1, 29, 29, 3]), kernel_size, strides, [1, 1, 1, 1], padding='VALID').shape = }")
+    # [1, 14, 14, 27] --> np.ceil(29 / 2) - 1 == 14
+    print(f"{tf.image.extract_patches(tf.ones([1, 30, 30, 3]), kernel_size, strides, [1, 1, 1, 1], padding='VALID').shape = }")
+    # [1, 14, 14, 27] --> np.ceil(30 / 2) - 1 == 14
     ```
-  - **Unfold**
-    ```py
-    image = imread('../../test_images/Anthony_Hopkins_0002.jpg')
-    aa = np.expand_dims(image.astype("float32"), 0)
-    cc = nn.Unfold(kernel_size=3, padding=1, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2)).permute(0, 2, 1)
-
-    bb = keras.layers.ZeroPadding2D(1)(aa)
-    bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID')
-
-    torch_stack = cc.numpy()[0].reshape(125, 125, 27).transpose(2, 0, 1) / 255 # RRR...GGG...BBB...
-    tf_stack = bb.numpy()[0].transpose(2, 0, 1) / 255  # RGBRGB...
-    plt.imshow(np.vstack([np.hstack(torch_stack), np.hstack(tf_stack)]))
-
-    print(f"{np.allclose(torch_stack[0], tf_stack[0], atol=1e-7) = }")
-    # np.allclose(torch_stack[0], tf_stack[0], atol=1e-7) = True
-    tf_picked_stack = tf_stack[np.hstack([np.arange(0, 27, 3), np.arange(1, 27, 3), np.arange(2, 27, 3)])] # RRR...GGG...BBB...
-    print(f"{np.allclose(tf_picked_stack, torch_stack, atol=1e-7) = }")
-    # np.allclose(tf_picked_stack, torch_stack, atol=1e-7) = True
-    ```
+  - **Comparing Torch unfold** `extract_patches` output channels like `RGBRGB...`, while `toch.nn.Unfold` like `RRR...GGG...BBB...`.
     ```py
     import torch
     from torch import nn
 
-    aa = np.arange(128, dtype='float32').reshape(1, 4, 4, 8)
-    unfold_cc = nn.Unfold(kernel_size=3, padding=1, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2)).permute(0, 2, 1)
-    print(f"{unfold_cc.shape = }") # unfold_cc.shape = torch.Size([1, 4, 72])
+    image = np.zeros([256, 256, 3])
+    image[:, :, 1] += 128 # G
+    image[:, :, 2] += 256 # B
 
-    bb = keras.layers.ZeroPadding2D(1)(aa)
+    aa = np.expand_dims(image.astype("float32"), 0)
+    cc = nn.Unfold(kernel_size=3, padding=1, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2)).permute(0, 2, 1)
+
+    # bb = keras.layers.ZeroPadding2D(1)(aa)
+    bb = tf.pad(aa, [[0, 0], [1, 1], [1, 1], [0, 0]])
     bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID')
-    dd = bb.numpy()
 
-    tf_dd = dd[:, :, :, np.hstack([np.arange(ii, 72, 8) for ii in range(8)])]
-    print(f"{np.allclose(tf_dd, unfold_cc.reshape(*tf_dd.shape), atol=1e-7) = }")
-    # np.allclose(tf_dd, unfold_cc.reshape(*tf_dd.shape), atol=1e-7) = True
+    torch_stack = cc.numpy().reshape(1, 128, 128, 27).transpose(0, 3, 1, 2) / 255 # RRR...GGG...BBB...
+    tf_stack = bb.numpy().transpose(0, 3, 1, 2) / 255  # RGBRGB...
+
+    print(f"{np.allclose(torch_stack[0, 0], tf_stack[0, 0], atol=1e-7) = }")
+    # np.allclose(torch_stack[0], tf_stack[0], atol=1e-7) = True
+    channel = image.shape[-1]
+    tf_transpose_channel = tf_stack.reshape(-1, 9, channel, 128, 128).transpose(0, 2, 1, 3, 4).reshape(-1, 27, 128, 128)
+    print(f"{np.allclose(tf_transpose_channel, torch_stack, atol=1e-7) = }")
+    # np.allclose(tf_picked_stack, torch_stack, atol=1e-7) = True
+
+    fig, axes = plt.subplots(2, 1, figsize=(12, 2))
+    axes[0].imshow(np.hstack(torch_stack[0]))
+    axes[0].axis('off')
+    axes[0].set_title("Torch image stack", fontsize='small')
+    axes[1].imshow(np.hstack(tf_stack[0]))
+    axes[1].axis('off')
+    axes[1].set_title("TF image stack", fontsize='small')
+    fig.tight_layout()
     ```
-  - **Fold**
-  ```py
-  import torch
-  import torch.nn.functional as F
+    ![](images/unfold_and_extract_patches.png)
+## TF reverse extracted patches without overlap
+  - Without overlap means `kernel_size == strides`, not considering `kernel_size < strides`.
+  - `tf.nn.space_to_depth` works same with `extract_patches` if no overlap.
+    ```py
+    img = np.random.uniform(size=[2, 28, 28, 192])
+    img_padded = tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    block_size = 3
+    print(f"{tf.nn.space_to_depth(img_padded, block_size).shape = }")
+    # [2, 10, 10, 1728]
 
-  ff = np.arange(2 * 2 * 18, dtype='float32').reshape(1, 2, 2, 18)
+    patches = tf.image.extract_patches(img_padded, [1, block_size, block_size, 1], [1, block_size, block_size, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{np.allclose(tf.nn.space_to_depth(img_padded, block_size), patches) = }")
+    # np.allclose(tf.nn.space_to_depth(img_padded, block_size), patches) = True
+    ```
+  - `tf.nn.depth_to_space` is the reverse of `space_to_depth`
+    ```py
+    img = np.random.uniform(size=[2, 28, 28, 192])
+    img_padded = tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    block_size = 3
+    img_to_depth = tf.nn.space_to_depth(img_padded, block_size)
+    print(f"{img_to_depth.shape = }")
+    # img_to_depth.shape = TensorShape([2, 10, 10, 1728])
+    depth_to_img = tf.nn.depth_to_space(img_to_depth, block_size)
+    print(f"{depth_to_img.shape = }")
+    # depth_to_img.shape = TensorShape([2, 30, 30, 192])
+    print(f"{np.allclose(depth_to_img[:, 1:-1, 1:-1, :], img) = }")
+    # np.allclose(depth_to_img[:, 1:-1, 1:-1, :], img) = True
+    ```
+  - This also can be done just using `transpose` and `reshape`
+    ```py
+    ww, hh = img_padded.shape[1] // block_size, img_padded.shape[2] // block_size
+    bb = img_padded.numpy().reshape(-1, ww, block_size, hh, block_size, img_padded.shape[-1])
+    cc = bb.transpose(0, 1, 3, 2, 4, 5).reshape(-1, ww, hh, block_size * block_size * img_padded.shape[-1])
+    print(f"{cc.shape = }")
+    # cc.shape = (2, 10, 10, 1728)
+    print(f"{np.allclose(cc, patches) = }")
+    # np.allclose(cc, patches) = True
 
-  torch_ff = torch.from_numpy(ff).reshape(-1, 4, ff.shape[-1]).permute(0, 2, 1)
-  fold_cc = F.fold(torch_ff, output_size=(4, 4), kernel_size=3, padding=1, stride=2).permute(0, 2, 3, 1)
-  torch_fold_cc = fold_cc.numpy()
-  print(f"{torch_fold_cc.shape = }")  # fold_cc.shape = (1, 4, 4, 8)
+    """ Reverse of `extract_patches` using `transpose` and `reshape` """
+    dd = patches.numpy().reshape(-1, patches.shape[1], patches.shape[2], block_size, block_size, img_padded.shape[-1])
+    print(f"{dd.shape = }")
+    # dd.shape = (2, 10, 10, 3, 3, 192)
+    ee = dd.transpose(0, 1, 3, 2, 4, 5).reshape(-1, *img_padded.shape[1:])
+    print(f"{ee.shape = }")
+    # ee.shape = (2, 30, 30, 192)
+    print(f"{np.allclose(img, ee[:, 1:-1, 1:-1, :]) = }")
+    # np.allclose(img, ee[:, 1:-1, 1:-1, :]) = True
+    ```
+  - `tf.space_to_batch` is same with `tf.space_to_batch_nd`
+    ```py
+    # /opt/anaconda3/lib/python3.8/site-packages/tensorflow/python/ops/array_ops.py
+    def space_to_batch_v2(input, block_shape, paddings, name=None):
+        return space_to_batch_nd(input, block_shape, paddings, name)
+    ```
+  - `tf.space_to_batch_nd` works similar to `tf.nn.space_to_depth`, just stacked `kernels` on `batch` dimension.
+    ```py
+    aa = np.arange(32, dtype="float32").reshape(2, 4, 4, 1)
+    aa_padded = tf.pad(aa, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    aa_to_batch = tf.space_to_batch_nd(aa_padded, [3, 3], [[0, 0], [0, 0]])
+    print(f"{aa_to_batch.shape = }")
+    # aa_to_batch.shape = TensorShape([18, 2, 2, 1])
 
-  folder_filter = tf.ones([3, 3, 8, 72]) / 72
-  dd = tf.nn.conv2d_transpose(ff, folder_filter, [1, 4, 4, 8], 2, padding='SAME') # [1, 4, 4, 8]
-  ```
-  ```py
-  images = np.random.random((10, 28, 28, 3)).astype(np.float32)
-  PATCH_WIDTH, PATCH_HEIGHT = 3, 3
+    aa_to_depth = tf.nn.space_to_depth(aa_padded, 3)
+    print(f"{aa_to_depth.shape = }")
+    # aa_to_depth.shape = TensorShape([2, 2, 2, 9])
+    print(f"{np.allclose(tf.reshape(aa_to_depth, [-1, 4, 9]), tf.transpose(tf.reshape(aa_to_batch, [9, -1, 4]), [1, 2, 0])) = }")
+    # np.allclose(tf.reshape(aa_to_depth, [-1, 4, 9]), tf.transpose(tf.reshape(aa_to_batch, [9, -1, 4]), [1, 2, 0])) = True
+    ```
+    ```py
+    img = np.random.uniform(size=[2, 28, 28, 192])
+    kernel_size = 3
+    img_to_batch = tf.space_to_batch_nd(img, [kernel_size, kernel_size], [[1, 1], [1, 1]])
+    print(f"{img_to_batch.shape = }")
+    # img_to_batch.shape = TensorShape([18, 10, 10, 192])
 
-  def extract_patches(x,):
-      ksizes = [1, PATCH_WIDTH, PATCH_HEIGHT, 1]
-      strides = [1, 16, 16, 1]
-      rates = [1, 1, 1, 1]
-      padding = 'SAME'
-      return tf.image.extract_patches(x, ksizes, strides, rates, padding)
+    img_to_depth = tf.nn.space_to_depth(tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]]), kernel_size)
+    print(f"{img_to_depth.shape = }")
+    # img_to_depth.shape = TensorShape([2, 10, 10, 1728])
 
-  def extract_patches_inverse(x, y, tape):
-      _x = tf.zeros_like(x)
-      _y = extract_patches(_x)
-      grad = tape.gradient(_y, _x)
-      # Divide by grad, to "average" together the overlapping patches
-      # otherwise they would simply sum up
-      return tape.gradient(_y, _x, output_gradients=y)
+    bb = tf.transpose(tf.reshape(img_to_batch, [kernel_size * kernel_size, -1, *img_to_batch.shape[1:]]), [1, 2, 3, 0, 4])
+    img_to_batch_reshaped = tf.reshape(bb, [-1, bb.shape[1], bb.shape[2], bb.shape[3] * bb.shape[4]])
+    print(f"{img_to_batch_reshaped.shape = }")
+    # img_to_batch_reshaped.shape = TensorShape([2, 10, 10, 1728])
+    print(f"{np.allclose(img_to_depth, img_to_batch_reshaped) = }")
+    # np.allclose(img_to_depth, img_to_batch_reshaped) = True
+    ```
+  - `tf.batch_to_space` is the reverse of `tf.space_to_batch_nd`
+    ```py
+    img = np.random.uniform(size=[2, 28, 28, 192])
+    img_to_batch = tf.space_to_batch_nd(img, [3, 3], [[1, 1], [1, 1]])
+    print(f"{img_to_batch.shape = }")
+    # img_to_batch.shape = TensorShape([18, 10, 10, 192])
 
-  with tf.GradientTape(persistent=True) as tape:
-      tf_images = tf.convert_to_tensor(images)
-      tape.watch(tf_images)
-      patches = extract_patches(tf_images)
-      inv = extract_patches_inverse(tf_images, patches, tape)
-  ```
-  - **PyTorch and TF**
+    batch_to_img = tf.batch_to_space(img_to_batch, [3, 3], [[1, 1], [1, 1]])
+    print(f"{batch_to_img.shape = }")
+    # batch_to_img.shape = TensorShape([2, 28, 28, 192])
+    print(f"{np.allclose(img, batch_to_img) = }")
+    # np.allclose(img, batch_to_img) = True
+    ```
+## TF reverse extracted patches with overlap
+  - For case of overlap happens once, like `kernel_size=3, strides=2`, split `patches` into `4` groups, and sum them up to handle overlapped areas. Others scenarios like `kernel_size=3, strides=1`, overlap happens twice, will need split into `9` groups.
+    ```py
+    img = np.random.uniform(size=[1, 28, 28, 192])
+    kernel_size, strides = 3, 2
+    channel = img.shape[-1]
+    img_pad = tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    patches = tf.image.extract_patches(img_pad, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 14, 14, 1728])
+
+    patches = tf.reshape(patches, (-1, patches.shape[1], patches.shape[2], kernel_size, kernel_size, channel))
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 14, 14, 3, 3, 192])
+
+    overlap_pad = 2 * strides - kernel_size
+    aa = tf.pad(patches, [[0, 0], [0, 0], [0, 0], [0, overlap_pad], [0, overlap_pad], [0, 0]])
+    print(f"{aa.shape = }")
+    # aa.shape = TensorShape([1, 14, 14, 4, 4, 192])
+
+    bb = tf.transpose(aa, [0, 1, 3, 2, 4, 5])
+    print(f"{bb.shape = }")
+    # bb.shape = TensorShape([1, 14, 4, 14, 4, 192])
+    ww, hh = bb.shape[1] // 2, bb.shape[3] // 2
+    output_shape = [-1, ww * bb.shape[2], hh * bb.shape[4], bb.shape[5]]
+    tf_fold = tf.pad(tf.reshape(bb[:, ::2, :, ::2, :, :], output_shape), [[0, 0], [0, strides], [0, strides], [0, 0]])
+    print(f"{tf_fold.shape = }")
+    # tf_fold.shape = TensorShape([1, 30, 30, 192])
+    tf_fold += tf.pad(tf.reshape(bb[:, ::2, :, 1::2, :, :], output_shape), [[0, 0], [0, strides], [strides, 0], [0, 0]])
+    tf_fold += tf.pad(tf.reshape(bb[:, 1::2, :, ::2, :, :], output_shape), [[0, 0], [strides, 0], [0, strides], [0, 0]])
+    tf_fold += tf.pad(tf.reshape(bb[:, 1::2, :, 1::2, :, :], output_shape), [[0, 0], [strides, 0], [strides, 0], [0, 0]])
+
+    print(f"{tf_fold.shape = }")
+    # tf_fold.shape = TensorShape([1, 30, 30, 192])
+
+    """ Torch unfold --> fold """
+    import torch
+    torch_inputs = torch.from_numpy(img).permute(0, 3, 1, 2)  # NCHW
+    unfold = torch.nn.Unfold(kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+    fold = torch.nn.Fold(output_size=torch_inputs.shape[2:4], kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+    torch_fold = fold(unfold(torch_inputs))
+    print(f"{torch_fold.shape = }")
+    # torch_fold.shape = torch.Size([1, 192, 28, 28])
+
+    print(f"{np.allclose(torch_fold.permute(0, 2, 3, 1), tf_fold[:, 1:-1, 1:-1, :]) = }")
+    # np.allclose(torch_fold.permute(0, 2, 3, 1), tf_fold[:, 1:-1, 1:-1, :]) = True
+    ```
+    ![](images/fold_overlap_1.png)
+  - **Collect into functions**
+    ```py
+    def pad_overlap_1(patches, start_x, start_y, strides):
+        bb = patches[:, start_x::2, :, start_y::2, :, :]  # [1, 7, 4, 7, 4, 192]
+        bb = tf.reshape(bb, [-1, bb.shape[1] * bb.shape[2], bb.shape[3] * bb.shape[4], bb.shape[-1]])  # [1, 28, 28, 192]
+        pad_x = [0, strides] if start_x == 0 else [strides, 0]
+        pad_y = [0, strides] if start_y == 0 else [strides, 0]
+        padding = [[0, 0], pad_x, pad_y, [0, 0]]
+        bb = tf.pad(bb, padding)
+        return bb
+
+    def fold_overlap_1(patches, output_size, kernel_size, strides, head_padding=[0, 0]):
+        channel = patches.shape[-1] // (kernel_size * kernel_size)
+        patches = tf.reshape(patches, (-1, patches.shape[1], patches.shape[2], kernel_size, kernel_size, channel)) # [1, 14, 14, 3, 3, 192]
+        stride_pad = 2 * strides - kernel_size
+        aa = tf.pad(patches, [[0, 0], [0, 0], [0, 0], [0, stride_pad], [0, stride_pad], [0, 0]]) # [1, 14, 14, 4, 4, 192], 14 // 2 * 4 == 28
+        aa = tf.transpose(aa, [0, 1, 3, 2, 4, 5])   # [1, 14, 4, 14, 4, 192]
+        bb = pad_overlap_1(aa, 0, 0, strides) + pad_overlap_1(aa, 0, 1, strides) + pad_overlap_1(aa, 1, 0, strides) + pad_overlap_1(aa, 1, 1, strides)
+        out_sx, out_sy = head_padding
+        out_ex, out_ey = out_sx + output_size[0], out_sy + output_size[1]
+        return bb[:, out_sx:out_ex, out_sy:out_ey, :]
+
+    img = np.random.uniform(size=(1, 28, 28, 192)).astype('float32')
+    kernel_size, strides = 3, 2
+
+    img_pad = tf.pad(img, [[0, 0], [1, 1], [1, 1], [0, 0]])
+    patches = tf.image.extract_patches(img_pad, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    tf_fold = fold_overlap_1(patches, img.shape[1:], kernel_size, strides, head_padding=[1, 1])
+    print(f"{tf_fold.shape = }")
+    # tf_fold.shape = TensorShape([1, 28, 28, 192])
+
+    """ Torch unfold --> fold """
+    import torch
+    torch_inputs = torch.from_numpy(img).permute(0, 3, 1, 2)  # NCHW
+    unfold = torch.nn.Unfold(kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+    fold = torch.nn.Fold(output_size=torch_inputs.shape[2:4], kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+    torch_fold = fold(unfold(torch_inputs))
+    print(f"{torch_fold.shape = }")
+    # torch_fold.shape = torch.Size([1, 192, 28, 28])
+
+    print(f"{np.allclose(torch_fold.permute(0, 2, 3, 1), tf_fold) = }")
+    # np.allclose(torch_fold.permute(0, 2, 3, 1), tf_fold) = True
+    ```
+## TF reverse extracted patches with overlap NOT cumulative sum on overlapped areas
+  - If use a bigger padding to `extract_patches`, we can drop the overlappped areas, and use `new_kernel_size = strides` to reverse.
+    ```py
+    img = np.random.uniform(size=[1, 28, 28, 192])
+    kernel_size, strides = 5, 3
+    channel = img.shape[-1]
+    img_pad = tf.pad(img, [[0, 0], [1, 1 + strides], [1, 1 + strides], [0, 0]])
+    patches = tf.image.extract_patches(img_pad, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 15, 15, 4800])
+
+    patches = tf.reshape(patches, (-1, patches.shape[1], patches.shape[2], kernel_size, kernel_size, channel))
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 10, 10, 5, 5, 192])
+    non_overlap_patches = tf.transpose(patches[:, :, :, :strides, :strides, :], [0, 1, 3, 2, 4, 5])
+    print(f"{non_overlap_patches.shape = }")
+    # non_overlap_patches.shape = TensorShape([1, 10, 3, 10, 3, 192])
+    _, ww, kww, hh, khh, cc = non_overlap_patches.shape
+    reconstructed = tf.reshape(non_overlap_patches, [-1, ww * kww, hh * khh, cc])
+    print(f"{reconstructed.shape = }")
+    # reconstructed.shape = TensorShape([1, 30, 30, 192])
+    print(f"{np.allclose(reconstructed[:, 1: 1 + img.shape[1], 1: 1 + img.shape[2], :], img) = }")
+    # np.allclose(reconstructed[:, 1: 1 + img.shape[1], 1: 1 + img.shape[2], :], img) = True
+    ```
+  - Else we need to create the last patch. If bigger gap between `kernel_size` and `strides`, like `kernel_size=10, strides=2`, need to create more patches.
+    ```py
+    img = np.random.uniform(size=[1, 28, 28, 192])
+    kernel_size, strides = 7, 3
+    channel = img.shape[-1]
+    padded = kernel_size // 2
+    img_pad = tf.pad(img, [[0, 0], [padded, padded], [padded, padded], [0, 0]])
+    patches = tf.image.extract_patches(img_pad, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 9, 9, 4800])
+
+    patches = tf.reshape(patches, (-1, patches.shape[1], patches.shape[2], kernel_size, kernel_size, channel))
+    patches = tf.transpose(patches, [0, 1, 3, 2, 4, 5])
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 9, 5, 9, 5, 192])
+
+    """ Create the last patch """
+    patches = tf.concat([patches, tf.pad(patches[:, -1:, strides:], [[0, 0], [0, 0], [0, strides]] + [[0, 0]] * 3)], axis=1)
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 10, 5, 9, 5, 192])
+    patches = tf.concat([patches, tf.pad(patches[:, :, :, -1:, strides:], [[0, 0]] * 3 + [[0, 0], [0, strides], [0, 0]])], axis=3)
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 10, 5, 10, 5, 192])
+
+    non_overlap_patches = patches[:, :, :strides, :, :strides, :]
+    print(f"{non_overlap_patches.shape = }")
+    # non_overlap_patches.shape = TensorShape([1, 10, 3, 10, 3, 192])
+    _, ww, kww, hh, khh, cc = non_overlap_patches.shape
+    reconstructed = tf.reshape(non_overlap_patches, [-1, ww * kww, hh * khh, cc])
+    print(f"{reconstructed.shape = }")
+    # reconstructed.shape = TensorShape([1, 30, 30, 192])
+
+    print(f"{np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = }")
+    # np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = True
+    ```
+  - Or concatenate the cut values in the last patch to the result.
+    ```py
+    img = np.random.uniform(size=[1, 28, 28, 192])
+    kernel_size, strides = 10, 2
+    channel = img.shape[-1]
+    padded = kernel_size // 2
+    img_pad = tf.pad(img, [[0, 0], [padded, padded], [padded, padded], [0, 0]])
+    patches = tf.image.extract_patches(img_pad, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 15, 15, 19200])
+
+    patches = tf.reshape(patches, (-1, patches.shape[1], patches.shape[2], kernel_size, kernel_size, channel))
+    patches = tf.transpose(patches, [0, 1, 3, 2, 4, 5])
+    print(f"{patches.shape = }")
+    # patches.shape = TensorShape([1, 15, 10, 15, 10, 192])
+    non_overlap_patches = patches[:, :, :strides, :, :strides, :]
+    print(f"{non_overlap_patches.shape = }")
+    # non_overlap_patches.shape = TensorShape([1, 15, 2, 15, 2, 192])
+    _, ww, kww, hh, khh, cc = non_overlap_patches.shape
+    reconstructed = tf.reshape(non_overlap_patches, [-1, ww * kww, hh * khh, cc])
+    print(f"{reconstructed.shape = }")
+    # reconstructed.shape = TensorShape([1, 30, 30, 192])
+
+    """ Handle the cut values in the last patch """
+    ww_cut = patches[:, -1:, strides:, :, :strides, :]
+    hh_cut = patches[:, :, :strides, -1:, strides:, :]
+    corner_cut = patches[:, -1:, strides:, -1:, strides:, :]
+    print(f"{ww_cut.shape = }, {hh_cut.shape = }, {corner_cut.shape = }")
+    # ww_cut.shape = TensorShape([1, 1, 8, 15, 2, 192]), hh_cut.shape = TensorShape([1, 15, 2, 1, 8, 192]), corner_cut.shape = TensorShape([1, 1, 8, 1, 8, 192])
+
+    ww_cut = tf.reshape(ww_cut, [-1, kernel_size - strides, ww * kww, cc])
+    hh_cut = tf.reshape(hh_cut, [-1, ww * kww, kernel_size - strides, cc])
+    corner_cut = tf.reshape(corner_cut, [-1, kernel_size - strides, kernel_size - strides, cc])
+    print(f"{ww_cut.shape = }, {hh_cut.shape = }, {corner_cut.shape = }")
+    # ww_cut.shape = TensorShape([1, 8, 30, 192]), hh_cut.shape = TensorShape([1, 30, 8, 192]), corner_cut.shape = TensorShape([1, 8, 8, 192])
+
+    """ Attach them to the reconstructed """
+    reconstructed = tf.concat([reconstructed, ww_cut], axis=1)
+    new_hh = tf.concat([hh_cut, corner_cut], axis=1)
+    reconstructed = tf.concat([reconstructed, new_hh], axis=2)
+    print(f"{reconstructed.shape = }")
+    # reconstructed.shape = TensorShape([1, 38, 38, 192])
+
+    print(f"{np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = }")
+    # np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = True
+    ```
+## Volo outlook attention
   ```py
   kernel_size, padding, stride, num_heads, embed_dim = 3, 1, 2, 6, 192
   aa = np.ones([1, 28, 28, 192], dtype="float32")
   ww, hh = int(np.ceil(aa.shape[1] / stride)), int(np.ceil(aa.shape[2] / stride)) # 14, 14
   attn = np.random.uniform(size=[1, ww, hh, kernel_size ** 4 * num_heads]).astype("float32")
   qk_scale = np.sqrt(embed_dim // num_heads)
+  num_head, strides = num_heads, stride
 
   """ PyTorch unfold """
   import torch
-  import torch.nn.functional as F
-  from torch import nn
 
-  inputs = torch.from_numpy(aa) # B, C, H, W
+  torch_inputs = torch.from_numpy(aa).permute(0, 3, 1, 2) # B, C, H, W
+  unfold = torch.nn.Unfold(kernel_size=kernel_size, padding=padding, stride=stride)
+  fold = torch.nn.Fold(output_size=torch_inputs.shape[2:4], kernel_size=kernel_size, padding=padding, stride=stride)
 
-  # vv = nn.Linear(aa.shape[-1], embed_dim, bias=False)(inputs).permute(0, 3, 1, 2)  # [1, 384, 28, 28]
-  torch_unfold = inputs.permute(0, 3, 1, 2)
-  unfold = nn.Unfold(kernel_size=kernel_size, padding=padding, stride=stride)
-  torch_unfold = unfold(torch_unfold) # [1, 3456, 196]
-  F.unfold(torch_unfold, kernel_size, dilation=1, padding=padding, stride=stride)
-
-  vv = torch_unfold.reshape(1, num_heads, embed_dim // num_heads, kernel_size * kernel_size, ww * hh) # [1, 6, 64, 9, 196]
-  vv = vv.permute(0, 1, 4, 3, 2)  # B,H,N,kxk,C/H [1, 6, 196, 9, 64]
+  torch_unfold = unfold(torch_inputs) # [1, 1728, 196]
+  torch_vv = torch_unfold.reshape(1, num_heads, embed_dim // num_heads, kernel_size * kernel_size, ww * hh) # [1, 6, 32, 9, 196]
+  torch_vv = torch_vv.permute(0, 1, 4, 3, 2)  # B,H,N,kxk,C/H [1, 6, 196, 9, 32]
 
   """ PyTorch attention """
   # attn = nn.AvgPool2d(kernel_size=stride, stride=stride, ceil_mode=True)(inputs.permute(0, 3, 1, 2)).permute(0, 2, 3, 1)  # [1, 14, 14, 192]
@@ -815,127 +1260,59 @@
   torch_attn = torch_attn.softmax(dim=-1) # [1, 6, 196, 9, 9]
 
   """ PyTorch fold """
-  torch_before_fold_1 = (torch_attn @ vv)  # [1, 6, 196, 9, 64]
-  torch_before_fold_1 = torch_before_fold_1.permute(0, 1, 4, 3, 2)  # [1, 6, 64, 9, 196]
-  torch_before_fold = torch_before_fold_1.reshape(1, embed_dim * kernel_size * kernel_size, hh * ww) # [1, 3456, 196]
+  torch_before_fold_1 = (torch_attn @ torch_vv)  # [1, 6, 196, 9, 32]
+  torch_before_fold_1 = torch_before_fold_1.permute(0, 1, 4, 3, 2)  # [1, 6, 32, 9, 196]
+  torch_before_fold = torch_before_fold_1.reshape(1, embed_dim * kernel_size * kernel_size, hh * ww) # [1, 1728, 196]
   # 196 == ceil(aa.shape[1] / stride) * ceil(aa.shape[2] / stride), 1728 == 192 * kernel_size * kernel_size
-  xx = F.fold(torch_before_fold, output_size=aa.shape[1:3], kernel_size=kernel_size, padding=padding, stride=stride)  # [1, 384, 28, 28]
-  xx = xx.permute(0, 2, 3, 1) # [1, 28, 28, 384]
+  xx = fold(torch_before_fold)  # [1, 192, 28, 28]
+  xx = xx.permute(0, 2, 3, 1) # [1, 28, 28, 192]
   torch_out = xx.numpy()
 
-
   """ TF unfold """
-  from tensorflow.keras import layers
+  img_padded = keras.layers.ZeroPadding2D(1)(aa)
+  tf_unfold = tf.image.extract_patches(img_padded, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID') # [1, 14, 14, 1728]
 
-  num_head, strides = num_heads, stride
-  # bb = layers.Dense(embed_dim, use_bias=False)(aa)
-  bb = keras.layers.ZeroPadding2D(1)(aa)
-  bb = tf.image.extract_patches(bb, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID') # [1, 14, 14, 1728]
+  print(f"{np.allclose(torch_unfold.permute(0, 2, 1).reshape(*tf_unfold.shape)[0, :, :, 0], tf_unfold[0, :, :, 0]) = }")
+  # np.allclose(torch_unfold.permute(0, 2, 1).reshape(*tf_unfold.shape)[0, :, :, 0], tf_unfold[0, :, :, 0]) = True
 
-  torch_cc = torch_unfold.permute(0, 2, 1).reshape(*bb.shape)
-  print(f"{np.allclose(torch_cc[0, :, :, 0], bb[0, :, :, 0]) = }")
-  # np.allclose(torch_cc[0, :, :, 0], bb[0, :, :, 0]) = True
-  tf_dd = bb.numpy()[:, :, :, np.hstack([np.arange(ii, bb.shape[-1], aa.shape[-1]) for ii in range(aa.shape[-1])])] # RGBRGB... --> RR...GG...BB...
-  print(f"{np.allclose(torch_cc, tf_dd, atol=1e-7) = }")
-  # np.allclose(torch_cc, tf_dd, atol=1e-7) = True
-
-  # bb = tf.reshape(bb, [bb.shape[0], -1, bb.shape[-1]]) # [1, 196, 1728]
-  # bb = tf.reshape(bb, [-1, ww, hh, num_head, embed_dim // num_head, kernel_size * kernel_size]) # [1, 14, 14, 6, 32, 9]
-  bb = tf.reshape(tf_dd, [-1, ww, hh, num_head, embed_dim padding=// num_head, kernel_size * kernel_size]) # [1, 14, 14, 6, 32, 9]
+  tf_vv = tf.reshape(tf_unfold, [-1, ww, hh, kernel_size * kernel_size, num_head, embed_dim // num_head]) # [1, 14, 14, 9, 6, 32], the last dimension is channel
+  print(f"{np.allclose(torch_vv.permute(0, 2, 3, 1, 4).reshape(*tf_vv.shape), tf_vv) = }")
+  # np.allclose(torch_vv.permute(0, 2, 3, 1, 4).reshape(*tf_vv.shape), tf_vv) = True
 
   """ TF attention """
-  # attn = keras.layers.AveragePooling2D(pool_size=stride, strides=stride)(aa) # [1, 14, 14, 192]
-  # attn = layers.Dense(kernel_size ** 4 * num_heads)(attn) # [1, 14, 14, 486]
   tf_attn = tf.reshape(attn, (-1, ww, hh, num_head, kernel_size * kernel_size, kernel_size * kernel_size)) / qk_scale # [1, 14, 14, 6, 9, 9]
   attention_weights = tf.nn.softmax(tf_attn, axis=-1)  # [1, 14, 14, 6, 9, 9]
   print(f"{np.allclose(torch_attn.permute(0, 2, 1, 3, 4).reshape(*attention_weights.shape), attention_weights) = }")
   # np.allclose(torch_attn.permute(0, 2, 1, 3, 4).reshape(*attention_weights.shape), attention_weights) = True
 
   """ TF fold """
-  tf_before_fold_1 = tf.matmul(attention_weights, bb, transpose_b=True)  # [1, 14, 14, 6, 9, 32],  The last two dimensions [9, 9] @ [9, 32] --> [9, 32]
-  tf_before_fold_1 = tf.transpose(tf_before_fold_1, [0, 1, 2, 3, 5, 4]) # [1, 14, 14, 6, 32, 9]
-  tf_before_fold = tf.reshape(tf_before_fold_1, [-1, ww, hh, embed_dim * kernel_size * kernel_size]) # [1, 14, 14, 1728]
-  print(f"{np.allclose(torch_before_fold.permute(0, 2, 1).reshape(*tf_before_fold.shape), tf_before_fold) = }")
-  # np.allclose(torch_before_fold.permute(0, 2, 1).reshape(*tf_before_fold.shape), tf_before_fold) = True
+  tf_before_fold_1 = tf.matmul(attention_weights, tf.transpose(tf_vv, [0, 1, 2, 4, 3, 5]))  # [1, 14, 14, 6, 9, 32],  The last two dimensions [9, 9] @ [9, 32] --> [9, 32]
+  tf_before_fold_1 = tf.transpose(tf_before_fold_1, [0, 1, 2, 4, 3, 5]) # [1, 14, 14, 9, 6, 32]
+  print(f"{np.allclose(torch_before_fold_1.permute(0, 4, 3, 1, 2).reshape(*tf_before_fold_1.shape), tf_before_fold_1, atol=1e-5) = }")
+  # np.allclose(torch_before_fold_1.permute(0, 4, 3, 1, 2).reshape(*tf_before_fold_1.shape), tf_before_fold_1, atol=1e-5) = True
 
-  folder_filter = tf.ones([3, 3, aa.shape[-1], tf_before_fold.shape[-1]]) / tf_before_fold.shape[-1]
-  dd = tf.nn.conv2d_transpose(tf_before_fold, folder_filter, [1, ww * stride, hh * stride, aa.shape[-1]], stride) # [1, 28, 28, 192]
-  tf_out = dd.numpy()
-
-  print(f"{torch_out.shape = }, {torch_out.max() = }, {torch_out.min() = }, {torch_out.mean() = }, {torch_out.sum() = }")
-  # torch_out.shape = (1, 28, 28, 192), torch_out.max() = 4.0000005, torch_out.min() = 0.43712577, torch_out.mean() = 2.0750084, torch_out.sum() = 312346.88
-  print(f"{tf_out.shape = }, {tf_out.max() = }, {tf_out.min() = }, {tf_out.mean() = }, {tf_out.sum() = }")
-  # tf_out.shape = (1, 28, 28, 192), tf_out.max() = 3.9999993, tf_out.min() = 0.44550508, tf_out.mean() = 2.040912, tf_out.sum() = 307214.38
-  ```
-  ```py
-  def image_to_patches(image, patch_height, patch_width):
-      # resize image so that it's dimensions are dividable by patch_height and patch_width
-      image_height = tf.cast(tf.shape(image)[0], dtype=tf.float32)
-      image_width = tf.cast(tf.shape(image)[1], dtype=tf.float32)
-      height = tf.cast(tf.ceil(image_height / patch_height) * patch_height, dtype=tf.int32)
-      width = tf.cast(tf.ceil(image_width / patch_width) * patch_width, dtype=tf.int32)
-
-      num_rows = height // patch_height
-      num_cols = width // patch_width
-      # make zero-padding
-      image = tf.squeeze(tf.image.resize_image_with_crop_or_pad(image, height, width))
-
-      # get slices along the 0-th axis
-      image = tf.reshape(image, [num_rows, patch_height, width, -1])
-      # h/patch_h, w, patch_h, c
-      image = tf.transpose(image, [0, 2, 1, 3])
-      # get slices along the 1-st axis
-      # h/patch_h, w/patch_w, patch_w,patch_h, c
-      image = tf.reshape(image, [num_rows, num_cols, patch_width, patch_height, -1])
-      # num_patches, patch_w, patch_h, c
-      image = tf.reshape(image, [num_rows * num_cols, patch_width, patch_height, -1])
-      # num_patches, patch_h, patch_w, c
-      return tf.transpose(image, [0, 2, 1, 3])
-  ```
-  ```py
-  c = 3
-  h = 1024
-  p = 32
-
-  image = tf.ones([h,h,c])
-  patch_size = [1,p,p,1]
-  patches = tf.image.extract_patches([image], patch_size, patch_size, [1, 1, 1, 1], 'VALID')  # [1, 32, 32, 3072]
-  print(f"{patches.shape = }")
-  patches = tf.reshape(patches, [h, p, p, c]) # [1024, 32, 32, 3]
-  print(f"{patches.shape = }")
-  reconstructed = tf.reshape(patches, [1, h, h, c]) # [1, 1024, 1024, 3]
-  print(f"{reconstructed.shape = }")
-  rec_new = tf.nn.space_to_depth(reconstructed,p) # [1, 32, 32, 3072]
-  print(f"{rec_new.shape = }")
-  rec_new = tf.reshape(rec_new,[h,h,c]) # [1024, 1024, 3]
-  print(f"{rec_new.shape = }")
-  ```
-  ```py
-  kernel_size, padding, stride, num_heads = 3, 1, 2, 6
-  aa = np.ones([1, 28, 28, 192], dtype="float32")
-
-  """ PyTorch unfold """
-  from torch import nn
-
-  vv = torch.from_numpy(aa).permute(0, 3, 1, 2) # B, C, H, W
-
-  unfold = nn.Unfold(kernel_size=kernel_size, padding=padding, stride=stride)
-  vv = unfold(vv) # [1, 1728, 196]
-
-  ww, hh = int(np.ceil(aa.shape[1] / stride)), int(np.ceil(aa.shape[2] / stride)) # 14, 14
-  vv = vv.reshape(1, num_heads, aa.shape[-1] // num_heads, kernel_size * kernel_size, ww * hh) # [1, 6, 32, 9, 196]
-  vv = vv.permute(0, 1, 4, 3, 2)  # B,H,N,kxk,C/H [1, 6, 196, 9, 32]
-
-  """ PyTorch fold """
-  attn = torch.ones([1, 6, 196, 9, 9])
-  xx = (attn @ vv)  # [1, 6, 196, 9, 32]
-  xx = xx.permute(0, 1, 4, 3, 2)  # [1, 6, 32, 9, 196]
-  xx = xx.reshape(1, aa.shape[-1] * kernel_size * kernel_size, hh * ww) # [1, 1728, 196]
-  # 196 == ceil(aa.shape[1] / stride) * ceil(aa.shape[2] / stride), 1728 == 192 * kernel_size * kernel_size
-  x = F.fold(xx, output_size=aa.shape[1:3], kernel_size=kernel_size, padding=padding, stride=stride)  # [1, 192, 28, 28]
-  xx = xx.permute(0, 2, 3, 1) # [1, 28, 28, 192]
+  tf_before_fold = tf.reshape(tf_before_fold_1, [-1, ww, hh, kernel_size * kernel_size * embed_dim]) # [1, 14, 14, 1728]
+  tf_out = fold_overlap_1(tf_before_fold, aa.shape[1:3], kernel_size, strides, head_padding=[1, 1]) # [1, 28, 28, 192]
+  print(f"{np.allclose(torch_out, tf_out) = }")
+  # np.allclose(torch_out, tf_out) = True
   ```
 ## Volo load torch weights
+  - [Github sail-sg/volo](https://github.com/sail-sg/volo)
+  ```py
+  import torch
+  from torchsummary import summary
+  from models import volo
+
+  net = volo.volo_d1()
+  net.eval()
+
+  summary(net, (3, 224, 224))
+  traced_cell = torch.jit.trace(net, (torch.randn(10, 3, 224, 224)))
+  torch.jit.save(traced_cell, 'd1.pth')
+
+  # RuntimeError: Exporting the operator col2im to ONNX opset version 13 is not supported.
+  # torch.onnx.export(net, torch.randn(10, 3, 224, 224), "d1.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, do_constant_folding=True, opset_version=13)
+  ```
   ```py
   import torch
   from torchsummary import summary
@@ -1061,7 +1438,13 @@
   ```
   ```py
   import volo
-  index = 1
+  import os
+  from tensorflow import keras
+  import tensorflow as tf
+  import sys
+
+  index = 0 if len(sys.argv) == 1 else int(sys.argv[1])
+
   model_paths = [
       "../models/volo/d1_224_84.2.h5",
       "../models/volo/d1_384_85.2.h5",
@@ -1072,6 +1455,7 @@
       "../models/volo/d4_224_85.7.h5",
       "../models/volo/d4_448_86.79.h5",
       "../models/volo/d5_224_86.10.h5",
+      "../models/volo/d5_448_87.0.h5",
       "../models/volo/d5_512_87.07.h5",
   ]
   model_path = model_paths[index]
@@ -1082,13 +1466,13 @@
   mm = getattr(volo, model_type)(input_shape=(input_shape, input_shape, 3), classfiers=2, num_classes=1000)
   mm.load_weights(model_path)
 
-  bb = keras.models.load_model(model_path)
+  from skimage.data import chelsea
+  imm = chelsea()  # Chelsea the cat
+  pred = mm(tf.expand_dims(tf.image.resize(imm, (input_shape, input_shape)) / 255, 0)).numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
 
-  keras_out_1 = bb(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
-  keras_out_2 = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
-  assert np.allclose(keras_out_1, keras_out_2, atol=1e-7)
-  print(f">>>> {np.allclose(keras_out_1, keras_out_2, atol=1e-7) = }")
   mm.save(model_path)
+  print(">>>> saved:", model_path)
   ```
   ```py
   index = 0
@@ -1102,6 +1486,7 @@
       "../models/volo/d4_224_85.7.pth.tar",
       "../models/volo/d4_448_86.79.pth.tar",
       "../models/volo/d5_224_86.10.pth.tar",
+      "../models/volo/d5_448_87.0.pth.tar",
       "../models/volo/d5_512_87.07.pth.tar",
   ]
 
@@ -1131,8 +1516,8 @@
   print(f"{(np.abs(torch_out - keras_out) < 5e-2).sum() / keras_out.shape[-1] = }")
   ```
 ## Volo check
-  - **PyTorch**
   ```py
+  """ PyTorch """
   torch_aa = torch.from_numpy(np.ones([1, 3, 224, 224], dtype='float32'))
   outlooker = torch_model.network[0][0]
   oa = outlooker.attn
@@ -1143,12 +1528,8 @@
 
   torch_before_fold = (torch_attn @ torch_vv).permute(0, 1, 4, 3, 2).reshape(1, 1728, 196)
   torch_fold = torch.nn.functional.fold(torch_before_fold, output_size=(28, 28), kernel_size=3, padding=1, stride=2)
-  ```
-  ```py
 
-  ```
-  - **TF**
-  ```py
+  """ TF """
   tf_aa = tf.ones((1, 224, 224, 3))
   tf_vv = keras.models.Model(mm.inputs[0], mm.get_layer('tf.reshape').output)(tf_aa)
   tf_attn = keras.models.Model(mm.inputs[0], mm.get_layer('tf.nn.softmax').output)(tf_aa)
@@ -1173,25 +1554,5 @@
   torch_xx = torch_model.norm(torch_model.forward_cls(torch_model.forward_tokens(torch_model.forward_embeddings(torch_aa))))
   tf_xx = keras.models.Model(mm.inputs[0], mm.get_layer('pre_out_LN').output)(tf_aa).numpy()
   print(f"{np.allclose(torch_xx.detach().numpy(), tf_xx, atol=1e-2) = }")
-
-  x_cls = torch_model.head(torch_xx[:, 0])
-  x_aux = torch_model.aux_head(x[:, 1:])
-
-  x_cls + 0.5 * x_aux.max(1)[0]
-  ```
-## PyTorch fold and unfold
-  ```py
-  F.fold(torch.from_numpy(np.arange(36).reshape(1, 9, 4).astype('float32')), output_size=(4, 4), kernel_size=3, padding=1, stride=2)
-  # [[[[16. 33. 17. 21.] [34. 70. 36. 44.] [18. 37. 19. 23.] [30. 61. 31. 35.]]]]
-  F.fold(torch.from_numpy(np.arange(36).reshape(1, 9, 4).astype('float32')), output_size=(2, 2), kernel_size=3, padding=1, stride=1)
-  # [[[[ 38.  54.] [ 86. 102.]]]]
-  ```
-  ```py
-  import torch
-  from torch import nn
-  fold = nn.Fold(output_size=(4, 5), kernel_size=(2, 2))
-  input = torch.randn(1, 3 * 2 * 2, 12)
-  output = fold(input)
-  output.size()
   ```
 ***
