@@ -536,7 +536,7 @@
   pp["epochs"] = [5, 5, 7, 33]
   pp["skip_epochs"] = 13
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout", **pp)
   pp["axes"] = axes
 
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, cleaned", **pp)
@@ -546,22 +546,29 @@
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_M4_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_2, arc_M4, cleaned", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, mixup, cleaned", **pp)
 
-  # axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, nesterov, cleaned", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, lookahead, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, nesterov, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random_0, lookahead, cleaned", **pp)
 
-  # axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, cleaned", **pp)
-  # axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, lookahead, cleaned", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, lookahead, cleaned", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout", **pp)
   # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc_M5, randaug_cutout, lookahead", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, lookahead", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, lookahead", **pp)
   axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, lookahead, ipc 10", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_lrmin_1e5_float16_hist.json", fig_label="arc, randaug_cutout, lrmin 1e-5", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_epoch_17_float16_hist.json", fig_label="arc, randaug_cutout, decay on epoch", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_lrmin_1e5_float16_hist.json", fig_label="arc, randaug_cutout, lrmin 1e-5", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_epoch_17_float16_hist.json", fig_label="arc, randaug_cutout, decay on epoch", **pp)
 
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, ipc 10", **pp)
-  axes, _ = plot.hist_plot_split("checkpoints/TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, ipc 10, nestrov", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, ipc 10", **pp)
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, ipc 10, nestrov", **pp)
+
+  # axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_mmul_1_float16_hist.json", fig_label="arc, randaug_cutout, mmul_1", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_cos_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, cosface", **pp)
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_warmup_2_float16_hist.json", fig_label="arc, randaug_cutout, warmup_2", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, bs1024", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_lrbase_2_cos16_batch_float16_hist.json", fig_label="arc, randaug_cutout, bs1024, lrbase 0.2", **pp)
 
   axes, _ = plot.hist_plot_split("checkpoints/efficientnet_v2/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random 0, cleaned", **pp)
   ```
@@ -585,6 +592,17 @@
       "checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_hist.json",
   ]
   _ = choose_accuracy(aa)
+  ```
+  ```py
+  from glob2 import glob
+  for src_name in glob('TT_ebv2_b0_swish_GDC_arc_*'):
+      dst_name = src_name.replace('TT_ebv2_b0_', 'TT_efv2_b0_')
+      print(f">>>> {src_name = }, {dst_name = }")
+      aa = np.load(src_name)
+      scores, names = aa.get("scores", []), aa.get("names", [])
+      names = [ii.replace('TT_ebv2_b0_', 'TT_efv2_b0_') for ii in names]
+      np.savez(src_name, scores=scores, names=names)
+      os.rename(src_name, dst_name)
   ```
   |                                                                                                                                                      |      lfw |   cfp_fp |   agedb_30 |   epoch |
   |:-----------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|-----------:|--------:|
@@ -611,19 +629,24 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_batch_float16_basic_agedb_30_epoch_49_0.976000_IJBB_11                                           | 0.371373 | 0.880039 |  0.93593 |  0.96037 | 0.974294 | 0.984323 |          |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 | 0.992391 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                      | 0.351899 | 0.880234 |  0.93408 | 0.958715 | 0.973612 | 0.984907 | 0.991727 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11    |  0.38296 | 0.870399 | 0.932911 |  0.95852 | 0.973612 | 0.983155 | 0.991932 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBB_11          |  0.33369 | 0.885005 |  0.93369 | 0.956378 | 0.972639 | 0.983544 | 0.991878 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11    |  0.38296 | 0.870399 | 0.932911 |  0.95852 | 0.973612 | 0.983155 | 0.991932 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBB_11          |  0.33369 | 0.885005 |  0.93369 | 0.956378 | 0.972639 | 0.983544 | 0.991878 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_r0_mixup_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.974333_IJBB_11             | 0.350828 | 0.757254 | 0.913729 | 0.957157 | 0.973807 | 0.985297 | 0.992829 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBB_11          |  0.37147 | 0.883934 | 0.935443 | 0.957254 | 0.972833 | 0.984323 | 0.991655 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11       | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 |  0.98481 | 0.991726 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBB_11             | 0.385005 | 0.883934 | 0.934372 | 0.958617 | 0.973515 | 0.983836 | 0.991745 |
-  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.975500_IJBB_11    | 0.380428 | 0.868744 | 0.931159 | 0.958423 | 0.974391 | 0.986173 | 0.993756 |
-  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11 | 0.382278 | 0.860954 | 0.932035 | 0.958715 | 0.975365 |  0.98666 | 0.994307 |
+  | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.975500_IJBB_11    | 0.380428 | 0.868744 | 0.931159 | 0.958423 | 0.974391 | 0.986173 | 0.993756 |
+  | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11 | 0.382278 | 0.860954 | 0.932035 | 0.958715 | 0.975365 |  0.98666 | 0.994307 |
   | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBB_11         | 0.338559 | 0.864849 | 0.930282 |  0.95852 | 0.976241 | 0.986368 |  0.99383 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977000_IJBB_11            | 0.38111  | 0.879649 | 0.936806 | 0.959981 | 0.974781 | 0.984031 | 0.992172 |
-  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977500_IJBB_11            | 0.374684 | 0.862999 | 0.933009 | 0.958812 | 0.97556  | 0.987829 | 0.99461  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977000_IJBB_11            | 0.38111  | 0.879649 | 0.936806 | 0.959981 | 0.974781 | 0.984031 | 0.992172 |
+  | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977500_IJBB_11            | 0.374684 | 0.862999 | 0.933009 | 0.958812 | 0.97556  | 0.987829 | 0.99461  |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11     | 0.368062 | 0.884615 | 0.938559 | 0.959688 | 0.973418 | 0.984907 | 0.991828 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976000_IJBB_11               | 0.385979 | 0.877702 | 0.938267 | 0.959883 | 0.975268 | 0.985005 | 0.99231  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976000_IJBB_11      | 0.385979 | 0.877702 | 0.938267 | 0.959883 | 0.975268 | 0.985005 | 0.99231  |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBB_11               | 0.389094 | 0.868939 | 0.938267 | 0.959786 | 0.974294 | 0.984031 | 0.992253 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977167_IJBB_11| 0.353554 | 0.871081 | 0.935346 | 0.959396 | 0.973223 | 0.984518 | 0.992468 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11| 0.366018 | 0.872347 | 0.935248 | 0.959396 | 0.97332  | 0.984518 | 0.992438 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBB_11        | 0.337975 | 0.881207 | 0.937098 | 0.959786 | 0.974781 | 0.984713 | 0.992272 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_mmul_1_tmul_1_float16_basic_agedb_30_epoch_33_0.975167_IJBB_11 | 0.403797 | 0.873418 | 0.932619 | 0.957644 | 0.974294 | 0.98481  | 0.992376 |
 
   |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
   |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
@@ -651,17 +674,16 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000_IJBB_11        | 0.324927 |  0.8815  | 0.938462 | 0.959494 | 0.975463 | 0.984615 | 0.991511 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_basic_agedb_30_epoch_12_0.978333_IJBB_11                       | 0.339435 | 0.869815 | 0.931938 | 0.959007 | 0.976047 | 0.986465 | 0.992172 |
 
-
   |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
   |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                                         | 0.869305 | 0.921511 | 0.951935 | 0.969781 | 0.98149  | 0.988751 | 0.99441  |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBC_11                                     | 0.877333 | 0.924068 | 0.950862 | 0.968298 | 0.980825 | 0.988649 | 0.993996 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                               | 0.858107 | 0.919108 | 0.951373 | 0.969065 | 0.980161 | 0.988597 | 0.994375 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977167_IJBC_11                                     | 0.877333 | 0.924068 | 0.950862 | 0.968298 | 0.980825 | 0.988649 | 0.993996 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_cleaned_random_0_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                               | 0.858107 | 0.919108 | 0.951373 | 0.969065 | 0.980161 | 0.988597 | 0.994375 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                                     | 0.884287 | 0.926471 | 0.951015 | 0.968758 | 0.98057  | 0.988853 | 0.994079 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                                  | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 | 0.994152 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_random_2_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977333_IJBC_11                                        | 0.876413 | 0.924733 | 0.950759 | 0.969423 | 0.980979 | 0.989058 | 0.994322 |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977000_IJBC_11                                       | 0.875646 | 0.924426 | 0.952856 | 0.970394 | 0.981899 | 0.989006 | 0.994436 |
-  | TT_ebv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977500_IJBC_11                                       | 0.861431 | 0.918239 | 0.949686 | 0.968809 | 0.981746 | 0.990847 | 0.995892 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977000_IJBC_11                                       | 0.875646 | 0.924426 | 0.952856 | 0.970394 | 0.981899 | 0.989006 | 0.994436 |
+  | TT_efv2_b0_swish_GDC_arc_M5_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.977500_IJBC_11                                       | 0.861431 | 0.918239 | 0.949686 | 0.968809 | 0.981746 | 0.990847 | 0.995892 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_LA_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBC_11                                | 0.879992 | 0.925704 | 0.953214 | 0.970343 | 0.981797 | 0.989467 | 0.99448  |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_basic_agedb_30_epoch_17_0.978000_IJBC_11               | 0.736565 | 0.894156 | 0.943294 | 0.968911 | 0.98466  | 0.991972 | 0.99578  |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_E50_arc_trip_randaug_100_no_shear_cutout_basic_agedb_30_epoch_16_0.977500_IJBC_11        | 0.806207 | 0.894411 | 0.943141 | 0.97019  | 0.984558 | 0.992381 | 0.996228 |
@@ -669,7 +691,11 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_Arctrip_05_64_basic_agedb_30_epoch_16_0.976833_IJBC_11            | 0.803395 | 0.872475 | 0.932454 | 0.965946 | 0.983791 | 0.991665 | 0.995959 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_basic_agedb_30_epoch_17_0.977333_IJBC_11 | 0.880247 | 0.927596 | 0.953214 | 0.970548 | 0.982359 | 0.989773 | 0.994434 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000_IJBC_11        | 0.883571 | 0.924426 |  0.95352 | 0.969934 | 0.981541 | 0.989058 | 0.99409  |
-  | TT_ebv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976000_IJBC_11                                          | 0.869816 | 0.927034 | 0.953418 | 0.970292 | 0.982104 | 0.989262 | 0.994536 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nesterov_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976000_IJBC_11                                 | 0.869816 | 0.927034 | 0.953418 | 0.970292 | 0.982104 | 0.989262 | 0.994536 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBC_11                                   | 0.870174 | 0.925807 | 0.952447 | 0.970394 | 0.98149  | 0.988904 | 0.994642 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977167_IJBC_11                           | 0.867976 | 0.924477 | 0.952191 | 0.969372 | 0.981285 | 0.989313 | 0.994807 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBC_11                                          | 0.875339 | 0.925858 | 0.953623 | 0.970394 | 0.982001 | 0.989262 | 0.994469 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                                          | 0.877026 | 0.925755 | 0.953163 | 0.970292 | 0.981388 | 0.98916  | 0.994394 |
 ## Finetune EfficientNetV2
   ```py
   hist_path = "checkpoints/efficientnet_v2/"
@@ -1536,18 +1562,6 @@
         opset_version=opset_version,
         output_names=,
     )
-  ```
-# Resnest
-  ```py
-  from torchsummary import summary
-  import torch
-
-  from resnest.torch import resnest50
-  net = resnest50(pretrained=False)
-  summary(net, (3, 224, 224))
-
-  xx = torch.randn(10, 3, 224, 224)
-  torch.onnx.export(net, xx, "resnest50.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
   ```
 ***
 

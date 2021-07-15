@@ -14,179 +14,6 @@
   - [Github Keras Attention Augmented Convolutions](https://github.com/titu1994/keras-attention-augmented-convs)
 ***
 
-# BotNet
-  - [aravindsrinivas/botnet.py](https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2)
-  - [leondgarse/botnet.py](https://gist.github.com/leondgarse/351dba9457c5a36516aea3ce1950ac74)
-  - **botnet MHSA**
-    ```py
-    from icecream import ic
-    inputs = keras.layers.Input([14, 16, 1024])
-    featuremap = inputs
-
-    print(botnet.MHSA(featuremap, 512, pos_enc_type='relative', heads=4).shape)
-    # (None, 14, 16, 512)
-
-    q = botnet.group_pointwise(featuremap, proj_factor=1, name='q_proj', heads=4, target_dimension=512)
-    k = botnet.group_pointwise(featuremap, proj_factor=1, name='k_proj', heads=4, target_dimension=512)
-    v = botnet.group_pointwise(featuremap, proj_factor=1, name='v_proj', heads=4, target_dimension=512)
-
-    ic(q.shape.as_list(), k.shape.as_list(), v.shape.as_list())
-    # q.shape.as_list(): [None, 4, 14, 16, 128]
-    print(botnet.relpos_self_attention(q=q, k=k, v=v, relative=True, fold_heads=True).shape)
-    # (None, 14, 16, 512)
-
-    relative, fold_heads = True, True
-    bs, heads, h, w, dim = q.shape
-    int_dim = int(dim)
-    q = q * (dim ** -0.5) # scaled dot-product
-    logits = tf.einsum('bhHWd,bhPQd->bhHWPQ', q, k)
-    if relative:
-        logits += botnet.relative_logits(q)
-    # weights = tf.reshape(logits, [-1, heads, h, w, h * w])
-    # weights = tf.nn.softmax(weights)
-    # weights = tf.reshape(weights, [-1, heads, h, w, h, w])
-    weights = tf.nn.softmax(logits)
-    attn_out = tf.einsum('bhHWPQ,bhPQd->bHWhd', weights, v)
-    if fold_heads:
-        attn_out = tf.reshape(attn_out, [-1, h, w, heads * dim])
-    ic(attn_out.shape.as_list())
-    # ic| attn_out.shape.as_list(): [None, 14, 16, 512]
-    ```
-  - **relative_logits**
-    ```py
-    def rel_to_abs(x):
-        """
-        Converts relative indexing to absolute.
-        Input: [bs, heads, h, w, 2*w - 1]
-        Output: [bs, heads, h, w, w]
-        """
-        bs, heads, h, w, dim = x.shape
-        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
-        x = tf.concat([x, col_pad], axis=-1)
-        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
-        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
-        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
-        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
-        final_x = final_x[:, :, :, :w, w-1:]
-        return final_x
-
-
-    def relative_logits_1d(*, q, rel_k, transpose_mask):
-        """
-        Compute relative logits along one dimenion.
-        `q`: [bs, heads, height, width, dim]
-        `rel_k`: [2*width - 1, dim]
-        """
-        bs, heads, h, w, dim = q.shape
-        # rel_logits = tf.einsum('bhxyd,md->bhxym', q, rel_k)
-        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
-        rel_logits = rel_to_abs(rel_logits)
-        rel_logits = tf.expand_dims(rel_logits, axis=3)
-        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
-        rel_logits = tf.transpose(rel_logits, transpose_mask)
-        return rel_logits
-
-
-    def relative_logits(q):
-        bs, heads, h, w, dim = q.shape
-        stddev = dim ** -0.5
-        rel_emb_w = tf.compat.v1.get_variable('r_width', shape=(2*w - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
-        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
-
-        # Relative logits in height dimension.
-        rel_emb_h = tf.compat.v1.get_variable('r_height', shape=(2*h - 1, dim), dtype=q.dtype, initializer=tf.random_normal_initializer(stddev=stddev))
-        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
-        return rel_logits_h + rel_logits_w
-    ```
-    ```py
-    aa = tf.convert_to_tensor(np.arange(45).reshape(1, 1, 3, 3, 5))
-    rel_to_abs(aa)
-    print(aa[0, 0].numpy())
-    # [[[ 0  1  2  3  4]
-    #   [ 5  6  7  8  9]
-    #   [10 11 12 13 14]]
-    #  [[15 16 17 18 19]
-    #   [20 21 22 23 24]
-    #   [25 26 27 28 29]]
-    #  [[30 31 32 33 34]
-    #   [35 36 37 38 39]
-    #   [40 41 42 43 44]]]
-    print(rel_to_abs(aa)[0, 0].numpy())
-    # [[[ 2  3  4]
-    #   [ 6  7  8]
-    #   [10 11 12]]
-    #  [[17 18 19]
-    #   [21 22 23]
-    #   [25 26 27]]
-    #  [[32 33 34]
-    #   [36 37 38]
-    #   [40 41 42]]]
-    ```
-  - **keras.layers.MultiHeadAttention**
-    ```py
-    from tensorflow.python.ops import math_ops
-    from tensorflow.python.ops import special_math_ops
-    from icecream import ic
-    inputs = keras.layers.Input([14, 16, 1024])
-
-    nn = keras.layers.MultiHeadAttention(num_heads=4, key_dim=128)
-    ic(nn(inputs, inputs).shape.as_list())
-    # ic| nn(inputs, inputs).shape.as_list(): [None, 14, 16, 1024]
-
-    query = nn._query_dense(inputs)
-    key = nn._key_dense(inputs)
-    value = nn._value_dense(inputs)
-    ic(query.shape.as_list(), key.shape.as_list(), value.shape.as_list())
-    # ic| query.shape.as_list(): [None, 14, 16, 4, 128]
-
-    # attention_output, attention_scores = nn._compute_attention(query, key, value)
-    query = math_ops.multiply(query, 1.0 / math.sqrt(float(nn._key_dim)))
-    # 'afgde,abcde->adbcfg', 'bhHWd,bhPQd->bhHWPQ' == 'afgde,adbce->afgdbc'
-    attention_scores = special_math_ops.einsum(nn._dot_product_equation, key, query)
-    ic(attention_scores.shape.as_list())
-    # ic| attention_scores.shape.as_list(): [None, 4, 14, 16, 14, 16]
-
-    if relative:
-        query = tf.transpose(query, [0, 3, 1, 2, 4])
-        attention_scores += relative_logits(query)
-    attention_scores = nn._masked_softmax(attention_scores, None)
-    attention_scores_dropout = nn._dropout_layer(attention_scores, training=False)
-    attention_output = special_math_ops.einsum(nn._combine_equation, attention_scores_dropout, value)
-    ic(attention_output.shape.as_list())
-    # ic| attention_output.shape.as_list(): [None, 14, 16, 4, 128]
-
-    attention_output = nn._output_dense(attention_output)
-    ic(attention_output.shape.as_list())
-    # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
-    ```
-    ```py
-    def rel_to_abs(x):
-        bs, heads, h, w, dim = x.shape
-        col_pad = tf.zeros_like(x[:, :, :, :, :1], dtype=x.dtype)
-        x = tf.concat([x, col_pad], axis=-1)
-        flat_x = tf.reshape(x, [-1, heads, h, w * 2 * w])
-        flat_pad = tf.zeros_like(flat_x[:, :, :, :w-1], dtype=x.dtype)
-        flat_x_padded = tf.concat([flat_x, flat_pad], axis=-1)
-        final_x = tf.reshape(flat_x_padded, [-1, heads, h, w+1, 2*w-1])
-        final_x = final_x[:, :, :, :w, w-1:]
-        return final_x
-
-    def relative_logits_1d(*, q, rel_k, transpose_mask):
-        bs, heads, h, w, dim = q.shape
-        rel_logits = tf.matmul(q, tf.transpose(rel_k, [1, 0]))
-        rel_logits = rel_to_abs(rel_logits)
-        rel_logits = tf.expand_dims(rel_logits, axis=3)
-        rel_logits = tf.tile(rel_logits, [1, 1, 1, h, 1, 1])
-        rel_logits = tf.transpose(rel_logits, transpose_mask)
-        return rel_logits
-
-    def relative_logits(q):
-        rel_logits_w = relative_logits_1d(q=q, rel_k=rel_emb_w, transpose_mask=[0, 1, 2, 4, 3, 5])
-        rel_logits_h = relative_logits_1d(q=tf.transpose(q, [0, 1, 3, 2, 4]), rel_k=rel_emb_h, transpose_mask=[0, 1, 4, 2, 5, 3])
-        return rel_logits_h + rel_logits_w
-    ```
-***
-
 # Word2Vec
   ```py
   dd = {ii : np.stack([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[0].numpy() for jj in range(1000)]) for ii in range(8)}
@@ -782,6 +609,458 @@
   ic(attention_output.shape.as_list())
   # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
   ```
+***
+
+# Resnest
+  - [Github zhanghang1989/ResNeSt](https://github.com/zhanghang1989/ResNeSt)
+  - [Github n2cholas/jax-resnet](https://github.com/n2cholas/jax-resnet/)
+  ```py
+  from torchsummary import summary
+  import torch
+
+  from resnest.torch import resnest50
+  net = resnest50(pretrained=True)
+  summary(net, (3, 224, 224))
+
+  xx = torch.randn(10, 3, 224, 224)
+  torch.onnx.export(net, xx, "resnest50.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
+
+  traced_cell = torch.jit.trace(net, (torch.randn(10, 3, 224, 224)))
+  torch.jit.save(traced_cell, 'resnest50.pth')
+  ```
+## Convert Resnest model weights from Torch
+  ```py
+  from torchsummary import summary
+  import torch
+
+  sys.path.append("../..")
+  from ResNeSt.resnest.torch import resnest as torch_resnest
+
+  model_name = "ResNest50"
+  torch_model = getattr(torch_resnest, model_name.lower())(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  import resnest
+  mm = getattr(resnest, model_name)(input_shape=(224, 224, 3), classifier_activation=None)
+  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
+  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
+
+  input_output_rr = {
+      "conv1.0" : "stem_1_conv",
+      'conv1.1': 'stem_1_bn',
+      'conv1.3': 'stem_2_conv',
+      'conv1.4': 'stem_2_bn',
+      'conv1.6': 'stem_3_conv',
+      'bn1': 'stem_3_bn',
+      'fc': 'predictions',
+  }
+  network_stack_rr = {'layer1': 'stack1_', 'layer2': 'stack2_', 'layer3': 'stack3_', 'layer4': 'stack4_'}
+  network_block_rr = {"{}".format(ii): "block{}_".format(ii + 1) for ii in range(48)}
+  layer_rr = {
+      "conv1": "1_conv",
+      "bn1": "1_bn",
+      "conv2.conv": "sa_1_conv",
+      "conv2.bn0": "sa_1_bn",
+      "conv2.fc1": "sa_2_conv",
+      "conv2.bn1": "sa_2_bn",
+      "conv2.fc2": "sa_3_conv",
+      "downsample.1": "shortcut_conv",
+      "downsample.2": "shortcut_bn",
+      "conv3": "2_conv",
+      "bn3": "2_bn",
+  }
+
+  def match_layer_name(torch_layer_name):
+      splitted_name = torch_layer_name.split('.')
+      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
+      if layer_name in input_output_rr:
+           return input_output_rr[layer_name]
+      elif splitted_name[0].startswith("layer"):
+          stack_nn, block_nn = splitted_name[0], splitted_name[1]
+          layer_nn = ".".join(splitted_name[2:-1])
+          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], layer_rr[layer_nn]])
+      else:
+          return None
+
+  aa = torch_model.state_dict()
+  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+  cc = set(bb.values())
+  # print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+  print("TF layers with weights not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc and len(ii.weights) != 0])
+  # TF layers with weights not contained in torch: []
+  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
+  # torch layers not contained in TF: []
+
+  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
+  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
+  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
+  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
+
+  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
+  for kk, vv in bb.items():
+      torch_weight = aa[kk].detach().numpy()
+      torch_weight_type = kk.split(".")[-1]
+      if torch_weight_type == "num_batches_tracked":
+          continue
+
+      tf_layer = mm.get_layer(vv)
+      tf_weights = tf_layer.get_weights()
+      tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+      if tf_weight_pos == 0:
+          if isinstance(tf_layer, keras.layers.Conv2D):
+              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+          elif isinstance(tf_layer, keras.layers.BatchNormalization):
+              torch_weight = torch_weight
+          elif isinstance(tf_layer, keras.layers.PReLU):
+              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+          elif isinstance(tf_layer, keras.layers.Dense):
+              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+              torch_weight = torch_weight.T
+
+      tf_weights[tf_weight_pos] = torch_weight
+      tf_layer.set_weights(tf_weights)
+
+  save_path = model_name.lower() + ".h5"
+  mm.save(save_path)
+  print("Saved model:", save_path)
+
+  input_shape = 224
+  inputs = np.random.uniform(size=(1, input_shape, input_shape, 3)).astype("float32")
+  torch_out = torch_model(torch.from_numpy(inputs.transpose(0, 3, 1, 2))).detach().numpy()
+  keras_out = mm(inputs)
+  print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
+  ```
+***
+
+# BotNet
+## Relative and absolute positional embedding
+  - [aravindsrinivas/botnet.py](https://gist.github.com/aravindsrinivas/56359b79f0ce4449bcb04ab4b56a57a2)
+  - [leondgarse/botnet.py](https://gist.github.com/leondgarse/351dba9457c5a36516aea3ce1950ac74)
+  - `Attn = softmax((Q * K + Q * P) / sqrt(dim))`
+  - **botnet MHSAWithPositionEmbedding forward**
+    ```py
+    import botnet
+    inputs = np.ones([1, 14, 16, 1024])
+    aa = botnet.MHSAWithPositionEmbedding()
+    print(f"{aa(inputs).shape = }")
+    # aa(inputs).shape = TensorShape([1, 14, 16, 512])
+
+    query = aa._query_dense(inputs)
+    key = aa._key_dense(inputs)
+    value = aa._value_dense(inputs)
+    print(f"{query.shape = }, {key.shape = }, {value.shape = }")
+    # query.shape = TensorShape([1, 14, 16, 4, 128]), key.shape = TensorShape([1, 14, 16, 4, 128]), value.shape = TensorShape([1, 14, 16, 4, 128])
+
+    query = query / tf.sqrt(float(aa._key_dim))
+    attention_scores = tf.einsum(aa._dot_product_equation, key, query)
+    print(f"{aa._dot_product_equation = }, {attention_scores.shape = }")
+    # aa._dot_product_equation = 'afgde,abcde->adbcfg', attention_scores.shape = TensorShape([1, 4, 14, 16, 14, 16])
+
+    if aa.relative:
+        # Add relative positional embedding
+        attention_scores += aa.relative_logits(query)
+    else:
+        # Add absolute positional embedding
+        attention_scores += aa.absolute_logits(query)
+
+    attention_mask = None
+    attention_scores = aa._masked_softmax(attention_scores, attention_mask)
+    attention_scores_dropout = aa._dropout_layer(attention_scores, training=False)
+    attention_output = special_math_ops.einsum(aa._combine_equation, attention_scores_dropout, value)
+    print(f"{aa._combine_equation = }, {attention_output.shape = }")
+    # aa._combine_equation = 'adbcfg,afgde->abcde', attention_output.shape = TensorShape([1, 14, 16, 4, 128])
+
+    # attention_output = aa._output_dense(attention_output)
+    hh, ww = inputs.shape[1], inputs.shape[2]
+    attention_output = tf.reshape(attention_output, [-1, hh, ww, aa.num_heads * aa.key_dim])
+    print(f"{attention_output.shape = }")
+    # attention_output.shape = TensorShape([1, 14, 16, 512])
+    ```
+  - **Absolute positional embedding**
+    ```py
+    hh, ww, num_heads, key_dim = 14, 16, 4, 128
+    query = tf.random.uniform([1, hh, ww, num_heads, key_dim])
+    pos_emb_h = tf.random.uniform([hh, key_dim])
+    pos_emb_w = tf.random.uniform([ww, key_dim])
+
+    pos_emb = tf.expand_dims(pos_emb_h, 1) + tf.expand_dims(pos_emb_w, 0)
+    print(f"{pos_emb.shape = }")
+    # pos_emb.shape = TensorShape([14, 16, 128])
+    abs_logits = tf.einsum('bxyhd,pqd->bhxypq', query, pos_emb)
+    print(f"{abs_logits.shape = }")
+    # abs_logits.shape = TensorShape([1, 4, 14, 16, 14, 16])
+
+    """ einsum process """
+    tt = tf.matmul(query, tf.reshape(pos_emb, [-1, pos_emb.shape[-1]]), transpose_b=True)
+    print(f"{tt.shape = }")
+    # tt.shape = TensorShape([1, 14, 16, 4, 224])
+    tt = tf.reshape(tt, query.shape[:-1] + pos_emb.shape[:2])
+    print(f"{tt.shape = }")
+    # tt.shape = TensorShape([1, 14, 16, 4, 14, 16])
+    tt = tf.transpose(tt, [0, 3, 1, 2, 4, 5])
+    print(f"{tt.shape = }")
+    # tt.shape = TensorShape([1, 4, 14, 16, 14, 16])
+    ```
+  - **Converts relative indexing to absolute** Input `[bs, heads, height, width, 2*width - 1]`, Output `[bs, heads, height, width, width]`
+    ```py
+    rel_pos = np.arange(28).reshape(1, 1, 1, 4, 7) # [bs, heads, height, width, 2 * width - 1]
+    print(rel_pos[0, 0, 0])
+    # [[ 0,  1,  2,  3,  4,  5,  6],
+    #  [ 7,  8,  9, 10, 11, 12, 13],
+    #  [14, 15, 16, 17, 18, 19, 20],
+    #  [21, 22, 23, 24, 25, 26, 27]]
+    _, heads, hh, ww, dim = rel_pos.shape
+
+    # (ww, 2 * ww - 1) --> (ww, 2 * (ww - 1)) ==> removed: ww * (2 * ww - 1) - ww * 2 * (ww - 1) == ww
+    flat_x = rel_pos.reshape([-1, heads, hh, ww * (ww * 2 - 1)])
+    print(flat_x[0, 0])
+    # [[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]]
+    flat_x = flat_x[:, :, :, ww - 1:-1]
+    print(flat_x[0, 0])
+    # [[ 3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]]
+    final_x = flat_x.reshape([-1, heads, hh, ww, 2 * (ww - 1)])
+    print(final_x[0, 0])
+    # [[[ 3,  4,  5,  6,  7,  8],
+    #   [ 9, 10, 11, 12, 13, 14],
+    #   [15, 16, 17, 18, 19, 20],
+    #   [21, 22, 23, 24, 25, 26]]]
+    final_x = final_x[:, :, :, :, :ww]
+    print(final_x[0, 0])
+    # [[[ 3,  4,  5,  6],
+    #   [ 9, 10, 11, 12],
+    #   [15, 16, 17, 18],
+    #   [21, 22, 23, 24]]]
+    ```
+  - **Relative positional embedding**
+    ```py
+    def rel_to_abs(rel_pos):
+        _, heads, hh, ww, dim = rel_pos.shape # [bs, heads, height, width, 2 * width - 1]
+        # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
+        flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (ww * 2 - 1)])[:, :, :, ww - 1:-1]
+        # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
+        return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (ww - 1)])[:, :, :, :, :ww]
+
+
+    hh, ww, num_heads, key_dim = 14, 16, 4, 128
+    query = tf.random.uniform([1, hh, ww, num_heads, key_dim])
+    pos_emb_h = tf.random.uniform([key_dim, 2 * hh - 1])
+    pos_emb_w = tf.random.uniform([key_dim, 2 * ww - 1])
+
+    """ rel_logits_w """
+    query_w = tf.transpose(query, [0, 3, 1, 2, 4])  # [1, 4, 14, 16, 128]
+    rel_logits_w = tf.matmul(query_w, pos_emb_w)  # [1, 4, 14, 16, 31]
+    rel_logits_w = rel_to_abs(rel_logits_w) # [1, 4, 14, 16, 16]
+
+    """ rel_logits_h """
+    query_h = tf.transpose(query, [0, 3, 2, 1, 4])  # [1, 4, 16, 14, 128]
+    rel_logits_h = tf.matmul(query_h, pos_emb_h)  # [1, 4, 16, 14, 27]
+    rel_logits_h = rel_to_abs(rel_logits_h) # [1, 4, 16, 14, 14]
+    rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14]
+
+    """ Output """
+    rel_logits_h = tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 1]
+    rel_logits_w = tf.expand_dims(rel_logits_w, axis=4) # [1, 4, 14, 16, 1, 16]
+    output = rel_logits_h + rel_logits_w  # [1, 4, 14, 16, 14, 16]
+    ```
+## Convert botnet model weights from Torch
+  ```py
+  import torch
+  from distribuuuu.models import botnet
+  net = botnet.botnet50()
+  net.eval()
+  weight = torch.load('../models/botnet50.pth.tar', map_location=torch.device('cpu'))
+  net.load_state_dict(weight)
+
+  from torchsummary import summary
+  summary(net, (3, 224, 224))
+
+  traced_cell = torch.jit.trace(net, (torch.randn(10, 3, 224, 224)))
+  torch.jit.save(traced_cell, 'botnet50.pth')
+  ```
+  ```py
+  import torch
+  from torchsummary import summary
+
+  sys.path.append('../../distribuuuu')
+  import distribuuuu.models.botnet as torch_botnet
+
+  torch_model = torch_botnet.botnet50()
+  torch_model.eval()
+  weight = torch.load('../../models/botnet50.pth.tar', map_location=torch.device('cpu'))
+  torch_model.load_state_dict(weight)
+
+  summary(torch_model, (3, 224, 224))
+
+  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  import botnet_2
+  mm = botnet_2.BotNet50(input_shape=(224, 224, 3), strides=1, classifier_activation=None)
+  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
+  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
+
+  input_output_rr = {
+      "0" : "conv1_conv",
+      '1': 'conv1_bn',
+      '10': 'predictions',
+  }
+  network_stack_rr = {'4': 'stack1_', '5': 'stack2_', '6': 'stack3_', '7': 'stack4_'}
+  network_block_rr = {"{}".format(ii): "block{}_".format(ii + 1) for ii in range(6)}
+  layer_rr = {
+      "conv1": "1_conv",
+      "bn1": "1_bn",
+      "conv2": "2_conv",
+      "bn2": "2_bn",
+      "conv3": "3_conv",
+      "bn3": "3_bn",
+      "downsample.0": "shorcut_conv",
+      "downsample.1": "shorcut_bn",
+  }
+  mhsa_layer_rr = {
+      "shortcut.0": "shorcut_conv",
+      "shortcut.1": "shorcut_bn",
+      "net.0": "1_conv",
+      "net.1": "1_bn",
+      "net.5": "2_bn",
+      "net.7": "3_conv",
+      "net.8": "3_bn",
+      "net.3.to_qk": "2_mhsa",
+      "net.3.to_v": "2_mhsa",
+      "net.3.pos_emb": "2_mhsa",
+  }
+
+  def match_layer_name(torch_layer_name):
+      splitted_name = torch_layer_name.split('.')
+      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
+      if layer_name in input_output_rr:
+           return input_output_rr[layer_name]
+      elif splitted_name[1] == "net":
+          stack_nn, block_nn, layer_nn = splitted_name[0], splitted_name[2], ".".join(splitted_name[3:-1])
+          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], mhsa_layer_rr[layer_nn]])
+      else:
+          stack_nn, block_nn, layer_nn = splitted_name[0], splitted_name[1], ".".join(splitted_name[2:-1])
+          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], layer_rr[layer_nn]])
+
+  aa = torch_model.state_dict()
+  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+  cc = set(bb.values())
+  # print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+  print("TF layers with weights not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc and len(ii.weights) != 0])
+  # TF layers with weights not contained in torch: []
+  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
+  # torch layers not contained in TF: []
+
+  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
+  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
+  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
+  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
+
+  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
+  for kk, vv in bb.items():
+      torch_weight = aa[kk].detach().numpy()
+      torch_weight_type = kk.split(".")[-1]
+      if torch_weight_type == "num_batches_tracked":
+          continue
+      if vv.endswith("_mhsa"):
+          continue
+
+      tf_layer = mm.get_layer(vv)
+      tf_weights = tf_layer.get_weights()
+      tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+      if tf_weight_pos == 0:
+          if isinstance(tf_layer, keras.layers.Conv2D):
+              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+          elif isinstance(tf_layer, keras.layers.BatchNormalization):
+              torch_weight = torch_weight
+          elif isinstance(tf_layer, keras.layers.PReLU):
+              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+          elif isinstance(tf_layer, keras.layers.Dense):
+              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+              torch_weight = torch_weight.T
+
+      tf_weights[tf_weight_pos] = torch_weight
+      tf_layer.set_weights(tf_weights)
+
+  """ MHSA weights """
+  inputs = np.random.uniform(size=(1, 14, 14, 512)).astype("float32")
+  torch_inputs = torch.from_numpy(inputs).permute(0, 3, 1, 2)
+
+  for index in range(3):
+      ee = torch_model[-4].net[index].net[3]
+      ww = {kk: vv.detach().numpy() for kk, vv in ee.state_dict().items()}
+      print({kk: ww[kk].shape for kk in ww})
+      # {'to_qk.weight': (1024, 512, 1, 1), 'to_v.weight': (512, 512, 1, 1), 'pos_emb.rel_height': (27, 128), 'pos_emb.rel_width': (27, 128)}
+      torch_out = ee(torch_inputs).permute(0, 2, 3, 1).detach().numpy()
+
+      ff = mm.get_layer('stack4_block{}_2_mhsa'.format(index + 1))
+      print({ii.name: ii.shape for ii in ff.weights})
+
+      vv = ww['to_v.weight'][:, :, 0, 0].reshape(4, -1, 512).transpose(2, 0, 1)
+      qq, kk = ww['to_qk.weight'][:, :, 0, 0].reshape(2, 4, -1, 512).transpose(0, 3, 1, 2)
+
+      wws = [
+          ww['pos_emb.rel_width'].T,
+          ww['pos_emb.rel_height'].T,
+          qq, kk, vv
+      ]
+      ff.set_weights(wws)
+
+      keras_out = ff(inputs)
+      print(f"{np.allclose(torch_out, keras_out, atol=1e-6) = }")
+
+  save_path = "botnet50.h5"
+  mm.save(save_path)
+  print("Saved model:", save_path)
+
+  input_shape = 224
+  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
+  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
+  ```
+  ```py
+  torch_inputs = torch.ones([1, 3, 224, 224])
+  stem_out = torch_model[3](torch_model[2](torch_model[1](torch_model[0](torch_inputs))))
+  stack_1_out = torch_model[4](stem_out)
+  stack_2_out = torch_model[5](stack_1_out)
+  stack_3_out = torch_model[6](stack_2_out)
+  stack_4_out = torch_model[7](stack_3_out)
+  avg_out = torch_model[8](stack_4_out)
+
+  print(f"{np.allclose(keras.models.Model(mm.inputs[0], mm.get_layer('stack1_block3_out').output)(np.ones([1, 224, 224, 3])), stack_1_out.permute(0, 2, 3, 1).detach(), atol=1e-5) = }")
+  print(f"{np.allclose(keras.models.Model(mm.inputs[0], mm.get_layer('stack2_block4_out').output)(np.ones([1, 224, 224, 3])), stack_2_out.permute(0, 2, 3, 1).detach(), atol=1e-5) = }")
+  print(f"{np.allclose(keras.models.Model(mm.inputs[0], mm.get_layer('stack3_block6_out').output)(np.ones([1, 224, 224, 3])), stack_3_out.permute(0, 2, 3, 1).detach(), atol=1e-4) = }")
+  print(f"{np.allclose(keras.models.Model(mm.inputs[0], mm.get_layer('stack4_block3_out').output)(np.ones([1, 224, 224, 3])), stack_4_out.permute(0, 2, 3, 1).detach(), atol=1e-4) = }")
+  print(f"{np.allclose(keras.models.Model(mm.inputs[0], mm.get_layer('avg_pool').output)(np.ones([1, 224, 224, 3])), avg_out[:, :, 0, 0].detach(), atol=1e-4) = }")
+  ```
+## BotNet positional embedding
+  ```py
+  import botnet
+  mm  = keras.models.load_model('../models/botnet50.h5')
+  fig, axes = plt.subplots(1, 3)
+  for ax, nn in zip(axes, ['stack4_block1_2_mhsa', 'stack4_block2_2_mhsa', 'stack4_block3_2_mhsa']):
+      pos_emb_h = mm.get_layer(nn).pos_emb_h.numpy().T
+      pos_emb_w = mm.get_layer(nn).pos_emb_w.numpy().T
+      pos_emb = np.expand_dims(pos_emb_h, 1) + np.expand_dims(pos_emb_w, 0)
+
+      ax.imshow(np.vstack([np.hstack(pos_emb[:, :, ii * 8: (ii + 1) * 8].transpose(2, 0, 1)) for ii in range(16)]))
+      ax.set_axis_off()
+      ax.set_title(nn)
+  fig.colorbar(ax.images[0])
+  fig.tight_layout()
+  ```
+  ![](images/botnet_pos_emb.png)
 ***
 
 # VOLO
@@ -1436,6 +1715,7 @@
   keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
   print(f"{np.allclose(torch_out, keras_out, atol=5e-3) = }")
   ```
+  **Load and save again**
   ```py
   import volo
   import os
@@ -1474,6 +1754,7 @@
   mm.save(model_path)
   print(">>>> saved:", model_path)
   ```
+  **Comparing Pytorch models**
   ```py
   index = 0
   model_paths = [
@@ -1505,17 +1786,19 @@
   load_pretrained_weights(torch_model, model_path, use_ema=False, strict=True, num_classes=1000)
 
   import volo
-  mm = keras.models.load_model(keras_model_path)
+  mm = getattr(volo, model_type)(input_shape=(input_shape, input_shape, 3), classfiers=2, num_classes=1000)
+  mm.load_weights(keras_model_path)
+  mm.save(keras_model_path)
+  # mm = keras.models.load_model(keras_model_path)
 
   inputs = np.random.uniform(size=(1, input_shape, input_shape, 3)).astype("float32")
   torch_out = torch_model(torch.from_numpy(inputs).permute(0, 3, 1, 2)).detach().numpy()
   keras_out = mm(inputs).numpy()
+  print(f"{(np.abs(torch_out - keras_out) < 1e-5).sum() / keras_out.shape[-1] = }")
+  print(f"{(np.abs(torch_out - keras_out) < 1e-4).sum() / keras_out.shape[-1] = }")
   print(f"{(np.abs(torch_out - keras_out) < 1e-3).sum() / keras_out.shape[-1] = }")
-  print(f"{(np.abs(torch_out - keras_out) < 5e-3).sum() / keras_out.shape[-1] = }")
-  print(f"{(np.abs(torch_out - keras_out) < 1e-2).sum() / keras_out.shape[-1] = }")
-  print(f"{(np.abs(torch_out - keras_out) < 5e-2).sum() / keras_out.shape[-1] = }")
   ```
-## Volo check
+  **Check by layers**
   ```py
   """ PyTorch """
   torch_aa = torch.from_numpy(np.ones([1, 3, 224, 224], dtype='float32'))
@@ -1555,4 +1838,17 @@
   tf_xx = keras.models.Model(mm.inputs[0], mm.get_layer('pre_out_LN').output)(tf_aa).numpy()
   print(f"{np.allclose(torch_xx.detach().numpy(), tf_xx, atol=1e-2) = }")
   ```
+## Volo positional embedding
+  ```py
+  import volo
+  mm  = keras.models.load_model('../models/volo/d1_224_84.2.h5')
+  pp = mm.get_layer('stack_0_positional').pp[0].numpy()
+  plt.imshow(np.vstack([np.hstack(pp[:, :, ii * 24: (ii + 1) * 24].transpose(2, 0, 1)) for ii in range(16)]))
+  ```
+***
+
+# VIT
+  - [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+  - [Github google-research/vision_transformer](https://github.com/google-research/vision_transformer)
+  - [Github yitu-opensource/T2T-ViT](https://github.com/yitu-opensource/T2T-ViT)
 ***
