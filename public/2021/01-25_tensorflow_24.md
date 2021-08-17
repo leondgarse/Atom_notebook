@@ -57,6 +57,13 @@
     x * hard_sigmoid(x)
     x * clip_by_value(x * 0.2 + 0.5, 0, 1)
     ```
+  - **gelu** The gaussian error linear activation
+    ```py
+    x * P(X <= x), where P(X) ~ N(0, 1)
+
+    `0.5 * x * (1 + tanh(sqrt(2 / pi) * (x + 0.044715 * x ** 3)))` if `approximate` is `True`
+    `x * P(X <= x) = 0.5 * x * (1 + tf.math.erf(x / sqrt(2)))` where `P(X) ~ N(0, 1)` if `approximate` is `False`
+    ```
 ## Plot activations
   ```py
   fig, axes = plt.subplots(1, 2, figsize=(8, 4))
@@ -69,11 +76,15 @@
   axes[0].plot(xx, keras.layers.PReLU(alpha_initializer=tf.initializers.Constant(0.25))(xx), label='PReLU 0.25')
 
   axes[0].plot(xx, tf.nn.swish(xx), label='swish')
-  axes[0].plot(xx, tf.nn.sigmoid(xx) * xx, label='swish self defined')
+  axes[0].plot(xx, tf.nn.sigmoid(xx) * xx, label='swish self defined', color=axes[0].lines[-1].get_color())
+  axes[0].plot(xx, tf.nn.gelu(xx), label='gelu')
+  color = axes[0].lines[-1].get_color()
+  axes[0].plot(xx, 0.5 * xx * (1 + np.tanh(np.sqrt(2 / np.pi) * (xx + 0.044715 * xx ** 3))), color=color, label='gelu self defined approximate True')
+  axes[0].plot(xx, 0.5 * xx * (1 + tf.math.erf(xx / sqrt(2))), color=color, label='gelu self defined approximate False')
 
   axes[0].plot(xx, tf.nn.relu6(xx), label='relu6')
   axes[0].plot(xx, xx * tf.nn.relu6(xx + 3) / 6, label='hard_swish, relu6')
-  axes[0].plot(xx, xx * np.clip(xx / 6 + 0.5, 0, 1), label='hard_swish, numpy')
+  axes[0].plot(xx, xx * np.clip(xx / 6 + 0.5, 0, 1), label='hard_swish, numpy', color=axes[0].lines[-1].get_color())
   axes[0].plot(xx, xx * np.clip(xx * 0.2 + 0.5, 0, 1), label='hard_swish hard_sigmoid, numpy')
 
   xx = np.arange(-6, 6, 0.05)

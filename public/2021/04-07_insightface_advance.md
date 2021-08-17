@@ -409,9 +409,9 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist.json", fig_label="resnet101v2 1 warmup", names=names, **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 swish, E", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet101v2, swish, first conv 3, strides 1", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 swish, E", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="resnet101v2, swish, first conv 3, strides 1", **pp)
 
   # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 relu, basic", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet50v2_swish_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet50v2 swish", **pp)
@@ -421,11 +421,18 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish, cleaned", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish, cleaned, SD", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="se_r50, swish, cleaned", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="r50, swish, cleaned, SD", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="se_r50, swish, cleaned", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_hist.json", fig_label="se_r50, swish, cleaned, SD", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_hist.json", fig_label="se_r50, swish, cleaned, randaug 100", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_randaug_100_bnm09_bne1e4_cos16_hist.json", fig_label="se_r50, swish, cleaned, randaug 100", **pp)
+
+  hist_path = "checkpoints/"
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnest50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnest50, swish, randaug 100", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnest50_se_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnest50, se, swish, randaug 100", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="se_r50, swish, randaug 100, SD", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="se_r50, swish, randaug 100, SD, bs1024", **pp)
   ```
   ```py
   from plot import choose_accuracy
@@ -573,6 +580,20 @@
   axes, _ = plot.hist_plot_split("checkpoints/efficientnet_v2/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="random 0, cleaned", **pp)
   ```
   ```py
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr', 'triplet_embedding_loss']
+  pp["epochs"] = [17]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_hist.json", fig_label="arc, randaug_cutout, lr_base 0.025", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_lrbase_1e3_hist.json", fig_label="arc, randaug_cutout, lr_base 1e-3", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_hist.json", fig_label="arc, randaug_cutout, lr_base 0.025, SGD lookahead", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_SAM_hist.json", fig_label="arc, randaug_cutout, lr_base 0.025, SGD lookahead, SAM", **pp)
+  ```
+
+  ```py
   from plot import choose_accuracy
   hist_path = "checkpoints/efficientnet_v2/"  
   aa = [
@@ -647,6 +668,8 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976833_IJBB_11| 0.366018 | 0.872347 | 0.935248 | 0.959396 | 0.97332  | 0.984518 | 0.992438 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBB_11        | 0.337975 | 0.881207 | 0.937098 | 0.959786 | 0.974781 | 0.984713 | 0.992272 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_mmul_1_tmul_1_float16_basic_agedb_30_epoch_33_0.975167_IJBB_11 | 0.403797 | 0.873418 | 0.932619 | 0.957644 | 0.974294 | 0.98481  | 0.992376 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977667_IJBB_11              | 0.33369  | 0.886271 | 0.937488 | 0.959494 | 0.972833 | 0.984518 | 0.99226  |
+  | TT_efv2_b0_swish_21k_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11           | 0.374878 | 0.872055 | 0.935638 | 0.959786 | 0.974391 | 0.983544 | 0.991683 |
 
   |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
   |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
@@ -673,6 +696,7 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_SGD_LA_randaug_cutout_basic_agedb_30_epoch_17_0.977333_IJBB_11 | 0.369718 | 0.877215 | 0.937877 | 0.960565 | 0.975657 | 0.985979 | 0.992154 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_basic_agedb_30_epoch_13_0.979000_IJBB_11        | 0.324927 |  0.8815  | 0.938462 | 0.959494 | 0.975463 | 0.984615 | 0.991511 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_basic_agedb_30_epoch_12_0.978333_IJBB_11                       | 0.339435 | 0.869815 | 0.931938 | 0.959007 | 0.976047 | 0.986465 | 0.992172 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_basic_agedb_30_epoch_17_0.977333_IJBB_11                           | 0.375755 | 0.872639 | 0.940701 | 0.959202 | 0.974781 | 0.984226 | 0.991931 |
 
   |                                                                                                                                                                                             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
   |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------:|---------:|---------:|---------:|---------:|---------:|---------:|
@@ -696,6 +720,8 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_nestrov_l2_5e4_bs512_ms1m_randaug_cutout_ipc_10_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977167_IJBC_11                           | 0.867976 | 0.924477 | 0.952191 | 0.969372 | 0.981285 | 0.989313 | 0.994807 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976167_IJBC_11                                          | 0.875339 | 0.925858 | 0.953623 | 0.970394 | 0.982001 | 0.989262 | 0.994469 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                                          | 0.877026 | 0.925755 | 0.953163 | 0.970292 | 0.981388 | 0.98916  | 0.994394 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977667_IJBC_11                                         | 0.876873 | 0.927085 | 0.951884 | 0.970701 | 0.981541 | 0.989364 | 0.994539 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_basic_agedb_30_epoch_17_0.977333_IJBC_11                           | 0.870174 | 0.926471 | 0.955259 | 0.970394 | 0.982257 | 0.989058 | 0.994494 |
 ## Finetune EfficientNetV2
   ```py
   hist_path = "checkpoints/efficientnet_v2/"
@@ -939,82 +965,82 @@
 ***
 
 # MXNet Pytorch Results
-```sh
-./IJB_evals.py -P IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBB.npz IJB_result/iresnet50_IJBB.npz IJB_result/r100-arcface-msfdrop75_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB.npz IJB_result/MS1MV2-ResNet100-Arcface_IJBB.npz /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
+  ```sh
+  ./IJB_evals.py -P IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBB.npz IJB_result/iresnet50_IJBB.npz IJB_result/r100-arcface-msfdrop75_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_average_IJBB.npz IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB.npz IJB_result/glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB.npz IJB_result/MS1MV2-ResNet100-Arcface_IJBB.npz /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
 
-./IJB_evals.py -P "IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC.npz", "IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz", "IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBC_11.npz", "/datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt"
-```
+  ./IJB_evals.py -P "IJB_result/glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC.npz", "IJB_result/MS1MV2-ResNet100-Arcface_IJBC.npz", "IJB_result/GhostNet_x1.3_Arcface_Epoch_24_IJBC_11.npz", "/datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt"
+  ```
 
-- **MXNet MS1MV3**
-| Datasets       | backbone   | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
-| -------------- | ---------- | ----------- | ----------- | ------- | ------ | ----- |
-| MS1MV3-Arcface | r18-fp16   | 92.07       | 94.66       | 97.77   | 97.73  | 99.77 |
-| MS1MV3-Arcface | r34-fp16   | 94.10       | 95.90       | 98.10   | 98.67  | 99.80 |
-| MS1MV3-Arcface | r50-fp16   | 94.79       | 96.46       | 98.35   | 98.96  | 99.83 |
-| MS1MV3-Arcface | r100-fp16  | 95.31       | 96.81       | 98.48   | 99.06  | 99.85 |
-| MS1MV3-Arcface | r2060-fp16 | 95.34       | 97.11       | 98.67   | 99.24  | 99.87 |
+  - **MXNet MS1MV3**
+  | Datasets       | backbone   | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
+  | -------------- | ---------- | ----------- | ----------- | ------- | ------ | ----- |
+  | MS1MV3-Arcface | r18-fp16   | 92.07       | 94.66       | 97.77   | 97.73  | 99.77 |
+  | MS1MV3-Arcface | r34-fp16   | 94.10       | 95.90       | 98.10   | 98.67  | 99.80 |
+  | MS1MV3-Arcface | r50-fp16   | 94.79       | 96.46       | 98.35   | 98.96  | 99.83 |
+  | MS1MV3-Arcface | r100-fp16  | 95.31       | 96.81       | 98.48   | 99.06  | 99.85 |
+  | MS1MV3-Arcface | r2060-fp16 | 95.34       | 97.11       | 98.67   | 99.24  | 99.87 |
 
-- **MXNet Glint360k**
-| Datasets          | backbone      | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
-| ----------------- | ------------- | ----------- | ----------- | ------- | ------ | ----- |
-| Glint360k-Cosface | r18-fp16-0.1  | 93.16       | 95.33       | 97.72   | 97.73  | 99.77 |
-| Glint360k-Cosface | r34-fp16-0.1  | 95.16       | 96.56       | 98.33   | 98.78  | 99.82 |
-| Glint360k-Cosface | r50-fp16-0.1  | 95.61       | 96.97       | 98.38   | 99.20  | 99.83 |
-| Glint360k-Cosface | r100-fp16-0.1 | 95.88       | 97.32       | 98.48   | 99.29  | 99.82 |
+  - **MXNet Glint360k**
+  | Datasets          | backbone      | IJBC(1e-05) | IJBC(1e-04) | agedb30 | cfp_fp | lfw   |
+  | ----------------- | ------------- | ----------- | ----------- | ------- | ------ | ----- |
+  | Glint360k-Cosface | r18-fp16-0.1  | 93.16       | 95.33       | 97.72   | 97.73  | 99.77 |
+  | Glint360k-Cosface | r34-fp16-0.1  | 95.16       | 96.56       | 98.33   | 98.78  | 99.82 |
+  | Glint360k-Cosface | r50-fp16-0.1  | 95.61       | 96.97       | 98.38   | 99.20  | 99.83 |
+  | Glint360k-Cosface | r100-fp16-0.1 | 95.88       | 97.32       | 98.48   | 99.29  | 99.82 |
 
-- **cavaface.pytorch**
-| Backbone             | Dataset   | Head           | Loss     | Flops/Params  | Megaface(Id/ver@1e-6) | IJBC(tar@far=1e-4) |
-| -------------------- | --------- | -------------- | -------- | ------------- | --------------------- | ------------------ |
-| AttentionNet-IRSE-92 | MS1MV3    | MV-AM          | Softmax  | 17.63G/55.42M | 99.1356/99.3999       | 96.56              |
-| IR-SE-100            | MS1MV3    | Arcface        | Softmax  | 24.18G/65.5M  | 99.0881/99.4259       | 96.69              |
-| IR-SE-100            | MS1MV3    | ArcNegface     | Softmax  | 24.18G/65.5M  | 99.1304/98.7099       | 96.81              |
-| IR-SE-100            | MS1MV3    | Curricularface | Softmax  | 24.18G/65.5M  | 99.0497/98.6162       | 97.00              |
-| IR-SE-100            | MS1MV3    | Combined       | Softmax  | 24.18G/65.5M  | 99.0718/99.4493       | 96.83              |
-| IR-SE-100            | MS1MV3    | CircleLoss     | Softplus | 24.18G/65.5M  | 98.5732/98.4834       | 96.52              |
-| ResNeSt-101          | MS1MV3    | Arcface        | Softmax  | 18.45G/97.61M | 98.8746/98.5615       | 96.63              |
-| DenseNet-201         | MS1MV3    | Arcface        | Softmax  | 8.52G/66.37M  | 98.3649/98.4294       | 96.03              |
-| IR-100               | Glint360k | Arcface        | Softmax  | 24.18G/65.5M  | 99.2964/98.8792       | 97.19              |
-| IR-100               | Glint360k | CosFace        | Softmax  | 24.18G/65.5M  | 99.2625/99.1812       | 97.40              |
+  - **cavaface.pytorch**
+  | Backbone             | Dataset   | Head           | Loss     | Flops/Params  | Megaface(Id/ver@1e-6) | IJBC(tar@far=1e-4) |
+  | -------------------- | --------- | -------------- | -------- | ------------- | --------------------- | ------------------ |
+  | AttentionNet-IRSE-92 | MS1MV3    | MV-AM          | Softmax  | 17.63G/55.42M | 99.1356/99.3999       | 96.56              |
+  | IR-SE-100            | MS1MV3    | Arcface        | Softmax  | 24.18G/65.5M  | 99.0881/99.4259       | 96.69              |
+  | IR-SE-100            | MS1MV3    | ArcNegface     | Softmax  | 24.18G/65.5M  | 99.1304/98.7099       | 96.81              |
+  | IR-SE-100            | MS1MV3    | Curricularface | Softmax  | 24.18G/65.5M  | 99.0497/98.6162       | 97.00              |
+  | IR-SE-100            | MS1MV3    | Combined       | Softmax  | 24.18G/65.5M  | 99.0718/99.4493       | 96.83              |
+  | IR-SE-100            | MS1MV3    | CircleLoss     | Softplus | 24.18G/65.5M  | 98.5732/98.4834       | 96.52              |
+  | ResNeSt-101          | MS1MV3    | Arcface        | Softmax  | 18.45G/97.61M | 98.8746/98.5615       | 96.63              |
+  | DenseNet-201         | MS1MV3    | Arcface        | Softmax  | 8.52G/66.37M  | 98.3649/98.4294       | 96.03              |
+  | IR-100               | Glint360k | Arcface        | Softmax  | 24.18G/65.5M  | 99.2964/98.8792       | 97.19              |
+  | IR-100               | Glint360k | CosFace        | Softmax  | 24.18G/65.5M  | 99.2625/99.1812       | 97.40              |
 
-- **IJBB**
-|                                                         |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |          AUC |
-|:------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
-| GhostNet_x1.3_Arcface_Epoch_24_IJBB                     |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |     0.993646 |
-| MS1MV2-ResNet100-Arcface_IJBB                           |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |     0.993771 |
-| r100-arcface-msfdrop75_IJBB                             |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |     0.995144 |
-| glint360k_iresnet50_IJBB                                |     0.436611 |     0.926972 |     0.957157 |     0.970691 |     0.979065 |     0.986855 |     0.993991 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB        |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |     0.993649 |
-| glint360k_r100FC_1.0_fp16_cosface8GPU_mode_average_IJBB | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |     0.993612 |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB        |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 | **0.995287** |
-| glint360k_r100FC_0.1_fp16_cosface8GPU_mode_average_IJBB |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |     0.995285 |
+  - **IJBB**
+  |                                                         |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |          AUC |
+  |:------------------------------------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
+  | GhostNet_x1.3_Arcface_Epoch_24_IJBB                     |     0.352678 |     0.881694 |     0.928724 |     0.954041 |     0.972055 |     0.985784 |     0.993646 |
+  | MS1MV2-ResNet100-Arcface_IJBB                           |      0.42814 |     0.908179 |     0.948978 |     0.964654 |     0.976728 |     0.986563 |     0.993771 |
+  | r100-arcface-msfdrop75_IJBB                             |     0.441772 |     0.905063 |     0.949464 |     0.965823 |     0.978578 |     0.988802 |     0.995144 |
+  | glint360k_iresnet50_IJBB                                |     0.436611 |     0.926972 |     0.957157 |     0.970691 |     0.979065 |     0.986855 |     0.993991 |
+  | glint360k_r100FC_1.0_fp16_cosface8GPU_model_IJBB        |     0.460857 | **0.938364** | **0.962317** |     0.970789 |      0.98111 |     0.988023 |     0.993649 |
+  | glint360k_r100FC_1.0_fp16_cosface8GPU_mode_average_IJBB | **0.464849** |     0.937001 |      0.96222 |     0.970789 |     0.981597 |     0.988023 |     0.993612 |
+  | glint360k_r100FC_0.1_fp16_cosface8GPU_model_IJBB        |     0.450536 |     0.931938 |     0.961928 |     0.972639 |     0.981986 |     0.989679 | **0.995287** |
+  | glint360k_r100FC_0.1_fp16_cosface8GPU_mode_average_IJBB |      0.44742 |     0.932619 |     0.961831 | **0.972833** | **0.982278** | **0.989971** |     0.995285 |
 
-- **Keras IJBB**
-|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
-| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBB_11                                              | 0.380721 |  0.85258 |  0.91889 | 0.951412 | 0.972833 | 0.986465 |
-| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                 | 0.327069 | 0.887244 | 0.932425 |  0.95482 | 0.972541 |  0.98481 |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11                       | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 |  0.98481 |
-| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11              | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
-| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBB_11  |  0.40224 | 0.916943 | 0.949951 |  0.96446 | 0.976728 |  0.98666 |
-| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBB_11 | 0.397371 | 0.914606 | 0.952483 | 0.967381 | 0.978773 | 0.987439 |
-| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBB_11                                                        | 0.385589 | 0.915871 | 0.950828 | 0.965141 | 0.976923 | 0.985784 |
-| TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBB_11                                       | 0.390944 | 0.924537 | 0.954333 | 0.967868 | 0.979747 | 0.987244 |
+  - **Keras IJBB**
+  |                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |
+  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:|
+  | TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBB_11                                              | 0.380721 |  0.85258 |  0.91889 | 0.951412 | 0.972833 | 0.986465 |
+  | TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBB_11                 | 0.327069 | 0.887244 | 0.932425 |  0.95482 | 0.972541 |  0.98481 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBB_11                                              | 0.369133 | 0.871081 | 0.937098 | 0.959104 | 0.973905 | 0.984518 |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBB_11                       | 0.352288 | 0.871276 | 0.937293 | 0.959981 | 0.975268 |  0.98481 |
+  | TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBB_11              | 0.349172 | 0.904284 | 0.944693 | 0.962707 | 0.974878 | 0.983739 |
+  | TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBB_11  |  0.40224 | 0.916943 | 0.949951 |  0.96446 | 0.976728 |  0.98666 |
+  | TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBB_11 | 0.397371 | 0.914606 | 0.952483 | 0.967381 | 0.978773 | 0.987439 |
+  | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBB_11                                                        | 0.385589 | 0.915871 | 0.950828 | 0.965141 | 0.976923 | 0.985784 |
+  | TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBB_11                                       | 0.390944 | 0.924537 | 0.954333 | 0.967868 | 0.979747 | 0.987244 |
 
-- **IJBC**
-|                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
-| glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 | 0.995874 |
-| GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 | 0.995519 |
-| TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11                                              | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |          |
-| TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11                 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |          |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |          |
-| TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                       | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 |          |
-| TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBC_11              | 0.897735 | 0.936493 | 0.959145 | 0.973411 | 0.983075 | 0.989262 |          |
-| TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |          |
-| TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |          |
-| TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |          |
-| TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |          |
+  - **IJBC**
+  |                                                                                                                                                                                  |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+  | glint360k_r100FC_1.0_fp16_cosface8GPU_IJBC                                                                                                                                       | 0.872066 | 0.961497 | 0.973871 | 0.980672 | 0.987421 | 0.991819 | 0.995874 |
+  | GhostNet_x1.3_Arcface_Epoch_24_IJBC_11                                                                                                                                           | 0.876259 | 0.922023 | 0.945748 |  0.96477 | 0.978985 | 0.990336 | 0.995519 |
+  | TT_mobilenet_swish_pointwise_distill_128_arc_emb512_dr04_wd5e4_bs512_r100_ms1m_fp16_cosine_basic_agedb_30_epoch_50_0.975333_IJBC_11                                              | 0.851255 | 0.907808 | 0.940328 | 0.963133 | 0.979751 | 0.991154 |          |
+  | TT_ghostnet_strides_1_prelu_25_se_relu_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_basic_agedb_30_epoch_50_0.976333_IJBC_11                 | 0.872833 | 0.922892 | 0.949328 | 0.966457 | 0.980263 | 0.989262 |          |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.975000_IJBC_11                                              | 0.869305 | 0.921511 | 0.951935 | 0.969781 |  0.98149 | 0.988751 |          |
+  | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976667_IJBC_11                       | 0.878714 | 0.924988 | 0.953214 | 0.969627 | 0.981643 | 0.988802 |          |
+  | TT_botnet50_swish_shortcut_act_none_GDC_arc_emb512_cos16_batch_restart_2_bias_false_conv_no_bias_tmul_2_random0_basic_agedb_30_epoch_45_batch_4000_0.980167_IJBC_11              | 0.897735 | 0.936493 | 0.959145 | 0.973411 | 0.983075 | 0.989262 |          |
+  | TT_resnet50v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_6000_0.983667_IJBC_11  | 0.909853 | 0.946106 | 0.963696 | 0.974383 | 0.983842 | 0.990694 |          |
+  | TT_resnet101v2_swish_pad_same_first_conv_k3_stride_1_conv_no_bias_E_arc_emb512_dr04_sgd_l2_5e4_bs384_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_44_batch_2000_0.985000_IJBC_11 | 0.900138 | 0.948816 | 0.966406 | 0.977144 | 0.985172 |  0.99187 |          |
+  | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |          |
+  | TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |          |
 ***
 
 # cavaface.pytorch
@@ -1982,24 +2008,95 @@
   # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
   ```
 ***
+
+# VOLO
+  ```py
+  sys.path.append('../Keras_volo')
+  import volo
+  mm = volo.volo_d1(input_shape=(112, 112, 3), num_classes=512, survivals=0.8, mean_classifier_top=True)
+  mm.load_weights('../models/volo/d1_224_84.2.h5', by_name=True, skip_mismatch=True)
+  bb = keras.models.load_model('../models/volo/d1_224_84.2.h5')
+  mm.get_layer('stack_0_positional').load_resized_pos_emb(bb.get_layer('stack_0_positional'))
+
+  bb = keras.models.Model(mm.inputs[0], keras.layers.Activation("linear", dtype="float32", name="embedding")(mm.output))
+  bb.save('../models/volo/d1_112_GAP_512_SD_08_84.2.h5')
+  ```
+  ```py
+  sys.path.append('../Keras_volo')
+  import volo
+  mm = volo.volo_d2(input_shape=(112, 112, 3), num_classes=512, survivals=0.8, mean_classifier_top=True)
+  mm.load_weights('../models/volo/d2_384_86.0.h5', by_name=True, skip_mismatch=True)
+  bb = keras.models.load_model('../models/volo/d2_384_86.0.h5')
+  mm.get_layer('stack_0_positional').load_resized_pos_emb(bb.get_layer('stack_0_positional'))
+
+  bb = keras.models.Model(mm.inputs[0], keras.layers.Activation("linear", dtype="float32", name="embedding")(mm.output))
+  bb.save('../models/volo/d2_112_GAP_512_SD_08_86.0.h5')
+  ```
+  ```py
+  import losses, train, models
+  import tensorflow_addons as tfa
+  keras.mixed_precision.set_global_policy("mixed_float16")
+
+  data_basic_path = '/datasets/ms1m-retinaface-t1'
+  data_path = data_basic_path + '_112x112_folders'
+  eval_paths = ["IJBB.bin", "IJBC.bin"] + [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
+
+  sys.path.append('../Keras_volo/')
+  import volo
+  basic_model = keras.models.load_model('../models/volo/d2_112_GAP_512_SD_08_86.0.h5')
+
+  tt = train.Train(data_path, eval_paths=eval_paths,
+      save_path='TT_volo_d2_GAP_SD_08_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16.h5',
+      basic_model=basic_model, model=None, lr_base=0.2, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-4,
+      batch_size=512, random_status=100, output_weight_decay=1)
+
+  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=False)
+  sch = [
+      {"loss": losses.ArcfaceLoss(scale=16), "epoch": 5, "optimizer": optimizer},
+      {"loss": losses.ArcfaceLoss(scale=32), "epoch": 5},
+      {"loss": losses.ArcfaceLoss(scale=64), "epoch": 40},
+  ]
+  tt.train(sch, 0)
+  ```
+***
+
+# AotNet
 ```py
-pos = np.arange(-1, 1, 0.01)
-neg = 1 - pos
+from keras_cv_attention_models import aotnet
+# resnet50 like
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0)
 
-margin = 0.5
-arc = np.cos(np.arccos(pos) + margin)
+# se_ir_resnet50 like
+mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], expansion=1, input_shape=(112, 112, 3), deep_stem=False, num_classes=0, se_ratio=1/4, stem_down_sample=False, strides=2)
 
-margin = 0.35
-ada = np.cos(np.arccos(pos) + np.maximum(neg, 0) + margin)
+# Basic
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=None, deep_stem=True, strides=1)
 
-margin = 0.35
-cosf = pos - margin
+# BotNet like
+attn = [None, None, "mhsa", "mhsa"]
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
 
-plt.plot(pos, pos, label="original")
-plt.plot(pos, arc, label="arc")
-plt.plot(pos, ada, label="ada")
-plt.plot(pos, cosf, label="cosf")
-plt.legend()
-plt.grid()
-plt.tight_layout()
+# HaloNet like
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="halo", deep_stem=True, strides=1)
+
+# Resnest50 like
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="sa", deep_stem=True, strides=1)
+
+# Cotnet50 like
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="cot", deep_stem=True, strides=1)
+
+# SECotnetD50 like
+attn = ["sa", "sa", ["cot", "sa"] * 50, "cot"]
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
+
+# Mixing se and outlook and halo and mhsa
+attn = [None, "outlook", ["mhsa", "halo"] * 50, ["mhsa", "halo"] * 4]
+se_ratio = [0.25, 0.25, 0, 0]
+mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, se_ratio=se_ratio, deep_stem=True)
+```
+```py
+# Most se_ir_resnet50 like
+# first conv, kernel_size=3, strides=1
+# se_module, use_bias=False
+mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
 ```
