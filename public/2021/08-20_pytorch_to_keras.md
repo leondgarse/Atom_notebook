@@ -1,5 +1,6 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
+
 # 目录
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -25,14 +26,16 @@
   	- [Troch roi align](#troch-roi-align)
   	- [TF crop and resize](#tf-crop-and-resize)
   	- [Token labeling](#token-labeling)
+  - [CotNet](#cotnet)
+  	- [PyTorch CotNet](#pytorch-cotnet)
+  	- [Convert CotNet model weights from Torch](#convert-cotnet-model-weights-from-torch)
+  	- [Test CotNet](#test-cotnet)
+  	- [Anti alias downsample](#anti-alias-downsample)
+  - [Attetion models](#attetion-models)
   	- [VIT](#vit)
   	- [[ToDo] SimAM](#todo-simam)
   	- [CoAtNet](#coatnet)
   	- [HaloNet](#halonet)
-  	- [CotNet](#cotnet)
-  	- [Convert CotNet model weights from Torch](#convert-cotnet-model-weights-from-torch)
-  	- [Test CotNet](#test-cotnet)
-  	- [Anti alias downsample](#anti-alias-downsample)
   	- [TF ResNext](#tf-resnext)
   	- [[ToDo] PyTorch ResNext](#todo-pytorch-resnext)
   	- [ResMLP](#resmlp)
@@ -44,6 +47,7 @@
 
   <!-- /TOC -->
 ***
+
 # Resnest
   - [Github zhanghang1989/ResNeSt](https://github.com/zhanghang1989/ResNeSt)
   - [Github n2cholas/jax-resnet](https://github.com/n2cholas/jax-resnet/)
@@ -1847,319 +1851,8 @@
   ```
 ***
 
-## VIT
-  - [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
-  - [Github google-research/vision_transformer](https://github.com/google-research/vision_transformer)
-  - [Github yitu-opensource/T2T-ViT](https://github.com/yitu-opensource/T2T-ViT)
-## [ToDo] SimAM
-  - [Github ZjjConan/SimAM](https://github.com/ZjjConan/SimAM)
-  ```py
-  class simam_module(torch.nn.Module):
-      def __init__(self, channels = None, e_lambda = 1e-4):
-          super(simam_module, self).__init__()
-
-          self.activaton = nn.Sigmoid()
-          self.e_lambda = e_lambda
-
-      def forward(self, x):
-          b, c, h, w = x.size()
-          n = w * h - 1
-          x_minus_mu_square = (x - x.mean(dim=[2,3], keepdim=True)).pow(2)
-          y = x_minus_mu_square / (4 * (x_minus_mu_square.sum(dim=[2,3], keepdim=True) / n + self.e_lambda)) + 0.5
-          return x * self.activaton(y)
-  ```
-  ```py
-  def simam_act(feature, lam=1e-4):
-      reduce_axis = list(range(1, len(feature.shape) - 1))
-      nn = tf.reduce_prod(feature.shape[1:len(feature.shape) - 1]) - 1
-      dd = tf.math.pow(feature - tf.reduce_mean(feature, axis=reduce_axis, keepdims=True), 2)
-      vv = tf.reduce_sum(dd, axis=reduce_axis, keepdims=True) / tf.cast(nn, dd.dtype)
-      E_inv = dd / (4 * (vv + lam)) + 0.5
-      return feature * tf.nn.sigmoid(E_inv)
-
-  xx = np.arange(28 * 192).reshape(1, 28, 192) / (28 * 192 // 2) - 1
-  plt.plot(xx.ravel(), simam_act(xx).numpy().ravel())
-  plt.plot(xx.ravel(), xx.ravel())
-  ```
-## CoAtNet
-  - [CoAtNet: Marrying Convolution and Attention for All Data Sizes](https://arxiv.org/pdf/2106.04803v1.pdf)
-  - [Github comvex/coatnet/model.py](https://github.com/blakechi/ComVEX/blob/master/comvex/coatnet/model.py)
-  ```py
-  from Keras_efficientnet_v2.efficientnet_v2 import MBConv
-
-  def conv_mlp(inputs, out_channel, kernel_size=1):
-      if kernel_size != 1:
-          inputs = keras.layers.ZeroPadding2D(1)(inputs)
-      nn = keras.layers.Conv2D(out_channel, kernel_size)(inputs)
-      nn = keras.layers.ReLU()(nn)
-      if kernel_size != 1:
-          nn = keras.layers.ZeroPadding2D(1)(nn)
-      nn = keras.layers.Conv2D(out_channel, kernel_size)(nn)
-      return nn
-
-  out_channels = [64, 96, 192, 384, 768]
-  inputs = keras.layers.Input([224, 224, 3])
-  nn = conv_mlp(inputs, 3, 3) # s0
-  nn = conv_mlp(nn, out_channels[0], 1) # mlp0
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = MBConv(nn, out_channels[0], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s1_") # s1
-  nn = conv_mlp(nn, out_channels[1], 1) # mlp1
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = MBConv(nn, out_channels[1], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s2_") # s2
-  nn = conv_mlp(nn, out_channels[2], 1) # mlp2
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s3
-  nn = conv_mlp(nn, out_channels[3], 1) # mlp3
-  nn = keras.layers.MaxPool2D(pool_size=(1, 2), strides=(1, 2))(nn)  # [batch, height, width, channel]
-
-  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s4
-  nn = conv_mlp(nn, out_channels[4], 1) # mlp4
-  nn = keras.layers.MaxPool2D(pool_size=(2, 1), strides=(2, 1))(nn)
-
-  mm = keras.models.Model(inputs, nn)
-  ```
-## HaloNet
-  - [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/pdf/2103.12731.pdf)
-  - [Github lucidrains/halonet-pytorch](https://github.com/lucidrains/halonet-pytorch)
-  ```py
-  class RelativePositionEmbedding(keras.layers.Layer):
-      def __init__(self, pos_dim_h, pos_dim_w, **kwargs):
-          super(RelativePositionEmbedding, self).__init__(**kwargs)
-          self.pos_dim_h, self.pos_dim_w = pos_dim_h, pos_dim_w
-
-      def build(self, input_shape):
-          key_dim = input_shape[-1]
-          stddev = key_dim ** -0.5
-          self.pos_emb_h = self.add_weight(
-              name="r_height",
-              shape=(key_dim, 2 * self.pos_dim_h - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )    
-          self.pos_emb_w = self.add_weight(
-              name="r_width",
-              shape=(key_dim, 2 * self.pos_dim_w - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )
-
-      def get_config(self):
-          base_config = super(RelativePositionEmbedding, self).get_config()
-          base_config.update({"pos_dim_h": self.pos_dim_h, "pos_dim_w": self.pos_dim_w})
-          return base_config
-
-      def rel_to_abs(self, rel_pos):
-          """
-          Converts relative indexing to absolute.
-          Input: [bs, heads, height, width, 2 * pos_dim - 1]
-          Output: [bs, heads, height, width, pos_dim]
-          """
-          _, heads, hh, ww, dim = rel_pos.shape  # [bs, heads, height, width, 2 * width - 1]
-          pos_dim = (dim + 1) // 2
-          full_rank_gap = pos_dim - ww
-          # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
-          flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
-          # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
-          return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
-
-      def call(self, inputs):
-          query_w = inputs  # e.g.: [1, 4, 14, 16, 128], [bs, heads, hh, ww, dims]
-          rel_logits_w = tf.matmul(query_w, self.pos_emb_w)   # [1, 4, 14, 16, 31], 2 * 16 - 1 == 31
-          rel_logits_w = self.rel_to_abs(rel_logits_w)    # [1, 4, 14, 16, 16]
-
-          query_h = tf.transpose(inputs, [0, 1, 3, 2, 4]) # [1, 4, 16, 14, 128], [bs, heads, ww, hh, dims], Exchange `ww` and `hh`
-          rel_logits_h = tf.matmul(query_h, self.pos_emb_h)  # [1, 4, 16, 14, 27], 2 * 14 - 1 == 27
-          rel_logits_h = self.rel_to_abs(rel_logits_h)  # [1, 4, 16, 14, 14]
-          rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14], transpose back
-
-          return tf.expand_dims(rel_logits_w, axis=-2) + tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 16]
-
-  rel_pos = np.arange(21).reshape(1, 1, 1, 3, -1)
-  print(rel_pos)
-  # [[ 0,  1,  2,  3,  4,  5,  6],
-  #  [ 7,  8,  9, 10, 11, 12, 13],
-  #  [14, 15, 16, 17, 18, 19, 20]]
-  _, heads, hh, ww, dim = rel_pos.shape
-  pos_dim = (dim + 1) // 2
-  full_rank_gap = pos_dim - ww
-  flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
-  print(flat_x)
-  # [ 2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-  out = tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
-  print(out)
-  # [[ 3,  4,  5,  6],
-  #  [ 9, 10, 11, 12],
-  #  [15, 16, 17, 18]]
-  ```
-  ```py
-  from einops import rearrange
-  block, halo, num_head = 2, 1, 4
-  aa = tf.ones([1, 14, 16, 256])
-
-  kernel_size = block + halo * 2
-  key_dim = aa.shape[-1] // num_head
-  q_inp = rearrange(aa, 'B (h hb) (w wb) (head c) -> B head h w (hb wb) c', hb=block, wb=block, head=num_head)
-  kv_inp = tf.image.extract_patches(aa, sizes=[1, kernel_size, kernel_size, 1], strides=[1, block, block, 1], rates=[1, 1, 1, 1], padding='SAME')
-  kv_inp = rearrange(kv_inp, "B h w (hb wb head c) -> B head h w (hb wb) c", hb=kernel_size, wb=kernel_size, head=num_head)
-  print(f"{q_inp.shape = }, {kv_inp.shape = }")
-  # q_inp.shape = TensorShape([1, 4, 7, 8, 4, 64]), kv_inp.shape = TensorShape([1, 4, 7, 8, 16, 64])
-
-  qq, kk, vv = q_inp, kv_inp, kv_inp
-  sim = tf.matmul(qq, kk, transpose_b=True)
-  print(f"{sim.shape = }")
-  # sim.shape = TensorShape([1, 4, 7, 8, 4, 16])
-
-  # Relative positional
-  hh, ww = qq.shape[2], qq.shape[3]
-  qq_pos = rearrange(qq, "B head h w (hb wb) c -> B (head h w) hb wb c", hb=block, wb=block)
-  print(f"{qq_pos.shape = }")
-  # qq_pos.shape = TensorShape([1, 224, 2, 2, 64])
-  pos = RelativePositionEmbedding(pos_dim_h=4, pos_dim_w=4)(qq_pos)
-  print(f"{pos.shape = }")
-  # pos.shape = TensorShape([1, 224, 2, 2, 4, 4])
-  pos = rearrange(pos, "B (head h w) hb wb hp wp -> B head h w (hb wb) (hp wp)", h=hh, w=ww, head=num_head)
-  print(f"{pos.shape = }")
-  # pos.shape = TensorShape([1, 4, 7, 8, 4, 16])
-
-  attn = tf.nn.softmax(sim + pos, axis=-1)
-  out = tf.matmul(attn, vv)
-  print(f"{out.shape = }")
-  # out.shape = TensorShape([1, 4, 7, 8, 4, 64])
-
-  out = rearrange(out, "B n h w (hb wb) c -> B (h hb) (w wb) (n c)", hb=block, wb=block)
-  print(f"{out.shape = }")
-  # out.shape = TensorShape([1, 14, 16, 256])
-  ```
-  ```py
-  from einops import rearrange
-
-  class HaloAttention(keras.layers.Layer):
-      def __init__(self, num_heads=4, key_dim=128, block_size=2, halo_size=1, out_shape=None, out_weight=True, out_bias=False, attn_dropout=0, **kwargs):
-          super(HaloAttention, self).__init__(**kwargs)
-          self.num_heads, self.key_dim, self.block_size, self.halo_size = num_heads, key_dim, block_size, halo_size
-          self.attn_dropout = attn_dropout
-          self.out_bias, self.out_weight = out_bias, out_weight
-          self.emb_dim = self.num_heads * self.key_dim
-          self.out_shape = self.emb_dim if out_shape is None or not out_weight else out_shape
-          self.qk_scale = 1.0 / tf.math.sqrt(tf.cast(self.key_dim, self._compute_dtype_object))
-          self.kv_kernel = self.block_size + self.halo_size * 2
-
-      def build(self, inputs):
-          if hasattr(inputs, "shape"):
-              _, hh, ww, cc = inputs.shape
-          else:
-              _, hh, ww, cc = inputs
-          stddev = self.key_dim ** -0.5
-          self.final_out_shape = (None, hh, ww, self.out_shape)
-
-          self.query_dense = self.add_weight("query", shape=[cc, self.emb_dim], trainable=True)
-          self.kv_dense = self.add_weight("key_value", shape=[cc, self.emb_dim * 2], trainable=True)
-          if self.out_weight:
-              self.out_dense_ww = self.add_weight("output_weight", shape=[self.emb_dim, self.out_shape], trainable=True)
-          if self.out_bias:
-              self.out_dense_bb = self.add_weight("output_bias", shape=self.out_shape, initializer='zeros', trainable=True)
-
-          if self.attn_dropout > 0:
-              self.attn_dropout_layer = keras.layers.Dropout(rate=self.attn_dropout)
-
-          self.pos_emb_w = self.add_weight(
-              name="r_width",
-              shape=(self.key_dim, 2 * self.kv_kernel - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )
-          self.pos_emb_h = self.add_weight(
-              name="r_height",
-              shape=(self.key_dim, 2 * self.kv_kernel - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )
-
-      def get_config(self):
-          base_config = super(HaloAttention, self).get_config()
-          base_config.update({
-              "num_heads": self.num_heads,
-              "key_dim": self.key_dim,
-              "block_size": self.block_size,
-              "halo_size": self.halo_size,
-              "out_shape": self.out_shape,
-              "out_weight": self.out_weight,
-              "out_bias": self.out_bias,
-              "attn_dropout": self.attn_dropout
-          })
-          return base_config
-
-      def rel_to_abs(self, rel_pos):
-          """
-          Converts relative indexing to absolute.
-          Input: [bs, heads, height, width, 2 * pos_dim - 1]
-          Output: [bs, heads, height, width, pos_dim]
-          """
-          _, heads, hh, ww, dim = rel_pos.shape  # [bs, heads, height, width, 2 * width - 1]
-          pos_dim = (dim + 1) // 2
-          full_rank_gap = pos_dim - ww
-          # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
-          flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
-          # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
-          return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
-
-      def relative_logits(self, query):
-          query_w = query  # e.g.: [1, 4, 14, 16, 128], [bs, heads, hh, ww, dims]
-          rel_logits_w = tf.matmul(query_w, self.pos_emb_w)   # [1, 4, 14, 16, 31], 2 * 16 - 1 == 31
-          rel_logits_w = self.rel_to_abs(rel_logits_w)    # [1, 4, 14, 16, 16]
-
-          query_h = tf.transpose(query, [0, 1, 3, 2, 4]) # [1, 4, 16, 14, 128], [bs, heads, ww, hh, dims], Exchange `ww` and `hh`
-          rel_logits_h = tf.matmul(query_h, self.pos_emb_h)  # [1, 4, 16, 14, 27], 2 * 14 - 1 == 27
-          rel_logits_h = self.rel_to_abs(rel_logits_h)  # [1, 4, 16, 14, 14]
-          rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14], transpose back
-
-          return tf.expand_dims(rel_logits_w, axis=-2) + tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 16]
-
-      def call(self, inputs, return_attention_scores=False, training=None):
-          # attn_query = [batch, num_heads, hh, ww, block_size * block_size, key_dim]
-          # pos_query = [batch, num_heads * hh * ww, block_size, block_size, key_dim]
-          query = tf.matmul(inputs, self.query_dense)
-          query = tf.multiply(query, self.qk_scale)
-          attn_query = rearrange(query, 'B (h hb) (w wb) (hd c) -> B hd h w (hb wb) c', hb=self.block_size, wb=self.block_size, hd=self.num_heads)
-          pos_query = rearrange(attn_query, 'B hd h w (hb wb) c -> B (hd h w) hb wb c', hb=self.block_size, wb=self.block_size)
-
-          # key_value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim * 2]
-          key_value =tf.matmul(inputs, self.kv_dense)
-          kv_padded = tf.pad(key_value, [[0, 0], [self.halo_size, self.halo_size], [self.halo_size, self.halo_size], [0, 0]])
-          sizes, strides = [1, self.kv_kernel, self.kv_kernel, 1], [1, self.block_size, self.block_size, 1]
-          kv_inp = tf.image.extract_patches(kv_padded, sizes=sizes, strides=strides, rates=[1, 1, 1, 1], padding='VALID')
-          kv_inp = rearrange(kv_inp, "B h w (hb wb hd c) -> B hd h w (hb wb) c", hb=self.kv_kernel, wb=self.kv_kernel, hd=self.num_heads)
-
-          # key = value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim]
-          key, value = tf.split(kv_inp, 2, axis=-1)
-
-          # scaled_dot_product_attention
-          attention_scores = tf.matmul(attn_query, key, transpose_b=True)   # [batch, num_heads, hh, ww, block_size * block_size, kv_kernel * kv_kernel]
-          pos = self.relative_logits(pos_query) # [batch, num_heads * hh * ww, block_size, block_size, kv_kernel, kv_kernel]
-          attention_scores += tf.reshape(pos, [-1, *attention_scores.shape[1:]])
-          attention_scores = tf.nn.softmax(attention_scores, axis=-1)
-
-          if self.attn_dropout > 0:
-              attention_scores = self.attn_dropout_layer(attention_scores, training=training)
-
-          attention_output = tf.matmul(attention_scores, value)  # [batch, num_heads, hh, ww, block_size * block_size, key_dim]
-          attention_output = rearrange(attention_output, "B hd h w (hb wb) c -> B (h hb) (w wb) (hd c)", hb=self.block_size, wb=self.block_size)
-
-          if self.out_weight:
-              # [batch, hh, ww, num_heads * key_dim] * [num_heads * key_dim, out] --> [batch, hh, ww, out]
-              attention_output = tf.matmul(attention_output, self.out_dense_ww)
-          if self.out_bias:
-              attention_output += self.out_dense_bb
-          attention_output.set_shape(self.final_out_shape)
-
-          if return_attention_scores:
-              return attention_output, attention_scores
-          return attention_output
-  ```
-## CotNet
+# CotNet
+## PyTorch CotNet
   ```py
   from train import setup_env, setup_model
   import torch
@@ -2559,6 +2252,321 @@
   from skimage.data import chelsea
   out = anti_alias_downsample(tf.expand_dims(chelsea() / 255, 0))
   plt.imshow(out[0])
+  ```
+***
+
+# Attetion models
+## VIT
+  - [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+  - [Github google-research/vision_transformer](https://github.com/google-research/vision_transformer)
+  - [Github yitu-opensource/T2T-ViT](https://github.com/yitu-opensource/T2T-ViT)
+## [ToDo] SimAM
+  - [Github ZjjConan/SimAM](https://github.com/ZjjConan/SimAM)
+  ```py
+  class simam_module(torch.nn.Module):
+      def __init__(self, channels = None, e_lambda = 1e-4):
+          super(simam_module, self).__init__()
+
+          self.activaton = nn.Sigmoid()
+          self.e_lambda = e_lambda
+
+      def forward(self, x):
+          b, c, h, w = x.size()
+          n = w * h - 1
+          x_minus_mu_square = (x - x.mean(dim=[2,3], keepdim=True)).pow(2)
+          y = x_minus_mu_square / (4 * (x_minus_mu_square.sum(dim=[2,3], keepdim=True) / n + self.e_lambda)) + 0.5
+          return x * self.activaton(y)
+  ```
+  ```py
+  def simam_act(feature, lam=1e-4):
+      reduce_axis = list(range(1, len(feature.shape) - 1))
+      nn = tf.reduce_prod(feature.shape[1:len(feature.shape) - 1]) - 1
+      dd = tf.math.pow(feature - tf.reduce_mean(feature, axis=reduce_axis, keepdims=True), 2)
+      vv = tf.reduce_sum(dd, axis=reduce_axis, keepdims=True) / tf.cast(nn, dd.dtype)
+      E_inv = dd / (4 * (vv + lam)) + 0.5
+      return feature * tf.nn.sigmoid(E_inv)
+
+  xx = np.arange(28 * 192).reshape(1, 28, 192) / (28 * 192 // 2) - 1
+  plt.plot(xx.ravel(), simam_act(xx).numpy().ravel())
+  plt.plot(xx.ravel(), xx.ravel())
+  ```
+## CoAtNet
+  - [CoAtNet: Marrying Convolution and Attention for All Data Sizes](https://arxiv.org/pdf/2106.04803v1.pdf)
+  - [Github comvex/coatnet/model.py](https://github.com/blakechi/ComVEX/blob/master/comvex/coatnet/model.py)
+  ```py
+  from Keras_efficientnet_v2.efficientnet_v2 import MBConv
+
+  def conv_mlp(inputs, out_channel, kernel_size=1):
+      if kernel_size != 1:
+          inputs = keras.layers.ZeroPadding2D(1)(inputs)
+      nn = keras.layers.Conv2D(out_channel, kernel_size)(inputs)
+      nn = keras.layers.ReLU()(nn)
+      if kernel_size != 1:
+          nn = keras.layers.ZeroPadding2D(1)(nn)
+      nn = keras.layers.Conv2D(out_channel, kernel_size)(nn)
+      return nn
+
+  out_channels = [64, 96, 192, 384, 768]
+  inputs = keras.layers.Input([224, 224, 3])
+  nn = conv_mlp(inputs, 3, 3) # s0
+  nn = conv_mlp(nn, out_channels[0], 1) # mlp0
+  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
+
+  nn = MBConv(nn, out_channels[0], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s1_") # s1
+  nn = conv_mlp(nn, out_channels[1], 1) # mlp1
+  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
+
+  nn = MBConv(nn, out_channels[1], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s2_") # s2
+  nn = conv_mlp(nn, out_channels[2], 1) # mlp2
+  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
+
+  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s3
+  nn = conv_mlp(nn, out_channels[3], 1) # mlp3
+  nn = keras.layers.MaxPool2D(pool_size=(1, 2), strides=(1, 2))(nn)  # [batch, height, width, channel]
+
+  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s4
+  nn = conv_mlp(nn, out_channels[4], 1) # mlp4
+  nn = keras.layers.MaxPool2D(pool_size=(2, 1), strides=(2, 1))(nn)
+
+  mm = keras.models.Model(inputs, nn)
+  ```
+## HaloNet
+  - [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/pdf/2103.12731.pdf)
+  - [Github lucidrains/halonet-pytorch](https://github.com/lucidrains/halonet-pytorch)
+  ```py
+  class RelativePositionEmbedding(keras.layers.Layer):
+      def __init__(self, pos_dim_h, pos_dim_w, **kwargs):
+          super(RelativePositionEmbedding, self).__init__(**kwargs)
+          self.pos_dim_h, self.pos_dim_w = pos_dim_h, pos_dim_w
+
+      def build(self, input_shape):
+          key_dim = input_shape[-1]
+          stddev = key_dim ** -0.5
+          self.pos_emb_h = self.add_weight(
+              name="r_height",
+              shape=(key_dim, 2 * self.pos_dim_h - 1),
+              initializer=tf.random_normal_initializer(stddev=stddev),
+              trainable=True,
+          )    
+          self.pos_emb_w = self.add_weight(
+              name="r_width",
+              shape=(key_dim, 2 * self.pos_dim_w - 1),
+              initializer=tf.random_normal_initializer(stddev=stddev),
+              trainable=True,
+          )
+
+      def get_config(self):
+          base_config = super(RelativePositionEmbedding, self).get_config()
+          base_config.update({"pos_dim_h": self.pos_dim_h, "pos_dim_w": self.pos_dim_w})
+          return base_config
+
+      def rel_to_abs(self, rel_pos):
+          """
+          Converts relative indexing to absolute.
+          Input: [bs, heads, height, width, 2 * pos_dim - 1]
+          Output: [bs, heads, height, width, pos_dim]
+          """
+          _, heads, hh, ww, dim = rel_pos.shape  # [bs, heads, height, width, 2 * width - 1]
+          pos_dim = (dim + 1) // 2
+          full_rank_gap = pos_dim - ww
+          # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
+          flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
+          # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
+          return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
+
+      def call(self, inputs):
+          query_w = inputs  # e.g.: [1, 4, 14, 16, 128], [bs, heads, hh, ww, dims]
+          rel_logits_w = tf.matmul(query_w, self.pos_emb_w)   # [1, 4, 14, 16, 31], 2 * 16 - 1 == 31
+          rel_logits_w = self.rel_to_abs(rel_logits_w)    # [1, 4, 14, 16, 16]
+
+          query_h = tf.transpose(inputs, [0, 1, 3, 2, 4]) # [1, 4, 16, 14, 128], [bs, heads, ww, hh, dims], Exchange `ww` and `hh`
+          rel_logits_h = tf.matmul(query_h, self.pos_emb_h)  # [1, 4, 16, 14, 27], 2 * 14 - 1 == 27
+          rel_logits_h = self.rel_to_abs(rel_logits_h)  # [1, 4, 16, 14, 14]
+          rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14], transpose back
+
+          return tf.expand_dims(rel_logits_w, axis=-2) + tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 16]
+
+  rel_pos = np.arange(21).reshape(1, 1, 1, 3, -1)
+  print(rel_pos)
+  # [[ 0,  1,  2,  3,  4,  5,  6],
+  #  [ 7,  8,  9, 10, 11, 12, 13],
+  #  [14, 15, 16, 17, 18, 19, 20]]
+  _, heads, hh, ww, dim = rel_pos.shape
+  pos_dim = (dim + 1) // 2
+  full_rank_gap = pos_dim - ww
+  flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
+  print(flat_x)
+  # [ 2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  out = tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
+  print(out)
+  # [[ 3,  4,  5,  6],
+  #  [ 9, 10, 11, 12],
+  #  [15, 16, 17, 18]]
+  ```
+  ```py
+  from einops import rearrange
+  block, halo, num_head = 2, 1, 4
+  aa = tf.ones([1, 14, 16, 256])
+
+  kernel_size = block + halo * 2
+  key_dim = aa.shape[-1] // num_head
+  q_inp = rearrange(aa, 'B (h hb) (w wb) (head c) -> B head h w (hb wb) c', hb=block, wb=block, head=num_head)
+  kv_inp = tf.image.extract_patches(aa, sizes=[1, kernel_size, kernel_size, 1], strides=[1, block, block, 1], rates=[1, 1, 1, 1], padding='SAME')
+  kv_inp = rearrange(kv_inp, "B h w (hb wb head c) -> B head h w (hb wb) c", hb=kernel_size, wb=kernel_size, head=num_head)
+  print(f"{q_inp.shape = }, {kv_inp.shape = }")
+  # q_inp.shape = TensorShape([1, 4, 7, 8, 4, 64]), kv_inp.shape = TensorShape([1, 4, 7, 8, 16, 64])
+
+  qq, kk, vv = q_inp, kv_inp, kv_inp
+  sim = tf.matmul(qq, kk, transpose_b=True)
+  print(f"{sim.shape = }")
+  # sim.shape = TensorShape([1, 4, 7, 8, 4, 16])
+
+  # Relative positional
+  hh, ww = qq.shape[2], qq.shape[3]
+  qq_pos = rearrange(qq, "B head h w (hb wb) c -> B (head h w) hb wb c", hb=block, wb=block)
+  print(f"{qq_pos.shape = }")
+  # qq_pos.shape = TensorShape([1, 224, 2, 2, 64])
+  pos = RelativePositionEmbedding(pos_dim_h=4, pos_dim_w=4)(qq_pos)
+  print(f"{pos.shape = }")
+  # pos.shape = TensorShape([1, 224, 2, 2, 4, 4])
+  pos = rearrange(pos, "B (head h w) hb wb hp wp -> B head h w (hb wb) (hp wp)", h=hh, w=ww, head=num_head)
+  print(f"{pos.shape = }")
+  # pos.shape = TensorShape([1, 4, 7, 8, 4, 16])
+
+  attn = tf.nn.softmax(sim + pos, axis=-1)
+  out = tf.matmul(attn, vv)
+  print(f"{out.shape = }")
+  # out.shape = TensorShape([1, 4, 7, 8, 4, 64])
+
+  out = rearrange(out, "B n h w (hb wb) c -> B (h hb) (w wb) (n c)", hb=block, wb=block)
+  print(f"{out.shape = }")
+  # out.shape = TensorShape([1, 14, 16, 256])
+  ```
+  ```py
+  from einops import rearrange
+
+  class HaloAttention(keras.layers.Layer):
+      def __init__(self, num_heads=4, key_dim=128, block_size=2, halo_size=1, out_shape=None, out_weight=True, out_bias=False, attn_dropout=0, **kwargs):
+          super(HaloAttention, self).__init__(**kwargs)
+          self.num_heads, self.key_dim, self.block_size, self.halo_size = num_heads, key_dim, block_size, halo_size
+          self.attn_dropout = attn_dropout
+          self.out_bias, self.out_weight = out_bias, out_weight
+          self.emb_dim = self.num_heads * self.key_dim
+          self.out_shape = self.emb_dim if out_shape is None or not out_weight else out_shape
+          self.qk_scale = 1.0 / tf.math.sqrt(tf.cast(self.key_dim, self._compute_dtype_object))
+          self.kv_kernel = self.block_size + self.halo_size * 2
+
+      def build(self, inputs):
+          if hasattr(inputs, "shape"):
+              _, hh, ww, cc = inputs.shape
+          else:
+              _, hh, ww, cc = inputs
+          stddev = self.key_dim ** -0.5
+          self.final_out_shape = (None, hh, ww, self.out_shape)
+
+          self.query_dense = self.add_weight("query", shape=[cc, self.emb_dim], trainable=True)
+          self.kv_dense = self.add_weight("key_value", shape=[cc, self.emb_dim * 2], trainable=True)
+          if self.out_weight:
+              self.out_dense_ww = self.add_weight("output_weight", shape=[self.emb_dim, self.out_shape], trainable=True)
+          if self.out_bias:
+              self.out_dense_bb = self.add_weight("output_bias", shape=self.out_shape, initializer='zeros', trainable=True)
+
+          if self.attn_dropout > 0:
+              self.attn_dropout_layer = keras.layers.Dropout(rate=self.attn_dropout)
+
+          self.pos_emb_w = self.add_weight(
+              name="r_width",
+              shape=(self.key_dim, 2 * self.kv_kernel - 1),
+              initializer=tf.random_normal_initializer(stddev=stddev),
+              trainable=True,
+          )
+          self.pos_emb_h = self.add_weight(
+              name="r_height",
+              shape=(self.key_dim, 2 * self.kv_kernel - 1),
+              initializer=tf.random_normal_initializer(stddev=stddev),
+              trainable=True,
+          )
+
+      def get_config(self):
+          base_config = super(HaloAttention, self).get_config()
+          base_config.update({
+              "num_heads": self.num_heads,
+              "key_dim": self.key_dim,
+              "block_size": self.block_size,
+              "halo_size": self.halo_size,
+              "out_shape": self.out_shape,
+              "out_weight": self.out_weight,
+              "out_bias": self.out_bias,
+              "attn_dropout": self.attn_dropout
+          })
+          return base_config
+
+      def rel_to_abs(self, rel_pos):
+          """
+          Converts relative indexing to absolute.
+          Input: [bs, heads, height, width, 2 * pos_dim - 1]
+          Output: [bs, heads, height, width, pos_dim]
+          """
+          _, heads, hh, ww, dim = rel_pos.shape  # [bs, heads, height, width, 2 * width - 1]
+          pos_dim = (dim + 1) // 2
+          full_rank_gap = pos_dim - ww
+          # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
+          flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
+          # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
+          return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
+
+      def relative_logits(self, query):
+          query_w = query  # e.g.: [1, 4, 14, 16, 128], [bs, heads, hh, ww, dims]
+          rel_logits_w = tf.matmul(query_w, self.pos_emb_w)   # [1, 4, 14, 16, 31], 2 * 16 - 1 == 31
+          rel_logits_w = self.rel_to_abs(rel_logits_w)    # [1, 4, 14, 16, 16]
+
+          query_h = tf.transpose(query, [0, 1, 3, 2, 4]) # [1, 4, 16, 14, 128], [bs, heads, ww, hh, dims], Exchange `ww` and `hh`
+          rel_logits_h = tf.matmul(query_h, self.pos_emb_h)  # [1, 4, 16, 14, 27], 2 * 14 - 1 == 27
+          rel_logits_h = self.rel_to_abs(rel_logits_h)  # [1, 4, 16, 14, 14]
+          rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14], transpose back
+
+          return tf.expand_dims(rel_logits_w, axis=-2) + tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 16]
+
+      def call(self, inputs, return_attention_scores=False, training=None):
+          # attn_query = [batch, num_heads, hh, ww, block_size * block_size, key_dim]
+          # pos_query = [batch, num_heads * hh * ww, block_size, block_size, key_dim]
+          query = tf.matmul(inputs, self.query_dense)
+          query = tf.multiply(query, self.qk_scale)
+          attn_query = rearrange(query, 'B (h hb) (w wb) (hd c) -> B hd h w (hb wb) c', hb=self.block_size, wb=self.block_size, hd=self.num_heads)
+          pos_query = rearrange(attn_query, 'B hd h w (hb wb) c -> B (hd h w) hb wb c', hb=self.block_size, wb=self.block_size)
+
+          # key_value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim * 2]
+          key_value =tf.matmul(inputs, self.kv_dense)
+          kv_padded = tf.pad(key_value, [[0, 0], [self.halo_size, self.halo_size], [self.halo_size, self.halo_size], [0, 0]])
+          sizes, strides = [1, self.kv_kernel, self.kv_kernel, 1], [1, self.block_size, self.block_size, 1]
+          kv_inp = tf.image.extract_patches(kv_padded, sizes=sizes, strides=strides, rates=[1, 1, 1, 1], padding='VALID')
+          kv_inp = rearrange(kv_inp, "B h w (hb wb hd c) -> B hd h w (hb wb) c", hb=self.kv_kernel, wb=self.kv_kernel, hd=self.num_heads)
+
+          # key = value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim]
+          key, value = tf.split(kv_inp, 2, axis=-1)
+
+          # scaled_dot_product_attention
+          attention_scores = tf.matmul(attn_query, key, transpose_b=True)   # [batch, num_heads, hh, ww, block_size * block_size, kv_kernel * kv_kernel]
+          pos = self.relative_logits(pos_query) # [batch, num_heads * hh * ww, block_size, block_size, kv_kernel, kv_kernel]
+          attention_scores += tf.reshape(pos, [-1, *attention_scores.shape[1:]])
+          attention_scores = tf.nn.softmax(attention_scores, axis=-1)
+
+          if self.attn_dropout > 0:
+              attention_scores = self.attn_dropout_layer(attention_scores, training=training)
+
+          attention_output = tf.matmul(attention_scores, value)  # [batch, num_heads, hh, ww, block_size * block_size, key_dim]
+          attention_output = rearrange(attention_output, "B hd h w (hb wb) c -> B (h hb) (w wb) (hd c)", hb=self.block_size, wb=self.block_size)
+
+          if self.out_weight:
+              # [batch, hh, ww, num_heads * key_dim] * [num_heads * key_dim, out] --> [batch, hh, ww, out]
+              attention_output = tf.matmul(attention_output, self.out_dense_ww)
+          if self.out_bias:
+              attention_output += self.out_dense_bb
+          attention_output.set_shape(self.final_out_shape)
+
+          if return_attention_scores:
+              return attention_output, attention_scores
+          return attention_output
   ```
 ## TF ResNext
   ```py
@@ -3075,3 +3083,4 @@
   ),
   ```
 ## [ToDo] LeVit
+***
