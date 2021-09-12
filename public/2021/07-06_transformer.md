@@ -760,31 +760,3 @@
   # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
   ```
 ***
-
-# Imagenet
-  ```py
-  sys.path.append('/home/tdtest/workspace/Keras_insightface/')
-  import data, models, myCallbacks
-  input_shape=(64, 64, 3)
-  image_classes_rule = data.ImageClassesRule_map('/datasets/ILSVRC2012_img_train')
-  ds, steps_per_epoch = data.prepare_dataset('/datasets/ILSVRC2012_img_train', image_names_reg = "*/*", image_classes_rule=image_classes_rule, img_shape=input_shape, batch_size=512)
-
-  # aa, bb = ds.as_numpy_iterator().next()
-  # aa = (aa + 1) / 2
-  # plt.imshow(np.vstack([np.hstack([aa[ii * 8 + jj] for jj in range(8)]) for ii in range(8)]))
-  # plt.axis('off')
-  # plt.tight_layout()
-  # print([image_classes_rule.indices_2_classes[ii] for ii in bb.argmax(-1)][:10])
-  # ['n02493793', 'n04204347', 'n01981276', 'n02027492', 'n03937543', 'n03743016', 'n04344873', 'n03590841', 'n04423845', 'n03720891']
-
-  model = keras.applications.ResNet50V2(input_shape=input_shape, weights=None)
-  model = models.add_l2_regularizer_2_model(model, weight_decay=5e-4, apply_to_batch_normal=False)
-  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
-  # callbacks = myCallbacks.basic_callbacks(checkpoint="keras_checkpoints.h5", lr=0.1, lr_decay=0.1, lr_min=1e-5, lr_decay_steps=[20, 30, 40])
-  lr_schduler = myCallbacks.CosineLrScheduler(0.1, first_restart_step=16, m_mul=0.5, t_mul=2.0, lr_min=1e-05, warmup=0, steps_per_epoch=steps_per_epoch)
-  callbacks = [lr_schduler]
-
-  model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=['acc'])
-  model.fit(ds, epochs=50, verbose=1, callbacks=callbacks, initial_epoch=0, steps_per_epoch=steps_per_epoch, use_multiprocessing=True, workers=4)
-  ```
-***

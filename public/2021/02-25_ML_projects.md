@@ -398,3 +398,159 @@
 ## 图神经网络
   - [Github /dmlc/dgl](https://github.com/dmlc/dgl)
 ***
+
+# Imagenet
+  - [ILSVRC2012_img_train.tar](magnet:?xt=urn:btih:umdds7gptqxk2jyvlgb4evbcpqh5sohc)
+  - [ILSVRC2012_img_val.tar](magnet:?xt=urn:btih:lvwq357nqhx5jhfjt2shg7qk4xr2l4xf)
+  - [Kaggle imagenet object localization patched 2019](https://www.kaggle.com/c/imagenet-object-localization-challenge/data)
+    ```sh
+    unzip imagenet-object-localization-challenge.zip -d imagenet-object-localization-challenge
+    cd imagenet-object-localization-challenge
+    tar xvf imagenet_object_localization_patched2019.tar.gz
+
+    cd ILSVRC/Data/CLS-LOC/train/
+    ls -1 | xargs -I '{}' tar cvf {}.tar {}
+    tar cvf ILSVRC2019_img_train.tar ./*.tar
+
+    cd ../test
+    tar cvf ILSVRC2019_img_test.tar $(ls *.JPEG)  # exclude the directory `./`
+    cd ../val
+    tar cvf ILSVRC2019_img_val.tar $(ls *.JPEG)  # exclude the directory `./`
+    cd ..
+
+    DATASET_PATH='/datasets/imagenet_2019'
+    mkdir $DATASET_PATH
+    mv train/ILSVRC2019_img_train.tar test/ILSVRC2019_img_test.tar val/ILSVRC2019_img_val.tar $DATASET_PATH
+
+    mkdir -p ~/tensorflow_datasets/downloads/manual
+    rm -f ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_*.tar
+    ln -s $DATASET_PATH/ILSVRC2019_img_train.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_train.tar
+    ln -s $DATASET_PATH/ILSVRC2019_img_val.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_val.tar
+    ln -s $DATASET_PATH/ILSVRC2019_img_test.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_test.tar
+    ```
+    ```py
+    import tensorflow_datasets as tfds
+    aa = tfds.image_classification.Imagenet2012()
+    aa.download_and_prepare()
+    train_ds, val_ds = aa.as_dataset(split='train'), aa.as_dataset(split='validation')
+    ```
+    ```py
+    import tensorflow_datasets as tfds
+    train_ds, val_ds = tfds.load('imagenet2012', split='train'), tfds.load('imagenet2012', split='validation')
+
+    data = val_ds.as_numpy_iterator().next()
+    print(data.keys())
+    # dict_keys(['file_name', 'image', 'label'])
+    plt.imshow(data['image'])
+    ```
+```py
+class CosineLrScheduler(keras.callbacks.Callback):
+    def __init__(self, lr_base, first_restart_step, steps_per_epoch, m_mul=0.5, t_mul=2.0, lr_min=1e-5, warmup=0):
+        super(CosineLrScheduler, self).__init__()
+        self.warmup = warmup * steps_per_epoch
+        self.first_restart_step = first_restart_step * steps_per_epoch
+        self.steps_per_epoch = steps_per_epoch
+        self.init_step_num, self.cur_epoch = 0, 0
+
+        if lr_min == lr_base * m_mul: # Without restart
+            self.schedule = keras.experimental.CosineDecay(lr_base, self.first_restart_step, alpha=lr_min / lr_base)
+        else:
+            self.schedule = keras.experimental.CosineDecayRestarts(lr_base, self.first_restart_step, t_mul=t_mul, m_mul=m_mul, alpha=lr_min / lr_base)
+
+        if warmup != 0:
+            self.warmup_lr_func = lambda ii: lr_min + (lr_base - lr_min) * ii / self.warmup
+
+    def on_train_batch_begin(self, cur_epoch, logs=None):
+        self.init_step_num = int(self.steps_per_epoch * cur_epoch)
+        self.cur_epoch = cur_epoch
+
+    def on_train_batch_begin(self, iterNum, logs=None):
+        global_iterNum = iterNum + self.init_step_num
+        if global_iterNum < self.warmup:
+            lr = self.warmup_lr_func(global_iterNum)
+        else:
+            lr = self.schedule(global_iterNum - self.warmup)
+
+        if self.model is not None:
+            K.set_value(self.model.optimizer.lr, lr)
+        if iterNum == 0:
+            print("\nLearning rate for iter {} is {}".format(self.cur_epoch + 1, lr))
+        return lr
+
+def constant_scheduler(epoch, lr_base, lr_decay_steps, decay_rate=0.1, lr_min=0, warmup=0):
+    if epoch < warmup:
+        lr = (lr_base - lr_min) * (epoch + 1) / (warmup + 1)
+    else:
+        epoch -= warmup
+        lr = lr_base * decay_rate ** np.sum(epoch >= np.array(lr_decay_steps))
+        lr = lr if lr > lr_min else lr_min
+    print("\nLearning rate for iter {} is {}".format(epoch + 1, lr))
+    return lr
+
+def exp_scheduler(epoch, lr_base=0.1, decay_step=1, decay_rate=0.9, lr_min=0, warmup=0):
+    if epoch < warmup:
+        lr = (lr_base - lr_min) * (epoch + 1) / (warmup + 1)
+    else:
+        epoch -= warmup
+        lr = lr_base * decay_rate ** (epoch / decay_step)
+        lr = lr if lr > lr_min else lr_min
+    # print("Learning rate for iter {} is {}".format(epoch + 1, lr))
+    return lr
+
+from keras_cv_attention_models.imagenet.callbacks import exp_scheduler, constant_scheduler, CosineLrScheduler
+epochs = np.arange(60)
+plt.figure(figsize=(14, 6))
+plt.plot(epochs, [exp_scheduler(ii, 0.1, 0.9) for ii in epochs], label="lr=0.1, decay=0.9")
+plt.plot(epochs, [exp_scheduler(ii, 0.1, 0.7) for ii in epochs], label="lr=0.1, decay=0.7")
+plt.plot(epochs, [constant_scheduler(ii, 0.1, [10, 20, 30, 40], 0.1) for ii in epochs], label="Constant, lr=0.1, decay_steps=[10, 20, 30, 40], decay_rate=0.1")
+
+steps_per_epoch = 100
+batchs = np.arange(60 * steps_per_epoch)
+aa = CosineLrScheduler(0.1, first_restart_step=50, lr_min=1e-6, warmup=0, m_mul=1e-5, steps_per_epoch=steps_per_epoch)
+plt.plot(batchs / steps_per_epoch, [aa.on_train_batch_begin(ii) for ii in batchs], label="Cosine, first_restart_step=50, min=1e-6, m_mul=1e-3")
+
+bb = CosineLrScheduler(0.1, first_restart_step=16, lr_min=1e-7, warmup=1, m_mul=0.4, steps_per_epoch=steps_per_epoch)
+plt.plot(batchs / steps_per_epoch, [bb.on_train_batch_begin(ii) for ii in batchs], label="Cosine restart, first_restart_step=16, min=1e-7, warmup=1, m_mul=0.4")
+
+plt.xlim(0, 60)
+plt.legend()
+# plt.grid()
+plt.tight_layout()
+```
+```py
+fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+xx = np.arange(0, 350)
+ax.plot(xx, [exp_scheduler(ii, lr_base=0.256, decay_step=2.4, decay_rate=0.97) for ii in xx])
+xx = np.arange(0, 52)
+ax.twiny().plot(xx, [exp_scheduler(ii, lr_base=0.256, decay_step=1, decay_rate=0.915, warmup=2) for ii in xx], color='r')
+```
+```py
+from keras_cv_attention_models.imagenet import data
+from keras_cv_attention_models import model_surgery
+
+with tf.distribute.MirroredStrategy().scope():
+    keras.mixed_precision.set_global_policy("mixed_float16")
+    input_shape = (224, 224, 3)
+    batch_size = 64
+    train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(batch_size=batch_size, input_shape=input_shape)
+    model = keras.applications.ResNet50V2(input_shape=input_shape, weights=None)
+    model = model_surgery.add_l2_regularizer_2_model(model, weight_decay=5e-4, apply_to_batch_normal=False)
+
+    optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
+    # callbacks = myCallbacks.basic_callbacks(checkpoint="keras_checkpoints.h5", lr=0.1, lr_decay=0.1, lr_min=1e-5, lr_decay_steps=[20, 30, 40])
+    lr_schduler = CosineLrScheduler(0.1, first_restart_step=16, m_mul=0.5, t_mul=2.0, lr_min=1e-05, warmup=2, steps_per_epoch=steps_per_epoch)
+    callbacks = [lr_schduler, keras.callbacks.ModelCheckpoint(model.name + ".h5", monitor='val_loss', save_best_only=True)]
+
+    model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=['acc'])
+    model.fit(
+        train_dataset,
+        epochs=50,
+        verbose=1,
+        callbacks=callbacks,
+        initial_epoch=0,
+        steps_per_epoch=steps_per_epoch,
+        validation_data=test_dataset,
+        use_multiprocessing=True,
+        workers=4
+    )
+```

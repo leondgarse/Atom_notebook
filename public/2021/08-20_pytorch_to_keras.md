@@ -7,45 +7,55 @@
   - [___2021 - 08 - 20 PyTorch to Keras___](#2021-08-20-pytorch-to-keras)
   - [目录](#目录)
   - [Resnest](#resnest)
-  	- [Convert Resnest model weights from Torch](#convert-resnest-model-weights-from-torch)
+    - [Convert Resnest model weights from Torch](#convert-resnest-model-weights-from-torch)
   - [BotNet](#botnet)
-  	- [Relative and absolute positional embedding](#relative-and-absolute-positional-embedding)
-  	- [Convert botnet model weights from Torch](#convert-botnet-model-weights-from-torch)
-  	- [BotNet positional embedding](#botnet-positional-embedding)
+    - [Relative and absolute positional embedding](#relative-and-absolute-positional-embedding)
+    - [Convert botnet model weights from Torch](#convert-botnet-model-weights-from-torch)
+    - [BotNet positional embedding](#botnet-positional-embedding)
   - [VOLO](#volo)
-  	- [PyTorch fold and unfold and conv2d](#pytorch-fold-and-unfold-and-conv2d)
-  	- [TF extract patches and Torch unfold](#tf-extract-patches-and-torch-unfold)
-  	- [TF reverse extracted patches without overlap](#tf-reverse-extracted-patches-without-overlap)
-  	- [TF reverse extracted patches with overlap](#tf-reverse-extracted-patches-with-overlap)
-  	- [TF reverse extracted patches with overlap NOT cumulative sum on overlapped areas](#tf-reverse-extracted-patches-with-overlap-not-cumulative-sum-on-overlapped-areas)
-  	- [Volo outlook attention without overlap](#volo-outlook-attention-without-overlap)
-  	- [Volo outlook attention](#volo-outlook-attention)
-  	- [Volo load torch weights](#volo-load-torch-weights)
-  	- [Volo positional embedding](#volo-positional-embedding)
-  	- [MHSA](#mhsa)
-  	- [Troch roi align](#troch-roi-align)
-  	- [TF crop and resize](#tf-crop-and-resize)
-  	- [Token labeling](#token-labeling)
+    - [PyTorch fold and unfold and conv2d](#pytorch-fold-and-unfold-and-conv2d)
+    - [TF extract patches and Torch unfold](#tf-extract-patches-and-torch-unfold)
+    - [TF reverse extracted patches without overlap](#tf-reverse-extracted-patches-without-overlap)
+    - [TF reverse extracted patches with overlap](#tf-reverse-extracted-patches-with-overlap)
+    - [TF reverse extracted patches with overlap NOT cumulative sum on overlapped areas](#tf-reverse-extracted-patches-with-overlap-not-cumulative-sum-on-overlapped-areas)
+    - [Volo outlook attention without overlap](#volo-outlook-attention-without-overlap)
+    - [Volo outlook attention](#volo-outlook-attention)
+    - [Volo load torch weights](#volo-load-torch-weights)
+    - [Volo positional embedding](#volo-positional-embedding)
+    - [MHSA](#mhsa)
+    - [Troch roi align](#troch-roi-align)
+    - [TF crop and resize](#tf-crop-and-resize)
+    - [Token labeling](#token-labeling)
   - [CotNet](#cotnet)
-  	- [PyTorch CotNet](#pytorch-cotnet)
-  	- [Convert CotNet model weights from Torch](#convert-cotnet-model-weights-from-torch)
-  	- [Test CotNet](#test-cotnet)
-  	- [Anti alias downsample](#anti-alias-downsample)
+    - [PyTorch CotNet](#pytorch-cotnet)
+    - [Convert CotNet model weights from Torch](#convert-cotnet-model-weights-from-torch)
+    - [Test CotNet](#test-cotnet)
+    - [Anti alias downsample](#anti-alias-downsample)
   - [Attetion models](#attetion-models)
-  	- [VIT](#vit)
-  	- [[ToDo] SimAM](#todo-simam)
-  	- [CoAtNet](#coatnet)
-  	- [HaloNet](#halonet)
-  	- [TF ResNext](#tf-resnext)
-  	- [[ToDo] PyTorch ResNext](#todo-pytorch-resnext)
-  	- [ResMLP](#resmlp)
-  	- [GMLP](#gmlp)
-  	- [Coat](#coat)
-  	- [EfficientNetV2 tiny](#efficientnetv2-tiny)
-  	- [ResNetq](#resnetq)
-  	- [[ToDo] LeVit](#todo-levit)
+    - [VIT](#vit)
+    - [[ToDo] SimAM](#todo-simam)
+    - [CoAtNet](#coatnet)
+    - [HaloNet](#halonet)
+    - [TF ResNext](#tf-resnext)
+    - [[ToDo] PyTorch ResNext](#todo-pytorch-resnext)
+    - [ResMLP](#resmlp)
+    - [GMLP](#gmlp)
+    - [Coat](#coat)
+    - [EfficientNetV2 tiny](#efficientnetv2-tiny)
+    - [ResNetq](#resnetq)
+    - [[ToDo] LeVit](#todo-levit)
 
   <!-- /TOC -->
+***
+# Timm
+  - [Github rwightman/pytorch-image-models](https://github.com/rwightman/pytorch-image-models)
+  ```py
+  #  Semi-Weakly Supervised ResNe*t models from https://github.com/facebookresearch/semi-supervised-ImageNet1K-models
+  #  Please note the CC-BY-NC 4.0 license on theses weights, non-commercial use only.
+  dd = pd.read_csv('/home/leondgarse/workspace/samba/pytorch-image-models/results/results-imagenet.csv')
+  dd[['swsl_resnext' in ii for ii in dd.model.values]]
+  dd[['resnext101' in ii for ii in dd.model.values]]
+  ```
 ***
 
 # Resnest
@@ -2330,9 +2340,49 @@
 
   mm = keras.models.Model(inputs, nn)
   ```
+  ```py
+  def _get_relative_indices(height: int, width: int) -> torch.tensor:
+      height, width = int(height), int(width)
+      ticks_y, ticks_x = torch.arange(height), torch.arange(width)
+      grid_y, grid_x = torch.meshgrid(ticks_y, ticks_x)
+      out = torch.empty(height*width, height*width).fill_(float("nan"))
+
+      for idx_y in range(height):
+          for idx_x in range(width):
+              rel_indices_y = grid_y - idx_y + height
+              rel_indices_x = grid_x - idx_x + width
+              flatten_indices = (rel_indices_y*width + rel_indices_x).flatten()
+              out[idx_y*width + idx_x] = flatten_indices
+      return out.to(torch.long)
+
+  def _interpolate_relative_bias(self, height: int, width: int) -> torch.Tensor:
+      out = rearrange(self.relative_bias, "h (n m) -> 1 h n m", n=(2*self.pre_height - 1))
+      out = nn.functional.interpolate(out, size=(2*height - 1, 2*width - 1), mode="bilinear", align_corners=True)
+
+      return rearrange(out, "1 h n m -> h (n m)")
+
+  relative_indices = self._get_relative_indices(H, W)
+  relative_bias = self._interpolate_relative_bias(H, W)
+
+  relative_indices = repeat(relative_indices, "n m -> b h n m", b=b, h=h)
+  relative_bias = repeat(relative_bias, "h r -> b h n r", b=b, n=H*W)  # r: number of relative biases, (2*H - 1)*(2*W - 1)
+  relative_biases = relative_bias.gather(dim=-1, index=relative_indices)
+  ```
 ## HaloNet
   - [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/pdf/2103.12731.pdf)
   - [Github lucidrains/halonet-pytorch](https://github.com/lucidrains/halonet-pytorch)
+  - [Github timm/models/byoanet.py#L121](https://github.com/rwightman/pytorch-image-models/blob/54a6cca27a9a3e092a07457f5d56709da56e3cf5/timm/models/byoanet.py#L121)
+  ```py
+  from torchsummary import summary
+  import torch
+  import timm
+  torch_model = timm.models.halonet_h1(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 256, 256))
+
+  traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 256, 256)))
+  torch.jit.save(traced_cell, 'halonet_h1.pth')
+  ```
   ```py
   class RelativePositionEmbedding(keras.layers.Layer):
       def __init__(self, pos_dim_h, pos_dim_w, **kwargs):
@@ -2442,133 +2492,34 @@
   print(f"{out.shape = }")
   # out.shape = TensorShape([1, 14, 16, 256])
   ```
-  ```py
-  from einops import rearrange
-
-  class HaloAttention(keras.layers.Layer):
-      def __init__(self, num_heads=4, key_dim=128, block_size=2, halo_size=1, out_shape=None, out_weight=True, out_bias=False, attn_dropout=0, **kwargs):
-          super(HaloAttention, self).__init__(**kwargs)
-          self.num_heads, self.key_dim, self.block_size, self.halo_size = num_heads, key_dim, block_size, halo_size
-          self.attn_dropout = attn_dropout
-          self.out_bias, self.out_weight = out_bias, out_weight
-          self.emb_dim = self.num_heads * self.key_dim
-          self.out_shape = self.emb_dim if out_shape is None or not out_weight else out_shape
-          self.qk_scale = 1.0 / tf.math.sqrt(tf.cast(self.key_dim, self._compute_dtype_object))
-          self.kv_kernel = self.block_size + self.halo_size * 2
-
-      def build(self, inputs):
-          if hasattr(inputs, "shape"):
-              _, hh, ww, cc = inputs.shape
-          else:
-              _, hh, ww, cc = inputs
-          stddev = self.key_dim ** -0.5
-          self.final_out_shape = (None, hh, ww, self.out_shape)
-
-          self.query_dense = self.add_weight("query", shape=[cc, self.emb_dim], trainable=True)
-          self.kv_dense = self.add_weight("key_value", shape=[cc, self.emb_dim * 2], trainable=True)
-          if self.out_weight:
-              self.out_dense_ww = self.add_weight("output_weight", shape=[self.emb_dim, self.out_shape], trainable=True)
-          if self.out_bias:
-              self.out_dense_bb = self.add_weight("output_bias", shape=self.out_shape, initializer='zeros', trainable=True)
-
-          if self.attn_dropout > 0:
-              self.attn_dropout_layer = keras.layers.Dropout(rate=self.attn_dropout)
-
-          self.pos_emb_w = self.add_weight(
-              name="r_width",
-              shape=(self.key_dim, 2 * self.kv_kernel - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )
-          self.pos_emb_h = self.add_weight(
-              name="r_height",
-              shape=(self.key_dim, 2 * self.kv_kernel - 1),
-              initializer=tf.random_normal_initializer(stddev=stddev),
-              trainable=True,
-          )
-
-      def get_config(self):
-          base_config = super(HaloAttention, self).get_config()
-          base_config.update({
-              "num_heads": self.num_heads,
-              "key_dim": self.key_dim,
-              "block_size": self.block_size,
-              "halo_size": self.halo_size,
-              "out_shape": self.out_shape,
-              "out_weight": self.out_weight,
-              "out_bias": self.out_bias,
-              "attn_dropout": self.attn_dropout
-          })
-          return base_config
-
-      def rel_to_abs(self, rel_pos):
-          """
-          Converts relative indexing to absolute.
-          Input: [bs, heads, height, width, 2 * pos_dim - 1]
-          Output: [bs, heads, height, width, pos_dim]
-          """
-          _, heads, hh, ww, dim = rel_pos.shape  # [bs, heads, height, width, 2 * width - 1]
-          pos_dim = (dim + 1) // 2
-          full_rank_gap = pos_dim - ww
-          # [bs, heads, height, width * (2 * width - 1)] --> [bs, heads, height, width * (2 * width - 1) - width]
-          flat_x = tf.reshape(rel_pos, [-1, heads, hh, ww * (pos_dim * 2 - 1)])[:, :, :, ww - 1 : -1]
-          # [bs, heads, height, width, 2 * (width - 1)] --> [bs, heads, height, width, width]
-          return tf.reshape(flat_x, [-1, heads, hh, ww, 2 * (pos_dim - 1)])[:, :, :, :, full_rank_gap : pos_dim + full_rank_gap]
-
-      def relative_logits(self, query):
-          query_w = query  # e.g.: [1, 4, 14, 16, 128], [bs, heads, hh, ww, dims]
-          rel_logits_w = tf.matmul(query_w, self.pos_emb_w)   # [1, 4, 14, 16, 31], 2 * 16 - 1 == 31
-          rel_logits_w = self.rel_to_abs(rel_logits_w)    # [1, 4, 14, 16, 16]
-
-          query_h = tf.transpose(query, [0, 1, 3, 2, 4]) # [1, 4, 16, 14, 128], [bs, heads, ww, hh, dims], Exchange `ww` and `hh`
-          rel_logits_h = tf.matmul(query_h, self.pos_emb_h)  # [1, 4, 16, 14, 27], 2 * 14 - 1 == 27
-          rel_logits_h = self.rel_to_abs(rel_logits_h)  # [1, 4, 16, 14, 14]
-          rel_logits_h = tf.transpose(rel_logits_h, [0, 1, 3, 2, 4]) # [1, 4, 14, 16, 14], transpose back
-
-          return tf.expand_dims(rel_logits_w, axis=-2) + tf.expand_dims(rel_logits_h, axis=-1) # [1, 4, 14, 16, 14, 16]
-
-      def call(self, inputs, return_attention_scores=False, training=None):
-          # attn_query = [batch, num_heads, hh, ww, block_size * block_size, key_dim]
-          # pos_query = [batch, num_heads * hh * ww, block_size, block_size, key_dim]
-          query = tf.matmul(inputs, self.query_dense)
-          query = tf.multiply(query, self.qk_scale)
-          attn_query = rearrange(query, 'B (h hb) (w wb) (hd c) -> B hd h w (hb wb) c', hb=self.block_size, wb=self.block_size, hd=self.num_heads)
-          pos_query = rearrange(attn_query, 'B hd h w (hb wb) c -> B (hd h w) hb wb c', hb=self.block_size, wb=self.block_size)
-
-          # key_value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim * 2]
-          key_value =tf.matmul(inputs, self.kv_dense)
-          kv_padded = tf.pad(key_value, [[0, 0], [self.halo_size, self.halo_size], [self.halo_size, self.halo_size], [0, 0]])
-          sizes, strides = [1, self.kv_kernel, self.kv_kernel, 1], [1, self.block_size, self.block_size, 1]
-          kv_inp = tf.image.extract_patches(kv_padded, sizes=sizes, strides=strides, rates=[1, 1, 1, 1], padding='VALID')
-          kv_inp = rearrange(kv_inp, "B h w (hb wb hd c) -> B hd h w (hb wb) c", hb=self.kv_kernel, wb=self.kv_kernel, hd=self.num_heads)
-
-          # key = value = [batch, num_heads, hh, ww, kv_kernel * kv_kernel, key_dim]
-          key, value = tf.split(kv_inp, 2, axis=-1)
-
-          # scaled_dot_product_attention
-          attention_scores = tf.matmul(attn_query, key, transpose_b=True)   # [batch, num_heads, hh, ww, block_size * block_size, kv_kernel * kv_kernel]
-          pos = self.relative_logits(pos_query) # [batch, num_heads * hh * ww, block_size, block_size, kv_kernel, kv_kernel]
-          attention_scores += tf.reshape(pos, [-1, *attention_scores.shape[1:]])
-          attention_scores = tf.nn.softmax(attention_scores, axis=-1)
-
-          if self.attn_dropout > 0:
-              attention_scores = self.attn_dropout_layer(attention_scores, training=training)
-
-          attention_output = tf.matmul(attention_scores, value)  # [batch, num_heads, hh, ww, block_size * block_size, key_dim]
-          attention_output = rearrange(attention_output, "B hd h w (hb wb) c -> B (h hb) (w wb) (hd c)", hb=self.block_size, wb=self.block_size)
-
-          if self.out_weight:
-              # [batch, hh, ww, num_heads * key_dim] * [num_heads * key_dim, out] --> [batch, hh, ww, out]
-              attention_output = tf.matmul(attention_output, self.out_dense_ww)
-          if self.out_bias:
-              attention_output += self.out_dense_bb
-          attention_output.set_shape(self.final_out_shape)
-
-          if return_attention_scores:
-              return attention_output, attention_scores
-          return attention_output
-  ```
 ## TF ResNext
+  - `groups_depthwise` using `tf.reduce_sum(nn, axis=-1)` is equal with `Conv2D` with `groups`
+  ```py
+  def groups_depthwise(inputs, groups=32, kernel_size=3, strides=1, padding="SAME", name=None):
+      input_filter = inputs.shape[-1]
+      cc = input_filter // groups
+      nn = inputs
+      if padding.upper() == "SAME":
+          nn = keras.layers.ZeroPadding2D(padding=kernel_size // 2, name=name and name + "pad")(nn)
+      nn = keras.layers.DepthwiseConv2D(kernel_size, strides=strides, depth_multiplier=cc, use_bias=False, name=name and name + "DC")(nn)
+      nn = keras.layers.Reshape((*nn.shape[1:-1], groups, cc, cc))(nn)
+      nn = tf.reduce_sum(nn, axis=-2)
+      nn = keras.layers.Reshape((*nn.shape[1:-2], input_filter))(nn)
+      return nn
+
+  inputs = keras.layers.Input([24, 24, 192])
+  mm = keras.models.Model(inputs, groups_depthwise(inputs, name="test_"))
+
+  aa = keras.layers.Conv2D(192, 3, use_bias=False, groups=32, padding='VALID')
+  aa.build([None, 26, 26, 192])
+
+  ww = mm.get_layer('test_DC').get_weights()[0]
+  aa.set_weights([ww.reshape([3, 3, 32, 6, 6]).transpose([0, 1, 3, 2, 4]).reshape([3, 3, 6, 192])])
+
+  bb = mm(tf.ones([1, 24, 24, 192]))
+  cc = aa(tf.pad(tf.ones([1, 24, 24, 192]), [[0, 0], [1, 1], [1, 1], [0, 0]]))
+  print(np.allclose(bb, cc, atol=1e-5))
+  ```
   ```py
   from tensorflow.python.keras.applications import resnet
   def stack_fn(x):
@@ -2591,13 +2542,79 @@
   ```py
   mm = aotnet.AotNet101(attn_types='gd', strides=2, expansion=2, out_channels=[64 * 2, 128 * 2, 256 * 2, 512 * 2])
   ```
-## [ToDo] PyTorch ResNext
-  - resnext50_32x4d
-  - resnext50d_32x4d
-  - resnext101_32x8d
-  - tv_resnext50_32x4d
-  - resnetblur50
-  -
+  ```py
+  from keras_cv_attention_models.resnet_family import resnext
+  mm = resnext.ResNeXt101(pretrained=None, classifier_activation=None)
+  bb = keras.models.load_model('/home/leondgarse/.keras/models/resnext101.h5')
+  mm.load_weights('/home/leondgarse/.keras/models/resnext101.h5', by_name=True)
+  for tt_layer in mm.layers:
+      if not tt_layer.name.endswith('GC_conv'):
+          continue
+      ss_name = tt_layer.name.replace('GC_conv', 'GD_DC')
+      ss_layer = bb.get_layer(ss_name)
+      print(f"{tt_layer.weights[0].shape = }, {ss_layer.weights[0].shape = }")
+      ss_ww = ss_layer.get_weights()[0]
+      groups, group_filter = 32, ss_ww.shape[-1]
+      tt_ww = ss_ww.reshape([3, 3, groups, group_filter, group_filter]).transpose([0, 1, 3, 2, 4]).reshape([3, 3, group_filter, group_filter * groups])
+      print(f"{groups = }, {group_filter = }, {tt_ww.shape = }")
+      tt_layer.set_weights([tt_ww])
+  ```
+## PyTorch ResNext
+  ```py
+  import torch
+  from torchsummary import summary
+
+  import timm
+  torch_model = timm.models.swsl_resnext101_32x8d(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
+  torch.jit.save(traced_cell, 'swsl_resnext101_32x8d.pth')
+
+  xx = torch.randn(10, 3, 224, 224)
+  torch.onnx.export(torch_model, xx, "swsl_resnext101_32x8d.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
+  ```
+  ```py
+  from onnx2keras import onnx_to_keras
+  import onnx
+  onnx_model = onnx.load('swsl_resnext101_32x8d.onnx')
+  # k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], change_ordering=False)"renumerate"
+  # name_policy: [None, "short" or "renumerate"], change_ordering: change ordering to HWC
+  k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], name_policy="renumerate", change_ordering=True)
+  print(k_model.input_shape, k_model.output_shape)
+  # (None, 224, 224, 3) (None, 1000)
+
+  k_model.save('swsl_resnext101_32x8d.onnx.h5')
+
+  from keras_cv_attention_models.resnet_family import resnext
+  mm = resnext.ResNeXt50(pretrained=None, classifier_activation=None)
+  bb = keras.models.load_model('swsl_resnext101_32x8d.onnx.h5')
+
+  source_wws = [ii.get_weights() for ii in bb.layers if len(ii.weights) != 0]
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  for source_ww, target_name in zip(source_wws, target_names):
+      print(f"{target_name = }, {source_ww[0].shape = }, {mm.get_layer(target_name).get_weights()[0].shape}")
+      if "_shortcut_conv" in target_name:
+          target_name = target_name.replace('_shortcut_conv', '_deep_3_conv')
+      elif '_deep_3_conv' in target_name:
+          kk = target_name.replace('_deep_3_conv', '_shortcut_conv')
+          target_name = kk if kk in target_names else target_name
+      if "_shortcut_bn" in target_name:
+          target_name = target_name.replace('_shortcut_bn', '_3_bn')
+      elif '_3_bn' in target_name:
+          kk = target_name.replace('_3_bn', '_shortcut_bn')
+          target_name = kk if kk in target_names else target_name
+      print([pp.shape for pp in source_ww], [qq.shape for qq in mm.get_layer(target_name).get_weights()])
+      mm.get_layer(target_name).set_weights(source_ww)
+
+  mm.save('swsl_resnext101_32x8d.h5')
+
+  input_shape = 224
+  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
+  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  print(f"{np.allclose(torch_out, keras_out, atol=1e-2) = }")
+  ```
 ## ResMLP
   ```py
   import torch
@@ -2913,6 +2930,465 @@
   mm.get_layer('aggregate').set_weights([aa[0][0], aa[1]])
   np.allclose(bb(tf.ones([1, 224, 224, 3])), mm(tf.ones([1, 224, 224, 3])))
   ```
+## ResNetQ
+  ```py
+  import torch
+  from torchsummary import summary
+
+  import timm
+  torch_model = timm.models.resnet51q(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  from skimage.data import chelsea
+  from skimage.transform import resize
+  img = chelsea()
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='tf').numpy()
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+  out = out.detach().cpu().numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(out))
+
+  traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
+  torch.jit.save(traced_cell, 'resnet51q.pth')
+
+  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  from keras_cv_attention_models.resnet_quad import resnet_quad
+  mm = resnet_quad.ResNetQ51(pretrained=None)
+
+  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
+  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
+
+  input_output_rr = {
+      "stem.conv1" : "stem_1_conv",
+      "stem.conv2" : "stem_2_conv",
+      "stem.conv3.conv" : "stem_3_conv",
+      "stem.conv3.bn" : "stem_3_bn",
+      "stem.conv4.conv" : "stem_4_conv",
+      "stem.conv4.bn" : "stem_bn",
+      'bn1': 'stem_bn',
+      'final_conv.conv': 'features_conv',
+      'final_conv.bn': 'features_bn',
+      'head.fc': 'predictions',
+  }
+  network_stack_rr = {'0': 'stack1_', '1': 'stack2_', '2': 'stack3_', '3': 'stack4_'}
+  network_block_rr = {"{}".format(ii): "block{}_".format(ii + 1) for ii in range(14)}
+  stack_layer_rr = {
+      "shortcut.conv": "shortcut_conv",
+      "shortcut.bn": "shortcut_bn",
+      "conv1_1x1.conv": "1_conv",
+      "conv1_1x1.bn": "1_bn",
+      "conv2_kxk.conv": "groups_conv",
+      "conv2_kxk.bn": "2_bn",
+      "conv3_1x1.conv": "3_conv",
+      "conv3_1x1.bn": "3_bn",
+  }
+
+  def match_layer_name(torch_layer_name):
+      splitted_name = torch_layer_name.split('.')
+      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
+      if layer_name in input_output_rr:
+           return input_output_rr[layer_name]
+
+      stack_nn, block_nn, layer_nn = splitted_name[1], splitted_name[2], ".".join(splitted_name[3:-1])
+      # print(f">>>> {stack_nn = }, {block_nn = }, {layer_nn = }")
+      return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], stack_layer_rr[layer_nn]])
+
+  aa = torch_model.state_dict()
+  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+  cc = set(bb.values())
+  # print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+  print("TF layers with weights not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc and len(ii.weights) != 0])
+  # TF layers with weights not contained in torch: []
+  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
+  # torch layers not contained in TF: []
+
+  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
+  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
+  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
+  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
+  # 'blocks.3.2.conv_dw.weight': (torch.Size([416, 1, 3, 3]), TensorShape([3, 3, 416, 1])),
+
+  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
+  for kk, vv in bb.items():
+      torch_weight = aa[kk].detach().numpy()
+      torch_weight_type = kk.split(".")[-1]
+      if torch_weight_type == "num_batches_tracked":
+          continue
+      if vv.endswith("_mhsa"):
+          continue
+
+      tf_layer = mm.get_layer(vv)
+      tf_weights = tf_layer.get_weights()
+      tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+      if tf_weight_pos == 0:
+          if isinstance(tf_layer, keras.layers.DepthwiseConv2D):  # DepthwiseConv2D is instance of Conv2D
+              torch_weight = np.transpose(torch_weight, (2, 3, 0, 1))
+          elif isinstance(tf_layer, keras.layers.Conv2D):
+              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+          elif isinstance(tf_layer, keras.layers.BatchNormalization):
+              torch_weight = torch_weight
+          elif isinstance(tf_layer, keras.layers.PReLU):
+              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+          elif isinstance(tf_layer, keras.layers.Dense):
+              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+              torch_weight = torch_weight.T
+
+      tf_weights[tf_weight_pos] = torch_weight
+      tf_layer.set_weights(tf_weights)
+
+  save_path = "resnetq51.h5"
+  mm.save(save_path)
+  print("Saved model:", save_path)
+
+  input_shape = 224
+  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
+  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
+  ```
+  ```py
+  from onnx2keras import onnx_to_keras
+  import onnx
+  onnx_model = onnx.load('resnet51q.onnx')
+  # k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], change_ordering=False)"renumerate"
+  # name_policy: [None, "short" or "renumerate"], change_ordering: change ordering to HWC
+  k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], name_policy="renumerate", change_ordering=True)
+  print(k_model.input_shape, k_model.output_shape)
+  # (None, 224, 224, 3) (None, 1000)
+
+  k_model.save('resnet51q.h5')
+
+  mm = keras.models.load_model('resnet51q.h5')
+  ```
+## ResNetD
+  ```py
+  import torch
+  from torchsummary import summary
+
+  import timm
+  torch_model = timm.models.resnet50d(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  from skimage.data import chelsea
+  from skimage.transform import resize
+  img = chelsea()
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='tf').numpy()
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+  out = out.detach().cpu().numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(out))
+
+  # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
+  # torch.jit.save(traced_cell, 'resnet50d.pth')
+  #
+  # xx = torch.randn(10, 3, 224, 224)
+  # torch.onnx.export(torch_model, xx, "resnet50d.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
+
+  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  from keras_cv_attention_models.aotnet import aotnet
+  mm = aotnet.AotNet50(deep_stem=True, strides=2, stem_width=32, classifier_activation=None)
+
+  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
+  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
+  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
+
+  input_output_rr = {
+      "conv1.0" : "stem_1_conv",
+      "conv1.1" : "stem_1_bn",
+      "conv1.3" : "stem_2_conv",
+      "conv1.4" : "stem_2_bn",
+      "conv1.6" : "stem_3_conv",
+      "bn1" : "stem_bn",
+      'fc': 'predictions',
+  }
+  network_stack_rr = {'layer1': 'stack1_', 'layer2': 'stack2_', 'layer3': 'stack3_', 'layer4': 'stack4_'}
+  network_block_rr = {"{}".format(ii): "block{}_".format(ii + 1) for ii in range(50)}
+  stack_layer_rr = {
+      "conv1": "deep_1_conv",
+      "bn1": "deep_1_bn",
+      "conv2": "deep_2_conv_conv",
+      "bn2": "deep_2_bn",
+      "conv3": "deep_3_conv",
+      "bn3": "3_bn",
+      "downsample.1": "shortcut_conv",
+      "downsample.2": "shortcut_bn",
+  }
+
+  def match_layer_name(torch_layer_name):
+      splitted_name = torch_layer_name.split('.')
+      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
+      if layer_name in input_output_rr:
+           return input_output_rr[layer_name]
+
+      stack_nn, block_nn, layer_nn = splitted_name[0], splitted_name[1], ".".join(splitted_name[2:-1])
+      # print(f">>>> {stack_nn = }, {block_nn = }, {layer_nn = }")
+      return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], stack_layer_rr[layer_nn]])
+
+  aa = torch_model.state_dict()
+  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
+  cc = set(bb.values())
+  # print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
+  print("TF layers with weights not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc and len(ii.weights) != 0])
+  # TF layers with weights not contained in torch: []
+  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
+  # torch layers not contained in TF: []
+
+  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
+  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
+  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
+  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
+  # 'blocks.3.2.conv_dw.weight': (torch.Size([416, 1, 3, 3]), TensorShape([3, 3, 416, 1])),
+
+  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
+  for kk, vv in bb.items():
+      torch_weight = aa[kk].detach().numpy()
+      torch_weight_type = kk.split(".")[-1]
+      if torch_weight_type == "num_batches_tracked":
+          continue
+
+      tf_layer = mm.get_layer(vv)
+      tf_weights = tf_layer.get_weights()
+      tf_weight_pos = tf_weights_dict[torch_weight_type]
+
+      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
+
+      if tf_weight_pos == 0:
+          if isinstance(tf_layer, keras.layers.DepthwiseConv2D):  # DepthwiseConv2D is instance of Conv2D
+              torch_weight = np.transpose(torch_weight, (2, 3, 0, 1))
+          elif isinstance(tf_layer, keras.layers.Conv2D):
+              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
+          elif isinstance(tf_layer, keras.layers.BatchNormalization):
+              torch_weight = torch_weight
+          elif isinstance(tf_layer, keras.layers.PReLU):
+              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
+          elif isinstance(tf_layer, keras.layers.Dense):
+              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+              torch_weight = torch_weight.T
+
+      tf_weights[tf_weight_pos] = torch_weight
+      tf_layer.set_weights(tf_weights)
+
+  save_path = "resnet50d.h5"
+  mm.save(save_path)
+  print("Saved model:", save_path)
+
+  input_shape = 224
+  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
+  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
+  print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
+  ```
+  ```py
+  from onnx2keras import onnx_to_keras
+  import onnx
+  onnx_model = onnx.load('resnet51q.onnx')
+  # k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], change_ordering=False)"renumerate"
+  # name_policy: [None, "short" or "renumerate"], change_ordering: change ordering to HWC
+  k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], name_policy="renumerate", change_ordering=True)
+  print(k_model.input_shape, k_model.output_shape)
+  # (None, 224, 224, 3) (None, 1000)
+
+  k_model.save('resnet51q.h5')
+
+  mm = keras.models.load_model('resnet51q.h5')
+  ```
+  ```py
+  from onnx2keras import onnx_to_keras
+  import onnx
+  onnx_model = onnx.load('resnet50d.onnx')
+  # k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], change_ordering=False)"renumerate"
+  # name_policy: [None, "short" or "renumerate"], change_ordering: change ordering to HWC
+  k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], name_policy="renumerate", change_ordering=True)
+  print(k_model.input_shape, k_model.output_shape)
+  # (None, 224, 224, 3) (None, 1000)
+
+  k_model.save('resnet50d.h5')
+
+  from keras_cv_attention_models.aotnet import aotnet
+  mm = aotnet.AotNet50(deep_stem=True, strides=2, stem_width=32, classifier_activation=None)
+  bb = keras.models.load_model('resnet50d.h5')
+
+  source_wws = [ii.get_weights() for ii in bb.layers if len(ii.weights) != 0]
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  for source_ww, target_name in zip(source_wws, target_names):
+      if "_shortcut_conv" in target_name:
+          target_name = target_name.replace('_shortcut_conv', '_deep_3_conv')
+      elif '_deep_3_conv' in target_name:
+          kk = target_name.replace('_deep_3_conv', '_shortcut_conv')
+          target_name = kk if kk in target_names else target_name
+      if "_shortcut_bn" in target_name:
+          target_name = target_name.replace('_shortcut_bn', '_3_bn')
+      elif '_3_bn' in target_name:
+          kk = target_name.replace('_3_bn', '_shortcut_bn')
+          target_name = kk if kk in target_names else target_name
+      print([pp.shape for pp in source_ww], [qq.shape for qq in mm.get_layer(target_name).get_weights()])
+      mm.get_layer(target_name).set_weights(source_ww)
+  ```
+## LeVit
+  - [Github facebookresearch/LeViT](https://github.com/facebookresearch/LeViT)
+  ```py
+  q_blocks_h, k_blocks_h, strides = 4, 7, 2
+  x1, y1 = np.meshgrid(range(q_blocks_h), range(q_blocks_h))
+  x2, y2 = np.meshgrid(range(k_blocks_h), range(k_blocks_h))
+  aa = np.hstack([x1.reshape(-1, 1), y1.reshape(-1, 1)])
+  bb = np.hstack([x2.reshape(-1, 1), y2.reshape(-1, 1)])
+  print(f"{aa.shape = }, {bb.shape = }")
+  # aa.shape = (16, 2), bb.shape = (49, 2)
+  cc = [np.abs(bb - ii * strides) for ii in aa]
+  dd = np.stack([ii[:, 0] + ii[:, 1] * k_blocks_h for ii in cc])
+  print(f"{dd.shape = }")
+  # dd.shape = (16, 49)
+
+  sys.path.append('../LeViT')
+  import levit
+  torch_model = levit.LeViT_128S(pretrained=True)
+  torch_model.eval()
+  print(f"{np.allclose(torch_model.blocks[12].attention_bias_idxs.numpy(), dd) = }")
+  # np.allclose(torch_model.blocks[12].attention_bias_idxs.numpy(), dd) = True
+  ```
+  ```py
+  q_blocks_h, k_blocks_h, strides = 4, 7, 2
+  x1, y1 = tf.meshgrid(range(q_blocks_h), range(q_blocks_h))
+  x2, y2 = tf.meshgrid(range(k_blocks_h), range(k_blocks_h))
+  aa = tf.concat([tf.reshape(x1, (-1, 1)), tf.reshape(y1, (-1, 1))], axis=-1)
+  bb = tf.concat([tf.reshape(x2, (-1, 1)), tf.reshape(y2, (-1, 1))], axis=-1)
+  print(f"{aa.shape = }, {bb.shape = }")
+  # aa.shape = (16, 2), bb.shape = (49, 2)
+  cc = [tf.math.abs(bb - ii * strides) for ii in aa]
+  dd = tf.stack([ii[:, 0] + ii[:, 1] * k_blocks_h for ii in cc])
+  print(f"{dd.shape = }")
+  # dd.shape = (16, 49)
+  ```
+  ```py
+  import torch
+  from torchsummary import summary
+
+  sys.path.append('../LeViT')
+  import levit as torch_levit
+  torch_model = torch_levit.LeViT_128S(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  from skimage.data import chelsea
+  from skimage.transform import resize
+  img = chelsea()
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='tf').numpy()
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+  out = out.detach().cpu().numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(out))
+
+  # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
+  # torch.jit.save(traced_cell, 'levit128.pth')
+  #
+  # xx = torch.randn(10, 3, 224, 224)
+  # torch.onnx.export(torch_model, xx, "levit128.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
+
+  from keras_cv_attention_models.levit import levit
+  mm = levit.LeViT128S()
+
+  aa = torch_model.state_dict()
+  ss = {}
+  for kk, vv in aa.items():
+      split_kk = kk.split(".")
+      vv = vv.numpy()
+      if split_kk[-1] in ["num_batches_tracked", "attention_bias_idxs", "attention_biases"]:
+          continue
+      if split_kk[-1] in ["weight", "bias", "running_mean", "running_var"]:
+          layer_name = ".".join(split_kk[:-1])
+          ss.setdefault(layer_name, []).append(vv)
+      else:
+          ss[kk] = vv
+
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0 and not isinstance(ii, levit.MultiHeadPositionalEmbedding)]
+  target_names = target_names[:-3] + [target_names[-2], target_names[-3], target_names[-1]]
+  print(f"{len(ss) = }, {len(target_names) = }")
+
+  for kk, tf_layer_name in zip(ss.keys(), target_names):
+      if tf_layer_name.endswith("_downsample_q"):
+          tf_layer_name = tf_layer_name.replace("_downsample_q", "_downsample_kv_bn")
+      elif tf_layer_name.endswith("_downsample_kv_bn"):
+          tf_layer_name = tf_layer_name.replace("_downsample_kv_bn", "_downsample_q")
+      print(f"{kk = }, {tf_layer_name = }")
+      tf_layer = mm.get_layer(tf_layer_name)
+      tf_weights = tf_layer.get_weights()
+      torch_weight = ss[kk]
+      # print("[{}] torch: {}, tf: {}".format(kk, [ii.shape for ii in torch_weight], [ii.shape for ii in tf_weights]))
+
+      if isinstance(tf_layer, keras.layers.Conv2D):
+          torch_weight[0] = np.transpose(torch_weight[0], (2, 3, 1, 0))
+      elif isinstance(tf_layer, keras.layers.PReLU):
+          torch_weight[0] = np.expand_dims(np.expand_dims(torch_weight[0], 0), 0)
+      elif isinstance(tf_layer, keras.layers.Dense):
+          # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
+          torch_weight[0] = torch_weight[0].T
+      print("[{}] torch: {}, tf: {}".format(kk, [ii.shape for ii in torch_weight], [ii.shape for ii in tf_weights]))
+
+      tf_layer.set_weights(torch_weight)
+
+  target_names_2 = [ii.name for ii in mm.layers if isinstance(ii, levit.MultiHeadPositionalEmbedding)]
+  ss_2 = {kk: [vv.numpy()] for kk, vv in aa.items() if kk.split(".")[-1] in ["attention_biases"]}
+  for kk, tf_layer_name in zip(ss_2.keys(), target_names_2):
+      print(f"{kk = }, {tf_layer_name = }")
+      tf_layer = mm.get_layer(tf_layer_name)
+      tf_weights = tf_layer.get_weights()
+      torch_weight = ss_2[kk]
+      print("[{}] torch: {}, tf: {}".format(kk, [ii.shape for ii in torch_weight], [ii.shape for ii in tf_weights]))
+      tf_layer.set_weights([torch_weight[0].T])
+  ```
+***
+
+# EfficientNet
+## Noisy Student EfficientNet
+  - **Reload imagenet model from keras applications**
+    ```py
+    from keras_efficientnet_v2 import efficientnet_v2
+    for ii in range(8):
+        print(f">>>> {ii = }")
+        mm = getattr(efficientnet_v2, "EfficientNetV1B{}".format(ii))(include_preprocessing=True)
+        mm.load_weights('/home/leondgarse/.keras/models/efficientnetb{}.h5'.format(ii))
+        imm = tf.image.resize(chelsea(), mm.input_shape[1:3]) # Chelsea the cat
+        pred = mm(tf.expand_dims(imm, 0)).numpy()
+        print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+        mm.save('efficientnetv1_b{}_imagenet.h5'.format(ii))
+    ```
+  - **Convert noisy_student ckpt models to h5**
+    ```py
+    sys.path.append("/home/leondgarse/workspace/samba/tensorflow/tensorflow/python/keras/applications")
+    from efficientnet_weight_update_util import write_ckpt_to_h5
+
+    for ii in range(8):
+        path_h5 = 'efficientnetv1-b{}-noisy_student.h5'.format(ii)
+        path_ckpt = '/home/leondgarse/workspace/samba/models/noisy_student_efficientnet-b{}'.format(ii)
+        keras_model = getattr(keras.applications, "EfficientNetB{}".format(ii))()
+        write_ckpt_to_h5('./aa.h5', path_ckpt, keras_model)
+        keras_model.load_weights('aa.h5')
+
+        import tensorflow as tf
+        from tensorflow import keras
+        from skimage.data import chelsea
+        imm = tf.image.resize(chelsea(), keras_model.input_shape[1:3]) # Chelsea the cat
+        pred = keras_model(tf.expand_dims(imm, 0)).numpy()
+        print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+        print(">>>> Saved to:", path_h5)
+        keras_model.save(path_h5)
+    ```
+    | Model | Params  | Top1 Acc |
+    | ----- | ------- | -------- |
+    | B0    | 5.3M    | 78.8     |
+    | B1    | 7.8M    | 81.5     |
+    | B2    | 9.1M    | 82.4     |
+    | B3    | 12.2M   | 84.1     |
+    | B4    | 19.3M   | 85.3     |
+    | B5    | 30.4M   | 86.1     |
+    | B6    | 43.0M   | 86.4     |
+    | B7    | 66.3M   | 86.9     |
+    | L2    | 480.3M  | 88.4     |
 ## EfficientNetV2 tiny
   ```py
   import torch
@@ -3046,41 +3522,4 @@
   keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
   print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
   ```
-## ResNetq
-  ```py
-  import torch
-  from torchsummary import summary
-
-  import timm
-  torch_model = timm.models.resnet51q(pretrained=True)
-  torch_model.eval()
-  summary(torch_model, (3, 224, 224))
-
-  from skimage.data import chelsea
-  from skimage.transform import resize
-  img = chelsea()
-  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='tf').numpy()
-  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
-  out = out.detach().cpu().numpy()
-  print(keras.applications.imagenet_utils.decode_predictions(out))
-
-  xx = torch.randn(10, 3, 224, 224)
-  torch.onnx.export(torch_model, xx, "resnet51q.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
-  ```
-  ```py
-  resnet51q=ByoModelCfg(
-      blocks=(
-          ByoBlockCfg(type='bottle', d=2, c=256, s=1, gs=32, br=0.25),
-          ByoBlockCfg(type='bottle', d=4, c=512, s=2, gs=32, br=0.25),
-          ByoBlockCfg(type='bottle', d=6, c=1536, s=2, gs=32, br=0.25),
-          ByoBlockCfg(type='bottle', d=4, c=1536, s=2, gs=1, br=1.0),
-      ),
-      stem_chs=128,
-      stem_type='quad2',
-      stem_pool=None,
-      num_features=2048,
-      act_layer='silu',
-  ),
-  ```
-## [ToDo] LeVit
 ***

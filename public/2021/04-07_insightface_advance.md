@@ -498,26 +498,46 @@
   | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_48_0.984333_IJBC_11                                                        | 0.896712 | 0.946106 | 0.964463 |  0.97607 | 0.984251 | 0.990131 |
   | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_46_batch_4000_0.984167_IJBC_11                                                     | 0.894718 | 0.945799 | 0.963798 | 0.975814 | 0.984456 | 0.990387 |
   | TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |
-## EfficientNetV2
-  ```sh
-  ./IJB_evals.py -P IJB_result/*efv2*IJBB* /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
-  ```
+## AotNet
+  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_DC_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50v2_14_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50v2_expansion1_preact_false_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50v2_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50v2_expansion1_se_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50v2_expansion1_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
+  TT_basic_aotnet50_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_
   ```py
-  hist_path = "checkpoints/resnetv2_50_101/"
+  import json
+  hist_path = "checkpoints/"
   pp = {}
-  pp["customs"] = plot.EVALS_NAME + ['lr']
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
   pp["epochs"] = [5, 5, 7, 33]
-  pp["skip_epochs"] = 3
+  pp["skip_epochs"] = 8
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="se_r50, swish, randaug 100, SD, bs1024", **pp)
   pp["axes"] = axes
 
-  hist_path = "checkpoints/efficientnet_v2/"
-  axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs512, sd 0", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd (1, 0.8)", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd 0.8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="se_r50, swish, randaug 100, SD, bs512", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_se_r50_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="se_r50, swish, randaug 100, SD, bs1024, dr 0", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s, 21K", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_hist.json", fig_label="aotnet, bs512, relu", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50v2_expansion1_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, v2_expansion1_SD_relu", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50v2_expansion1_se_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, v2_expansion1_se_SD_relu", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50v2_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, v2_expansion1_se_SD_swish, dr0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50v2_expansion1_preact_false_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, v2_expansion1_preact_false_se_SD_swish, dr0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, expansion1_preact_true_strides2_se_SD_swish, dr0", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50v2_14_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, v2_14_expansion1_se_SD_swish, dr0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, 14_expansion1_preact_true_strides2_se_SD_swish, dr0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_DC_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, 14_expansion1_preact_true_strides2_se_DC_swish, dr02", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="aotnet, bs512, 14_expansion1_preact_true_strides2_se_SD_swish, dr02", **pp)
+  ```
+## EfficientNetV2B0
+  ```sh
+  ./IJB_evals.py -P IJB_result/*efv2*IJBB* /datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt
   ```
   ```py
   hist_path = "checkpoints/ghostnet/"
@@ -592,7 +612,17 @@
   axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_hist.json", fig_label="arc, randaug_cutout, lr_base 0.025, SGD lookahead", **pp)
   axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_SAM_hist.json", fig_label="arc, randaug_cutout, lr_base 0.025, SGD lookahead, SAM", **pp)
   ```
+  ```py
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr', 'triplet_embedding_loss']
+  pp["epochs"] = [17]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_t_GDC_arc_emb512_dr0_sgd_l2_5e4_bs256_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="bs2562, lr_base 0.05", names=names, **pp)
+  pp["axes"] = axes
 
+  axes, _ = plot.hist_plot_split("checkpoints/TT_efv2_t_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="bs512, lr_base 0.05", **pp)
+  ```
   ```py
   from plot import choose_accuracy
   hist_path = "checkpoints/efficientnet_v2/"  
@@ -722,7 +752,7 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_48_0.976833_IJBC_11                                          | 0.877026 | 0.925755 | 0.953163 | 0.970292 | 0.981388 | 0.98916  | 0.994394 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_49_0.977667_IJBC_11                                         | 0.876873 | 0.927085 | 0.951884 | 0.970701 | 0.981541 | 0.989364 | 0.994539 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_sgd_LA_basic_agedb_30_epoch_17_0.977333_IJBC_11                           | 0.870174 | 0.926471 | 0.955259 | 0.970394 | 0.982257 | 0.989058 | 0.994494 |
-## Finetune EfficientNetV2
+## Finetune EfficientNetV2B0
   ```py
   hist_path = "checkpoints/efficientnet_v2/"
   pp = {}
@@ -845,6 +875,31 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_sphere_2_hist                        | 0.998167 | 0.979571 |   0.970667 |      15 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_arc_M5_randaug_cutout_2_hist         | 0.9975   | 0.978714 |   0.977167 |      14 |
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_softmax_LS_Arctrip_035_1_SGD_LA_hist | 0.997833 | 0.981714 |   0.9775   |      16 |
+## EfficientNetV2S
+  ```py
+  hist_path = "checkpoints/resnetv2_50_101/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
+  pp["axes"] = axes
+
+  hist_path = "checkpoints/efficientnet_v2/"
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs512, sd 0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd (1, 0.8), GDC", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd 0.8", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s, 21K, E", **pp)
+
+  hist_path = "checkpoints/"
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, F, wd5e5", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, F, wd5e4", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, strides1, F, wd5e5", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, deep_stem, 21K, GDC, wd5e5", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5", **pp)
+  ```
 ***
 
 # AutoAugment and RandAugment
@@ -2099,4 +2154,22 @@ mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu'
 # first conv, kernel_size=3, strides=1
 # se_module, use_bias=False
 mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
+```
+```py
+from keras_cv_attention_models import imagenet
+
+hists = {
+    "lr on batch, lr1e-2, wd0, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
+    "lr on batch, lr1e-2, wd0, randaug 5, use_bias": "checkpoints/cmt_tiny_use_bias_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
+    "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key": "checkpoints/cmt_tiny_imagenet_batch_size_128_randaug_5_mixup_0_hist.json",
+    "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key, wo_first_ln": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_hist.json",
+    "lr on epoch, lr1e-2, wd0, randaug 5, use_bias, wo_first_ln": "checkpoints/cmt_tiny_use_bias_wo_first_ln_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_epoch_wd0.01_hist.json",
+    "lr on epoch, lr1e-2, wd1e-1": "checkpoints/cmt_tiny_use_bias_dw_key_imagenet_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.1_hist.json",
+    "lr on epoch, lr1e-2, wd1e-2": "checkpoints/cmt_tiny_use_bias_dw_key_imagenet_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
+    # "lr on batch, SGD, lr1e-1, wd5e-4, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd5e-4_hist.json",
+    # "lr on batch, SGD, lr1e-1, wd5e-5, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd5e-05_hist.json",
+}
+fig = imagenet.plot_hists(hists.values(), names=list(hists.keys()))
+for ax in fig.axes:
+    ax.grid()
 ```
