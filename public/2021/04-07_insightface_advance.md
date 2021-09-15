@@ -2155,21 +2155,3 @@ mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu'
 # se_module, use_bias=False
 mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
 ```
-```py
-from keras_cv_attention_models import imagenet
-
-hists = {
-    "lr on batch, lr1e-2, wd0, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
-    "lr on batch, lr1e-2, wd0, randaug 5, use_bias": "checkpoints/cmt_tiny_use_bias_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
-    "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key": "checkpoints/cmt_tiny_imagenet_batch_size_128_randaug_5_mixup_0_hist.json",
-    "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key, wo_first_ln": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_hist.json",
-    "lr on epoch, lr1e-2, wd0, randaug 5, use_bias, wo_first_ln": "checkpoints/cmt_tiny_use_bias_wo_first_ln_cifar10_batch_size_128_randaug_5_mixup_0_lr0.01_epoch_wd0.01_hist.json",
-    "lr on epoch, lr1e-2, wd1e-1": "checkpoints/cmt_tiny_use_bias_dw_key_imagenet_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.1_hist.json",
-    "lr on epoch, lr1e-2, wd1e-2": "checkpoints/cmt_tiny_use_bias_dw_key_imagenet_batch_size_128_randaug_5_mixup_0_lr0.01_wd0.01_hist.json",
-    # "lr on batch, SGD, lr1e-1, wd5e-4, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd5e-4_hist.json",
-    # "lr on batch, SGD, lr1e-1, wd5e-5, randaug 5": "checkpoints/cmt_tiny_cifar10_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd5e-05_hist.json",
-}
-fig = imagenet.plot_hists(hists.values(), names=list(hists.keys()))
-for ax in fig.axes:
-    ax.grid()
-```

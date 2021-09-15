@@ -531,6 +531,70 @@
   fig.tight_layout()
   ```
   ![](images/botnet_pos_emb.png)
+## Relative positional embedding by gathering
+  ```py
+  aa = np.arange(1 * 4 * 7).reshape(1, 1, 1, 4, 7)[0, 0, 0]
+  xx = np.repeat(np.arange(7-4, 7).reshape(1, -1), 4, axis=0) - np.arange(4).reshape([-1, 1])
+  yy = np.repeat(np.zeros([1, 4], dtype='uint8'), 4, axis=0) + np.arange(4).reshape([-1, 1])
+  bb = np.stack([yy, xx], axis=-1)
+  cc = tf.gather_nd(aa, bb).numpy()
+
+  print(f"{aa = }")
+  # aa = array([[ 0,  1,  2,  3,  4,  5,  6],
+  #        [ 7,  8,  9, 10, 11, 12, 13],
+  #        [14, 15, 16, 17, 18, 19, 20],
+  #        [21, 22, 23, 24, 25, 26, 27]])
+  print(f"{bb[:, :, 0] = }")
+  # bb[:, :, 0] = array([[0, 0, 0, 0],
+  #        [1, 1, 1, 1],
+  #        [2, 2, 2, 2],
+  #        [3, 3, 3, 3]])
+  print(f"{bb[:, :, 1] = }")
+  # bb[:, :, 1] = array([[3, 4, 5, 6],
+  #        [2, 3, 4, 5],
+  #        [1, 2, 3, 4],
+  #        [0, 1, 2, 3]])
+  print(f"{cc = }")
+  # cc = array([[ 3,  4,  5,  6],
+  #        [ 9, 10, 11, 12],
+  #        [15, 16, 17, 18],
+  #        [21, 22, 23, 24]])
+  ```
+## Bias Relative positional embedding
+  ```py
+  query_width, key_width = 3, 5
+  query_pos_dim, key_pos_dim = query_width * 2 - 1, key_width * 2 - 1
+  aa = np.arange(query_pos_dim * key_pos_dim).reshape(query_pos_dim, key_pos_dim)
+  xx, yy = np.meshgrid(np.arange(key_width), np.arange(query_width))
+  bb = np.stack([yy, xx], -1)
+  cc = (bb[np.newaxis, np.newaxis] + bb[:, :, np.newaxis, np.newaxis, :])[::-1, ::-1]
+  dd = tf.gather_nd(aa, cc).numpy()
+
+  print(f"{aa.shape = }, {cc.shape = }, , {dd.shape = }")
+  # aa.shape = (5, 9), cc.shape = (3, 5, 3, 5, 2), , dd.shape = (3, 5, 3, 5)
+  print(f"{aa = }")
+  # aa = array([[ 0,  1,  2,  3,  4,  5,  6,  7,  8],
+  #        [ 9, 10, 11, 12, 13, 14, 15, 16, 17],
+  #        [18, 19, 20, 21, 22, 23, 24, 25, 26],
+  #        [27, 28, 29, 30, 31, 32, 33, 34, 35],
+  #        [36, 37, 38, 39, 40, 41, 42, 43, 44]])
+  print(f"{dd[0, 0] = }")
+  # dd[0, 0] = array([[22, 23, 24, 25, 26],
+  #        [31, 32, 33, 34, 35],
+  #        [40, 41, 42, 43, 44]])
+  print(f"{dd[2, 2] = }")
+  # dd[2, 2] = array([[ 2,  3,  4,  5,  6],
+  #        [11, 12, 13, 14, 15],
+  #        [20, 21, 22, 23, 24]])
+  print(f"{dd[:, :, 0, 0] = }")
+  # dd[:, :, 0, 0] = array([[22, 21, 20, 19, 18],
+  #        [13, 12, 11, 10,  9],
+  #        [ 4,  3,  2,  1,  0]])
+  print(f"{dd[:, :, 2, 2] = }")
+  # dd[:, :, 2, 2] = array([[42, 41, 40, 39, 38],
+  #        [33, 32, 31, 30, 29],
+  #        [24, 23, 22, 21, 20]])
+  ```
 ***
 
 # VOLO
@@ -3521,5 +3585,37 @@
   torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
   keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
   print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
+  ```
+***
+
+# CMT
+  - CMT article: [PDF 2107.06263 CMT: Convolutional Neural Networks Meet Vision Transformers](https://arxiv.org/pdf/2107.06263.pdf)
+  ```py
+  hist_path = "checkpoints/cmt_tiny/"
+  hists = {
+      # "lr on batch, lr1e-2, wd0, randaug 5": hist_path + "cmt_tiny-cifar10-batch_size_128_randaug_5_mixup_0-lr0.01_wd0_hist.json",
+      # "lr on batch, lr1e-2, wd0, randaug 5, use_bias": hist_path + "cmt_tiny-cifar10-use_bias-batch_size_128_randaug_5_mixup_0-lr0.01_wd0_hist.json",
+      # "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key": hist_path + "cmt_tiny-cifar10-use_bias-dw_key-batch_size_128_randaug_5_mixup_0-lr0.01_wd0_hist.json",
+      # "lr on batch, lr1e-2, wd0, randaug 5, use_bias, dw_key, wo_first_ln": hist_path + "cmt_tiny-cifar10-use_bias-dw_key-wo_first_ln-batch_size_128_randaug_5_mixup_0-lr0.01_wd0_hist.json",
+      # "lr on epoch, lr1e-2, wd0, randaug 5, use_bias, wo_first_ln": hist_path + "cmt_tiny-cifar10-use_bias-wo_first_ln-batch_size_128_randaug_5_mixup_0-lr0.01_epoch_wd0_hist.json",
+      "lr on batch, lr1e-2, wd1e-1": hist_path + "cmt_tiny-cifar10-use_bias-dw_key-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.1_hist.json",
+      # "lr on batch, lr1e-2, wd1e-2": hist_path + "cmt_tiny-cifar10-use_bias-dw_key-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.01_hist.json",
+      # "lr on batch, lr1e-2, wd1e-1, dw_act_add": hist_path + "cmt_tiny-cifar10-dw_act_add-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.1_hist.json",
+      # "lr on batch, lr1e-2, wd1e-1, conv_key, dw_act_add": hist_path + "cmt_tiny-cifar10-conv_key-dw_act_add-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.1_hist.json",
+      # "all_use_bias, dw_key": hist_path + "cmt_tiny-cifar10-all_use_bias-dw_key-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.1_hist.json",
+      "all_no_bias, dw_key, randaug_10": hist_path + "cmt_tiny-cifar10-all_no_bias-dw_key-batch_size_128_randaug_10_mixup_0-lr0.01_wd0.1_hist.json",
+      "stem_act_first_false, dw_key, randaug_10": hist_path + "cmt_tiny-cifar10-stem_act_first_false-dw_key-batch_size_128_randaug_10_cut_mixup_0-lr0.01_wd0.1_hist.json",
+      "all_act_first_false, dw_key, randaug_10": hist_path + "cmt_tiny-cifar10-all_act_first_false-dw_key-batch_size_128_randaug_10_cut_mixup_0-lr0.01_wd0.1_hist.json",
+      "dw_key, randaug_10, mixup_0.5": hist_path + "cmt_tiny-cifar10-dw_key-batch_size_128_randaug_10_mixup_0.5-lr0.01_wd0.1_hist.json",
+      "dw_key, randaug_10": hist_path + "cmt_tiny-cifar10-dw_key-batch_size_128_randaug_10_mixup_0-lr0.01_wd0.1_hist.json",
+      # "all_no_bias, dw_key, randaug_5_cut_mixup_04": hist_path + "cmt_tiny-cifar10-all_no_bias-dw_key-batch_size_128_randaug_5_cut_mixup_04-lr0.01_wd0.1_hist.json",
+      "all_no_bias, dw_key, randaug_5": hist_path + "cmt_tiny-cifar10-all_not_use_bias-dw_key-batch_size_128_randaug_5_mixup_0-lr0.01_wd0.1_hist.json",
+      "lr on epoch, lr1e-2, wd1e-1, conv_key, dw_act_add": hist_path + "cmt_tiny-cifar10-use_bias-conv_key-batch_size_128_randaug_5_mixup_0-lr0.01_on_epoch_wd0.1_hist.json",
+      "lr on batch, lr1e-3, wd1e-1, conv_key, dw_act_add": hist_path + "cmt_tiny-cifar10-use_bias-conv_key-batch_size_128_randaug_5_mixup_0-lr0.001_wd0.1_hist.json",
+      # "lr on batch, SGD, lr1e-1, wd5e-4, randaug 5": hist_path + "cmt_tiny-cifar10-SGD-batch_size_128_randaug_5_mixup_0-lr0.1_wd5e-4_hist.json",
+      # "lr on batch, SGD, lr1e-1, wd5e-5, randaug 5": hist_path + "cmt_tiny-cifar10-SGD-batch_size_128_randaug_5_mixup_0-lr0.1_wd5e-05_hist.json",
+  }
+  from keras_cv_attention_models import imagenet
+  fig = imagenet.plot_hists(hists.values(), names=list(hists.keys()))
   ```
 ***

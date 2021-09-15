@@ -413,7 +413,7 @@
     tar cvf ILSVRC2019_img_train.tar ./*.tar
 
     cd ../test
-    tar cvf ILSVRC2019_img_test.tar $(ls *.JPEG)  # exclude the directory `./`
+    ls > foo && tar cvf ILSVRC2019_img_test.tar -T foo  # exclude the directory `./`
     cd ../val
     tar cvf ILSVRC2019_img_val.tar $(ls *.JPEG)  # exclude the directory `./`
     cd ..

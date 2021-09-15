@@ -1605,6 +1605,11 @@
     ```sh
     */10 6-23 * * * PATH=/opt/anaconda3/bin:$HOME/local_bin:$PATH PYTHONPATH=/opt/anaconda3/lib:$PYTHONPATH xxxx
     ```
+## 关闭 Mouse battery low 通知
+  - [Disable "Mouse battery low" spam notification on Ubuntu](https://wrgms.com/disable-mouse-battery-low-spam-notification/)
+  ```sh
+  wget -O - https://gist.githubusercontent.com/guiambros/166039459a8579638b57f7d135505ab1/raw/733b8dd3ac3280bb76f48ba3dc04655df6d69025/silent-mouse.sh | bash
+  ```
 ***
 
 # 软件
