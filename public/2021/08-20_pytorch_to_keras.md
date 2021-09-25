@@ -3619,3 +3619,21 @@
   fig = imagenet.plot_hists(hists.values(), names=list(hists.keys()))
   ```
 ***
+
+# NFNets
+```py
+model    top1  top1_err    top5  top5_err  param_count  img_size  cropt_pct interpolation
+11    dm_nfnet_f6  86.144    13.856  97.730     2.270       438.36       576      0.956       bicubic
+16    dm_nfnet_f5  85.814    14.186  97.488     2.512       377.21       544      0.954       bicubic
+17    dm_nfnet_f4  85.714    14.286  97.520     2.480       316.07       512      0.951       bicubic
+19    dm_nfnet_f3  85.522    14.478  97.462     2.538       254.92       416      0.940       bicubic
+30    dm_nfnet_f2  85.064    14.936  97.240     2.760       193.78       352      0.920       bicubic
+41   eca_nfnet_l2  84.698    15.302  97.264     2.736        56.72       384      1.000       bicubic
+42    dm_nfnet_f1  84.626    15.374  97.100     2.900       132.63       320      0.910       bicubic
+63   eca_nfnet_l1  84.010    15.990  97.028     2.972        41.41       320      1.000       bicubic
+79    dm_nfnet_f0  83.386    16.614  96.572     3.428        71.49       256      0.900       bicubic
+96       nfnet_l0  82.750    17.250  96.516     3.484        35.07       288      1.000       bicubic
+102  eca_nfnet_l0  82.580    17.420  96.490     3.510        24.14       288      1.000       bicubic
+166   nf_resnet50  80.660    19.340  95.336     4.664        25.56       288       0.94       bicubic
+238  nf_regnet_b1  79.292    20.708  94.748     5.252        10.22       288       0.90       bicubic
+```

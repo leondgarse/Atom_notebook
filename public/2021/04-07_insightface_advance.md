@@ -897,8 +897,34 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, F, wd5e4", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, strides1, F, wd5e5", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, deep_stem, 21K, GDC, wd5e5", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, deep_stem, 21K, GDC, wd5e5, bs512", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5, bs512", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, adamw wd1e4, bs512", **pp)
+  ```
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [17]
+  pp["skip_epochs"] = 0
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_1e2_hist.json", fig_label="E50, adamw_1e2", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_1e2_lr_125_hist.json", fig_label="E50, adamw_1e2_lr_125", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_5e2_lr_125_hist.json", fig_label="E50, adamw_5e2_lr_125", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_1e1_lr_125_hist.json", fig_label="E50, adamw_1e1_lr_125", **pp)
+  ```
+  ```py
+  from plot import choose_accuracy
+  hist_path = "checkpoints/"
+  aa = [
+      hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
+      hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
+      hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
+  ]
+  _ = choose_accuracy(aa)
   ```
 ***
 
@@ -2154,4 +2180,58 @@ mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu'
 # first conv, kernel_size=3, strides=1
 # se_module, use_bias=False
 mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
+```
+## Distillation
+- [PDF 2106.05237 Knowledge distillation: A good teacher is patient and consistent](https://arxiv.org/pdf/2106.05237.pdf)
+```py
+import models, data
+mm = keras.models.load_model('checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_M5_sgd_LA.h5', custom_objects={'NormDense': models.NormDense}, compile=False)
+ds, steps_per_epoch = data.prepare_dataset('faces_emore_test', batch_size=16)
+aa, bb = ds.as_numpy_iterator().next()
+cc = mm(aa).numpy()
+dd = np.argsort(cc, axis=-1)[:, -10:]
+ss = np.array([ii[jj] for ii, jj in zip(cc, dd)])
+```
+```py
+class DistillerLoss(keras.losses.Loss):
+    def __init__(self, student_loss_fn, distillation_loss_fn, alpha=0.1, temperature=10, **kwargs):
+        super(DistillerLoss, self).__init__(**kwargs)
+        self.student_loss_fn, self.distillation_loss_fn = student_loss_fn, distillation_loss_fn
+        self.alpha, self.temperature = alpha, temperature
+
+    def call(self, y_true, y_pred):
+        student_output, teacher_output = tf.split(y_pred, 2, axis=-1)
+        student_loss = self.student_loss_fn(y_true, student_output)
+        distillation_loss = self.distillation_loss_fn(
+            tf.nn.softmax(teacher_output / self.temperature, axis=1),
+            tf.nn.softmax(student_output / self.temperature, axis=1),
+        )
+        loss = self.alpha * student_loss + (1 - self.alpha) * distillation_loss
+        return loss
+
+def distiller_accuracy(y_true, y_pred):
+    student_output, _ = tf.split(y_pred, 2, axis=-1)
+    return keras.metrics.sparse_categorical_accuracy(y_true, student_output)
+
+distiller_loss = DistillerLoss(
+    student_loss_fn=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    distillation_loss_fn=keras.losses.KLDivergence(),
+    alpha=0.1,
+    # temperature=100,
+    temperature=10,
+)
+```
+```py
+# Reference: https://www.tutorialexample.com/implement-kl-divergence-loss-in-tensorflow-tensorflow-tutorial/
+def kl_divergence(true_p, pred_p):
+    true_prob = tf.nn.softmax(true_p, axis = 1)
+    loss_1 = -tf.nn.softmax_cross_entropy_with_logits(logits=true_p, labels=true_prob)
+    loss_2 = tf.nn.softmax_cross_entropy_with_logits(logits=pred_p, labels=true_prob)
+    loss = loss_1 + loss_2
+    return loss
+
+distillation_loss = self.distillation_loss_fn(
+    teacher_predictions / self.temperature,
+    student_predictions / self.temperature
+)
 ```

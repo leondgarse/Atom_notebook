@@ -554,3 +554,42 @@ with tf.distribute.MirroredStrategy().scope():
         workers=4
     )
 ```
+```py
+hhs = {
+    # "resnet50v2_imagenet_batch_size_128_magnitude_5": "checkpoints/saved/resnet50v2_imagenet_batch_size_128_magnitude_5_hist.json",
+    # "coatnet0_imagenet_batch_size_64_magnitude_5": "checkpoints/saved/coatnet0_imagenet_batch_size_64_magnitude_5_hist.json",
+    # "aotnet50_swish_preact_avg_down_drop02_mixup_0_imagenet_batch_size_512_magnitude_5": "checkpoints/saved/aotnet50_swish_preact_avg_down_drop02_mixup_0_imagenet_batch_size_512_magnitude_5_hist.json",
+    # "coatnet0_imagenet2012_batch_size_32_randaug_10_mixup_0_lr0.01_wd0.1": "checkpoints/coatnet0_imagenet2012_batch_size_32_randaug_10_mixup_0_lr0.01_wd0.1_hist.json",
+    # "cmt_tiny_imagenet2012_batch_size_128_randaug_10_mixup_0_lr0.01_wd0.1": "checkpoints/cmt_tiny_imagenet2012_batch_size_128_randaug_10_mixup_0_lr0.01_wd0.1_hist.json",
+    # "aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
+    # "aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.01_wd0.1": "checkpoints/aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.01_wd0.1_hist.json",
+    "aotnet50, E20, randaug_10_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
+    "aotnet50, E20, randaug_10_mixup_0_AdamW_lr0.001_wd0.": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.001_wd0.1_hist.json",
+    "aotnet50, E20, randaug_5_mixup_0_AdamW_lr0.001_wd0.1_on_epoch": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_5_mixup_0_AdamW_lr0.001_wd0.1_on_epoch_hist.json",
+    "aotnet50, E20, randaug_5_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
+}
+
+fig = imagenet.plot_hists(hhs.values(), list(hhs.keys()), addition_plots=None)
+
+```
+## inception crop
+  ```py
+  if inception_crop:
+      channels = im.shape[-1]
+      begin, size, _ = tf.image.sample_distorted_bounding_box(
+          tf.shape(im),
+          tf.zeros([0, 0, 4], tf.float32),
+          area_range=(0.05, 1.0),
+          min_object_covered=0,  # Don't enforce a minimum area.
+          use_image_if_no_bounding_boxes=True)
+      im = tf.slice(im, begin, size)
+      # Unfortunately, the above operation loses the depth-dimension. So we
+      # need to restore it the manual way.
+      im.set_shape([None, None, channels])
+      im = tf.image.resize(im, [crop_size, crop_size])
+  else:
+      im = tf.image.resize(im, [resize_size, resize_size])
+      im = tf.image.random_crop(im, [crop_size, crop_size, 3])
+  if tf.random.uniform(shape=[]) > 0.5:
+      im = tf.image.flip_left_right(im)
+  ```

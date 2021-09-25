@@ -344,6 +344,7 @@
   | 960[40]   | 0.064614 | 0.99617 | 0.93686 | 0.97017  | 2.90319 |
   | 2575[107] | 0.064761 | 0.99667 | 0.93829 | 0.96950  | 2.90445 |
 ## Mobilenet 512 embeddings
+
   | Step      | fc7_acc  | lfw     | cfp_fp  | agedb_30 | SUM     |
   | --------- | -------- | ------- | ------- | -------- | ------- |
   | **Loss**  | arcface  | **DS**  | emore   |          |         |
@@ -432,7 +433,6 @@
     from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 
     data_gen = ImageDataGenerator(rescale=1./255, validation_split=0.1)
-
 
     img_gen = data_gen.flow_from_directory('segmentation_dataset/tumorImage/', target_size=(512, 512), batch_size=4,
                                            class_mode=None, seed=seed, color_mode='grayscale')
