@@ -4,6 +4,23 @@
 # 目录
 ***
 
+# Q / A
+  ```py
+  """ Q:
+  Called Trackable._track_trackable() with name='loss_scale', but a Trackable with this name is already declared as a dependency. Names must be unique (or overwrite=True).
+  """
+  """ A1:
+  https://fixexception.com/tensorflow/called-trackable-track-trackable-with-name-s-but-a-trackable-with-this-name-is-already-declared-as-a-dependency-names-must-be-unique-or-overwrite-true/
+
+  vi /opt/anaconda3/lib/python3.8/site-packages/tensorflow/python/keras/mixed_precision/loss_scale_optimizer.py
+  - 539       self._track_trackable(self._loss_scale, 'loss_scale')
+  + 539       self._track_trackable(self._loss_scale, 'loss_scale', overwrite=True)
+  - 550     self._track_trackable(FakeOptimizerForRestoration(self._optimizer), 'base_optimizer')
+  + 550     self._track_trackable(FakeOptimizerForRestoration(self._optimizer), 'base_optimizer', overwrite=True)
+  """
+  ```
+***
+
 # Backbones
 ## BoTNet on MS1MV3
   ```py
@@ -877,6 +894,21 @@
   | TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_softmax_LS_Arctrip_035_1_SGD_LA_hist | 0.997833 | 0.981714 |   0.9775   |      16 |
 ## EfficientNetV2S
   ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5, dropout 0.2, drop_connect 0.2, bs512", **pp)
+  pp["axes"] = axes
+
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, adamw wd1e4, bs512", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_F_wd5e5_arc_emb512_dr03_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_m, 21K, GDC, wd5e5, dropout 0.3, drop_connect 0.2, bs512", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_F_wd5e5_arc_emb512_dr03_dr_conn03_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_m, 21K, GDC, wd5e5, dropout 0.3, drop_connect 0.3, bs512", **pp)
+  ```
+  - **EfficientNetV2S**
+  ```py
   hist_path = "checkpoints/resnetv2_50_101/"
   pp = {}
   pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
@@ -887,21 +919,35 @@
   pp["axes"] = axes
 
   hist_path = "checkpoints/efficientnet_v2/"
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs512, sd 0", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd (1, 0.8), GDC", **pp)
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early_efv2_s, bs1024, sd 0.8", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_s_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs512_ms1m_bnm09_bne1e4_cos16_hist.json", fig_label="ebv2_s, 21K, E", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_add_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cos16_hist.json", fig_label="TT_early_efv2_s_add_GDC", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="TT_early_efv2_s_sd08_GDC", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early, sd_1_08_GDC, l2_5e4_bs1024, random0", **pp)
 
   hist_path = "checkpoints/"
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, F, wd5e5", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, F, wd5e4", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, strides1, F, wd5e5", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC_wd5e5_arc_emb512_dr02", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F_wd5e5_arc_emb512_dr02", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F_wd5e4_arc_emb512_dr02", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, deep_stem, 21K, GDC, wd5e5, bs512", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5, bs512", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_out_512_F_wd5e5_lr05_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_out_512_F_wd5e5_lr05_arc_emb512_dr04", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="ebv2_s, 21K, GDC, adamw wd1e4, bs512", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_wd5e5_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_F_dr04_drc02_wd5e5_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_F_dr04_drc02", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024, randaug_cutout", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, random0", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos49_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, random0, cos49", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_2_hist.json", fig_label="drc02, early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_hist.json", fig_label="s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0", **pp)
   ```
+  - **EfficientNetV2S adamw fine-tune**
   ```py
   hist_path = "checkpoints/"
   pp = {}
@@ -916,14 +962,44 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_5e2_lr_125_hist.json", fig_label="E50, adamw_5e2_lr_125", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_E50_adamw_1e1_lr_125_hist.json", fig_label="E50, adamw_1e1_lr_125", **pp)
   ```
+  - **EfficientNetV2S strides1**
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC_wd5e5_arc_emb512_dr02", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_GDC_wd5e5_arc_emb512_dr02", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_wd5e5_arc_emb512_dr02", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_wd5e5_arc_emb512_dr04", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_lr05_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_wd5e5_lr05_arc_emb512_dr04", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_out_512_F_wd5e5_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_out_512_F_wd5e5_arc_emb512_dr04", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_wd5e5_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_pw512_F_wd5e5_arc_emb512_dr04", **pp)
+  ```
+  - **EfficientNetV2M**
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [5, 5, 7, 33]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="s_F_wd5e5_arc_emb512_dr02", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_GDC_wd5e5_arc_emb512_dr02_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="m_GDC_wd5e5_arc_emb512_dr02", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_F_wd5e5_arc_emb512_dr03_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="m_F_wd5e5_arc_emb512_dr03", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_F_wd5e5_arc_emb512_dr03_dr_conn03_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="m_F_wd5e5_arc_emb512_dr03_dr_conn03", **pp)
+  ```
   ```py
   from plot import choose_accuracy
-  hist_path = "checkpoints/"
-  aa = [
-      hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
-      hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
-      hist_path + "TT_effv2_s_strides1_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json",
-  ]
+  from glob2 import glob
+
+  aa = glob('checkpoints/TT_effv2_*.json')
   _ = choose_accuracy(aa)
   ```
 ***
@@ -1393,19 +1469,6 @@
   plt.tight_layout()
   ```
   ![](images/cut_out.png)
-# EfficientnetV2
-  ```sh
-  cd automl/efficientnetv2/
-  CUDA_VISIBLE_DEVICES='1' python infer.py --model_name=efficientnetv2-s --model_dir='efficientnetv2-s-21k' --mode='tf2bm' --dataset_cfg=imagenet21k
-  ```
-  ```py
-  infer.get_config('efficientnetv2-s', 'imagenet21k')["model"]['blocks_args']
-  infer.get_config('efficientnetv2-m', 'imagenet21k')["model"]['blocks_args']
-  infer.get_config('efficientnetv2-l', 'imagenet21k')["model"]['blocks_args']
-
-  aa = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in tt.layers])
-  bb = np.array([np.sum([np.cumprod(jj.shape)[-1] for jj in ii.weights]) for ii in keras_model.layers])
-  ```
 # insightface recognition
   - **Save to jit and onnx model**
     ```py
@@ -2142,96 +2205,99 @@
 ***
 
 # AotNet
-```py
-from keras_cv_attention_models import aotnet
-# resnet50 like
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0)
+  ```py
+  from keras_cv_attention_models import aotnet
+  # resnet50 like
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0)
 
-# se_ir_resnet50 like
-mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], expansion=1, input_shape=(112, 112, 3), deep_stem=False, num_classes=0, se_ratio=1/4, stem_down_sample=False, strides=2)
+  # se_ir_resnet50 like
+  mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], expansion=1, input_shape=(112, 112, 3), deep_stem=False, num_classes=0, se_ratio=1/4, stem_down_sample=False, strides=2)
 
-# Basic
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=None, deep_stem=True, strides=1)
+  # Basic
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=None, deep_stem=True, strides=1)
 
-# BotNet like
-attn = [None, None, "mhsa", "mhsa"]
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
+  # BotNet like
+  attn = [None, None, "mhsa", "mhsa"]
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
 
-# HaloNet like
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="halo", deep_stem=True, strides=1)
+  # HaloNet like
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="halo", deep_stem=True, strides=1)
 
-# Resnest50 like
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="sa", deep_stem=True, strides=1)
+  # Resnest50 like
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="sa", deep_stem=True, strides=1)
 
-# Cotnet50 like
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="cot", deep_stem=True, strides=1)
+  # Cotnet50 like
+  mm = aotnet.AotNet50(inp也是ut_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="cot", deep_stem=True, strides=1)
 
-# SECotnetD50 like
-attn = ["sa", "sa", ["cot", "sa"] * 50, "cot"]
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
+  # SECotnetD50 like
+  attn = ["sa", "sa", ["cot", "sa"] * 50, "cot"]
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
 
-# Mixing se and outlook and halo and mhsa
-attn = [None, "outlook", ["mhsa", "halo"] * 50, ["mhsa", "halo"] * 4]
-se_ratio = [0.25, 0.25, 0, 0]
-mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, se_ratio=se_ratio, deep_stem=True)
-```
-```py
-# Most se_ir_resnet50 like
-# first conv, kernel_size=3, strides=1
-# se_module, use_bias=False
-mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
-```
-## Distillation
-- [PDF 2106.05237 Knowledge distillation: A good teacher is patient and consistent](https://arxiv.org/pdf/2106.05237.pdf)
-```py
-import models, data
-mm = keras.models.load_model('checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_M5_sgd_LA.h5', custom_objects={'NormDense': models.NormDense}, compile=False)
-ds, steps_per_epoch = data.prepare_dataset('faces_emore_test', batch_size=16)
-aa, bb = ds.as_numpy_iterator().next()
-cc = mm(aa).numpy()
-dd = np.argsort(cc, axis=-1)[:, -10:]
-ss = np.array([ii[jj] for ii, jj in zip(cc, dd)])
-```
-```py
-class DistillerLoss(keras.losses.Loss):
-    def __init__(self, student_loss_fn, distillation_loss_fn, alpha=0.1, temperature=10, **kwargs):
-        super(DistillerLoss, self).__init__(**kwargs)
-        self.student_loss_fn, self.distillation_loss_fn = student_loss_fn, distillation_loss_fn
-        self.alpha, self.temperature = alpha, temperature
+  # Mixing se and outlook and halo and mhsa
+  attn = [None, "outlook", ["mhsa", "halo"] * 50, ["mhsa", "halo"] * 4]
+  se_ratio = [0.25, 0.25, 0, 0]
+  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, se_ratio=se_ratio, deep_stem=True)
+  ```
+  ```py
+  # Most se_ir_resnet50 like
+  # first conv, kernel_size=3, strides=1
+  # se_module, use_bias=False
+  mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
+  ```
+***
 
-    def call(self, y_true, y_pred):
-        student_output, teacher_output = tf.split(y_pred, 2, axis=-1)
-        student_loss = self.student_loss_fn(y_true, student_output)
-        distillation_loss = self.distillation_loss_fn(
-            tf.nn.softmax(teacher_output / self.temperature, axis=1),
-            tf.nn.softmax(student_output / self.temperature, axis=1),
-        )
-        loss = self.alpha * student_loss + (1 - self.alpha) * distillation_loss
-        return loss
+# Distillation
+  - [PDF 2106.05237 Knowledge distillation: A good teacher is patient and consistent](https://arxiv.org/pdf/2106.05237.pdf)
+  ```py
+  import models, data
+  mm = keras.models.load_model('checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_E50_M5_sgd_LA.h5', custom_objects={'NormDense': models.NormDense}, compile=False)
+  ds, steps_per_epoch = da也是ta.prepare_dataset('faces_emore_test', batch_size=16)
+  aa, bb = ds.as_numpy_iterator().next()
+  cc = mm(aa).numpy()
+  dd = np.argsort(cc, axis=-1)[:, -10:]
+  ss = np.array([ii[jj] for ii, jj in zip(cc, dd)])
+  ```
+  ```py
+  class DistillerLoss(keras.losses.Loss):
+      def __init__(self, student_loss_fn, distillation_loss_fn, alpha=0.1, temperature=10, **kwargs):
+          super(DistillerLoss, self).__init__(**kwargs)
+          self.student_loss_fn, self.distillation_loss_fn = student_loss_fn, distillation_loss_fn
+          self.alpha, self.temperature = alpha, temperature
 
-def distiller_accuracy(y_true, y_pred):
-    student_output, _ = tf.split(y_pred, 2, axis=-1)
-    return keras.metrics.sparse_categorical_accuracy(y_true, student_output)
+      def call(self, y_true, y_pred):
+          student_output, teacher_output = tf.split(y_pred, 2, axis=-1)
+          student_loss = self.student_loss_fn(y_true, student_output)
+          distillation_loss = self.distillation_loss_fn(
+              tf.nn.softmax(teacher_output / self.temperature, axis=1),
+              tf.nn.softmax(student_output / self.temperature, axis=1),
+          )
+          loss = self.alpha * student_loss + (1 - self.alpha) * distillation_loss
+          return loss
 
-distiller_loss = DistillerLoss(
-    student_loss_fn=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    distillation_loss_fn=keras.losses.KLDivergence(),
-    alpha=0.1,
-    # temperature=100,
-    temperature=10,
-)
-```
-```py
-# Reference: https://www.tutorialexample.com/implement-kl-divergence-loss-in-tensorflow-tensorflow-tutorial/
-def kl_divergence(true_p, pred_p):
-    true_prob = tf.nn.softmax(true_p, axis = 1)
-    loss_1 = -tf.nn.softmax_cross_entropy_with_logits(logits=true_p, labels=true_prob)
-    loss_2 = tf.nn.softmax_cross_entropy_with_logits(logits=pred_p, labels=true_prob)
-    loss = loss_1 + loss_2
-    return loss
+  def distiller_accuracy(y_true, y_pred):
+      student_output, _ = tf.split(y_pred, 2, axis=-1)
+      return keras.metrics.sparse_categorical_accuracy(y_true, student_output)
 
-distillation_loss = self.distillation_loss_fn(
-    teacher_predictions / self.temperature,
-    student_predictions / self.temperature
-)
-```
+  distiller_loss = DistillerLoss(
+      student_loss_fn=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+      distillation_loss_fn=keras.losses.KLDivergence(),
+      alpha=0.1,
+      # temperature=100,
+      temperature=10,
+  )
+  ```
+  ```py
+  # Reference: https://www.tutorialexample.com/implement-kl-divergence-loss-in-tensorflow-tensorflow-tutorial/
+  def kl_divergence(true_p, pred_p):
+      true_prob = tf.nn.softmax(true_p, axis = 1)
+      loss_1 = -tf.nn.softmax_cross_entropy_with_logits(logits=true_p, labels=true_prob)
+      loss_2 = tf.nn.softmax_cross_entropy_with_logits(logits=pred_p, labels=true_prob)
+      loss = loss_1 + loss_2
+      return loss
+
+  distillation_loss = self.distillation_loss_fn(
+      teacher_predictions / self.temperature,
+      student_predictions / self.temperature
+  )
+  ```
+***

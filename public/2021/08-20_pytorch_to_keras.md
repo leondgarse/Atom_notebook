@@ -48,6 +48,7 @@
   <!-- /TOC -->
 ***
 # Timm
+## Timm results
   - [Github rwightman/pytorch-image-models](https://github.com/rwightman/pytorch-image-models)
   ```py
   #  Semi-Weakly Supervised ResNe*t models from https://github.com/facebookresearch/semi-supervised-ImageNet1K-models
@@ -55,6 +56,144 @@
   dd = pd.read_csv('/home/leondgarse/workspace/samba/pytorch-image-models/results/results-imagenet.csv')
   dd[['swsl_resnext' in ii for ii in dd.model.values]]
   dd[['resnext101' in ii for ii in dd.model.values]]
+  ```
+## Basic RegNetZ load Timm weights
+  ```py
+  import timm
+  import torch
+  from torchsummary import summary
+  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
+
+  torch_model = timm.models.regnetz_b(pretrained=True)
+  _ = torch_model.eval()
+  summary(torch_model, (3, 224, 224))
+
+  """ Run predict """
+  from skimage.data import chelsea
+  from skimage.transform import resize
+  img = chelsea()
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='torch').numpy()
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+  out = out.detach().cpu().numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(out))
+
+  """ Save jit model or onnx """
+  # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
+  # torch.jit.save(traced_cell, 'regnetz_b.pth')
+  #
+  # xx = torch.randn(10, 3, 224, 224)
+  # torch.onnx.export(torch_model, xx, "regnetz_b.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, opset_version=11)
+
+  """ Convert weights """
+  torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
+  {kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
+
+  from keras_cv_attention_models.resnet_family import regnet
+  mm = regnet.RegNetZB(classifier_activation=None, pretrained=None)
+
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  {ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
+
+  """ Load weights and save h5 """
+  additional_transfer = {}
+  layer_names_matched_torch = target_names
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+
+  """ Keras run predict """
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+  pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+  # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+  ```
+  **Re-save**
+  ```py
+  from keras_cv_attention_models.resnet_family import regnet
+  mm = regnet.RegNetZB(pretrained=None)
+  pp = mm.name + "_imagenet.h5"
+  mm.load_weights(pp)
+
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+  pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+  # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+
+  print(">>>> Saving to:", pp)
+  mm.save(pp)
+  ```
+  **md5**
+  ```sh
+  ls -1 ./regnetz_*.h5 | xargs -I {} md5sum {}
+  ```
+  ```py
+  additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+  layer_names_matched_torch = [""] * len(target_names)
+  for id, ii in enumerate(target_names):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(id, ii, tail_name)
+      if tail_name in ["_deep_2_haloquery_conv"]:
+          layer_names_matched_torch.insert(id - 1, ii)
+          layer_names_matched_torch.pop(-1)
+      else:
+          layer_names_matched_torch[id] = ii
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+  ```
+  ```py
+  additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+  layer_names_matched_torch = [""] * len(target_names)
+  for id, ii in enumerate(target_names):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(id, ii, tail_name)
+      if tail_name in ["_shortcut_conv"]:
+          layer_names_matched_torch.insert(id - 5, ii)
+          layer_names_matched_torch.pop(-1)
+      elif tail_name in ["_shortcut_bn"]:
+          layer_names_matched_torch.insert(id - 6, ii)
+          layer_names_matched_torch.pop(-1)
+      else:
+          layer_names_matched_torch[id] = ii
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+  ```
+## Timm randaug
+  ```py
+  import timm.data.auto_augment as timm_auto_augment
+  from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
+
+  PIL_INTERP_DICT = {"bicubic": 3, "bilinear": 2}
+  target_shape = (224, 224)
+  resize_method = "bicubic"
+  magnitude = 6
+
+  aa_params = {
+      "translate_const": int(min(target_shape) * 0.45),
+      "img_mean": (124, 117, 104),    # MUST be tuple
+      "interpolation": PIL_INTERP_DICT.get(resize_method, PIL_INTERP_DICT["bilinear"]),
+  }
+  auto_augment = "rand-m{}-mstd0.5-inc1".format(magnitude)
+  rr = timm_auto_augment.rand_augment_transform(auto_augment, aa_params)
+  process = lambda img: img_to_array(rr(array_to_img(img)))
+
+  from skimage.data import chelsea
+  plt.imshow(np.vstack([np.hstack([process(chelsea()) for _ in range(10)]) for _ in range(10)]) / 255)
+  ```
+  ```py
+  from keras_cv_attention_models.imagenet import augment
+  from skimage.data import chelsea
+  aa = augment.RandAugment(num_layers=2, magnitude=6, translate_const=0.45)
+  image = tf.convert_to_tensor(chelsea().astype('float32'))
+  plt.imshow(np.vstack([np.hstack([aa(image) for _ in range(10)]) for _ in range(10)]) / 255)
+  ```
+  ```py
+  from keras_cv_attention_models.imagenet import data
+  train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset('cifar10', input_shape=(224, 224), batch_size=64, random_crop_min=0.6, mixup_alpha=0.1, cutmix_alpha=1.0, rescale_mode="tf", magnitude=6)
+  aa, bb = train_dataset.as_numpy_iterator().next()
+  plt.imshow(np.vstack([np.hstack(aa[ii * 8 : (ii + 1) * 8]) for ii in range(8)]) / 2 + 0.5)
   ```
 ***
 
@@ -753,38 +892,40 @@
   - **TF extract patches by reshape and concatenate**
     ```py
     kernel_size, strides = 3, 2
-    inputs = np.random.uniform(size=[1, 28, 28, 192])
+    inputs = np.random.uniform(size=[1, 64, 28, 192])
     pad = kernel_size // 2
     pad_inputs = tf.pad(inputs, [[0, 0], [pad, pad], [pad, pad], [0, 0]])
 
-    _, ww, hh, cc = pad_inputs.shape
-    num_patches = int(tf.math.ceil(ww / strides) - 1)
-    valid_ww = num_patches * strides
+    _, hh, ww, cc = pad_inputs.shape
+    num_patches_hh, num_patches_ww = int(tf.math.ceil(hh / strides) - 1), int(tf.math.ceil(ww / strides) - 1)
+    valid_hh, valid_ww = num_patches_hh * strides, num_patches_ww * strides
     overlap_s = kernel_size - strides
-    temp_shape = (-1, num_patches, strides, num_patches, strides, cc)
-    print(f"{ww = }, {hh = }, {cc = }, {num_patches = }, {valid_ww = }, {overlap_s = }")
-    # ww = 30, hh = 30, cc = 192, num_patches = 14, valid_ww = 28, overlap_s = 1
+    temp_shape = (-1, num_patches_hh, strides, num_patches_ww, strides, cc)
+    print(f"{ww = }, {hh = }, {cc = }, {num_patches_hh = }, {num_patches_ww = }, {valid_hh = }, {valid_ww = }, {overlap_s = }")
+    # ww = 30, hh = 66, cc = 192, num_patches_hh = 32, num_patches_ww = 14, valid_hh = 64, valid_ww = 28, overlap_s = 1
 
-    center = tf.reshape(pad_inputs[:, :valid_ww, :valid_ww, :], temp_shape) # (1, 14, 2, 14, 2, 192)
-    ww_overlap = tf.reshape(pad_inputs[:, :valid_ww, overlap_s:valid_ww + overlap_s, :], temp_shape)  # (1, 14, 2, 14, 2, 192)
-    hh_overlap = tf.reshape(pad_inputs[:, overlap_s:valid_ww + overlap_s, :valid_ww, :], temp_shape)  # (1, 14, 2, 14, 2, 192)
-    corner_overlap = tf.reshape(pad_inputs[:, overlap_s:valid_ww + overlap_s, overlap_s:valid_ww + overlap_s, :], temp_shape) # (1, 14, 2, 14, 2, 192)
-    print(f"{center.shape = }, {ww_overlap.shape = }, {hh_overlap.shape = }, {corner_overlap.shape = }")
-    # center.shape = TensorShape([1, 14, 2, 14, 2, 192]), ww_overlap.shape = TensorShape([1, 14, 2, 14, 2, 192]), hh_overlap.shape = TensorShape([1, 14, 2, 14, 2, 192]), corner_overlap.shape = TensorShape([1, 14, 2, 14, 2, 192])
+    center = tf.reshape(pad_inputs[:, :valid_hh, :valid_ww, :], temp_shape) # (1, 32, 2, 14, 2, 192)
+    ww_overlap = tf.reshape(pad_inputs[:, :valid_hh, overlap_s:valid_ww + overlap_s, :], temp_shape)  # (1, 32, 2, 14, 2, 192)
+    hh_overlap = tf.reshape(pad_inputs[:, overlap_s:valid_hh + overlap_s, :valid_ww, :], temp_shape)  # (1, 32, 2, 14, 2, 192)
+    corner_overlap = tf.reshape(pad_inputs[:, overlap_s:valid_hh + overlap_s, overlap_s:valid_ww + overlap_s, :], temp_shape) # (1, 32, 2, 14, 2, 192)
+    print(f"{center.shape = }, {corner_overlap.shape = }")
+    # center.shape = TensorShape([1, 32, 2, 14, 2, 192]), corner_overlap.shape = TensorShape([1, 32, 2, 14, 2, 192])
+    print(f"{ww_overlap.shape = }, {hh_overlap.shape = }")
+    # ww_overlap.shape = TensorShape([1, 32, 2, 14, 2, 192]), hh_overlap.shape = TensorShape([1, 32, 2, 14, 2, 192])
 
-    aa = tf.concat([center, ww_overlap[:, :, :, :, -overlap_s:, :]], axis=4)    # (1, 14, 2, 14, 3, 192)
-    bb = tf.concat([hh_overlap[:, :, -overlap_s:, :, :, :], corner_overlap[:, :, -overlap_s:, :, -overlap_s:, :]], axis=4)    # (1, 14, 1, 14, 3, 192)
-    out = tf.concat([aa, bb], axis=2)  # (1, 14, 3, 14, 3, 192)
-    print(f"{aa.shape = }, {bb.shape = }, {out.shape = }")
-    # aa.shape = TensorShape([1, 14, 2, 14, 3, 192]), bb.shape = TensorShape([1, 14, 1, 14, 3, 192]), out.shape = TensorShape([1, 14, 3, 14, 3, 192])
+    center_ww = tf.concat([center, ww_overlap[:, :, :, :, -overlap_s:, :]], axis=4)    # (1, 32, 2, 14, 3, 192)
+    hh_corner = tf.concat([hh_overlap[:, :, -overlap_s:, :, :, :], corner_overlap[:, :, -overlap_s:, :, -overlap_s:, :]], axis=4)    # (1, 32, 1, 14, 3, 192)
+    out = tf.concat([center_ww, hh_corner], axis=2)  # (1, 32, 3, 14, 3, 192)
+    print(f"{center_ww.shape = }, {hh_corner.shape = }, {out.shape = }")
+    # aa.shape = TensorShape([1, 32, 2, 14, 3, 192]), hh_corner.shape = TensorShape([1, 32, 1, 14, 3, 192]), out.shape = TensorShape([1, 32, 3, 14, 3, 192])
 
-    out = tf.transpose(out, [0, 1, 3, 2, 4, 5]) # [1, 14, 14, 3, 3, 192]
+    out = tf.transpose(out, [0, 1, 3, 2, 4, 5]) # [1, 32, 14, 3, 3, 192]
     print(f"{out.shape = }")
-    # out.shape = TensorShape([1, 14, 14, 3, 3, 192])
+    # out.shape = TensorShape([1, 32, 14, 3, 3, 192])
 
     patches = tf.image.extract_patches(pad_inputs, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
-    print(f"{np.allclose(patches, tf.reshape(out, [-1, num_patches, num_patches, kernel_size * kernel_size * cc])) = }")
-    # np.allclose(patches, tf.reshape(out, [-1, num_patches, num_patches, kernel_size * kernel_size * cc])) = True
+    print(f"{np.allclose(patches, tf.reshape(out, [-1, num_patches_hh, num_patches_ww, kernel_size * kernel_size * cc])) = }")
+    # np.allclose(patches, tf.reshape(out, [-1, num_patches_hh, num_patches_ww, kernel_size * kernel_size * cc])) = True
     ```
 ## TF reverse extracted patches without overlap
   - Without overlap means `kernel_size == strides`, not considering `kernel_size < strides`.
@@ -1093,6 +1234,109 @@
     print(f"{np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = }")
     # np.allclose(reconstructed[:, padded: padded + img.shape[1], padded: padded + img.shape[2], :], img) = True
     ```
+## Timm unfold and fold using conv2d and conv2d transpose
+  ```py
+  kernel_size, strides = 3, 2
+  inputs = np.random.uniform(size=[1, 64, 28, 192]).astype("float32")
+  pad = kernel_size // 2
+  pad_inputs = tf.pad(inputs, [[0, 0], [pad, pad], [pad, pad], [0, 0]])
+
+  """ UnFold """
+  kernel_out = kernel_size * kernel_size
+  aa = tf.reshape(tf.eye(kernel_out), [kernel_size, kernel_size, 1, kernel_out])
+  bb = tf.transpose(pad_inputs, [0, 3, 1, 2])
+  cc = tf.reshape(bb, [-1, pad_inputs.shape[1], pad_inputs.shape[2], 1])
+  conv_rr = tf.nn.conv2d(cc, aa, strides=strides, padding='VALID')
+  out = tf.reshape(conv_rr, [-1, pad_inputs.shape[-1], conv_rr.shape[1], conv_rr.shape[2], kernel_size, kernel_size])
+  out = tf.transpose(out, [0, 2, 3, 4, 5, 1])
+  out = tf.reshape(out, [-1, out.shape[1], out.shape[2], kernel_size * kernel_size * pad_inputs.shape[-1]])
+
+  patches = tf.image.extract_patches(pad_inputs, [1, kernel_size, kernel_size, 1], [1, strides, strides, 1], [1, 1, 1, 1], padding='VALID')
+  print(f"{np.allclose(patches, out) = }")
+  # np.allclose(patches, out) = True
+
+  """ Fold """
+  dd = tf.nn.conv2d_transpose(conv_rr, aa, cc.shape, strides, padding="VALID")
+  ee = tf.transpose(tf.reshape(dd[..., 0], bb.shape), [0, 2, 3, 1])[:, paded:-paded, paded:-paded, :]
+
+  """ Torch unfold --> fold """
+  import torch
+  torch_inputs = torch.from_numpy(inputs).permute(0, 3, 1, 2)  # NCHW
+  unfold = torch.nn.Unfold(kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+  fold = torch.nn.Fold(output_size=torch_inputs.shape[2:4], kernel_size=kernel_size, dilation=1, padding=1, stride=strides)
+  torch_fold = fold(unfold(torch_inputs))
+  print(f"{torch_fold.shape = }")
+  # torch_fold.shape = torch.Size([1, 192, 64, 28])
+
+  print(f"{np.allclose(torch_fold.permute(0, 2, 3, 1), ee) = }")
+  # np.allclose(torch_fold.permute(0, 2, 3, 1), ee) = True
+  ```
+  **By Conv3D and Conv3DTranspose**
+  ```py
+  from keras_cv_attention_models.common_layers import __unfold_filters_initializer__
+
+  def unfold_by_conv3d(inputs, kernel_size=3, strides=2, dilation_rate=1, padding="SAME", compressed=True, name=None):
+      if padding.upper() == "SAME":
+          pad = kernel_size // 2
+          pad_inputs = tf.pad(inputs, [[0, 0], [pad, pad], [pad, pad], [0, 0]])
+      else:
+          pad_inputs = inputs
+
+      _, hh, ww, cc = pad_inputs.shape
+      to3d = tf.expand_dims(pad_inputs, -1)
+      conv_rr = keras.layers.Conv3D(
+          filters=kernel_size * kernel_size,
+          kernel_size=[kernel_size, kernel_size, 1],
+          strides=[strides, strides, 1],
+          dilation_rate=[dilation_rate, dilation_rate, 1],
+          padding="VALID",
+          use_bias=False,
+          trainable=False,
+          kernel_initializer=__unfold_filters_initializer__,
+          name=name and name + "unfold_conv",
+      )(to3d)
+      # [batch, hh, ww, channel, kernel * kernel] -> [batch, hh, ww, kernel * kernel, channel]
+      out = tf.transpose(conv_rr, [0, 1, 2, 4, 3])  # [batch, hh, ww, kernel, kernel, channnel]
+      if compressed:
+          out = tf.reshape(out, [-1, out.shape[1], out.shape[2], kernel_size * kernel_size * cc])
+      else:
+          out = tf.reshape(out, [-1, out.shape[1], out.shape[2], kernel_size, kernel_size, cc])
+      return out
+
+  def fold_by_conv3d_transpose(patches, output_shape=None, kernel_size=3, strides=2, dilation_rate=1, padding="SAME", compressed=True, name=None):
+      paded = kernel_size // 2 if padding else 0
+
+      if compressed:
+          _, hh, ww, cc = patches.shape
+          channel = cc // kernel_size // kernel_size
+          conv_rr = tf.reshape(patches, [-1, hh, ww, kernel_size, kernel_size, channel])
+      else:
+          _, hh, ww, _, _, channel = patches.shape
+          conv_rr = patches
+
+      conv_rr = tf.transpose(conv_rr, [0, 1, 2, 5, 3, 4])  # [batch, channnel, hh, ww, kernel, kernel]
+      conv_rr = tf.reshape(conv_rr, [-1, hh, ww, channel, kernel_size * kernel_size])
+
+      convtrans_rr = keras.layers.Conv3DTranspose(
+          filters=1,
+          kernel_size=[kernel_size, kernel_size, 1],
+          strides=[strides, strides, 1],
+          dilation_rate=[dilation_rate, dilation_rate, 1],
+          padding="VALID",
+          output_padding=[paded, paded, 0],
+          use_bias=False,
+          trainable=False,
+          kernel_initializer=__unfold_filters_initializer__,
+          name=name and name + "fold_convtrans",
+      )(conv_rr)
+      out = convtrans_rr[..., 0]
+      if output_shape is None:
+          output_shape = [-paded, -paded]
+      else:
+          output_shape = [output_shape[0] + paded, output_shape[1] + paded]
+      out = out[:, paded : output_shape[0], paded : output_shape[1]]
+      return out
+  ```
 ## Volo outlook attention without overlap
   ```py
   kernel_size, num_heads, embed_dim = 2, 6, 192
@@ -1426,6 +1670,33 @@
 
   mm.save(model_path)
   print(">>>> saved:", model_path)
+  ```
+  **Resave on changing**
+  ```py
+  from keras_cv_attention_models.volo import volo
+
+  import tensorflow as tf
+  from tensorflow import keras
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+
+  for ii in range(1, 6):
+      name = "volo_d{}".format(ii)
+      for rr in volo.PRETRAINED_DICT[name].keys():
+          input_shape = int(rr)
+          mm = getattr(volo, "VOLO_d{}".format(ii))(input_shape=(input_shape, input_shape, 3), pretrained="imagenet")
+          print(f">>>> {input_shape = }, {mm.name = }, {mm.input_names = }")
+
+          """ Run predict """
+          pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+          # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+          print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+
+          pp = mm.name + "_{}.h5".format(input_shape)
+          print(">>>> Saving to:", pp)
+          mm.save(pp)
+          keras.backend.clear_session()
   ```
   **Comparing Pytorch models**
   ```py
@@ -3618,22 +3889,435 @@
   from keras_cv_attention_models import imagenet
   fig = imagenet.plot_hists(hists.values(), names=list(hists.keys()))
   ```
+  ```py
+  #!/bin/bash
+  OMP_NUM_THREADS=1
+  MKL_NUM_THREADS=1
+  export OMP_NUM_THREADS
+  export MKL_NUM_THREADS
+  cd CMT-pytorch;
+  CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -W ignore -m torch.distributed.launch --nproc_per_node 8 train.py \
+  --batch_size 512 --num_workers 48 --lr 6e-3 --optimizer_name "adamw" --tf_optimizer 1 --cosine 1 --model_name cmtti --max_epochs 300 \
+  --warmup_epochs 5 --num-classes 1000 --input_size 184 \
+  --crop_size 160 --weight_decay 1e-1 --grad_clip 0 --repeated-aug 0 --max_grad_norm 5.0 \
+  --drop_path_rate 0.1 --FP16 0 --qkv_bias 1 \
+  --ape 0 --rpe 1 --pe_nd 0 --mode O2 --amp 1 --apex 0 \
+  --train_file $file_folder$/train.txt \
+  --val_file $file_folder$/val.txt \
+  --log-dir $save_folder$/log_dir \
+  --checkpoints-path $save_folder$/checkpoints
+  ```
 ***
 
 # NFNets
+  ```py
+  import timm
+  import torch
+  from torchsummary import summary
+  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
+
+  torch_model = timm.models.dm_nfnet_f0(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 256, 256))
+
+  from skimage.data import chelsea
+  from skimage.transform import resize
+  img = chelsea()
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (256, 256)), mode='tf').numpy()
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
+  out = out.detach().cpu().numpy()
+  print(keras.applications.imagenet_utils.decode_predictions(out))
+
+  # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 256, 256)))
+  # torch.jit.save(traced_cell, 'dm_nfnet_f0.pth')
+  #
+  # xx = torch.randn(10, 3, 256, 256)
+  # torch.onnx.export(torch_model, xx, "dm_nfnet_f0.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, opset_version=11)
+
+  torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
+  {kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
+
+  from keras_cv_attention_models.nfnets import nfnets
+  mm = nfnets.NFNetF0(classifier_activation=None, pretrained=None)
+
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  {ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
+
+  """ deep-mind original """
+  layer_names_matched_torch = [""] * len(target_names)
+  for id, ii in enumerate(target_names):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      if tail_name in ['_deep_gain', '_shortcut_conv']:
+          id = id - 6
+      elif tail_name in ["_deep_1_conv", "_deep_2_conv", "_deep_3_conv", "_deep_4_conv", "_se_1_conv", "_se_2_conv"]:
+          id = id + (2 if "_block1_" in ii else 1)
+      layer_names_matched_torch[id] = ii
+
+  """ ECA NFNets light """
+  layer_names_matched_torch = [""] * len(target_names)
+  for id, ii in enumerate(target_names):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      if tail_name in ['_deep_gain', '_shortcut_conv']:
+          id = id - 5
+      elif tail_name in ["_deep_1_conv", "_deep_2_conv", "_deep_3_conv", "_deep_4_conv", "_eca_conv1d"]:
+          id = id + (1 if "_block1_" in ii else 0)
+      layer_names_matched_torch[id] = ii
+
+  print(f"{len(stacked_state_dict) = }, {len(layer_names_matched_torch) = }")
+  {ii: [jj.shape.as_list() for jj in mm.get_layer(ii).weights] for ii in layer_names_matched_torch}
+
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, save_name=mm.name + "_imagenet.h5")
+
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+  pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+  pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+  ```
+# Halonet timm
+  ```py
+  import timm
+  import torch
+  from torchsummary import summary
+  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
+
+  torch_model = timm.models.halonet26t(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 256, 256))
+
+  torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+  stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
+  {kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
+
+  from keras_cv_attention_models.halonet import halonet
+  mm = halonet.HaloNet(num_blocks=[2, 2, 2, 2], attn_type=[None, None, [None, 'halo'], 'halo'], expansion=4, halo_block_size=8, halo_halo_size=2, num_heads=8, key_dim=16, tiered_stem=True, classifier_activation=None, pretrained=None)
+
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  {ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
+  ```
+  - **BotNet26T**
+  ```py
+  target_part_1_idx = target_names.index('stack3_block2_3_bn')
+  # target_part_1_idx = len(target_names) # HaloNet50T, all layers
+  target_part_1 = target_names[:target_part_1_idx + 1]
+  layer_names_matched_torch_1 = [""] * len(target_part_1)
+  for id, ii in enumerate(target_part_1):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 4 # 6 for ECA model
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 5 # 7 for ECA model
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_bn", "_eca_conv1d"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      layer_names_matched_torch_1[id] = ii
+
+  target_part_2 = target_names[target_part_1_idx + 1:]
+  layer_names_matched_torch_2 = [""] * len(target_part_2)
+  for id, ii in enumerate(target_part_2):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 5
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 6
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_mhsa_qkv_conv", "_deep_2_mhsa_pos_emb", "_deep_2_bn"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      layer_names_matched_torch_2[id] = ii
+
+  layer_names_matched_torch = layer_names_matched_torch_1 + layer_names_matched_torch_2
+  print(f"{len(stacked_state_dict) = }, {len(layer_names_matched_torch) = }")
+  {ii: [jj.shape.as_list() for jj in mm.get_layer(ii).weights] for ii in layer_names_matched_torch}
+
+  additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+  ```
+  - **HaloNet26T**
+  ```py
+  target_part_1_idx = target_names.index('stack3_block2_deep_3_bn')
+  # target_part_1_idx = len(target_names) # HaloNet50T, all layers
+  target_part_1 = target_names[:target_part_1_idx + 1]
+  layer_names_matched_torch_1 = [""] * len(target_part_1)
+  for id, ii in enumerate(target_part_1):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 4 # 6 for ECA model
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 5 # 7 for ECA model
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_bn", "_eca_conv1d"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      elif tail_name == "_halo_query_conv":
+          id = id - 1
+      elif tail_name == "_halo_key_value_conv":
+          id = id + 1
+      layer_names_matched_torch_1[id] = ii
+
+  target_part_2 = target_names[target_part_1_idx + 1:]
+  layer_names_matched_torch_2 = [""] * len(target_part_2)
+  for id, ii in enumerate(target_part_2):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 6
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 7
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_bn"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      elif tail_name == "_halo_query_conv":
+          id = (id + 1) if "_block1_" in ii else (id - 1)
+      elif tail_name == "_halo_key_value_conv":
+          id = (id + 3) if "_block1_" in ii else (id + 1)
+      elif tail_name == "_halo_pos_emb":
+          id = id + (2 if "_block1_" in ii else 0)
+      layer_names_matched_torch_2[id] = ii
+
+  layer_names_matched_torch = layer_names_matched_torch_1 + layer_names_matched_torch_2
+  print(f"{len(stacked_state_dict) = }, {len(layer_names_matched_torch) = }")
+  {ii: [jj.shape.as_list() for jj in mm.get_layer(ii).weights] for ii in layer_names_matched_torch}
+  ```
+  - **HaloNetSE33T**
+  ```py
+  target_part_1_idx = target_names.index('stack3_block3_deep_3_bn')
+  target_part_1 = target_names[:target_part_1_idx + 1]
+  layer_names_matched_torch_1 = [""] * len(target_part_1)
+  for id, ii in enumerate(target_part_1):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 6
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 7
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_bn", "_se_1_conv", "_se_2_conv"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      elif tail_name == "_halo_query_conv":
+          id = id - 1
+      elif tail_name == "_halo_key_value_conv":
+          id = id + 1
+      layer_names_matched_torch_1[id] = ii
+
+  target_part_2 = target_names[target_part_1_idx + 1:]
+  layer_names_matched_torch_2 = [""] * len(target_part_2)
+  for id, ii in enumerate(target_part_2):
+      tail_name = "_" + "_".join(ii.split('_')[2:])
+      print(f">>>> {id = }, {tail_name = }")
+      if tail_name in ['_shortcut_conv']:
+          id = id - 6
+      elif tail_name in ['_shortcut_bn']:
+          id = id - 7
+      elif tail_name in ["_deep_1_conv", "_deep_1_bn", "_deep_2_conv", "_deep_2_bn"]:
+          id = id + (2 if "_block1_" in ii else 0)
+      elif tail_name in ['_deep_3_conv']:
+          id = id + (1 if "_block1_" in ii else 0)
+      elif tail_name == "_halo_query_conv":
+          id = (id + 1) if "_block1_" in ii else (id - 1)
+      elif tail_name == "_halo_key_value_conv":
+          id = (id + 3) if "_block1_" in ii else (id + 1)
+      elif tail_name == "_halo_pos_emb":
+          id = id + (2 if "_block1_" in ii else 0)
+      layer_names_matched_torch_2[id] = ii
+
+  layer_names_matched_torch = layer_names_matched_torch_1 + layer_names_matched_torch_2
+  print(f"{len(stacked_state_dict) = }, {len(layer_names_matched_torch) = }")
+  {ii: [jj.shape.as_list() for jj in mm.get_layer(ii).weights] for ii in layer_names_matched_torch}
+  ```
+  ```py
+  additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+  pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+  pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+  ```
+  ```py
+  from keras_cv_attention_models.halonet import halonet
+  mm = halonet.HaloNetSE33T(pretrained=None)
+  pp = mm.name + "_imagenet.h5"
+  mm.load_weights(pp)
+
+  from skimage.data import chelsea
+  img = chelsea() # Chelsea the cat
+  imm = keras.applications.imagenet_utils.preprocess_input(img, mode='torch')
+  pred = mm(tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)).numpy()
+  # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
+
+  print(">>>> Saving to:", pp)
+  mm.save(pp)
+  ```
+  ```py
+  from keras_cv_attention_models import imagenet
+  from keras_cv_attention_models.halonet import halonet
+
+  mm = halonet.HaloNet26T(pretrained="imagenet")
+  imagenet.eval(mm, central_fraction=0.98, mode='torch')
+  ```
+  ```py
+  from keras_cv_attention_models import imagenet
+  from tqdm import tqdm
+
+  batch_size = 16
+  train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = imagenet.data.init_dataset(input_shape=(256, 256), batch_size=batch_size, mode='torch')
+  test_steps = int(np.ceil(len(test_dataset) / batch_size))
+
+  mm = keras.applications.MobileNet(input_shape=(224, 224, 3))
+
+  y_true, y_pred = [], []
+  for img_batch, true_labels in tqdm(test_dataset, "Evaluating", total=len(test_dataset)):
+      predicts = mm(img_batch).numpy()
+      y_pred.extend(predicts.argmax(-1))
+      y_true.extend(true_labels.argmax(-1))
+  y_true, y_pred = np.array(y_true), np.array(y_pred)
+  ```
+  | Model           | Params | Image resolution | central_fraction | Top1 Acc | Top5 Acc |
+  | --------------- | ------ | ---------------- | ---------------- | -------- | -------- |
+  | halonet26t      | 11.6M  | 256              | 0.98             | 0.77676  | 0.93672  |
+  |                 |        |                  | 0.95             | 0.77998  | 0.93898  |
+  | -bicubic        |        |                  | 0.95             | 0.77624  | 0.9371   |
+  |                 |        |                  | 0.94             | 0.78136  | 0.93968  |
+  | halonet50t      | 11.6M  | 256              | 0.98             | 0.8081   | 0.95034  |
+  |                 |        |                  | 0.95             | 0.80932  | 0.95164  |
+  |                 |        |                  | 0.94             | 0.81054  | 0.95162  |
+  | halonet_se33t   | 13.7M  | 256              | 0.98             | 0.79808  | 0.94918  |
+  |                 |        |                  | 0.94             | 0.80074  | 0.9504   |
+  | -bicubic        |        |                  | 0.94             | 0.79904  | 0.9494   |
+  | halonext_eca26t | 10.7M  | 256              | 0.98             | 0.77818  | 0.93992  |
+  |                 |        |                  | 0.9              | 0.78416  | 0.94348  |
+
+  | Model           | Params | Image resolution | central_fraction | Top1 Acc | Top5 Acc |
+  | --------------- | ------ | ---------------- | ---------------- | -------- | -------- |
+  | halonet26t      | 11.6M  | 256              | 0.95             | 79.13    | 94.314   |
+  | halonet50t      | 11.6M  | 256              | 0.98             | 0.8081   | 0.95034  |
+  | halonet_se33t   | 13.7M  | 256              | 0.94             | 80.986   | 95.272   |
+  | halonext_eca26t | 10.7M  | 256              | 0.9              | 78.842   | 94.188   |
+# RegNetZ
 ```py
-model    top1  top1_err    top5  top5_err  param_count  img_size  cropt_pct interpolation
-11    dm_nfnet_f6  86.144    13.856  97.730     2.270       438.36       576      0.956       bicubic
-16    dm_nfnet_f5  85.814    14.186  97.488     2.512       377.21       544      0.954       bicubic
-17    dm_nfnet_f4  85.714    14.286  97.520     2.480       316.07       512      0.951       bicubic
-19    dm_nfnet_f3  85.522    14.478  97.462     2.538       254.92       416      0.940       bicubic
-30    dm_nfnet_f2  85.064    14.936  97.240     2.760       193.78       352      0.920       bicubic
-41   eca_nfnet_l2  84.698    15.302  97.264     2.736        56.72       384      1.000       bicubic
-42    dm_nfnet_f1  84.626    15.374  97.100     2.900       132.63       320      0.910       bicubic
-63   eca_nfnet_l1  84.010    15.990  97.028     2.972        41.41       320      1.000       bicubic
-79    dm_nfnet_f0  83.386    16.614  96.572     3.428        71.49       256      0.900       bicubic
-96       nfnet_l0  82.750    17.250  96.516     3.484        35.07       288      1.000       bicubic
-102  eca_nfnet_l0  82.580    17.420  96.490     3.510        24.14       288      1.000       bicubic
-166   nf_resnet50  80.660    19.340  95.336     4.664        25.56       288       0.94       bicubic
-238  nf_regnet_b1  79.292    20.708  94.748     5.252        10.22       288       0.90       bicubic
+stack 1
+32 --> 96 --> 48
+48 --> 144 --> 48
+stack 2
+48 --> 144 --> 96
+96 --> 96 * 3 --> 96
+x 5
+stack 3
+96 --> 96 * 3 --> 192
+192 --> 192 * 3 --> 192
+x 11
+stack 4
+192 --> 192 * 3 --> 288
+288 --> 288 * 3 --> 288
+
+hidden_channel_ratio
+[[2, 3], [1.5] + [3] * 5, [1.5] + [3] * 11, [2, 3]]
+```
+```py
+import timm
+import torch
+from torchsummary import summary
+from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
+
+torch_model = timm.models.regnetz_b(pretrained=True)
+torch_model.eval()
+summary(torch_model, (3, 256, 256))
+
+torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+print("torch_model total_parameters :", np.sum(list(torch_params.values())))
+
+stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
+{kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
+
+from keras_cv_attention_models.halonet import halonet
+mm = halonet.HaloNet(num_blocks=[2, 2, 2, 2], attn_type=[None, None, [None, 'halo'], 'halo'], expansion=4, halo_block_size=8, halo_halo_size=2, num_heads=8, key_dim=16, tiered_stem=True, classifier_activation=None, pretrained=None)
+
+target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+{ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
+
+additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+keras_reload_stacked_state_dict(mm, stacked_state_dict, target_names, save_name=mm.name + "_imagenet.h5")
+```
+```py
+mm = aotnet.AotNet(
+    num_blocks=[2, 6, 12, 2],
+    strides=[2, 2, 2, 2],
+    out_channels=[48, 96, 192, 288],
+    hidden_channel_ratio=[[2, 3], [1.5] + [3] * 5, [1.5] + [3] * 11, [2, 3]],
+    use_block_output_activation=False,
+    stem_type="kernel_3x3",
+    stem_width=32,
+    stem_downsample=False,
+    se_ratio=0.25,
+    group_size=16,
+    shortcut_type=None,
+    output_num_features=1536,
+    activation='swish'
+)
+```
+***
+```py
+def get_params(size, scale, ratio):
+    height, width = size[0], size[1]
+    area = height * width
+
+    for attempt in range(10):
+        target_area = random.uniform(*scale) * area
+        log_ratio = (math.log(ratio[0]), math.log(ratio[1]))
+        aspect_ratio = math.exp(random.uniform(*log_ratio))
+
+        w = int(round(math.sqrt(target_area * aspect_ratio)))
+        h = int(round(math.sqrt(target_area / aspect_ratio)))
+
+        if w <= width and h <= height:
+            i = random.randint(0, height - h)
+            j = random.randint(0, width - w)
+            return i, j, h, w
+
+    # Fallback to central crop
+    in_ratio = width / height
+    if in_ratio < min(ratio):
+        w = width
+        h = int(round(w / min(ratio)))
+    elif in_ratio > max(ratio):
+        h = height
+        w = int(round(h * max(ratio)))
+    else:  # whole image
+        w = width
+        h = height
+    return h, w
+
+def get_params_2(size, scale, ratio):
+    width, height = size[0], size[1]  # img.size is (width, height)
+    area = height * width
+    scale_max = min(height * height * ratio[1] / area, width * width / ratio[0] / area, scale[1])
+    target_area = random.uniform(scale[0], scale_max) * area
+
+    ratio_min = max(target_area / (height * height), ratio[0])
+    ratio_max = min(width * width / target_area, ratio[1])
+    log_ratio = (math.log(ratio_min), math.log(ratio_max))
+    aspect_ratio = math.exp(random.uniform(*log_ratio))
+
+    ww = int(round(math.sqrt(target_area * aspect_ratio)))
+    hh = int(round(math.sqrt(target_area / aspect_ratio)))
+
+    top = random.randint(0, height - hh)
+    left = random.randint(0, width - ww)
+    return top, left, hh, ww
 ```
