@@ -915,7 +915,8 @@
   pp["epochs"] = [5, 5, 7, 33]
   pp["skip_epochs"] = 3
   names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_resnet101v2_pad_same_conv_no_bias_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_float16_hist.json", fig_label="resnet101v2 conv_no_bias, relu", **pp)
+  axes, _ = plot.hist_plot_split("checkpoints/TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw", **pp)
   pp["axes"] = axes
 
   hist_path = "checkpoints/efficientnet_v2/"
@@ -924,25 +925,23 @@
   # axes, _ = plot.hist_plot_split(hist_path + "TT_early_efv2_s_sd_1_08_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_cos16_hist.json", fig_label="early, sd_1_08_GDC, l2_5e4_bs1024, random0", **pp)
 
   hist_path = "checkpoints/"
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC_wd5e5_arc_emb512_dr02", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC_wd5e5_arc_emb512_dr02", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F_wd5e5_arc_emb512_dr02", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_F_wd5e4_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F_wd5e4_arc_emb512_dr02", **pp)
 
   # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_GDC_wd5e5_arc_emb512_dr02_sgd", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_GDC_wd5e5_arc_emb512_dr02_adamw", **pp)
   # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_deep_stem_out_512_F_wd5e5_lr05_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="deep_stem_out_512_F_wd5e5_lr05_arc_emb512_dr04", **pp)
 
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_wd5e5_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0", **pp)
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_F_dr04_drc02_wd5e5_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_F_dr04_drc02", **pp)
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024, randaug_cutout", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512, random0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_2_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, random0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos49_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512, random0, cos49", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_wd5e4_arc_emb512_sgd_bs1024, randaug_cutout", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, random0", **pp)
-  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos49_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, random0, cos49", **pp)
-
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, randaug", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_2_hist.json", fig_label="drc02, early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512, randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc0_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_2_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_no_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug_no_cutout", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_no_cutout_bnm09_bne1e5_cos16_float16_reuse_opt_hist.json", fig_label="early_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512, timm_randaug_no_cutout, reuse_opt", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_timm_randaug", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0_bnm09_bne1e5_cos16_float16_hist.json", fig_label="s_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_random0", **pp)
@@ -979,6 +978,12 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_wd5e5_lr05_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_wd5e5_lr05_arc_emb512_dr04", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_out_512_F_wd5e5_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_out_512_F_wd5e5_arc_emb512_dr04", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_wd5e5_arc_emb512_dr04_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_pw512_F_wd5e5_arc_emb512_dr04", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_GDC_dr0_drc02_lr_01_wd5e4", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_dr04_drc02_lr_01_wd5e4", **pp)
+
+  TT_effv2_s_strides1_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json
+  TT_effv2_s_strides1_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json
   ```
   - **EfficientNetV2M**
   ```py

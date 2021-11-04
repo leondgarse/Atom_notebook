@@ -62,7 +62,7 @@
   import timm
   import torch
   from torchsummary import summary
-  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
+  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict, match_layer_names_with_torch
 
   torch_model = timm.models.regnetz_b(pretrained=True)
   _ = torch_model.eval()
@@ -75,14 +75,15 @@
   img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (224, 224)), mode='torch').numpy()
   out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
   out = out.detach().cpu().numpy()
+  out = tf.nn.softmax(out).numpy()  # If classifier activation is not softmax
   print(keras.applications.imagenet_utils.decode_predictions(out))
 
   """ Save jit model or onnx """
   # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
-  # torch.jit.save(traced_cell, 'regnetz_b.pth')
+  # torch.jit.save(traced_cell, 'aa.pth')
   #
   # xx = torch.randn(10, 3, 224, 224)
-  # torch.onnx.export(torch_model, xx, "regnetz_b.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, opset_version=11)
+  # torch.onnx.export(torch_model, xx, "aa.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE, opset_version=11)
 
   """ Convert weights """
   torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
@@ -95,7 +96,7 @@
   mm = regnet.RegNetZB(classifier_activation=None, pretrained=None)
 
   target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
-  {ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
+  {mm.get_layer(ii).name: [jj.shape.as_list() for jj in mm.get_layer(ii).weights] for ii in target_names}
 
   """ Load weights and save h5 """
   additional_transfer = {}
@@ -113,8 +114,10 @@
   **Re-save**
   ```py
   from keras_cv_attention_models.resnet_family import regnet
-  mm = regnet.RegNetZB(pretrained=None)
+  resolution = 224
+  mm = regnet.RegNetZB(input_shape=(resolution, resolution, 3), pretrained=None)
   pp = mm.name + "_imagenet.h5"
+  # pp = mm.name + "_{}.h5".format(resolution)
   mm.load_weights(pp)
 
   from skimage.data import chelsea
@@ -131,6 +134,11 @@
   ```sh
   ls -1 ./regnetz_*.h5 | xargs -I {} md5sum {}
   ```
+  **code formatter**
+  ```sh
+  find ./* -name "*.py" | grep -v __init__ | grep -v setup.py | xargs -I {} black -l 160 {} --diff
+  ```
+## halonet
   ```py
   additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
   layer_names_matched_torch = [""] * len(target_names)
@@ -144,6 +152,7 @@
           layer_names_matched_torch[id] = ii
   keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
   ```
+## botnet
   ```py
   additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
   layer_names_matched_torch = [""] * len(target_names)
@@ -159,6 +168,70 @@
       else:
           layer_names_matched_torch[id] = ii
   keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+  ```
+## beit
+  ```py
+  unstack_weights = ["cls_token", "gamma_1", "gamma_2", "relative_position_bias_table", "q_bias", "v_bias"]
+  stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict(), skip_weights=["relative_position_index"], unstack_weights=unstack_weights)
+
+  tail_align_dict = {"attn_gamma": -6, "mlp_gamma": -9, "attn_query_bias": -1, "attn_value_bias": -1, "attn_pos_emb": -1}
+  full_name_align_dict = {"cls_token": -1}
+  layer_names_matched_torch = match_layer_names_with_torch(target_names, tail_align_dict, full_name_align_dict, tail_split_position=1)
+
+  additional_transfer = {}
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
+  ```
+  ```py
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch
+
+  skip_weights = ["relative_position_index"]
+  unstack_weights = ["cls_token", "gamma_1", "gamma_2", "relative_position_bias_table", "q_bias", "v_bias"]
+  tail_align_dict = {"attn_gamma": -6, "mlp_gamma": -9, "attn_query_bias": -1, "attn_value_bias": -1, "attn_pos_emb": -1}
+  full_name_align_dict = {"cls_token": -1}
+
+  import timm
+  from keras_cv_attention_models.beit import beit
+
+  resolution = 224
+  mm = beit.BeitLargePatch16(input_shape=(resolution, resolution, 3), classifier_activation=None)
+  keras_reload_from_torch(
+      torch_model=timm.models.beit_large_patch16_224(pretrained=True),
+      keras_model=mm,
+      input_resolution=(resolution, resolution),
+      skip_weights=skip_weights,
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      tail_split_position=1,
+      additional_transfer={},
+      save_name=mm.name + "_{}.h5".format(resolution),
+      do_convert=True,
+  )
+  ```
+## resnet regnety
+  ```py
+  import timm
+  from keras_cv_attention_models import aotnet
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
+
+  torch_model = timm.models.resnet50(pretrained=True)
+  mm = aotnet.AotNet50(classifier_activation=None)
+  keras_reload_from_torch_model(torch_model, mm, tail_align_dict={"block1_deep_3_conv": -1, "block1_3_bn": -2}, tail_split_position=1, do_convert=True)
+  ```
+  ```py
+  from keras_cv_attention_models import aotnet, download_and_load
+  mm = aotnet.AotNet50(input_shape=(160, 160, 3), model_name='aotnet50_160')
+  download_and_load.keras_reload_from_torch_model('resnet50_a3_0-59cae1ef.pth', mm, tail_align_dict={"block1_deep_3_conv": -1, "block1_3_bn": -2}, tail_split_position=1, do_convert=True)
+  ```
+## efficientnet
+  ```py
+  import timm
+  import keras_efficientnet_v2
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
+
+  torch_model = timm.models.efficientnetv2_rw_t(pretrained=True)
+  mm = keras_efficientnet_v2.EfficientNetV2T(classifier_activation=None)
+  keras_reload_from_torch_model(torch_model, mm, do_convert=True)
   ```
 ## Timm randaug
   ```py
@@ -195,6 +268,15 @@
   aa, bb = train_dataset.as_numpy_iterator().next()
   plt.imshow(np.vstack([np.hstack(aa[ii * 8 : (ii + 1) * 8]) for ii in range(8)]) / 2 + 0.5)
   ```
+## Timm BCE
+```py
+num_classes = 10
+off_value = 0.1
+on_value = 0.9
+target = torch.from_numpy(np.random.randint(0, num_classes, size=[5,]))
+target = target.long().view(-1, 1)
+target = torch.full((target.size()[0], num_classes), off_value).scatter_(1, target, on_value)
+```
 ***
 
 # Resnest
@@ -2601,10 +2683,6 @@
 ***
 
 # Attetion models
-## VIT
-  - [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
-  - [Github google-research/vision_transformer](https://github.com/google-research/vision_transformer)
-  - [Github yitu-opensource/T2T-ViT](https://github.com/yitu-opensource/T2T-ViT)
 ## [ToDo] SimAM
   - [Github ZjjConan/SimAM](https://github.com/ZjjConan/SimAM)
   ```py
@@ -3678,8 +3756,7 @@
   ```
 ***
 
-# EfficientNet
-## Noisy Student EfficientNet
+# Noisy Student EfficientNet
   - **Reload imagenet model from keras applications**
     ```py
     from keras_efficientnet_v2 import efficientnet_v2
@@ -3724,139 +3801,6 @@
     | B6    | 43.0M   | 86.4     |
     | B7    | 66.3M   | 86.9     |
     | L2    | 480.3M  | 88.4     |
-## EfficientNetV2 tiny
-  ```py
-  import torch
-  from torchsummary import summary
-
-  import timm
-  torch_model = timm.models.efficientnetv2_rw_t(pretrained=True)
-  torch_model.eval()
-  summary(torch_model, (3, 224, 224))
-
-  from skimage.data import chelsea
-  from skimage.transform import resize
-  img = chelsea()
-  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, (288, 288)), mode='tf').numpy()
-  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype('float32')))
-  out = out.detach().cpu().numpy()
-  print(keras.applications.imagenet_utils.decode_predictions(out))
-
-  torch_params = {kk: np.cumproduct(vv.shape)[-1] for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
-  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
-
-  # traced_cell = torch.jit.trace(torch_model, (torch.randn(10, 3, 224, 224)))
-  # torch.jit.save(traced_cell, 'coat_lite_tiny.pth')
-  #
-  # xx = torch.randn(10, 3, 224, 224)
-  # torch.onnx.export(torch_model, xx, "efficientnetv2_rw_t.onnx", verbose=False, keep_initializers_as_inputs=True, training=torch.onnx.TrainingMode.PRESERVE)
-
-  import keras_efficientnet_v2
-  mm = keras_efficientnet_v2.efficientnet_v2.EfficientNetV2T(pretrained=None)
-
-  keras_params = {ii.name: int(sum([np.cumproduct(jj.shape)[-1] for jj in ii.weights])) for ii in mm.layers}
-  keras_params = {kk: vv for kk, vv in keras_params.items() if vv != 0}
-  print("keras_model total_parameters :", np.sum(list(keras_params.values())))
-
-  input_output_rr = {
-      "conv_stem" : "stem_conv",
-      'bn1': 'stem_bn',
-      'conv_head': 'post_conv',
-      'bn2': 'post_bn',
-      'classifier': 'predictions',
-  }
-  network_stack_rr = {'0': 'stack_0_', '1': 'stack_1_', '2': 'stack_2_', '3': 'stack_3_', '4': 'stack_4_', '5': 'stack_5_'}
-  network_block_rr = {"{}".format(ii): "block{}_".format(ii) for ii in range(14)}
-  stack_0_layer_rr = {
-      "conv": "fu_conv",
-      "bn1": "fu_bn",
-  }
-  stack_1_layer_rr = {
-      "conv_exp": "sortcut_conv",
-      "bn1": "sortcut_bn",
-      "conv_pwl": "MB_pw_conv",
-      "bn2": "MB_pw_bn",
-  }
-  stack_3_layer_rr = {
-      "conv_pw": "sortcut_conv",
-      "bn1": "sortcut_bn",
-      "conv_dw": "MB_dw",
-      "bn2": "MB_dw_bn",
-      "se.conv_reduce": "se_1_conv",
-      "se.conv_expand": "se_2_conv",
-      "conv_pwl": "MB_pw_conv",
-      "bn3": "MB_pw_bn",
-  }
-
-  def match_layer_name(torch_layer_name):
-      splitted_name = torch_layer_name.split('.')
-      layer_name = ".".join(splitted_name[:-1] if len(splitted_name) > 1 else splitted_name)
-      if layer_name in input_output_rr:
-           return input_output_rr[layer_name]
-
-      stack_nn, block_nn, layer_nn = splitted_name[1], splitted_name[2], ".".join(splitted_name[3:-1])
-      if splitted_name[1] in ["0"]:
-          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], stack_0_layer_rr[layer_nn]])
-      elif splitted_name[1] in ["1", "2"]:
-          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], stack_1_layer_rr[layer_nn]])
-      else:
-          return "".join([network_stack_rr[stack_nn], network_block_rr[block_nn], stack_3_layer_rr[layer_nn]])
-
-  aa = torch_model.state_dict()
-  bb = {ii: match_layer_name(ii) for ii in aa.keys()}
-  cc = set(bb.values())
-  # print("TF layers not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc])
-  print("TF layers with weights not contained in torch:", [ii.name for ii in mm.layers if ii.name not in cc and len(ii.weights) != 0])
-  # TF layers with weights not contained in torch: []
-  print("torch layers not contained in TF:", [ii for ii in cc if ii not in keras_params])
-  # torch layers not contained in TF: []
-
-  dd = {kk: (aa[kk].shape, mm.get_layer(vv).weights[0 if "weight" in kk else -1].shape) for kk, vv in bb.items() if "num_batches_tracked" not in kk}
-  # 'patch_embed.conv.0.weight': (torch.Size([64, 3, 7, 7]), TensorShape([7, 7, 3, 64])),
-  # 'network.0.0.attn.attn.weight': (torch.Size([486, 192]), TensorShape([192, 486])),
-  # 'network.0.0.attn.proj.weight': (torch.Size([192, 192]), TensorShape([192, 192])),
-  # 'blocks.3.2.conv_dw.weight': (torch.Size([416, 1, 3, 3]), TensorShape([3, 3, 416, 1])),
-
-  tf_weights_dict = {"weight": 0, "bias": 1, "running_mean": 2, "running_var": 3}
-  for kk, vv in bb.items():
-      torch_weight = aa[kk].detach().numpy()
-      torch_weight_type = kk.split(".")[-1]
-      if torch_weight_type == "num_batches_tracked":
-          continue
-      if vv.endswith("_mhsa"):
-          continue
-
-      tf_layer = mm.get_layer(vv)
-      tf_weights = tf_layer.get_weights()
-      tf_weight_pos = tf_weights_dict[torch_weight_type]
-
-      print("[{}] torch: {}, tf: {}".format(kk, torch_weight.shape, tf_weights[tf_weight_pos].shape))
-
-      if tf_weight_pos == 0:
-          if isinstance(tf_layer, keras.layers.DepthwiseConv2D):  # DepthwiseConv2D is instance of Conv2D
-              torch_weight = np.transpose(torch_weight, (2, 3, 0, 1))
-          elif isinstance(tf_layer, keras.layers.Conv2D):
-              torch_weight = np.transpose(torch_weight, (2, 3, 1, 0))
-          elif isinstance(tf_layer, keras.layers.BatchNormalization):
-              torch_weight = torch_weight
-          elif isinstance(tf_layer, keras.layers.PReLU):
-              torch_weight = np.expand_dims(np.expand_dims(torch_weight, 0), 0)
-          elif isinstance(tf_layer, keras.layers.Dense):
-              # fc layer after flatten, weights need to reshape according to NCHW --> NHWC
-              torch_weight = torch_weight.T
-
-      tf_weights[tf_weight_pos] = torch_weight
-      tf_layer.set_weights(tf_weights)
-
-  save_path = "botnet50.h5"
-  mm.save(save_path)
-  print("Saved model:", save_path)
-
-  input_shape = 224
-  torch_out = torch_model(torch.from_numpy(np.ones([1, 3, input_shape, input_shape], dtype='float32'))).detach().numpy()
-  keras_out = mm(np.ones([1, input_shape, input_shape, 3], dtype='float32'))
-  print(f"{np.allclose(torch_out, keras_out, atol=1e-4) = }")
-  ```
 ***
 
 # CMT

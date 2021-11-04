@@ -362,7 +362,7 @@
 
 # Yoloface
 ## Pytorch Inference
-  - [Github ouyanghuiyu/yolo-face-with-landmark](https://github.com/ouyanghuiyu/yolo-face-with-landmark)
+  - [Github DayBreak-u/yolo-face-with-landmark](https://github.com/DayBreak-u/yolo-face-with-landmark)
   - **Torch model inference**
     ```py
     ! cd yolo-face-with-landmark

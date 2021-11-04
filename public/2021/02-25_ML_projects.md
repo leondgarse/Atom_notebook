@@ -400,6 +400,7 @@
 ***
 
 # Imagenet
+## Init dataset
   - [ILSVRC2012_img_train.tar](magnet:?xt=urn:btih:umdds7gptqxk2jyvlgb4evbcpqh5sohc)
   - [ILSVRC2012_img_val.tar](magnet:?xt=urn:btih:lvwq357nqhx5jhfjt2shg7qk4xr2l4xf)
   - [Kaggle imagenet object localization patched 2019](https://www.kaggle.com/c/imagenet-object-localization-challenge/data)
@@ -418,7 +419,7 @@
     tar cvf ILSVRC2019_img_val.tar $(ls *.JPEG)  # exclude the directory `./`
     cd ..
 
-    DATASET_PATH='/datasets/imagenet_2019'
+    DATASET_PATH='/media/SD/tdtest/imagenet_2019'
     mkdir $DATASET_PATH
     mv train/ILSVRC2019_img_train.tar test/ILSVRC2019_img_test.tar val/ILSVRC2019_img_val.tar $DATASET_PATH
 
@@ -427,6 +428,8 @@
     ln -s $DATASET_PATH/ILSVRC2019_img_train.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_train.tar
     ln -s $DATASET_PATH/ILSVRC2019_img_val.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_val.tar
     ln -s $DATASET_PATH/ILSVRC2019_img_test.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_test.tar
+
+    mv ~/tensorflow_datasets/imagenet2012 ~/tensorflow_datasets/imagenet2012.bak
     ```
     ```py
     import tensorflow_datasets as tfds
@@ -443,6 +446,290 @@
     # dict_keys(['file_name', 'image', 'label'])
     plt.imshow(data['image'])
     ```
+## Training
+```py
+keras.mixed_precision.set_global_policy("mixed_float16")
+strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
+
+from keras_cv_attention_models.imagenet import data
+from keras_cv_attention_models.imagenet import callbacks
+from keras_cv_attention_models import model_surgery
+from keras_cv_attention_models import aotnet, coatnet, cmt
+import tensorflow_addons as tfa
+
+input_shape = (160, 160, 3)
+batch_size = 256 * strategy.num_replicas_in_sync
+lr_base_512 = 8e-3
+l2_weight_decay = 0
+optimizer_wd_mul = 0.02
+label_smoothing = 0
+lr_decay_steps = 100 # [30, 60, 90] for constant decay
+lr_warmup = 5
+lr_min = 1e-6
+epochs = 105
+initial_epoch = 0
+basic_save_name = None
+
+data_name = "imagenet2012"
+magnitude = 6
+mixup_alpha = 0.1
+cutmix_alpha = 1.0
+central_crop = 1
+random_crop_min = 0.08
+
+train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
+    data_name=data_name,
+    input_shape=input_shape,
+    batch_size=batch_size,
+    mixup_alpha=mixup_alpha,
+    cutmix_alpha=cutmix_alpha,
+    rescale_mode="torch",
+    central_crop=central_crop,
+    random_crop_min=random_crop_min,
+    resize_method="bicubic",
+    random_erasing_prob=0.0,
+    magnitude=magnitude,
+)
+
+# model = coatnet.CoAtNet0(num_classes=1000, activation='gelu', drop_connect_rate=0.2, drop_rate=0.2)
+# model = cmt.CMTTiny(input_shape=input_shape, num_classes=num_classes, drop_connect_rate=0.1, drop_rate=0.1)
+model = aotnet.AotNet50(num_classes=num_classes, input_shape=input_shape)
+# model = keras.models.load_model('checkpoints/resnet50_imagenet2012_batch_size_256_randaug_5_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.002_wd0.02_latest.h5')
+
+lr_base = lr_base_512 * batch_size / 512
+if isinstance(lr_decay_steps, list):
+    constant_lr_sch = lambda epoch: callbacks.constant_scheduler(epoch, lr_base=lr_base, lr_decay_steps=lr_decay_steps, warmup=lr_warmup)
+    lr_scheduler = keras.callbacks.LearningRateScheduler(constant_lr_sch)
+    epochs = epochs if epochs != 0 else lr_decay_steps[-1] + lr_decay_steps[0] + lr_warmup   # 124 for lr_decay_steps=[30, 60, 90], lr_warmup=4
+else:
+    lr_scheduler = callbacks.CosineLrScheduler(lr_base, first_restart_step=lr_decay_steps, m_mul=0.5, t_mul=2.0, lr_min=lr_min, warmup=lr_warmup, steps_per_epoch=-1)
+    # lr_scheduler = callbacks.CosineLrSchedulerEpoch(lr_base, first_restart_step=lr_decay_steps, m_mul=0.5, t_mul=2.0, lr_min=lr_min, warmup=lr_warmup)
+    epochs = epochs if epochs != 0 else lr_decay_steps * 3 + lr_warmup  # 94 for lr_decay_steps=30, lr_warmup=4
+
+if model.optimizer is None:
+    if l2_weight_decay != 0:
+        model = model_surgery.add_l2_regularizer_2_model(model, weight_decay=l2_weight_decay, apply_to_batch_normal=False)
+
+    if optimizer_wd_mul > 0:
+        # optimizer = tfa.optimizers.AdamW(learning_rate=lr_base, weight_decay=lr_base * optimizer_wd_mul)
+        optimizer = tfa.optimizers.LAMB(learning_rate=lr_base, weight_decay_rate=optimizer_wd_mul)
+    else:
+        optimizer = keras.optimizers.SGD(learning_rate=lr_base, momentum=0.9)
+    model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing), metrics=["acc"])
+
+compiled_opt = model.optimizer
+compiled_opt = compiled_opt.inner_optimizer if isinstance(compiled_opt, keras.mixed_precision.LossScaleOptimizer) else compiled_opt
+if basic_save_name is None:
+    basic_save_name = "{}_{}_batch_size_{}".format(model.name, data_name, batch_size)
+    basic_save_name += "_randaug_{}_mixup_{}_cutmix_{}_RRC_{}".format(magnitude, mixup_alpha, cutmix_alpha, random_crop_min)
+    basic_save_name += "_{}_lr{}_wd{}".format(compiled_opt.__class__.__name__, lr_base_512, optimizer_wd_mul or l2_weight_decay)
+print(">>>> basic_save_name =", basic_save_name)
+
+""" imagenet.train.train """
+if hasattr(lr_scheduler, "steps_per_epoch") and lr_scheduler.steps_per_epoch == -1:
+    lr_scheduler.build(steps_per_epoch)
+is_lr_on_batch = True if hasattr(lr_scheduler, "steps_per_epoch") and lr_scheduler.steps_per_epoch > 0 else False
+
+# ckpt_path = os.path.join("checkpoints", basic_save_name + "epoch_{epoch:03d}_val_acc_{val_acc:.4f}.h5")
+# cur_callbacks = [keras.callbacks.ModelCheckpoint(ckpt_path, monitor="val_loss", save_best_only=True)]
+# cur_callbacks = [keras.callbacks.ModelCheckpoint(os.path.join("checkpoints", basic_save_name + ".h5"))]
+cur_callbacks = [callbacks.MyCheckpoint(basic_save_name, monitor='val_acc')]
+hist_file = os.path.join("checkpoints", basic_save_name + "_hist.json")
+if initial_epoch == 0 and os.path.exists(hist_file):
+    os.remove(hist_file)
+cur_callbacks.append(callbacks.MyHistory(initial_file=hist_file))
+cur_callbacks.append(keras.callbacks.TerminateOnNaN())
+if lr_scheduler is not None:
+    cur_callbacks.append(lr_scheduler)
+
+if lr_scheduler is not None and isinstance(compiled_opt, tfa.optimizers.weight_decay_optimizers.DecoupledWeightDecayExtension):
+    print(">>>> Append weight decay callback...")
+    lr_base, wd_base = model.optimizer.lr.numpy(), model.optimizer.weight_decay.numpy()
+    wd_callback = callbacks.OptimizerWeightDecay(lr_base, wd_base, is_lr_on_batch=is_lr_on_batch)
+    cur_callbacks.append(wd_callback)  # should be after lr_scheduler
+
+model.fit(
+    train_dataset,
+    epochs=epochs,
+    verbose=1,
+    callbacks=cur_callbacks,
+    initial_epoch=initial_epoch,
+    steps_per_epoch=steps_per_epoch,
+    validation_data=test_dataset,
+    use_multiprocessing=True,
+    workers=4,
+)
+```
+```sh
+CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.0_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 60 --random_crop_min 0
+CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 60 --random_crop_min 0.08
+```
+## Validation
+```py
+sys.path.append('../automl/efficientnetv2/')
+import datasets as orign_datasets
+import effnetv2_model as orign_effnetv2_model
+
+dataset = "imagenetft"
+model_type = "s"
+load_weights = "imagenet21k-ft1k"
+cc = orign_datasets.get_dataset_config(dataset)
+if cc.get("model", None):
+    cc.model.num_classes = cc.data.num_classes
+else:
+    cc['model'] = None
+model = orign_effnetv2_model.get_model('efficientnetv2-{}'.format(model_type), model_config=cc.model, weights=load_weights)
+
+from keras_cv_attention_models import imagenet
+imagenet.evaluation(model, input_shape=(384, 384), rescale_mode="tf", resize_method='bicubic', central_crop=0.99)
+```
+```py
+import timm
+mm = timm.models.regnetz_d(pretrained=True)
+_ = mm.evaluation()
+from keras_cv_attention_models import imagenet
+imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
+```
+```py
+import keras_cv_attention_models
+from keras_cv_attention_models import imagenet
+mm = keras_cv_attention_models.regnet.RegNetZD()
+imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
+```
+
+| model   | Input Resolution | rescale_mode | resize_method | central_crop | top 1       | top 5       |
+| ------- | ---------------- | ------------ | ------------- | ------------ | ----------- | ----------- |
+| EffV2B0 | 224              | tf           | bilinear      | 0.875        | 0.75304     | 0.92606     |
+| EffV2B0 | 224              | tf           | bicubic       | 0.875        | 0.7581      | 0.92858     |
+| EffV2B0 | 224              | torch        | bilinear      | 0.875        | 0.78594     | 0.94262     |
+| EffV2B0 | 224              | torch        | bicubic       | 0.875        | **0.78748** | 0.94386     |
+| EffV2B0 | 224              | torch        | bicubic       | 0.87         | 0.787       | 0.9436      |
+| EffV2B0 | 224              | torch        | bicubic       | 0.95         | 0.78732     | **0.94412** |
+| EffV2B0 | 224              | torch        | bicubic       | 1.0          | 0.78536     | 0.94404     |
+
+| model   | Input Resolution | rescale_mode | resize_method | central_crop     | top 1       | top 5       |
+| ------- | ---------------- | ------------ | ------------- | ---------------- | ----------- | ----------- |
+| EffV2B1 | 240              | torch        | bicubic       | 0.87             | 0.79722     | **0.94938** |
+| EffV2B1 | 240              | torch        | bicubic       | 240/272 (0.882)  | 0.79788     | 0.94924     |
+| EffV2B1 | 240              | torch        | bicubic       | 0.95             | **0.7987**  | 0.94936     |
+| EffV2B2 | 260              | torch        | bicubic       | 260/292 (0.890)  | 0.80428     | 0.95184     |
+| EffV2B2 | 260              | torch        | bicubic       | 0.95             | **0.80642** | **0.95262** |
+| EffV2B3 | 300              | torch        | bicubic       | 300/332 (0.9036) | 0.81974     | 0.95818     |
+| EffV2B3 | 300              | torch        | bicubic       | 0.95             | **0.82098** | **0.95896** |
+| EffV2B3 | 300              | torch        | bicubic       | 1.0              | 0.82        | 0.9587      |
+| EffV2T  | 288              | torch        | bicubic       | 0.99             | 0.82186     | 0.96112     |
+| EffV2T  | 320              | torch        | bicubic       | 0.99             | **0.82506** | **0.96228** |
+
+| model       | Input Resolution | rescale_mode | resize_method | central_crop | top 1       | top 5       |
+| ----------- | ---------------- | ------------ | ------------- | ------------ | ----------- | ----------- |
+| EffV2S      | 384              | tf           | bicubic       | 0.95         | 0.83788     | 0.96602     |
+| EffV2S      | 384              | tf           | bicubic       | 0.99         | 0.8386      | 0.967       |
+| EffV2S      | 384              | torch        | bicubic       | 0.95         | 0.29858     | 0.46904     |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.94         | 0.84006     | 0.97118     |
+| EffV2S ft1k | 384              | torch        | bicubic       | 0.94         | 0.13104     | 0.21656     |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.95         | 0.84076     | 0.97134     |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.96         | 0.8417      | 0.97176     |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.97         | 0.84188     | 0.972       |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.98         | 0.84302     | 0.9727      |
+| EffV2S ft1k | 384              | tf           | bicubic       | 0.99         | **0.84328** | 0.97254     |
+| EffV2S ft1k | 384              | tf           | bicubic       | 1.0          | 0.84312     | **0.97292** |
+
+| model        | Input Resolution | rescale_mode | resize_method | central_crop | top 1   | top 5   |
+| ------------ | ---------------- | ------------ | ------------- | ------------ | ------- | ------- |
+| EffV2M       | 480              | tf           | bicubic       | 0.99         | 0.8509  | 0.973   |
+| EffV2L       | 480              | tf           | bicubic       | 0.99         | 0.855   | 0.97324 |
+| EffV2M ft1k  | 480              | tf           | bicubic       | 0.99         | 0.85606 | 0.9775  |
+| EffV2L ft1k  | 480              | tf           | bicubic       | 0.99         | 0.86294 | 0.9799  |
+| EffV2XL ft1k | 512              | tf           | bicubic       | 0.99         | 0.86532 | 0.97866 |
+
+| model        | rescale_mode        | resize_method | central_crop | top 1   | top 5   | Reported |
+| ------------ | ------------------- | ------------- | ------------ | ------- | ------- | -------- |
+| halonet26t   | torch               | bicubic       | 0.95         | 0.78588 | 0.94078 | 79.134   |
+| halonet26t   | tf                  | bicubic       | 0.95         | 0.7766  | 0.93588 |          |
+| halonet50t   | torch               | bicubic       | 0.94         | 0.81134 | 0.95202 | 81.350   |
+| halonet50t   | tf                  | bicubic       | 0.94         | 0.8068  | 0.9493  |          |
+| aotnet50     | torch (resize-crop) | bicubic       | 0.95         | 0.79292 | 0.94126 | 80.4     |
+| aotnet50     | torch (crop-resize) | bicubic       | 0.95         | 0.79384 | 0.94164 |          |
+| aotnet50     | torch (resize-crop) | bicubic       | 0.875        | 0.7938  | 0.94148 |          |
+| aotnet50     | torch (crop-resize) | bicubic       | 0.875        | 0.79444 | 0.94222 |          |
+| aotnet50     | tf                  | bicubic       | 0.95         | 0.78208 | 0.93604 |          |
+| aotnet50 160 | torch               | bicubic       | 0.95         | 0.72594 | 0.90654 |          |
+| aotnet50 160 | torch               | bicubic       | 0.875        | 0.73132 | 0.91042 |          |
+| aotnet50 160 | torch (224)         | bicubic       | 0.95         | 0.7668  | 0.93066 | 78.1     |
+| aotnet50 160 | torch (224)         | bicubic       | 0.875        | 0.7674  | 0.93    |          |
+| aotnet50 160 | tf (224)            | bicubic       | 0.95         | 0.73926 | 0.9148  |          |
+| regnetzd 256 | tf                  | bicubic       | 0.95         | 0.83244 | 0.96636 | 84.034   |
+| regnetzd 256 | torch               | bicubic       | 0.95         | 0.80944 | 0.95612 |          |
+
+| model      | rescale_mode | resize_method | central_crop | top 1   | top 5   | Reported |
+| ---------- | ------------ | ------------- | ------------ | ------- | ------- | -------- |
+| RegNetY032 | torch (288)  | bicubic       | 0.875        | 0.82446 | 0.96248 | 82.722   |
+| RegNetY040 | torch        | bicubic       | 0.875        | 0.80568 | 0.9512  | 81.5     |
+| RegNetY040 | tf           | bicubic       | 0.875        | 0.80108 | 0.9478  |          |
+| RegNetY080 | torch        | bicubic       | 0.875        | 0.8148  | 0.94876 | 82.2     |
+| RegNetY160 | torch        | bicubic       | 0.875        | 0.81432 | 0.94456 | 82.0     |
+| RegNetY320 | torch        | bicubic       | 0.875        | 0.81738 | 0.94152 | 82.5     |
+  ```py
+  import sys, os, time, re, gc
+  from pathlib import Path
+  from glob import glob
+
+  import tensorflow as tf
+  import numpy as np
+  import matplotlib.pyplot as plt
+
+  from tensorflow.keras import backend as K
+  from tensorflow.keras.utils import to_categorical
+  from tensorflow.keras.applications import vgg16, vgg19, resnet_v2
+
+  path_imagenet_val_dataset = Path("data/") # path/to/data/
+  dir_images = Path("data/val") # path/to/images/directory
+  path_labels = Path("data/ILSVRC2012_validation_ground_truth.txt")
+  path_synset_words = Path("data/synset_words.txt")
+  path_meta = Path("data/meta.mat")
+
+  x_val_paths = glob(str(path_imagenet_val_dataset / "x_val*.npy"))
+
+  # Sort filenames in ascending order
+  x_val_paths.sort(key=lambda f: int(re.sub('\D', '', f)))
+  y_val = np.load(str(path_imagenet_val_dataset / "y_val.npy"))
+  y_val_one_hot = to_categorical(y_val, 1000)
+  def top_k_accuracy(y_true, y_pred, k=1, tf_enabled=True):
+      if tf_enabled:
+          argsorted_y = tf.argsort(y_pred)[:,-k:]
+          matches = tf.cast(tf.math.reduce_any(tf.transpose(argsorted_y) == tf.argmax(y_true, axis=1, output_type=tf.int32), axis=0), tf.float32)
+          return tf.math.reduce_mean(matches).numpy()
+      else:
+          argsorted_y = np.argsort(y_pred)[:,-k:]
+          return np.any(argsorted_y.T == y_true.argmax(axis=1), axis=0).mean()
+
+  K.clear_session()
+  # model = vgg19.VGG19()
+  import keras_efficientnet_v2
+  model = keras_efficientnet_v2.EfficientNetV2B0()
+
+  y_pred = None
+  for i, x_val_path in enumerate(x_val_paths):
+      x_val = np.load(x_val_path).astype('float32') # loaded as RGB
+      x_val = vgg19.preprocess_input(x_val) # converted to BGR
+      y_pred_sharded = model.predict(x_val, verbose=0, use_multiprocessing=True, batch_size=16, callbacks=None)
+
+      try:
+          y_pred = np.concatenate([y_pred, y_pred_sharded])
+      except ValueError:
+          y_pred = y_pred_sharded
+
+      del x_val
+      gc.collect()
+
+      completed_percentage = (i + 1) * 100 / len(x_val_paths)
+      if completed_percentage % 5 == 0:
+          print("{:5.1f}% completed.".format(completed_percentage))
+
+  print(top_k_accuracy(y_val_one_hot, y_pred, k=1))
+  # 0.71248
+  print(top_k_accuracy(y_val_one_hot, y_pred, k=5))
+  ```
 ```py
 class CosineLrScheduler(keras.callbacks.Callback):
     def __init__(self, lr_base, first_restart_step, steps_per_epoch, m_mul=0.5, t_mul=2.0, lr_min=1e-5, warmup=0):
@@ -593,3 +880,4 @@ fig = imagenet.plot_hists(hhs.values(), list(hhs.keys()), addition_plots=None)
   if tf.random.uniform(shape=[]) > 0.5:
       im = tf.image.flip_left_right(im)
   ```
+***
