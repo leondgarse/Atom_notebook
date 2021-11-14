@@ -400,6 +400,56 @@
 ***
 
 # Imagenet
+## Timm
+```sh
+pipi torch==1.10.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+pipi torchvision==0.11.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+
+git clone https://github.com.cnpmjs.org/NVIDIA/apex.git && cd apex/
+vi setup.py
+# Comment off `RuntimeError` after `if (bare_metal_major != torch_binary_major) or (bare_metal_minor != torch_binary_minor):`
+sudo touch /usr/local/cuda-11.2/targets/x86_64-linux/include/cuda_profiler_api.h
+pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+
+CUDA_VISIBLE_DEVICES='1' python train_tf.py FOO -c _79_83-fusedlamb-cosine-lr0.00500-wd0.020000-n0-rand-m7-mstd0.5-inc1-m0.1-sd0.1-d0.0-ls0.0-301-299-resnet50-args.yaml.txt
+
+
+```
+```py
+def parse_timm_log(log_filee):
+    with open(log_filee, 'r') as ff:
+        aa = ff.readlines()
+
+    train_epoch_started, train_epoch_end_pattern, previous_line = False, "", ""
+    for ii in aa:
+        if ii.startswith("Train:"):
+            train_epoch_started = True
+            previous_line = ii
+        elif train_epoch_started and not ii.startswith("Train:"):
+            train_epoch_end_pattern = previous_line.split("[")[1].split("]")[0]
+            break
+
+    test_epoch_started, test_epoch_end_pattern, previous_line = False, "", ""
+    for ii in aa:
+        if ii.startswith("Test:"):
+            test_epoch_started = True
+            previous_line = ii
+        elif test_epoch_started and not ii.startswith("Test:"):
+            test_epoch_end_pattern = previous_line.split("[")[1].split("]")[0]
+            break
+
+    train_loss = [float(ii.split('Loss: ')[1].split(" ")[1][1:-1]) for ii in aa if train_epoch_end_pattern in ii]
+    lr = [float(ii.split('LR: ')[1].split(" ")[0]) for ii in aa if train_epoch_end_pattern in ii]
+    val_loss = [float(ii.split('Loss: ')[1].strip().split(" ")[1][1:-1]) for ii in aa if test_epoch_end_pattern in ii]
+    val_acc = [float(ii.split('Acc@1: ')[1].strip().split("Acc@5:")[0].split("(")[1].split(")")[0]) for ii in aa if test_epoch_end_pattern in ii]
+
+    # print(f"{len(train_loss) = }, {len(lr) = }, {len(val_loss) = }, {len(val_acc) = }")
+    return {"loss": train_loss, "lr": lr, "val_loss": val_loss, "val_acc": val_acc}
+
+aa = parse_timm_log('log.foo')
+from keras_cv_attention_models.imagenet import plot_hists
+plot_hists(aa, 'timm resnet50')
+```
 ## Init dataset
   - [ILSVRC2012_img_train.tar](magnet:?xt=urn:btih:umdds7gptqxk2jyvlgb4evbcpqh5sohc)
   - [ILSVRC2012_img_val.tar](magnet:?xt=urn:btih:lvwq357nqhx5jhfjt2shg7qk4xr2l4xf)
@@ -561,8 +611,12 @@ model.fit(
 )
 ```
 ```sh
-CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.0_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 60 --random_crop_min 0
-CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 60 --random_crop_min 0.08
+TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit" CUDA_VISIBLE_DEVICES='0' ./train_script.py --random_crop_min 0
+CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 86 --random_crop_min 0.08
+CUDA_VISIBLE_DEVICES='1' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.0_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 95 --random_crop_min 0
+```
+```sh
+watch -n 10 sh -c "nvidia-smi > /dev/null || ssh leondgarse@192.168.16.189 -C 'notify-send --urgency=low \"[83 Error] nvidia fall\"'"
 ```
 ## Validation
 ```py

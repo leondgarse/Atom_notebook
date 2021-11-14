@@ -982,8 +982,8 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_GDC_dr0_drc02_lr_01_wd5e4", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="strides1_F_dr04_drc02_lr_01_wd5e4", **pp)
 
-  TT_effv2_s_strides1_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json
-  TT_effv2_s_strides1_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="pw512, strides1_F_dr02_drc02_lr_01_wd5e4", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="pw512, strides1_F_dr0_drc02_lr_01_wd5e4", **pp)
   ```
   - **EfficientNetV2M**
   ```py

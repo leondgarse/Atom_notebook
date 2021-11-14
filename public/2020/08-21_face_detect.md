@@ -793,6 +793,7 @@
           super(YoloNMS, self).__init__(**kwargs)
           self.max_output_size, self.iou_threshold, self.score_threshold = max_output_size, iou_threshold, score_threshold
           self.points_idx = np.arange(4, 14)
+
       def call(self, inputs):
           xyC = tf.gather(inputs, [0, 1], axis=-1)[0]
           wh = tf.gather(inputs, [2, 3], axis=-1)[0]
@@ -807,6 +808,7 @@
 
       # def compute_output_shape(self, input_shape):
       #     return (None, 4), (None, 10), ()
+
       def get_config(self):
           config = super(YoloNMS, self).get_config()
           config.update({
@@ -815,6 +817,7 @@
               "score_threshold": self.score_threshold,
           })
           return config
+
       @classmethod
       def from_config(cls, config):
           return cls(**config)
@@ -822,6 +825,21 @@
   nns = [YoloDecode(np.array(pred_anchors[ii]), strides[ii], (256, 160)) for ii in range(3)]
   nn = tf.concat([nns[ii](mm.outputs[ii]) for ii in range(3)], axis=1)
   nn = YoloNMS()(nn)
+  tt = keras.models.Model(mm.inputs[0], nn)
+  ```
+  ```py
+  def yolo_nms(inputs, max_output_size=15, iou_threshold=0.35, score_threshold=0.25):
+      xy_center, wh, ppt, cct = inputs[..., :2], inputs[..., 2:4], inputs[..., 4:14], inputs[..., 14]
+      xy_start = xy_center - wh / 2
+      xy_end = xy_start + wh
+      bbt = tf.concat([xy_start, xy_end], axis=-1)
+      bbt, ppt, cct = bbt[0], ppt[0], cct[0]
+      rr = tf.image.non_max_suppression(bbt, cct, max_output_size=max_output_size, iou_threshold=iou_threshold, score_threshold=score_threshold)
+      return tf.gather(bbt, rr, axis=0), tf.gather(ppt, rr, axis=0), tf.gather(cct, rr, axis=0)
+
+  nns = [YoloDecode(np.array(pred_anchors[ii]), strides[ii], (256, 160)) for ii in range(3)]
+  nn = tf.concat([nns[ii](mm.outputs[ii]) for ii in range(3)], axis=1)
+  nn = yolo_nms(nn)
   tt = keras.models.Model(mm.inputs[0], nn)
   ```
 ## TFLite inference

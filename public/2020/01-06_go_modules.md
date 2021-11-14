@@ -1671,7 +1671,7 @@
     )
 
     func main() {
-            _ = tflite.NewModelFromFile("/data/model.tflite")
+            _ = tflite.NewModelFromFile("model.tflite")
     }
     ```
     **Compile and run**
@@ -1679,9 +1679,9 @@
     CGO_ENABLED=1 GOOS=android GOARCH=arm CC="$HOME/Android/Sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi29-clang " go build test_tflite.go
     CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$HOME/Android/Sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang -Wl,-rpath-link,$HOME/Android/Sdk/ndk/20.0.5594570/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/29" go build test_tflite.go
 
-    adb push test_tflite model.tflite $HOME/workspace/tensorflow.arm/bazel-bin/tensorflow/lite/c/libtensorflowlite_c.so /data
+    adb push test_tflite model.tflite $HOME/workspace/tensorflow.arm/bazel-bin/tensorflow/lite/c/libtensorflowlite_c.so /data/local/tmp
 
-    adb shell 'chmod a+x /data/test_tflite; LD_LIBRARY_PATH=/data /data/test_tflite'
+    adb shell 'cd /data/local/tmp; chmod a+x test_tflite; LD_LIBRARY_PATH=/data/local/tmp ./test_tflite'
     ```
 ## Linux ARM
   ```sh
