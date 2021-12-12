@@ -138,20 +138,6 @@
   ```sh
   find ./* -name "*.py" | grep -v __init__ | grep -v setup.py | xargs -I {} black -l 160 {} --diff
   ```
-## halonet
-  ```py
-  additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
-  layer_names_matched_torch = [""] * len(target_names)
-  for id, ii in enumerate(target_names):
-      tail_name = "_" + "_".join(ii.split('_')[2:])
-      print(id, ii, tail_name)
-      if tail_name in ["_deep_2_haloquery_conv"]:
-          layer_names_matched_torch.insert(id - 1, ii)
-          layer_names_matched_torch.pop(-1)
-      else:
-          layer_names_matched_torch[id] = ii
-  keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
-  ```
 ## botnet
   ```py
   additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
@@ -233,6 +219,51 @@
   mm = keras_efficientnet_v2.EfficientNetV2T(classifier_activation=None)
   keras_reload_from_torch_model(torch_model, mm, do_convert=True)
   ```
+## HaloNet
+  - **eca_halonext26ts**
+  ```py
+  import timm
+  from keras_cv_attention_models.halonet import halonet
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
+
+  tail_align_dict={"shortcut_conv": -5, "shortcut_bn": -6, "deep_2_haloquery_conv": -1,
+      "stack4": {"shortcut_conv": -6, "shortcut_bn": -7, "deep_2_haloquery_conv": -1},
+  }
+  additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+
+  torch_mdoel = timm.models.eca_halonext26ts(pretrained=True)
+  mm = halonet.HaloNextECA26T(classifier_activation=None)
+  keras_reload_from_torch_model(torch_mdoel, mm, input_resolution=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
+  ```
+## MagFace
+  ```py
+  from keras_cv_attention_models import download_and_load
+  import models
+  mm = models.buildin_models('r50', output_layer='E', activation="PReLU", bn_momentum=0.9, bn_epsilon=2e-5, use_bias=True, scale=True)
+
+  tail_align_dict={"block1_2_conv": -1, "block1_3_bn": -2}
+  # [25088, 512] -> CHW + out [512, 7, 7, 512] -> HWC + out [7, 7, 512, 512] -> [25088, 512]
+  additional_transfer={"E_dense": lambda ww: [ww[0].reshape(512, 7, 7, 512).transpose([1, 2, 0, 3]).reshape([-1, 512]), ww[1]]}
+  download_and_load.keras_reload_from_torch_model('magface_iresnet50_MS1MV2_ddp_fp32.pth', keras_model=mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True, input_shape=(112, 112), additional_transfer=additional_transfer, save_name="magface_iresnet50_MS1MV2_ddp_fp32.h5")
+  ```
+  Input is `BGR` image in `[0, 1]`
+  ```py
+  import evals
+  bb = keras.models.load_model('magface_iresnet50_MS1MV2_ddp_fp32.h5')
+  ee = evals.eval_callback(lambda imms: bb(imms[:, :, :, ::-1] / 2 + 0.5), '/datasets/faces_casia/lfw.bin', batch_size=16)
+  ee.on_epoch_end()
+  # magface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.997500, cfp_fp: 0.981143, agedb_30: 0.978833, IJBB 0.930185
+  # mag-cosface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.998333, cfp_fp: 0.982714, agedb_30: 0.978667, IJBB 0.93408
+  # magface_iresnet50_MS1MV2_dp, lfw: 0.998167, cfp_fp: 0.981143, agedb_30: 0.980500, IJBB 0.943622
+  # magface_epoch_00025, lfw: 0.998333, cfp_fp: 0.987429, agedb_30: 0.983333, IJBB 0.949562
+  ```
+  ```py
+  import IJB_evals
+  mm = keras.models.load_model('magface_iresnet50_MS1MV2_dp.h5')
+  tt = IJB_evals.IJB_test(lambda imms: mm(imms[:, :, :, ::-1] / 255.0), data_path='/datasets/IJB_release/', subset='IJBB', batch_size=16)
+  score = tt.run_model_test_single()
+  IJB_evals.plot_roc_and_calculate_tpr([score], names=[mm.name + "_IJBB"], label=tt.label)
+  ```
 ## Timm randaug
   ```py
   import timm.data.auto_augment as timm_auto_augment
@@ -268,15 +299,6 @@
   aa, bb = train_dataset.as_numpy_iterator().next()
   plt.imshow(np.vstack([np.hstack(aa[ii * 8 : (ii + 1) * 8]) for ii in range(8)]) / 2 + 0.5)
   ```
-## Timm BCE
-```py
-num_classes = 10
-off_value = 0.1
-on_value = 0.9
-target = torch.from_numpy(np.random.randint(0, num_classes, size=[5,]))
-target = target.long().view(-1, 1)
-target = torch.full((target.size()[0], num_classes), off_value).scatter_(1, target, on_value)
-```
 ***
 
 # Resnest
@@ -4217,8 +4239,8 @@ mm = aotnet.AotNet(
 ```
 ***
 ```py
-def get_params(size, scale, ratio):
-    height, width = size[0], size[1]
+def get_params(img, scale, ratio):
+    height, width = img.size[0], img.size[1]
     area = height * width
 
     for attempt in range(10):
@@ -4245,18 +4267,23 @@ def get_params(size, scale, ratio):
     else:  # whole image
         w = width
         h = height
-    return h, w
+    i = (img.size[1] - h) // 2
+    j = (img.size[0] - w) // 2
+    return i, j, h, w
 
-def get_params_2(size, scale, ratio):
-    width, height = size[0], size[1]  # img.size is (width, height)
+def get_params_2(img, scale, ratio, log_distribute=True):
+    width, height = img.size[0], img.size[1]  # img.size is (width, height)
     area = height * width
     scale_max = min(height * height * ratio[1] / area, width * width / ratio[0] / area, scale[1])
     target_area = random.uniform(scale[0], scale_max) * area
 
     ratio_min = max(target_area / (height * height), ratio[0])
     ratio_max = min(width * width / target_area, ratio[1])
-    log_ratio = (math.log(ratio_min), math.log(ratio_max))
-    aspect_ratio = math.exp(random.uniform(*log_ratio))
+    if log_distribute:  # More likely to select a smaller value
+        log_ratio = (math.log(ratio_min), math.log(ratio_max))
+        aspect_ratio = math.exp(random.uniform(*log_ratio))
+    else:
+        aspect_ratio = random.uniform(ratio_min, ratio_max)
 
     ww = int(round(math.sqrt(target_area * aspect_ratio)))
     hh = int(round(math.sqrt(target_area / aspect_ratio)))
@@ -4264,4 +4291,216 @@ def get_params_2(size, scale, ratio):
     top = random.randint(0, height - hh)
     left = random.randint(0, width - ww)
     return top, left, hh, ww
+```
+```py
+import math, random
+from PIL import Image
+
+img = Image.fromarray(np.zeros([100, 100, 3], 'uint8'))
+aa = np.array([get_params(img, scale=(0.08, 1.0), ratio=(0.75, 1.3333333)) for _ in range(100000)])
+hhs, wws = aa[:, 2], aa[:, 3]
+print("Scale range:", ((hhs * wws).min() / 1e4, (hhs * wws).max() / 1e4))
+# Scale range: (0.075, 0.9801)
+print("Ratio range:", ((wws / hhs).min(), (wws / hhs).max()))
+# Ratio range: (0.7272727272727273, 1.375)
+
+fig, axes = plt.subplots(4, 1, figsize=(6, 8))
+pp = {
+    "ratio distribute": wws / hhs,
+    "scale distribute": wws * hhs / 1e4,
+    "height distribute": hhs,
+    "width distribute": wws,
+}
+for ax, kk in zip(axes, pp.keys()):
+    _ = ax.hist(pp[kk], bins=1000, label=kk)
+    ax.set_title("[with attempt] " + kk)
+fig.tight_layout()
+```
+
+# VIT visualize
+```py
+import cv2
+from vit_keras import vit, visualize, layers
+
+# Load a model
+image_size = 384
+model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
+# classes = utils.get_imagenet_classes()
+
+# Get an image and compute the attention map
+url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
+imm = plt.imread(keras.utils.get_file('aa.jpg', url))
+
+""" attention_map """
+size = model.input_shape[1]
+grid_size = int(np.sqrt(model.layers[5].output_shape[0][-2] - 1))
+
+# Prepare the input
+X = vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis, :]  # type: ignore
+
+# Get the attention weights from each transformer.
+outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
+weights = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
+num_layers = weights.shape[0]
+num_heads = weights.shape[2]
+reshaped = weights.reshape((num_layers, num_heads, grid_size ** 2 + 1, grid_size ** 2 + 1))
+
+# From Appendix D.6 in the paper ...
+# Average the attention weights across all heads.
+reshaped = reshaped.mean(axis=1)
+
+# From Section 3 in https://arxiv.org/pdf/2005.00928.pdf ...
+# To account for residual connections, we add an identity matrix to the
+# attention matrix and re-normalize the weights.
+reshaped = reshaped + np.eye(reshaped.shape[1])
+reshaped = reshaped / reshaped.sum(axis=(1, 2))[:, np.newaxis, np.newaxis]
+
+# Recursively multiply the weight matrices
+v = reshaped[-1]
+for ii in reshaped[::-1][1:]:
+    v = np.matmul(v, ii)
+    # v *= ii
+
+# Attention from the output token to the input space.
+mask = v[0, 1:].reshape(grid_size, grid_size)
+mask = cv2.resize(mask / mask.max(), (imm.shape[1], imm.shape[0]))[..., np.newaxis]
+# return (mask * imm).astype("uint8")
+attention_map = (mask * imm).astype("uint8")
+
+# print('Prediction:', classes[model.predict(vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis])[0].argmax()])
+# Prediction: Eskimo dog, husky
+
+# Plot results
+fig, (ax1, ax2) = plt.subplots(ncols=2)
+ax1.axis('off')
+ax2.axis('off')
+ax1.set_title('Original')
+ax2.set_title('Attention Map')
+_ = ax1.imshow(imm)
+_ = ax2.imshow(attention_map)
+```
+```py
+from skimage.data import chelsea
+imm = chelsea()
+
+url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
+imm = plt.imread(keras.utils.get_file('aa.jpg', url))
+
+fig, axes = plt.subplots(1, 3, figsize=(3 * 4, 4))
+axes[0].imshow(imm)
+
+from keras_cv_attention_models.beit import beit
+mm = beit.BeitBasePatch16(input_shape=(384, 384, 3), pretrained="imagenet")
+
+imm_inputs = keras.applications.imagenet_utils.preprocess_input(imm, mode='tf')
+imm_inputs = tf.expand_dims(tf.image.resize(imm_inputs, mm.input_shape[1:3]), 0)
+bb = keras.models.Model(mm.inputs[0], [ii.output for ii in mm.layers if ii.name.endswith('attention_scores')])
+attn_scores = bb(imm_inputs)
+
+""" BotNet """
+mask = [ii.numpy()[0].mean((0)) for ii in attn_scores][::-1]
+down_sample = lambda xx, rr: tf.nn.max_pool(xx[tf.newaxis, :, :, tf.newaxis], rr, rr, 'VALID')[0, :, :, 0].numpy()
+cum_mask = [mask[0]] + [down_sample(mask[ii], int(mask[ii].shape[0] / mask[0].shape[0])) for ii in range(1, len(mask))]
+cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
+mask = [ii.mean(0) for ii in mask]
+
+ss = [int(np.sqrt(ii.shape[0])) for ii in mask]
+mmask = [tf.image.resize(tf.reshape(ii, [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
+plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[:ii+1], axis=0).numpy()) for ii in range(len(mmask))]))
+
+""" LeViT """
+mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
+cum_mask = [matmul_prod(mask[:ii+1]).mean(0) for ii in range(len(mask))]
+mask = [ii.mean(0) for ii in mask]
+
+""" HaloNet """
+mask = [ii.numpy()[0].mean((0, 1, 2)) for ii in attn_scores]
+plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1], False) for ii in range(len(mask))]))
+plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mask))]))
+
+mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
+cum_mask = [ii.reshape(*ii.shape[:3], 14, 14)[..., :8, :8].reshape(*ii.shape[:3], 64) for ii in mask]
+cum_mask = [tf.reduce_max(ii, axis=(0, 1)).numpy() for ii in cum_mask]
+cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
+mask = [ii.mean((0, 1, 2)) for ii in mask]
+
+qqs = [int(np.sqrt(ii.shape[2])) for ii in mask]
+vvs = [int(np.sqrt(ii.shape[3])) for ii in mask]
+hhs = [(jj - ii) // 2 for ii, jj in zip(qqs, vvs)]
+tt = [rearrange(ii, "hh ww (hb wb) cc -> (hh hb) (ww wb) cc", hb=qq, wb=qq) for ii, qq in zip(mask, qqs)]
+tt = [tf.expand_dims(tf.pad(ii, [[hh, hh], [hh, hh], [0, 0]]), 0) for ii, hh in zip(tt, hhs)]
+tt = [tpu_compatible_extract_patches(ii, vv, qq, padding='VALID', compressed=False).numpy()[0] for ii, vv, qq in zip(tt, vvs, qqs)]
+# tt = [rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc").mean((0, 1)) for ii in tt]
+tt = [tf.reduce_max(rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc"), axis=(0, 1)).numpy() for ii in tt]
+cum_mask = [matmul_prod(tt[:ii+1]).mean(0) for ii in range(len(tt))]
+
+""" Coat """
+mask = [ii.numpy()[0].mean((0, 2)) for ii in attn_scores]
+plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1][1:], False) for ii in range(len(mask))]))
+
+ss = [int(np.sqrt(ii.shape[0] - 1)) for ii in mask]
+mmask = [tf.image.resize(tf.reshape(ii[1:], [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
+plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mmask))]))
+
+""" VOLO """
+aa = attention_layers.fold_by_conv2d_transpose(tf.reduce_mean(tf.concat(attn_scores, axis=0), axis=(3, 5)), (48, 48))[:, :, :, 0] + tf.eye(48)
+attn_scores = (aa / tf.reduce_sum(aa, axis=(1, 2), keepdims=True)).numpy()
+
+""" BEIT """
+mask = [ii.numpy()[0].mean(0) + np.eye(ii.shape[-1]) for ii in attn_scores]
+mask = [(ii / ii.sum()) for ii in mask]
+cum_mask = [matmul_prod(mask[-ii-1:])[0][1:] for ii in range(len(mask))]
+mask = [ii[0][1:]for ii in mask]
+
+mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in mask])
+cum_mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in cum_mask])
+plt.imshow(mask_imm)
+plt.imshow(cum_mask_imm)
+plt.imshow(np.vstack([mask_imm, cum_mask_imm]))
+
+def matmul_prod(aa):
+    vv = np.ones_like(aa[0], dtype='float64')
+    for ii in aa[::-1]:
+        vv = np.matmul(vv, ii)
+    return vv
+
+def apply_mask_2_image(image, mask, has_cls_token=True):
+    # mask = vv[0]
+    if has_cls_token:
+        width = height = int(np.sqrt(mask.shape[0] - 1))
+        mask = mask[1:]
+    elif len(mask.shape) == 1:
+        width = height = int(np.sqrt(mask.shape[0]))
+    else:
+        height, width = mask.shape[:2]
+    mask = mask.reshape(width, height, 1)
+    mask = tf.image.resize(mask / mask.max(), image.shape[:2]).numpy()
+    return (mask * image).astype("uint8")
+
+plt.imshow(apply_mask_2_image(imm, matmul_prod(attn_scores)[0], ww, hh))
+plt.imsave('aa.png', np.hstack([apply_mask_2_image(imm, matmul_prod(attn_scores[-ii-1:])[0], ww, hh) for ii in range(len(attn_scores))]))
+plt.imsave('bb.png', np.hstack([apply_mask_2_image(imm, matmul_prod([attn_scores[-ii-1]])[0], ww, hh) for ii in range(len(attn_scores))]))
+
+axes[1].imshow(attention_map)
+```
+```py
+from vit_keras import vit, layers
+image_size = 384
+model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
+X = vit.preprocess_inputs(tf.image.resize(imm, (image_size, image_size)))[np.newaxis, :]
+outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
+attn_scores = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
+
+fig = visualizing.plot_attention_score_maps(attn_scores, imm, attn_type='beit')
+```
+```py
+import tensorflow_addons as tfa
+xx = tf.random.uniform((1000, 32, 32, 3))
+yy = tf.one_hot(tf.cast(tf.random.uniform((1000,)) * 10, 'int32'), depth=32)
+mm = keras.models.Sequential([keras.layers.Input([32, 32, 3]), keras.layers.Flatten(), keras.layers.BatchNormalization(), keras.layers.Dense(32)])
+mm.compile(optimizer=tfa.optimizers.AdamW(weight_decay=0.01, exclude_from_weight_decay=['/gamma', '/beta']), loss="categorical_crossentropy")
+mm.fit(xx, yy)
+mm.save('aa.h5')
+bb = keras.models.load_model('aa.h5')
+print(bb.optimizer.exclude_from_weight_decay)
 ```

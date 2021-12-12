@@ -829,12 +829,12 @@
   ```
   ```py
   def yolo_nms(inputs, max_output_size=15, iou_threshold=0.35, score_threshold=0.25):
-      xy_center, wh, ppt, cct = inputs[..., :2], inputs[..., 2:4], inputs[..., 4:14], inputs[..., 14]
+      inputs = inputs[0][inputs[0, :, -1] > score_threshold]
+      xy_center, wh, ppt, cct = inputs[:, :2], inputs[:, 2:4], inputs[:, 4:14], inputs[:, 14]
       xy_start = xy_center - wh / 2
       xy_end = xy_start + wh
       bbt = tf.concat([xy_start, xy_end], axis=-1)
-      bbt, ppt, cct = bbt[0], ppt[0], cct[0]
-      rr = tf.image.non_max_suppression(bbt, cct, max_output_size=max_output_size, iou_threshold=iou_threshold, score_threshold=score_threshold)
+      rr = tf.image.non_max_suppression(bbt, cct, max_output_size=max_output_size, iou_threshold=iou_threshold, score_threshold=0.0)
       return tf.gather(bbt, rr, axis=0), tf.gather(ppt, rr, axis=0), tf.gather(cct, rr, axis=0)
 
   nns = [YoloDecode(np.array(pred_anchors[ii]), strides[ii], (256, 160)) for ii in range(3)]

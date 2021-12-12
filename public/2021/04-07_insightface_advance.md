@@ -985,6 +985,22 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="pw512, strides1_F_dr02_drc02_lr_01_wd5e4", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="pw512, strides1_F_dr0_drc02_lr_01_wd5e4", **pp)
   ```
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [1, 3, 12, 48]
+  pp["skip_epochs"] = 3
+  names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_GDC_wd5e5_arc_emb512_dr02_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC_wd5e5_arc_emb512_dr02", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_GDC_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="GDC, dr0, wd 5e-4", **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F, dr 0.4, wd 5e-4", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr0_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr04_drc02_lr_01_wd5e4_arc_emb512_sgd_bs512_ms1m_randaug_bnm09_bne1e5_cos16_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.4", **pp)
+  ```
   - **EfficientNetV2M**
   ```py
   hist_path = "checkpoints/"

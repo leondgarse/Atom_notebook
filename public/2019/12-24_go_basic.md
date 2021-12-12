@@ -502,7 +502,7 @@
     go mod tidy
 
     cd ../testFoo
-    go mid init testFoo
+    go mod init testFoo
     go mod tidy
 
     cd ../
@@ -1223,6 +1223,49 @@
     )
     fmt.Println(v1, p, v2, v3)
     // {1 2} &{1 2} {1 0} {0 0}
+    ```
+  - 结构体作为函数参数时类似 **值传递**
+    ```go
+    package main
+
+    import "fmt"
+
+    type CC struct {
+    	aa int
+    	cc []int32
+    }
+
+    func main() {
+    	aa := make([]int32, 4)
+    	foo(aa)
+    	fmt.Println(aa)
+
+    	cc := CC{0, []int32{0, 0}}
+    	goo(cc)
+    	fmt.Println(cc)
+    	koo(&cc)
+    	fmt.Println(cc)
+    }
+
+    func foo(bb []int32) {
+    	bb[0] = 1
+    }
+
+    func goo(dd CC) {
+    	dd.aa = 1
+    	dd.cc[0] = 1
+    }
+
+    func koo(dd *CC) {
+    	dd.aa = 2
+    	dd.cc[0] = 2
+    }
+    ```
+    ```sh
+    go run test_struct.go
+    # [1 0 0 0]
+    # {0 [1 0]}
+    # {2 [2 0]}
     ```
 ## 数组
   - Go 语言中的数组是 **值**，而不是指针

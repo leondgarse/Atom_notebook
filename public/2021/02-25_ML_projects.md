@@ -413,7 +413,18 @@ pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp
 
 CUDA_VISIBLE_DEVICES='1' python train_tf.py FOO -c _79_83-fusedlamb-cosine-lr0.00500-wd0.020000-n0-rand-m7-mstd0.5-inc1-m0.1-sd0.1-d0.0-ls0.0-301-299-resnet50-args.yaml.txt
 
+CUDA_VISIBLE_DEVICES='0' python train.py $HOME/tensorflow_datasets/ -c _79_83-fusedlamb-cosine-lr0.00500-wd0.020000-n0-rand-m7-mstd0.5-inc1-m0.1-sd0.1-d0.0-ls0.0-301-299-resnet50-args.yaml.txt --batch-size 256 --lr 4e-3
 
+CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211109-111121-resnet50-160/checkpoint-99.pth.tar
+
+CUDA_VISIBLE_DEVICES='0' python validate_tf.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --channels-last --checkpoint ../keras_cv_attention_models/checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_epoch_102_val_acc_0.7494.h5
+
+```
+```sh
+CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211109-111121-resnet50-160/checkpoint-99.pth.tar
+# * Acc@1 78.066 (21.934) Acc@5 93.680 (6.320)
+CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211115-150528-resnet50-160/checkpoint-96.pth.tar
+# * Acc@1 78.206 (21.794) Acc@5 93.878 (6.122)
 ```
 ```py
 def parse_timm_log(log_filee):
@@ -611,7 +622,7 @@ model.fit(
 )
 ```
 ```sh
-TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit" CUDA_VISIBLE_DEVICES='0' ./train_script.py --random_crop_min 0
+TF_XLA_FLAGS="--tf_xla_auto_jit=2" CUDA_VISIBLE_DEVICES='0' ./train_script.py --random_crop_min 0
 CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 86 --random_crop_min 0.08
 CUDA_VISIBLE_DEVICES='1' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.0_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 95 --random_crop_min 0
 ```
@@ -651,15 +662,17 @@ mm = keras_cv_attention_models.regnet.RegNetZD()
 imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
 ```
 
-| model   | Input Resolution | rescale_mode | resize_method | central_crop | top 1       | top 5       |
-| ------- | ---------------- | ------------ | ------------- | ------------ | ----------- | ----------- |
-| EffV2B0 | 224              | tf           | bilinear      | 0.875        | 0.75304     | 0.92606     |
-| EffV2B0 | 224              | tf           | bicubic       | 0.875        | 0.7581      | 0.92858     |
-| EffV2B0 | 224              | torch        | bilinear      | 0.875        | 0.78594     | 0.94262     |
-| EffV2B0 | 224              | torch        | bicubic       | 0.875        | **0.78748** | 0.94386     |
-| EffV2B0 | 224              | torch        | bicubic       | 0.87         | 0.787       | 0.9436      |
-| EffV2B0 | 224              | torch        | bicubic       | 0.95         | 0.78732     | **0.94412** |
-| EffV2B0 | 224              | torch        | bicubic       | 1.0          | 0.78536     | 0.94404     |
+| model   | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
+| ------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
+| EffV2B0 | 224              | tf           | bilinear          | 0.875        | 0.75304     | 0.92606     |
+| EffV2B0 | 224              | tf           | bicubic           | 0.875        | 0.7581      | 0.92858     |
+| EffV2B0 | 224              | torch        | bilinear          | 0.875        | 0.78594     | 0.94262     |
+| EffV2B0 | 224              | torch        | bicubic           | 0.875        | **0.78748** | 0.94386     |
+| EffV2B0 | 224              | torch        | bicubic antialias | 0.875        | 0.7833      | 0.94038     |
+| EffV2B0 | 224              | torch        | bicubic           | 0.87         | 0.787       | 0.9436      |
+| EffV2B0 | 224              | torch        | bicubic           | 0.95         | 0.78732     | **0.94412** |
+| EffV2B0 | 224              | torch        | bicubic antialias | 0.95         | 0.78288     | 0.93998     |
+| EffV2B0 | 224              | torch        | bicubic           | 1.0          | 0.78536     | 0.94404     |
 
 | model   | Input Resolution | rescale_mode | resize_method | central_crop     | top 1       | top 5       |
 | ------- | ---------------- | ------------ | ------------- | ---------------- | ----------- | ----------- |
@@ -674,27 +687,32 @@ imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_met
 | EffV2T  | 288              | torch        | bicubic       | 0.99             | 0.82186     | 0.96112     |
 | EffV2T  | 320              | torch        | bicubic       | 0.99             | **0.82506** | **0.96228** |
 
-| model       | Input Resolution | rescale_mode | resize_method | central_crop | top 1       | top 5       |
-| ----------- | ---------------- | ------------ | ------------- | ------------ | ----------- | ----------- |
-| EffV2S      | 384              | tf           | bicubic       | 0.95         | 0.83788     | 0.96602     |
-| EffV2S      | 384              | tf           | bicubic       | 0.99         | 0.8386      | 0.967       |
-| EffV2S      | 384              | torch        | bicubic       | 0.95         | 0.29858     | 0.46904     |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.94         | 0.84006     | 0.97118     |
-| EffV2S ft1k | 384              | torch        | bicubic       | 0.94         | 0.13104     | 0.21656     |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.95         | 0.84076     | 0.97134     |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.96         | 0.8417      | 0.97176     |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.97         | 0.84188     | 0.972       |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.98         | 0.84302     | 0.9727      |
-| EffV2S ft1k | 384              | tf           | bicubic       | 0.99         | **0.84328** | 0.97254     |
-| EffV2S ft1k | 384              | tf           | bicubic       | 1.0          | 0.84312     | **0.97292** |
+| model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
+| ----------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
+| EffV2S      | 384              | tf           | bicubic           | 0.95         | 0.83788     | 0.96602     |
+| EffV2S      | 384              | torch        | bicubic           | 0.95         | 0.29858     | 0.46904     |
+| EffV2S      | 384              | tf           | bicubic           | 0.99         | **0.8386**  | **0.967**   |
+| EffV2S      | 384              | tf           | bicubic antialias | 0.99         | 0.8387      | 0.967       |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.94         | 0.84006     | 0.97118     |
+| EffV2S ft1k | 384              | torch        | bicubic           | 0.94         | 0.13104     | 0.21656     |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.95         | 0.84076     | 0.97134     |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.96         | 0.8417      | 0.97176     |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.97         | 0.84188     | 0.972       |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.98         | 0.84302     | 0.9727      |
+| EffV2S ft1k | 384              | tf           | bicubic           | 0.99         | 0.84328     | 0.97254     |
+| EffV2S ft1k | 384              | tf           | bicubic antialias | 0.99         | 0.84336     | 0.97256     |
+| EffV2S ft1k | 384              | tf           | bicubic           | 1.0          | 0.84312     | **0.97292** |
+| EffV2S ft1k | 384              | tf           | bicubic antialias | 1.0          | **0.84348** | 0.97288     |
 
-| model        | Input Resolution | rescale_mode | resize_method | central_crop | top 1   | top 5   |
-| ------------ | ---------------- | ------------ | ------------- | ------------ | ------- | ------- |
-| EffV2M       | 480              | tf           | bicubic       | 0.99         | 0.8509  | 0.973   |
-| EffV2L       | 480              | tf           | bicubic       | 0.99         | 0.855   | 0.97324 |
-| EffV2M ft1k  | 480              | tf           | bicubic       | 0.99         | 0.85606 | 0.9775  |
-| EffV2L ft1k  | 480              | tf           | bicubic       | 0.99         | 0.86294 | 0.9799  |
-| EffV2XL ft1k | 512              | tf           | bicubic       | 0.99         | 0.86532 | 0.97866 |
+| model        | Input Resolution | rescale_mode | resize_method     | central_crop | top 1   | top 5   |
+| ------------ | ---------------- | ------------ | ----------------- | ------------ | ------- | ------- |
+| EffV2M       | 480              | tf           | bicubic           | 0.99         | 0.8509  | 0.973   |
+| EffV2M       | 480              | tf           | bicubic antialias | 0.99         | 0.85086 | 0.9731  |
+| EffV2L       | 480              | tf           | bicubic           | 0.99         | 0.855   | 0.97324 |
+| EffV2L       | 480              | tf           | bicubic antialias | 0.99         |         |         |
+| EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
+| EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
+| EffV2XL ft1k | 512              | tf           | bicubic           | 0.99         | 0.86532 | 0.97866 |
 
 | model        | rescale_mode        | resize_method | central_crop | top 1   | top 5   | Reported |
 | ------------ | ------------------- | ------------- | ------------ | ------- | ------- | -------- |
@@ -723,6 +741,19 @@ imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_met
 | RegNetY080 | torch        | bicubic       | 0.875        | 0.8148  | 0.94876 | 82.2     |
 | RegNetY160 | torch        | bicubic       | 0.875        | 0.81432 | 0.94456 | 82.0     |
 | RegNetY320 | torch        | bicubic       | 0.875        | 0.81738 | 0.94152 | 82.5     |
+
+| model              | rescale_mode        | resize_method      | central_crop | top 1   | top 5   |
+| ------------------ | ------------------- | ------------------ | ------------ | ------- | ------- |
+| timm resnet50 (CE) | torch (clip 255)    | bicubic antialias  | 0.95         | 0.77    | 0.93722 |
+| timm resnet50 (CE) | torch               | bicubic antialias  | 0.95         | 0.77026 | 0.93716 |
+| timm resnet50 (CE) | torch               | bilinear antialias | 0.95         | 0.76898 | 0.93746 |
+| timm resnet50 (CE) | torch               | bilinear           | 0.95         | 0.76404 | 0.93412 |
+| AotNet50 (CE)      | torch               | bilinear           | 0.95         | 0.7694  | 0.93704 |
+| AotNet50 (CE)      | torch               | bicubic            | 0.95         | 0.77004 | 0.93702 |
+| AotNet50 (CE)      | torch               | bicubic antialias  | 0.95         | 0.7647  | 0.9335  |
+| AotNet50 (CE)      | torch (clip 255)    | bicubic            | 0.95         | 0.76996 | 0.9371  |
+| AotNet50 (CE)      | torch (resize_crop) | bicubic            | 0.95         | 0.76956 | 0.93696 |
+
   ```py
   import sys, os, time, re, gc
   from pathlib import Path
@@ -935,3 +966,176 @@ fig = imagenet.plot_hists(hhs.values(), list(hhs.keys()), addition_plots=None)
       im = tf.image.flip_left_right(im)
   ```
 ***
+## Timm validation
+```py
+from validate_tf import *
+setup_default_logging()
+args = parser.parse_args('/home/tdtest/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224'.split(' '))
+data = '/home/tdtest/tensorflow_datasets/'
+dataset = "tfds/imagenet2012"
+dataset = create_dataset(root=data, name=dataset, split='validation', load_bytes=False, class_map="")
+
+model = create_model("resnet50", pretrained=False, num_classes=1000, in_chans=3)
+data_config = resolve_data_config(vars(args), model=model, use_test_size=True, verbose=True)
+loader = create_loader(
+        dataset,
+        input_size=data_config['input_size'],
+        batch_size=256,
+        use_prefetcher=True,
+        interpolation=data_config['interpolation'],
+        mean=data_config['mean'],
+        std=data_config['std'],
+        num_workers=4,
+        crop_pct=0.95,
+        pin_memory=False,
+        tf_preprocessing=False)
+```
+```py
+sys.path.append('../keras_cv_attention_models/')
+from keras_cv_attention_models import aotnet
+mm = aotnet.AotNet50(input_shape=(224, 224, 3), classifier_activation=None)
+mm.load_weights('../keras_cv_attention_models/aotnet50_160_imagenet.h5')
+y_true, y_pred_top_1, y_pred_top_5 = [], [], []
+for ii in range(int(np.ceil(50000/256))):
+    input = np.load('imagenet_eval/input_{}.npy'.format(ii))
+    target = np.load('imagenet_eval/target_{}.npy'.format(ii))
+    print(ii, input.shape, target.shape)
+    predicts = mm(input).numpy()
+    pred_argsort = predicts.argsort(-1)
+    y_pred_top_1.extend(pred_argsort[:, -1])
+    y_pred_top_5.extend(pred_argsort[:, -5:])
+    y_true.extend(target)
+
+y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
+accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
+accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
+print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
+# >>>> Accuracy top1: 0.78066 top5: 0.9368
+```
+```py
+import tensorflow_datasets as tfds
+
+def evaluation_process_resize_crop(datapoint, target_shape=(224, 224), central_crop=1.0, resize_method="bilinear"):
+    image = datapoint["image"]
+    shape = tf.shape(image)
+    height, width = shape[0], shape[1]
+    min_border = tf.cast(tf.minimum(height, width), tf.float32)
+    scale_size = tf.cast(tf.minimum(*target_shape), tf.float32) / central_crop
+    hh_scale = tf.cast(tf.floor(tf.cast(height, tf.float32) * scale_size / min_border), tf.int32)
+    ww_scale = tf.cast(tf.floor(tf.cast(width, tf.float32) * scale_size / min_border), tf.int32)
+    image = tf.image.resize(image, (hh_scale, ww_scale), method=resize_method)
+
+    y, x = (hh_scale - target_shape[0]) // 2, (ww_scale - target_shape[1]) // 2
+    image = tf.image.crop_to_bounding_box(image, y, x, target_shape[0], target_shape[1])
+    image = tf.clip_by_value(image, 0, 255)
+
+    label = datapoint["label"]
+    return image, label
+
+data_name, input_shape, eval_central_crop, resize_method = "imagenet2012", (224, 224), 0.95, "bicubic"
+mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
+std = tf.constant([0.229, 0.224, 0.225]) * 255.0
+rescaling = lambda xx: (xx - mean) / std
+as_one_hot = lambda yy: tf.one_hot(yy, num_classes)
+
+dataset, info = tfds.load(data_name, with_info=True)
+test_process = lambda xx: evaluation_process_resize_crop(xx, input_shape[:2], eval_central_crop, resize_method)  # timm
+test_dataset = dataset["validation"].map(test_process)
+test_dataset = test_dataset.batch(batch_size).map(lambda xx, yy: (rescaling(xx), as_one_hot(yy)))
+```
+```py
+import math
+import torch
+from torchvision import transforms
+from PIL import Image
+from tqdm import tqdm
+import tensorflow_datasets as tfds
+
+img_size, crop_pct, batch_size = 224, 0.95, 64
+tfl = [
+    transforms.Resize(int(math.floor(img_size / crop_pct)), interpolation=transforms.InterpolationMode.BICUBIC),
+    transforms.CenterCrop(img_size),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=torch.tensor([0.485, 0.456, 0.406]), std=torch.tensor([0.229, 0.224, 0.225]))
+]
+tfl = transforms.Compose(tfl)
+
+test_process = lambda image: np.array(tfl(Image.fromarray(image)).permute([1, 2, 0]))
+ds = tfds.load("imagenet2012", with_info=False)["validation"]
+
+from keras_cv_attention_models import aotnet
+mm = aotnet.AotNet50(input_shape=(img_size, img_size, 3), classifier_activation=None)
+mm.load_weights('aotnet50_160_imagenet.h5')
+
+total = len(ds)
+id = 0
+inputs = []
+y_true, y_pred_top_1, y_pred_top_5 = [], [], []
+mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
+std = tf.constant([0.229, 0.224, 0.225]) * 255.0
+for data_point in tqdm(ds.as_numpy_iterator(), total=len(ds)):
+# for data_point in ds.as_numpy_iterator():
+    imm, label = test_process(data_point['image']), data_point['label']
+    imm = (imm - mean) / std
+    id += 1
+    inputs.append(imm)
+    y_true.append(label)
+    if id % batch_size != 0 and id != total:
+        continue
+    # print(id, np.shape(inputs), np.shape(y_true))
+
+    predicts = mm(np.array(inputs)).numpy()
+    pred_argsort = predicts.argsort(-1)
+    y_pred_top_1.extend(pred_argsort[:, -1])
+    y_pred_top_5.extend(pred_argsort[:, -5:])
+    inputs = []
+y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
+accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
+accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
+print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
+# >>>> Accuracy top1: 0.78066 top5: 0.9368
+```
+```py
+from tensorflow.keras.preprocessing.image import array_to_img, img_to_array
+
+def test_process(image, target_shape=(224, 224), central_crop=0.95, resize_method="bilinear"):
+    shape = tf.shape(image)
+    height, width = shape[0], shape[1]
+    min_border = tf.cast(tf.minimum(height, width), tf.float32)
+    scale_size = tf.cast(tf.minimum(*target_shape), tf.float32) / central_crop
+    hh_scale = tf.cast(tf.floor(tf.cast(height, tf.float32) * scale_size / min_border), tf.int32)
+    ww_scale = tf.cast(tf.floor(tf.cast(width, tf.float32) * scale_size / min_border), tf.int32)
+    # image = tf.convert_to_tensor(np.array(Image.fromarray(image).resize((ww_scale, hh_scale), resample=Image.BICUBIC)))
+    resize_func = lambda xx: img_to_array(array_to_img(xx).resize((ww_scale, hh_scale), resample=Image.BICUBIC)).astype('float32')
+    image = tf.numpy_function(resize_func, [image], tf.float32)
+    # image = tf.image.resize(image, (hh_scale, ww_scale), method=resize_method)
+
+    y, x = (hh_scale - target_shape[0]) // 2, (ww_scale - target_shape[1]) // 2
+    image = tf.image.crop_to_bounding_box(image, y, x, target_shape[0], target_shape[1])
+    # image = tf.clip_by_value(image, 0, 255)
+    return tf.cast(image, 'float32')
+
+# >>>> Accuracy top1: 0.78058 top5: 0.93622
+# >>>> Accuracy top1: 0.78068 top5: 0.93622
+```
+```py
+mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
+std = tf.constant([0.229, 0.224, 0.225]) * 255.0
+rescaling = lambda xx: (xx - mean) / std
+
+test_dataset = dataset["validation"].map(lambda data_point: (test_process(data_point['image']), data_point['label']))
+test_dataset = test_dataset.batch(batch_size).map(lambda xx, yy: (rescaling(xx), yy))
+
+y_true, y_pred_top_1, y_pred_top_5 = [], [], []
+for img_batch, true_labels in tqdm(test_dataset.as_numpy_iterator(), "Evaluating", total=len(test_dataset)):
+    predicts = np.array(model_interf(img_batch))
+    pred_argsort = predicts.argsort(-1)
+    y_pred_top_1.extend(pred_argsort[:, -1])
+    y_pred_top_5.extend(pred_argsort[:, -5:])
+    y_true.extend(np.array(true_labels).argmax(-1))
+y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
+accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
+accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
+print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
+return y_true, y_pred_top_1, y_pred_top_5
+```

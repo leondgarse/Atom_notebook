@@ -1627,6 +1627,8 @@
 ## Android ARM
   - [Build TensorFlow Lite for ARM boards](https://www.tensorflow.org/lite/guide/build_arm64)
     ```sh
+    /home/leondgarse/Android/Sdk/ndk/21.0.6113669/
+
     ./configure
     # Please specify the home path of the Android NDK to use. [Default is /home/leondgarse/Android/Sdk/ndk-bundle]: /home/leondgarse/Android/Sdk/ndk/20.0.5594570/
     # Please specify the (min) Android NDK API level to use: 18
@@ -1707,6 +1709,64 @@
     git diff delegates/xnnpack/xnnpack.go
     # -#cgo LDFLAGS: -ltensorflowlite-delegate_xnnpack -lXNNPACK
     # +#cgo LDFLAGS: -ltensorflowlite_c -lm -llog
+    ```
+## go-tflite with Go Module
+  - **目录结构**
+    ```sh
+    $ tree
+    # ├── main.go
+    # ├── model.tflite
+    # └── runTest
+    #     └── runTest.go
+    ```
+    **main.go**
+    ```go
+    package main
+
+    import "testTflite/runTest"
+
+    func main() {
+    	runTest.Run("model.tflite")
+    }
+    ```
+    **runTest.go**SDK_HOME="$HOME/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/linux-x86_64"
+    ```go
+    package runTest
+
+    import (
+    	"github.com/leondgarse/go-tflite"
+    )
+
+    func Run(model_path string) {
+    	tflite.NewModelFromFile(model_path)
+    }
+    ```
+  - **amd64 测试运行**
+    ```sh
+    go mod init testTflite
+    go mod tidy
+
+    export CGO_LDFLAGS=-L$HOME/workspace/tensorflow/bazel-bin/tensorflow/lite/c
+    export CGO_CFLAGS=-I$HOME/workspace/tensorflow/
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/workspace/tensorflow/bazel-bin/tensorflow/lite/c
+    go run main.go
+    ```
+  - **arm64 测试运行**
+    ```sh
+    export CGO_LDFLAGS="-L$HOME/workspace/tensorflow.arm64/bazel-bin/tensorflow/lite/c -L$HOME/workspace/tensorflow.arm32/bazel-bin/tensorflow/lite/c"
+    export CGO_CFLAGS="-I$HOME/workspace/tensorflow.arm64/ -I$HOME/workspace/tensorflow.arm32/"
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/workspace/tensorflow.arm64/bazel-bin/tensorflow/lite/c:$HOME/workspace/tensorflow.arm32/bazel-bin/tensorflow/lite/c
+
+    SDK_HOME="$HOME/Android/Sdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/linux-x86_64"
+    ANDROID_CC="$SDK_HOME/bin/aarch64-linux-android29-clang -Wl,-rpath-link,$SDK_HOME/sysroot/usr/lib/aarch64-linux-android/29"
+    ANDROID_CXX="$SDK_HOME/bin/aarch64-linux-android29-clang++ -Wl,-rpath-link,$SDK_HOME/sysroot/usr/lib/aarch64-linux-android/29"
+    ANDROID_ARCH="arm64"
+    CGO_ENABLED=1 GOOS=android GOARCH=$ANDROID_ARCH GOARM=7 CC=$ANDROID_CC CXX=$ANDROID_CXX go build main.go
+    ```
+  - **gomobile bind**
+    ```sh
+    go get golang.org/x/mobile/bind
+    gomobile bind -v -o export.aar -target="android/$ANDROID_ARCH" testTflite/runTest
     ```
 ***
 
