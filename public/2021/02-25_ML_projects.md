@@ -1,6 +1,32 @@
 # ___2021 - 02 - 25 Machine Learning Projects___
 ***
 
+# 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2021 - 02 - 25 Machine Learning Projects___](#2021-02-25-machine-learning-projects)
+  - [目录](#目录)
+  - [图像超分](#图像超分)
+  - [OCR](#ocr)
+    - [图神经网络](#图神经网络)
+  - [Attention](#attention)
+  - [BERT](#bert)
+    - [单词嵌入向量 Word embeddings](#单词嵌入向量-word-embeddings)
+    - [Word2Vec](#word2vec)
+  - [BiT](#bit)
+  - [Transformer](#transformer)
+    - [位置编码 Positional encoding](#位置编码-positional-encoding)
+    - [Scaled dot product attention](#scaled-dot-product-attention)
+    - [多头注意力 Multi-head attention](#多头注意力-multi-head-attention)
+  - [Visualizing](#visualizing)
+    - [VIT visualize](#vit-visualize)
+    - [tf keras vis](#tf-keras-vis)
+    - [Visualizing Data using the Embedding Projector in TensorBoard](#visualizing-data-using-the-embedding-projector-in-tensorboard)
+  - [Image segmentation](#image-segmentation)
+
+  <!-- /TOC -->
+***
+
 # 图像超分
   - [Github idealo/image-super-resolution](https://github.com/idealo/image-super-resolution)
     ```py

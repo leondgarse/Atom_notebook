@@ -2,6 +2,55 @@
 ***
 
 # 目录
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2021 - 01 - 25 Tensorflow 2.4.0___](#2021-01-25-tensorflow-240)
+  - [目录](#目录)
+  - [Activations](#activations)
+    - [Tensorflow activations](#tensorflow-activations)
+    - [Plot activations](#plot-activations)
+    - [Acon](#acon)
+    - [Replace PReLU with DepthwiseConv2D](#replace-prelu-with-depthwiseconv2d)
+  - [Weight decay](#weight-decay)
+    - [MXNet SGD and tfa SGDW](#mxnet-sgd-and-tfa-sgdw)
+    - [L2 Regularization and Weight Decay](#l2-regularization-and-weight-decay)
+    - [SGD with momentum](#sgd-with-momentum)
+    - [Keras Model test](#keras-model-test)
+    - [MXNet model test](#mxnet-model-test)
+    - [Modify model with L2 regularizer](#modify-model-with-l2-regularizer)
+    - [Optimizers with weight decay test](#optimizers-with-weight-decay-test)
+  - [Float16 mixed precision](#float16-mixed-precision)
+    - [Basic test](#basic-test)
+    - [Convert float32 model to mixed float16](#convert-float32-model-to-mixed-float16)
+    - [Pytorch float16](#pytorch-float16)
+  - [XLA Accelerated Linear Algebra](#xla-accelerated-linear-algebra)
+  - [Auto Tuner](#auto-tuner)
+    - [Keras Tuner](#keras-tuner)
+    - [TensorBoard HParams](#tensorboard-hparams)
+  - [Tensorflow Horovod and Distribute](#tensorflow-horovod-and-distribute)
+    - [Multi GPU](#multi-gpu)
+    - [Install horovod](#install-horovod)
+    - [Tensorflow horovod](#tensorflow-horovod)
+    - [Tensorflow distribute](#tensorflow-distribute)
+    - [Test results](#test-results)
+  - [Datasets](#datasets)
+    - [Data Augmentation](#data-augmentation)
+    - [dataset cache](#dataset-cache)
+    - [datasets interleave](#datasets-interleave)
+  - [SAM](#sam)
+  - [Stochastic Depth](#stochastic-depth)
+  - [Tape](#tape)
+  - [Data augment](#data-augment)
+    - [Tensorflow image random](#tensorflow-image-random)
+    - [RandAugment](#randaugment)
+    - [AutoAugment](#autoaugment)
+    - [mixup](#mixup)
+    - [Cutout](#cutout)
+  - [Fuse Conv2D and BatchNorm](#fuse-conv2d-and-batchnorm)
+    - [Basic fuse layer test](#basic-fuse-layer-test)
+    - [Fuse layers in model](#fuse-layers-in-model)
+
+  <!-- /TOC -->
 ***
 
 # Activations
