@@ -145,44 +145,68 @@
   ```
 ***
 
-# Flag
-  ```go
-  package main
-
-  import (
+# Flag and command line arguments
+  - **os.Args**
+    ```go
+    package main
+    import (
+      "os"
       "fmt"
-      "flag"
-  )
+      "strconv"
+    )
 
-  func main() {
-      ss := flag.String("string", "hello", "String value")
-      ii := flag.Int("int", 1234, "Int value")
-      bb := flag.Bool("bool", false, "Bool value")
-      ee := flag.String("ee", "", "Essential string value")
-      flag.Parse()
-      if *ee == "" {
-          flag.Usage()
-          return
-      }   
+    func main() {
+      fmt.Println("All args:", os.Args)
+      int_arg := 2
+      if len(os.Args) > 1 {
+        int_arg, _ = strconv.Atoi(os.Args[1])
+      }
+      fmt.Println("int_arg:", int_arg)
+    }
+    ```
+    ```sh
+    $ go run test_args.go 45
+    # All args: [/tmp/go-build3787173901/b001/exe/test_args 45]
+    # int_arg: 45
+    ```
+  - **flag**
+    ```go
+    package main
 
-      fmt.Println(*ss, *ii, *bb, *ee)
-  }
-  ```
-  ```sh
-  $ go run test_flag.go
-  # Usage of /tmp/go-build853351541/b001/exe/test_flag:
-  #   -bool
-  #     	Bool value
-  #   -ee string
-  #     	Essential string value
-  #   -int int
-  #     	Int value (default 1234)
-  #   -string string
-  #     	String value (default "hello")
+    import (
+        "fmt"
+        "flag"
+    )
 
-  $ go run test_flag.go -ee aa -bool -int 42 -string world
-  # world 42 true aa
-  ```
+    func main() {
+        ss := flag.String("string", "hello", "String value")
+        ii := flag.Int("int", 1234, "Int value")
+        bb := flag.Bool("bool", false, "Bool value")
+        ee := flag.String("ee", "", "Essential string value")
+        flag.Parse()
+        if *ee == "" {
+            flag.Usage()
+            return
+        }   
+
+        fmt.Println(*ss, *ii, *bb, *ee)
+    }
+    ```
+    ```sh
+    $ go run test_flag.go
+    # Usage of /tmp/go-build853351541/b001/exe/test_flag:
+    #   -bool
+    #     	Bool value
+    #   -ee string
+    #     	Essential string value
+    #   -int int
+    #     	Int value (default 1234)
+    #   -string string
+    #     	String value (default "hello")
+
+    $ go run test_flag.go -ee aa -bool -int 42 -string world
+    # world 42 true aa
+    ```
 ***
 
 # Binary 二进制文件读写

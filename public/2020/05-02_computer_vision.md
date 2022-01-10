@@ -45,6 +45,7 @@
   	- [亮度检测](#亮度检测)
   	- [色偏检测](#色偏检测)
   	- [失焦检测](#失焦检测)
+  - [Affine Transform](#affine-transform)
 
   <!-- /TOC -->
 ***
@@ -1054,18 +1055,21 @@
   video_test(func=OptflowTest())
   ```
 ## Track 物体跟踪
+  ```sh
+  pip install opencv-contrib-python
+  ```
   ```py
   class ObjectTrack:
-      def __init__(self, tracker='kcf', title="Opencv"):
+      def __init__(self, tracker='csrt', title="Opencv"):
           self.title = title
           OPENCV_OBJECT_TRACKERS = {
-              "csrt": cv2.TrackerCSRT_create,
               "kcf": cv2.TrackerKCF_create,
-              "boosting": cv2.TrackerBoosting_create,
-              "mil": cv2.TrackerMIL_create,
-              "tld": cv2.TrackerTLD_create,
-              "medianflow": cv2.TrackerMedianFlow_create,
-              "mosse": cv2.TrackerMOSSE_create
+              "csrt": cv2.TrackerCSRT_create,
+              # "boosting": cv2.TrackerBoosting_create,
+              # "mil": cv2.TrackerMIL_create,
+              # "tld": cv2.TrackerTLD_create,
+              # "medianflow": cv2.TrackerMedianFlow_create,
+              # "mosse": cv2.TrackerMOSSE_create
           }
           self.tracker = OPENCV_OBJECT_TRACKERS[tracker]()
           self.initBB = None
@@ -2083,5 +2087,333 @@
               cv2.line(frame, (left, down), (left, up), color, 3, cv2.LINE_AA)
 
   videos_test(func=FaceDetectViewMatch(), src=[0, 4])
+  ```
+***
+
+# Affine Transform
+## Image rotate
+  ```py
+  @tf.function
+  def image_rotation(imm, degree):
+      if degree == 90:
+          return np.transpose(imm[::-1, :, :], (1, 0, 2))
+      if degree == 180:
+          return imm[::-1, ::-1, :]
+      if degree == 270:
+          return np.transpose(imm[:, ::-1, :], (1, 0, 2))
+      return imm
+
+  plt.imshow(image_rotation(imm, 90))
+  plt.imshow(image_rotation(imm, 180))
+  plt.imshow(image_rotation(imm, 270))
+  ```
+  ```py
+  mm3 = keras.Sequential([
+      keras.layers.Input((None, None, 3)),
+      keras.preprocessing.image.apply_affine_transform,
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
+  tflite_model = converter.convert()
+  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
+
+  inputs = keras.layers.Input([None, None, 3])
+  nn = keras.preprocessing.image.apply_affine_transform(inputs)
+  mm = keras.models.Model(inputs, nn)
+  ```
+  ```py
+  @tf.function
+  def images_funcs(image, trans, type):
+      ret = image
+      type = type[0]
+      if type == 0:
+          # Resize
+          ret = keras.layers.experimental.preprocessing.Resizing(trans[0], trans[1])
+      elif type == 1:
+          # Rotate
+          angle = trans[0]
+          if angle == 90:
+              ret = image[::-1, :, :].transpose(1, 0, 2)
+          elif angle == 180:
+              ret = imm[::-1, ::-1, :]
+          elif angle == 270:
+              ret = imm[:, ::-1, :].transpose(1, 0, 2)
+      elif type == 2:
+          # Affine
+          ret = keras.preprocessing.image.apply_affine_transform(image, *trans)
+      return ret
+
+  image_input = keras.layers.Input([None, None, 3])
+  trans_input = keras.layers.Input([6])
+  type_input = keras.layers.Input(None)
+  ```
+  ```py
+  def transform_matrix_offset_center(matrix, x, y):
+      o_x = float(x) / 2 + 0.5
+      o_y = float(y) / 2 + 0.5
+      offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]])
+      reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]])
+      transform_matrix = np.dot(np.dot(offset_matrix, matrix), reset_matrix)
+      return transform_matrix
+
+
+  theta = tform.rotation / np.pi * 180
+  _tx, _ty = tform.translation
+  tx = np.cos(theta) * _tx + np.sin(theta) * _ty
+  ty = np.cos(theta) * _ty - np.sin(theta) * _tx
+  # tx, ty = _tx, _ty
+  zx, zy = tform.scale, tform.scale
+  transform_matrix = None
+
+  if theta != 0:
+      theta = np.deg2rad(theta)
+      rotation_matrix = np.array([[np.cos(theta), -np.sin(theta), 0],
+                                  [np.sin(theta), np.cos(theta), 0],
+                                  [0, 0, 1]])
+      transform_matrix = rotation_matrix
+
+  if tx != 0 or ty != 0:
+      # np.cos(theta), -np.sin(theta), np.cos(theta) * tx - np.sin(theta) * ty
+      # np.sin(theta), np.cos(theta), np.sin(theta) * tx + np.cos(theta) * ty
+      # 0, 0, 1
+      shift_matrix = np.array([[1, 0, tx],
+                               [0, 1, ty],
+                               [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = shift_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, shift_matrix)
+
+  if shear != 0:
+      shear = np.deg2rad(shear)
+      shear_matrix = np.array([[1, -np.sin(shear), 0],
+                               [0, np.cos(shear), 0],
+                               [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = shear_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, shear_matrix)
+
+  if zx != 1 or zy != 1:
+      # np.cos(theta) * zx, -np.sin(theta) * zy, np.cos(theta) * tx - np.sin(theta) * ty
+      # np.sin(theta) * zx, np.cos(theta) * zy, np.sin(theta) * tx + np.cos(theta) * ty
+      # 0, 0, 1
+      zoom_matrix = np.array([[zx, 0, 0],
+                              [0, zy, 0],
+                              [0, 0, 1]])
+      if transform_matrix is None:
+          transform_matrix = zoom_matrix
+      else:
+          transform_matrix = np.dot(transform_matrix, zoom_matrix)
+
+  if transform_matrix is not None:
+      h, w = x.shape[row_axis], x.shape[col_axis]
+      transform_matrix = transform_matrix_offset_center(
+          transform_matrix, h, w)
+      x = np.rollaxis(x, channel_axis, 0)
+      final_affine_matrix = transform_matrix[:2, :2]
+      final_offset = transform_matrix[:2, 2]
+
+      channel_images = [ndimage.interpolation.affine_transform(
+          x_channel,
+          final_affine_matrix,
+          final_offset,
+          order=order,
+          mode=fill_mode,
+          cval=cval) for x_channel in x]
+      x = np.stack(channel_images, axis=0)
+      x = np.rollaxis(x, 0, channel_axis + 1)
+  return x
+  ```
+## Face align landmarks
+  ```py
+  from skimage.transform import SimilarityTransform
+  import cv2
+
+  def face_align_landmarks(img, landmarks, image_size=(112, 112)):
+      ret = []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          src = np.array(
+              [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]],
+              dtype=np.float32,
+          )
+
+          dst = landmark.astype(np.float32)
+          tform = SimilarityTransform()
+          tform.estimate(dst, src)
+          M = tform.params[0:2, :]
+          ret.append(cv2.warpAffine(img, M, (image_size[1], image_size[0]), borderValue=0.0))
+
+      return np.array(ret)
+  ```
+  ```py
+  from skimage import transform
+  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', show=True):
+      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
+      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
+      ret, nns = [], []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          tform.estimate(landmark, src)
+          ret.append(transform.warp(img, tform.inverse, output_shape=image_size))
+      ret = (np.array(ret) * 255).astype(np.uint8)
+
+      return (np.array(ret) * 255).astype(np.uint8)
+
+  def face_align_landmarks_sk(img, landmarks, image_size=(112, 112), method='similar', order=1, show=True):
+      tform = transform.AffineTransform() if method == 'affine' else transform.SimilarityTransform()
+      src = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.729904, 92.2041]], dtype=np.float32)
+      ret, nns = [], []
+      for landmark in landmarks:
+          # landmark = np.array(landmark).reshape(2, 5)[::-1].T
+          tform.estimate(src, landmark)
+          ret.append(transform.warp(img, tform, output_shape=image_size, order=order))
+          if show:
+              nns.append(tform.inverse(landmark))
+
+      ret = (np.array(ret) * 255).astype(np.uint8)
+      if show:
+          plt.figure()
+          plt.imshow(np.hstack(ret))
+          for id, ii in enumerate(nns):
+              plt.scatter(ii[:, 0] + image_size[0] * id, ii[:, 1], c='r', s=8)
+      return ret
+  ```
+  ```py
+  mm3 = keras.Sequential([
+      keras.layers.Input((None, None, 3)),
+      keras.preprocessing.image.apply_affine_transform,
+      mm,
+      keras.layers.Lambda(tf.nn.l2_normalize, name='norm_embedding', arguments={'axis': 1})
+  ])
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(mm3)
+  tflite_model = converter.convert()
+  open('./norm_model_tf2.tflite', 'wb').write(tflite_model)
+
+  inputs = keras.layers.Input([None, None, 3])
+  nn = keras.preprocessing.image.apply_affine_transform(inputs)
+  mm = keras.models.Model(inputs, nn)
+  ```
+## ndimage affine_transform
+  - 对于 `skimage.transform` 生成的转换矩阵，`ndimage.interpolation.affine_transform` 在使用时，需要将横纵坐标上的变幻对调
+  - **变换 tform.parameters**
+    - `rotation` 改为反向旋转
+    - `translation` 对调 `xy` 变换值
+    ```py
+    from scipy import ndimage
+
+    tform = transform.SimilarityTransform()
+    tform.estimate(src, pps[0])
+
+    # tt = transform.SimilarityTransform(rotation=tform.rotation*-1, scale=tform.scale, translation=tform.translation[::-1]).params
+    tt = tform.params.copy()
+    tt[0, -1], tt[1, -1] = tt[1, -1], tt[0, -1]
+    tt[0, 1], tt[1, 0] = -1 * tt[0, 1], -1 * tt[1, 0]
+    channel_images = [ndimage.interpolation.affine_transform(
+        imm[:, :, ii],
+        tt,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for ii in range(3)]
+    x = np.stack(channel_images, axis=-1)
+    plt.imshow(x)
+    ```
+  - **变换时图像转置** 使用原值的 `tform.parameters`，转置图像的宽高
+    ```py
+    from scipy import ndimage
+
+    tform = transform.SimilarityTransform()
+    tform.estimate(src, pps[0])
+
+    channel_images = [ndimage.interpolation.affine_transform(
+        imm[:, :, ii].T,
+        tform.params,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for ii in range(3)]
+    x = np.stack(channel_images, axis=-1)
+    x = np.transpose(x, (1, 0, 2))
+    plt.imshow(x)
+    ```
+  - **生成转置的变换矩阵** `skimage.transform` `estimate` 的参数值对调 `xy` 坐标值
+    ```py
+    tform.estimate(src[:, ::-1], pps[0][:, ::-1])
+    channel_axis = 2
+    x = np.rollaxis(imm, channel_axis, 0)  # (976, 1920, 3) --> (3, 976, 1920)
+    channel_images = [ndimage.interpolation.affine_transform(
+        x_channel,
+        tform.params,
+        output_shape=(112, 112),
+        order=1,
+        mode='nearest',
+        cval=0) for x_channel in x]
+    x = np.stack(channel_images, axis=0)  # (3, 112, 112)
+    x = np.rollaxis(x, 0, channel_axis + 1) # (112, 112, 3)
+    plt.imshow(x)
+    ```
+## affine_transform 图像缩放
+  ```py
+  scale = 3
+  tt = transform.SimilarityTransform(scale=scale, translation=[0, 0]).params
+  channel_images = [ndimage.interpolation.affine_transform(
+      imm[:, :, ii],
+      tt,
+      output_shape=(imm.shape[0] // scale, imm.shape[1] // scale),
+      order=1,
+      mode='nearest',
+      cval=0) for ii in range(3)]
+  x = np.stack(channel_images, axis=-1)
+  plt.imshow(x)
+  ```
+## affine_transform 图像旋转
+  ```py
+  theta = 90 # [90, 180, 270]
+  rotation = theta / 180 * np.pi
+  # translation=[imm.shape[0] * abs(cos(rotation)), imm.shape[1] * abs(sin(rotation))]
+  if theta == 90:
+      translation=[imm.shape[0], 0]
+      output_shape = imm.shape[:2][::-1]
+  elif theta == 180:
+      translation=imm.shape[:2]
+      output_shape = imm.shape[:2]
+  elif theta == 270:
+      translation=[0, imm.shape[1]]
+      output_shape = imm.shape[:2][::-1]
+
+  tt = transform.SimilarityTransform(rotation=rotation, translation=translation).params
+  channel_images = [ndimage.interpolation.affine_transform(
+      imm[:, :, ii],
+      tt,
+      output_shape=output_shape,
+      order=1,
+      mode='nearest',
+      cval=0) for ii in range(3)]
+  x = np.stack(channel_images, axis=-1)
+  plt.imshow(x)
+  ```
+## WarpAffine TF function
+  ```py
+  class WarpAffine(keras.layers.Layer):
+      def __call__(self, imm, tformP, output_shape):
+          rets = []
+          for xx in imm:
+              x = tf.transpose(xx, (2, 0, 1))
+              channel_images = [ndimage.interpolation.affine_transform(
+                  x_channel,
+                  tformP,
+                  output_shape=output_shape,
+                  order=1,
+                  mode='nearest',
+                  cval=0) for x_channel in x]
+              x = tf.stack(channel_images, axis=0)
+              x = tf.transpose(x, (1, 2, 0))
+              rets.append(x)
+          return rets
   ```
 ***

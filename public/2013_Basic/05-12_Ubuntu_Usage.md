@@ -132,6 +132,10 @@
     apt list | grep -i residual-config
     aptitude -F %p search '~c' | sudo xargs dpkg -P
     ```
+  - `The following signatures couldn't be verified because the public key is not available: NO_PUBKEY EB3E94ADBE1229CF`
+    ```sh
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
+    ```
   - 404 error while apt-get install libssl-dev
     ```c
     check if
@@ -1806,6 +1810,7 @@
     sudo dpkg -i stardict-common_3.0.1-9.4_all.deb
     sudo dpkg -i stardict-gnome_3.0.1-9.4_amd64.deb
     sudo dpkg -i stardict_3.0.1-9.4_all.deb
+    sudo apt --fix-broken install
     ```
   - Dictionary directory
     ```shell
@@ -1919,6 +1924,8 @@
     - [User Themes - GNOME Shell Extensions](https://extensions.gnome.org/extension/19/user-themes/)
     - 点击切换按钮，安装 `Gnome Shell extension`
     - 重新打开 `gnome-tweak-tool` -> `Apperance` -> `Shell`
+  - **隐藏桌面图标**
+    - `Extensions` -> `Desktop icons`
   - **隐藏系统顶栏 top bar**
     - 安装 `GNOME Shell Extensions` 后，打开 [Hide Top Bar - GNOME Shell Extensions](https://extensions.gnome.org/extension/545/hide-top-bar/)
     - 点击切换按钮，安装 `Hide Top Bar`
@@ -2326,7 +2333,7 @@
     sudo ln -s /usr/bin/python3 /usr/bin/python
 
     sudo apt-get install \
-    aptitude aria2 audacious axel cairo-dock calibre chrome-gnome-shell cmake cscope curl docker.io easystroke expect filezilla flat-remix flat-remix-gnome gconf2 gnome-tweak-tool golang-go google-chrome-stable \
+    apache2 aptitude aria2 audacious axel cairo-dock calibre chrome-gnome-shell cmake cscope curl docker.io easystroke expect filezilla flat-remix flat-remix-gnome gconf2 gnome-tweak-tool golang-go google-chrome-stable \
     iptux ibus-pinyin intltool java-common libssl-dev locate minicom mp3info mysql-client mysql-common mysql-server net-tools nfs-common nfs-kernel-server \
     p7zip-full pidgin privoxy proxychains rename rsync samba seahorse shutter supervisor synaptic teamviewer telnet testdisk tftp tftpd tmux tree \
     unrar unzip virtualbox virtualbox-ext-pack virtualbox-guest-additions-iso vlc wget wireshark zip
@@ -2362,8 +2369,8 @@
 
     cp Atom_notebook/ ~/ -rf
     cp Calibre\ Library/ local_bin/ practice_code/ Wallpapers/ ~/ -rf
-    cp .atom/ .bashrc .easystroke/ .gitconfig* .icons/ .mozilla/ .ssh/ .thunderbird/ .tmux .tmux.conf .vimrc .vim ~/ -rf
-    cp .local/share/audacious/ ~/.local/share/ -rf
+    cp .atom/ .bashrc .easystroke/ .gitconfig* .icons/ .mozilla/ .ssh/ .themes .thunderbird/ .tmux .tmux.conf .vimrc .vim ~/ -rf
+    cp .local/share/audacious/ .local/share/icons/ ~/.local/share/ -rf
     mkdir ~/.ipython/profile_default/ -p && cp .ipython/profile_default/ipython_* ~/.ipython/profile_default/
 
     cd .config

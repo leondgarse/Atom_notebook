@@ -516,16 +516,6 @@
   | TT_r50_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e4_cos16_basic_agedb_30_epoch_46_batch_4000_0.984167_IJBC_11                                                     | 0.894718 | 0.945799 | 0.963798 | 0.975814 | 0.984456 | 0.990387 |
   | TT_se_r50_SD_swish_E_arc_emb512_dr04_sgd_l2_5e4_bs1024_ms1m_cleaned_bnm09_bne1e4_cos16_basic_agedb_30_epoch_49_batch_4000_0.984500_IJBC_11                                       | 0.907757 | 0.950759 | 0.966252 | 0.976684 | 0.985172 | 0.990489 |
 ## AotNet
-  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_DC_swish_E_arc_emb512_dr02_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50_14_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50v2_14_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50_expansion1_preact_true_strides2_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50v2_expansion1_preact_false_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50v2_expansion1_se_SD_swish_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50v2_expansion1_se_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50v2_expansion1_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e5_cos16_float16_
-  TT_basic_aotnet50_SD_relu_E_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_float16_
   ```py
   import json
   hist_path = "checkpoints/"
@@ -1023,90 +1013,25 @@
   aa = glob('checkpoints/TT_effv2_*.json')
   _ = choose_accuracy(aa)
   ```
-***
-
-# AutoAugment and RandAugment
-## Tensorflow image random
+  - **AdamW**
   ```py
-  import data
-  ds, steps_per_epoch = data.prepare_dataset('/datasets/faces_casia_112x112_folders/', random_status=0)
-  imms, labels = ds.as_numpy_iterator().next()
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [3, 1, 3, 13, 33]
+  pp["skip_epochs"] = 10
+  names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos16", names=names, **pp)
+  pp["axes"] = axes
 
-  cc = (imms + 1) / 2
-  plt.imshow(np.vstack([np.hstack(cc[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(cc.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos49", **pp)
 
-  img = cc[4] * 255
-  random_status = 3
-  total = 10
-  aa = np.vstack([
-      np.hstack([tf.image.adjust_brightness(img, ii) for ii in arange(-12.75 * random_status, 12.75 * random_status, 12.75 * random_status * 2 / total)]),
-      np.hstack([tf.image.adjust_contrast(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
-      np.hstack([tf.image.adjust_saturation(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
-      np.hstack([tf.image.adjust_hue(img, ii) for ii in arange(1 - 0.02 * random_status, 1 + 0.02 * random_status, 0.02 * random_status * 2 / total)[:total]]),
-      np.hstack([tf.image.adjust_jpeg_quality(img / 255, ii) * 255 for ii in arange(80 - random_status * 5, 80 + random_status * 5, random_status * 5 * 2 / total)]),
-  ])
-  plt.imshow(aa / 255)
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-## RandAugment
-  - [Github tensorflow/models augment.py](https://github.com/tensorflow/models/blob/HEAD/official/vision/image_classification/augment.py)
-  ```py
-  sys.path.append("/home/leondgarse/workspace/tensorflow_models/official/vision/image_classification")
-  import augment
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd1e1lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_float16_2_hist.json", fig_label="F, point_wise 512, wd 1e-3, dr 0.2, adamw cos16_epoch", **pp)
 
-  aa = augment.RandAugment(magnitude=5)
-  # ['AutoContrast', 'Equalize', 'Invert', 'Rotate', 'Posterize', 'Solarize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Cutout', 'SolarizeAdd']
-  aa.available_ops = ['AutoContrast', 'Equalize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
-  dd = np.stack([aa.distort(tf.image.random_flip_left_right(tf.convert_to_tensor(ii * 255))) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
+  pp["epochs"] = [1, 3, 13, 33]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos49_epoch", init_epoch=3, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos16_epoch", init_epoch=3, **pp)
 
-  enlarge = 2
-  aa = augment.RandAugment(magnitude=5 * enlarge)
-  aa.available_ops = ['AutoContrast', 'Equalize', 'Posterize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
-  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-## AutoAugment
-  ```py
-  policy = [
-      [('Equalize', 0.8, 1), ('ShearY', 0.8, 4)],
-      [('Color', 0.4, 9), ('Equalize', 0.6, 3)],
-      [('Color', 0.2, 0), ('Equalize', 0.8, 8)],
-      [('Color', 0.6, 1), ('Equalize', 1.0, 2)],
-      [('Equalize', 1.0, 9), ('ShearY', 0.6, 3)],
-      [('Color', 0.4, 7), ('Equalize', 0.6, 0)],
-      [('Posterize', 0.4, 6), ('AutoContrast', 0.4, 7)],
-      [('ShearY', 0.8, 0), ('Color', 0.6, 4)],
-      [('Equalize', 0.8, 4), ('Equalize', 0.0, 8)],
-      [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
-  ]
-  aa = augment.AutoAugment()
-  aa.policies = policy
-  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
-  ```
-  ```py
-  import autoaugment
-  policy = autoaugment.ImageNetPolicy()
-  policy_func = lambda img: np.array(policy(tf.keras.preprocessing.image.array_to_img(img)), dtype=np.float32)
-
-  dd = np.stack([policy_func(tf.convert_to_tensor(ii)) / 255 for ii in cc])
-  fig = plt.figure()
-  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
-  plt.axis('off')
-  plt.tight_layout()
   ```
 ***
 
@@ -1343,154 +1268,10 @@
       if len(os.listdir(os.path.join(PATH, ii))) == 0:
           os.removedirs(os.path.join(PATH, ii))
   ```
-# MLP
-  ```py
-  sys.path.append('../Keras_mlp/')
-  import mlp_mixer
-  bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=512, dropout=0.4, classifier_activation=None)
+***
 
-  embedding = keras.layers.BatchNormalization()(bb.outputs[0])
-  embedding_fp32 = keras.layers.Activation("linear", dtype="float32", name="embedding")(embedding)
-  basic_model = keras.models.Model(bb.inputs[0], embedding_fp32)
-
-  bb = mlp_mixer.MlpMixerModel_S16(input_shape=(112, 112, 3), num_classes=0)
-  out = keras.layers.Reshape((7, 7, 512))(bb.outputs[0])
-  basic_model = keras.models.Model(bb.inputs[0], out)
-  basic_model = models.buildin_models(basic_model, output_layer='GDC')
-  ```
-  ```py
-  sys.path.append('../Keras_mlp/')
-  import res_mlp
-  bb = res_mlp.ResMLP(input_shape=(112, 112, 3), num_blocks=8, patch_size=16, hidden_dim=512, mlp_dim=512 * 4, num_classes=512, dropout=0.4, classifier_activation=None)
-  ```
-# mixup
-  - [mixup: BEYOND EMPIRICAL RISK MINIMIZATION](https://arxiv.org/pdf/1710.09412.pdf)
-    - For mixup, we find that α ∈ [0.1, 0.4] leads to improved performance over ERM, whereas for large α, mixup leads to underfitting.
-    - We also find that models with higher capacities and/or longer training runs are the ones to benefit the most from mixup.
-    - For example, when trained for 90 epochs, the mixup variants of ResNet-101 and ResNeXt-101 obtain a greater improvement (0.5% to 0.6%) over their ERM analogues than the gain of smaller models such as ResNet-50 (0.2%).
-    - When trained for 200 epochs, the top-1 error of the mixup variant of ResNet-50 is further reduced by 1.2% compared to the 90 epoch run, whereas its ERM analogue stays the same.
-  ```py
-  DEFAULT_ALPHA = 0.4
-  def sample_beta_distribution(size, concentration_0=DEFAULT_ALPHA, concentration_1=DEFAULT_ALPHA):
-      gamma_1_sample = tf.random.gamma(shape=[size], alpha=concentration_1)
-      gamma_2_sample = tf.random.gamma(shape=[size], alpha=concentration_0)
-      return gamma_1_sample / (gamma_1_sample + gamma_2_sample)
-
-  def mixup(image, label, alpha=DEFAULT_ALPHA):
-      """Applies Mixup regularization to a batch of images and labels.
-
-      [1] Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz
-        Mixup: Beyond Empirical Risk Minimization.
-        ICLR'18, https://arxiv.org/abs/1710.09412
-
-      Arguments:
-        batch_size: The input batch size for images and labels.
-        alpha: Float that controls the strength of Mixup regularization.
-        image: a Tensor of batched images.
-        label: a Tensor of batch labels.
-
-      Returns:
-        A new dict of features with updated images and labels with the same
-        dimensions as the input with Mixup regularization applied.
-      """
-      # mix_weight = tfp.distributions.Beta(alpha, alpha).sample([batch_size, 1])
-      batch_size = tf.shape(image)[0]
-      mix_weight = sample_beta_distribution(batch_size, alpha, alpha)
-      mix_weight = tf.maximum(mix_weight, 1. - mix_weight)
-
-      # Regard values with `> 0.9` as no mixup, this probability is near `1 - alpha`
-      # alpha: no_mixup --> {0.2: 0.6714, 0.4: 0.47885, 0.6: 0.35132, 0.8: 0.26354, 1.0: 0.19931}
-      mix_weight = tf.where(mix_weight > 0.9, tf.ones_like(mix_weight), mix_weight)
-
-      label_mix_weight = tf.cast(tf.expand_dims(mix_weight, -1), "float32")
-      img_mix_weight = tf.cast(tf.reshape(mix_weight, [batch_size, 1, 1, 1]), image.dtype)
-
-      shuffle_index = tf.random.shuffle(tf.range(batch_size))
-      image = image * img_mix_weight + tf.gather(image, shuffle_index) * (1. - img_mix_weight)
-      label = tf.cast(label, "float32")
-      label = label * label_mix_weight + tf.gather(label, shuffle_index) * (1 - label_mix_weight)
-      return image, label
-
-  import tensorflow_datasets as tfds
-  preprocessing = lambda data: (tf.cast(data["image"], tf.float32) / 255.0, tf.one_hot(data["label"], depth=10))
-  dataset = tfds.load("cifar10", split="train").map(preprocessing).batch(64)
-  image, label = dataset.as_numpy_iterator().next()
-  aa, bb = mixup(image, label)
-  plt.imshow(np.vstack([np.hstack(aa[ii * 8: (ii + 1) * 8]) for ii in range(8)]))
-
-  cc = []
-  for alpha in np.arange(0, 1.2, 0.2):
-      aa = sample_beta_distribution(10000, alpha, alpha)
-      bb = tf.maximum(aa, 1 - aa).numpy()
-      name = "alpha {:.1f}".format(alpha)
-      print(name, dict(zip(*np.histogram(bb, bins=5)[::-1])))
-      cc.append((bb > 0.9).sum() / bb.shape[0])
-      # plt.plot(np.histogram(bb, bins=50)[0], label=name)
-      plt.hist(bb, bins=50, alpha=0.5, label=name)
-  plt.legend()
-  plt.xlim(0.5, 1)
-  plt.tight_layout()
-  # alpha 0.0 {0.0: 0, 0.2: 0, 0.4: 10000, 0.6: 0, 0.8: 0}
-  # alpha 0.2 {0.5001278: 663, 0.60010225: 710, 0.7000767: 814, 0.8000511: 1130, 0.90002555: 6683}
-  # alpha 0.4 {0.50006217: 1051, 0.60004973: 1166, 0.7000373: 1317, 0.80002487: 1647, 0.90001243: 4819}
-  # alpha 0.6 {0.5001339: 1521, 0.60010684: 1522, 0.70007986: 1613, 0.8000528: 1905, 0.90002584: 3439}
-  # alpha 0.8 {0.5001678: 1736, 0.6001339: 1779, 0.7001: 1848, 0.8000661: 2043, 0.9000322: 2594}
-  # alpha 1.0 {0.500016: 1959, 0.5999865: 2043, 0.699957: 2079, 0.7999276: 1973, 0.8998981: 1946}
-
-  print(dict(zip(np.arange(0, 1.2, 0.2), cc)))
-  # {0.0: 0.0, 0.2: 0.6714, 0.4: 0.47885, 0.6000000000000001: 0.35132, 0.8: 0.26354, 1.0: 0.19931}
-  ```
-# Cutout
-  ```py
-  def cutout(image: tf.Tensor, pad_size: int, replace: int = 0) -> tf.Tensor:
-      """Apply cutout (https://arxiv.org/abs/1708.04552) to image.
-
-      This operation applies a (2*pad_size x 2*pad_size) mask of zeros to
-      a random location within `img`. The pixel values filled in will be of the
-      value `replace`. The located where the mask will be applied is randomly
-      chosen uniformly over the whole image.
-
-      Args:
-        image: An image Tensor of type uint8.
-        pad_size: Specifies how big the zero mask that will be generated is that is
-          applied to the image. The mask will be of size (2*pad_size x 2*pad_size).
-        replace: What pixel value to fill in the image in the area that has the
-          cutout mask applied to it.
-
-      Returns:
-        An image Tensor that is of type uint8.
-      """
-      image_height = tf.shape(image)[0]
-      image_width = tf.shape(image)[1]
-
-      # Sample the center location in the image where the zero mask will be applied.
-      cutout_center_height = tf.random.uniform(shape=[], minval=0, maxval=image_height, dtype=tf.int32)
-
-      cutout_center_width = tf.random.uniform(shape=[], minval=0, maxval=image_width, dtype=tf.int32)
-
-      lower_pad = tf.maximum(0, cutout_center_height - pad_size)
-      upper_pad = tf.maximum(0, image_height - cutout_center_height - pad_size)
-      left_pad = tf.maximum(0, cutout_center_width - pad_size)
-      right_pad = tf.maximum(0, image_width - cutout_center_width - pad_size)
-
-      cutout_shape = [image_height - (lower_pad + upper_pad), image_width - (left_pad + right_pad)]
-      padding_dims = [[lower_pad, upper_pad], [left_pad, right_pad]]
-      mask = tf.pad(tf.zeros(cutout_shape, dtype=image.dtype), padding_dims, constant_values=1)
-      mask = tf.expand_dims(mask, -1)
-      mask = tf.tile(mask, [1, 1, 3])
-      image = tf.where(tf.equal(mask, 0), tf.ones_like(image, dtype=image.dtype) * replace, image)
-      return image
-
-  import skimage.data
-  imm = tf.convert_to_tensor(skimage.data.chelsea())
-  cutout_const = 80
-  cutout_cond = lambda img: cutout(img, cutout_const, 128) if np.random.uniform() > 0.5 else img
-  plt.imshow(np.hstack([cutout_cond(imm) / 255 for _ in range(5)]))
-  plt.axis("off")
-  plt.tight_layout()
-  ```
-  ![](images/cut_out.png)
-# insightface recognition
+# Insightface
+## Insightface recognition
   - **Save to jit and onnx model**
     ```py
     !cd insightface/recognition/arcface_torch
@@ -1687,7 +1468,7 @@
     | ms1mv3_arcface_r100_fp16_IJBC_11        | 0.909802 |  0.95306 | 0.968042 | 0.978831 | 0.985376 | 0.991665 | 0.995768 |
     | glint360k_cosface_r100_fp16_0.1_IJBC_11 | 0.905763 | 0.958787 | 0.973155 | 0.981899 | 0.987319 | 0.992381 | 0.996522 |
     | partial_fc_glint360k_r100_IJBC_11       | 0.877947 | 0.962622 | 0.974689 | 0.981643 |  0.98691 | 0.991768 | 0.995767 |
-# insightface scrfd
+## Insightface scrfd
   ```py
   !pip install -U insightface onnxruntime onnx-simplifier mmcv-full terminaltables pycocotools
 
@@ -2018,252 +1799,6 @@
   cc = Convert_IJB_to_bin("/datasets/IJB_release/", model_interf, score, subset="IJBC", pos_num=3000, neg_num=3000, min_pos=0.2, max_neg=0.5, nfold=10, pick_median=True, save_dest="IJBC.bin")
   cc.tid_embs = bb.tid_embs
   picked_images, picked_landmarks, picked_values = cc.convert()
-  ```
-***
-
-# Fuse Conv2D and BatchNorm
-## Basic fuse layer test
-  ```py
-  def fuse_conv_bn(conv_layer, bn_layer):
-      # BatchNormalization returns: gamma * (batch - self.moving_mean) / sqrt(self.moving_var + epsilon) + beta
-      # --> conv_w_new = gamma * conv_w / np.sqrt(var + epsilon)
-      # --> conv_b_new = gamma * (conv_b - mean) / sqrt(var + epsilon) + beta
-      batch_std = tf.sqrt(bn_layer.moving_variance + bn_layer.epsilon)
-      if isinstance(conv_layer, keras.layers.DepthwiseConv2D):
-          ww = tf.transpose(conv_layer.depthwise_kernel, [0, 1, 3, 2]) * bn_layer.gamma / batch_std
-          ww = tf.transpose(ww, [0, 1, 3, 2])
-      else:
-          ww = conv_layer.kernel * bn_layer.gamma / batch_std
-
-      if conv_layer.use_bias:
-          bias = bn_layer.gamma * (conv_layer.bias - bn_layer.moving_mean) / batch_std + bn_layer.beta
-      else:
-          bias = bn_layer.gamma * (-1 * bn_layer.moving_mean) / batch_std + bn_layer.beta
-
-      cc = conv_layer.get_config()
-      cc['use_bias'] = True
-      fused_conv_bn = conv_layer.__class__.from_config(cc)
-      fused_conv_bn.build(conv_layer.input_shape)
-      fused_conv_bn.set_weights([ww, bias])
-      return fused_conv_bn
-
-  input_shape = (224, 224, 3)
-  mm = keras.models.Sequential([
-      keras.layers.InputLayer(input_shape),
-      keras.layers.Conv2D(64, 7, use_bias=False),
-      keras.layers.BatchNormalization(axis=-1),
-  ])
-  # Random set BatchNormalization weights
-  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
-
-  inputs = tf.ones([1, * input_shape])
-  orign_out = mm(inputs)
-
-  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
-  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
-  fused_out = fused_conv_bn(inputs)
-  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
-  # allclose: True
-  ```
-  ```py
-  input_shape = (56, 56, 64)
-  mm = keras.models.Sequential([
-      keras.layers.InputLayer(input_shape),
-      keras.layers.DepthwiseConv2D((7, 7), use_bias=False),
-      keras.layers.BatchNormalization(axis=-1),
-  ])
-  # Random set BatchNormalization weights
-  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
-
-  inputs = tf.ones([1, * input_shape])
-  orign_out = mm(inputs)
-
-  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
-  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
-  fused_out = fused_conv_bn(inputs)
-  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
-  # allclose: True
-  ```
-## Fuse layers in model
-  ```py
-  import json
-
-  def convert_to_fused_conv_bn_model(model):
-      """ Check bn layers with conv layer input """
-      model_config = json.loads(model.to_json())
-      ee = {layer['name']: layer for layer in model_config['config']['layers']}
-      fuse_convs, fuse_bns = [], []
-      conv_names = ["Conv2D", "DepthwiseConv2D"]
-      for layer in model_config['config']['layers']:
-          if layer['class_name'] == "BatchNormalization" and len(layer["inbound_nodes"]) == 1:
-              input_node = layer["inbound_nodes"][0][0]
-              if isinstance(input_node, list) and ee.get(input_node[0], {"class_name": None})['class_name'] in conv_names:
-                  fuse_convs.append(input_node[0])
-                  fuse_bns.append(layer['name'])
-      print(f">>>> {len(fuse_convs) = }, {len(fuse_bns) = }")
-      # len(fuse_convs) = 53, len(fuse_bns) = 53
-
-      """ Create new model config """
-      layers = []
-      fused_bn_dict = dict(zip(fuse_bns, fuse_convs))
-      fused_conv_dict = dict(zip(fuse_convs, fuse_bns))
-      for layer in model_config['config']['layers']:
-          if layer["name"] in fuse_convs:
-              print(">>>> Fuse conv bn:", layer["name"])
-              layer["config"]["use_bias"] = True
-          elif layer["name"] in fuse_bns:
-              continue
-
-          if len(layer["inbound_nodes"]) != 0:
-              for ii in layer["inbound_nodes"][0]:
-                  if isinstance(ii, list) and ii[0] in fused_bn_dict:
-                      print(">>>> Replace inbound_nodes: {}, {} --> {}".format(layer["name"], ii[0], fused_bn_dict[ii[0]]))
-                      ii[0] = fused_bn_dict[ii[0]]
-          layers.append(layer)
-      model_config['config']['layers'] = layers
-      new_model = keras.models.model_from_json(json.dumps(model_config))
-
-      """ New model set layer weights by layer names """
-      for layer in new_model.layers:
-          if layer.name in fuse_bns:  # This should not happen
-              continue
-
-          orign_layer = model.get_layer(layer.name)
-          if layer.name in fused_conv_dict:
-              orign_bn_layer = model.get_layer(fused_conv_dict[layer.name])
-              print(">>>> Fuse conv bn", layer.name, orign_bn_layer.name)
-              conv_bn = fuse_conv_bn(orign_layer, orign_bn_layer)
-              layer.set_weights(conv_bn.get_weights())
-          else:
-              layer.set_weights(orign_layer.get_weights())
-      return new_model
-
-  """ Verification """
-  model = keras.applications.ResNet50(input_shape=(224, 224, 3))
-  new_model = convert_to_fused_conv_bn_model(model)
-
-  inputs = tf.ones((1, *model.input_shape[1:]))
-  orign_out = model(inputs).numpy()
-  fused_out = new_model(inputs).numpy()
-  print(f'{np.allclose(orign_out, fused_out, atol=1e-9) = }')
-  # np.allclose(orign_out, fused_out, atol=1e-9) = True
-
-  %timeit model(inputs)
-  # 69.6 ms ± 209 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
-  # 29.7 ms ± 172 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
-  %timeit new_model(inputs)
-  # 49.7 ms ± 185 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
-  # 16.8 ms ± 126 µs per loop (mean ± std. dev. of 7 runs, 100 loops each) # GPU
-  ```
-  ```py
-  import models
-  model = keras.models.load_model('./checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333.h5')
-  model = models.convert_mixed_float16_to_float32(model)  # Don't use float16 when converting
-  new_model = convert_to_fused_conv_bn_model(model)
-
-  inputs = tf.ones((1, *model.input_shape[1:]))
-  orign_out = model(inputs).numpy()
-  fused_out = new_model(inputs).numpy()
-  print(f'{np.allclose(orign_out, fused_out, atol=1e-5) = }')
-  # np.allclose(orign_out, fused_out, atol=1e-5) = True
-
-  %timeit model(inputs)
-  # 47.6 ms ± 240 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
-  %timeit new_model(inputs)
-  # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
-  ```
-***
-
-# VOLO
-  ```py
-  sys.path.append('../Keras_volo')
-  import volo
-  mm = volo.volo_d1(input_shape=(112, 112, 3), num_classes=512, survivals=0.8, mean_classifier_top=True)
-  mm.load_weights('../models/volo/d1_224_84.2.h5', by_name=True, skip_mismatch=True)
-  bb = keras.models.load_model('../models/volo/d1_224_84.2.h5')
-  mm.get_layer('stack_0_positional').load_resized_pos_emb(bb.get_layer('stack_0_positional'))
-
-  bb = keras.models.Model(mm.inputs[0], keras.layers.Activation("linear", dtype="float32", name="embedding")(mm.output))
-  bb.save('../models/volo/d1_112_GAP_512_SD_08_84.2.h5')
-  ```
-  ```py
-  sys.path.append('../Keras_volo')
-  import volo
-  mm = volo.volo_d2(input_shape=(112, 112, 3), num_classes=512, survivals=0.8, mean_classifier_top=True)
-  mm.load_weights('../models/volo/d2_384_86.0.h5', by_name=True, skip_mismatch=True)
-  bb = keras.models.load_model('../models/volo/d2_384_86.0.h5')
-  mm.get_layer('stack_0_positional').load_resized_pos_emb(bb.get_layer('stack_0_positional'))
-
-  bb = keras.models.Model(mm.inputs[0], keras.layers.Activation("linear", dtype="float32", name="embedding")(mm.output))
-  bb.save('../models/volo/d2_112_GAP_512_SD_08_86.0.h5')
-  ```
-  ```py
-  import losses, train, models
-  import tensorflow_addons as tfa
-  keras.mixed_precision.set_global_policy("mixed_float16")
-
-  data_basic_path = '/datasets/ms1m-retinaface-t1'
-  data_path = data_basic_path + '_112x112_folders'
-  eval_paths = ["IJBB.bin", "IJBC.bin"] + [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
-
-  sys.path.append('../Keras_volo/')
-  import volo
-  basic_model = keras.models.load_model('../models/volo/d2_112_GAP_512_SD_08_86.0.h5')
-
-  tt = train.Train(data_path, eval_paths=eval_paths,
-      save_path='TT_volo_d2_GAP_SD_08_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16.h5',
-      basic_model=basic_model, model=None, lr_base=0.2, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-4,
-      batch_size=512, random_status=100, output_weight_decay=1)
-
-  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9, nesterov=False)
-  sch = [
-      {"loss": losses.ArcfaceLoss(scale=16), "epoch": 5, "optimizer": optimizer},
-      {"loss": losses.ArcfaceLoss(scale=32), "epoch": 5},
-      {"loss": losses.ArcfaceLoss(scale=64), "epoch": 40},
-  ]
-  tt.train(sch, 0)
-  ```
-***
-
-# AotNet
-  ```py
-  from keras_cv_attention_models import aotnet
-  # resnet50 like
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0)
-
-  # se_ir_resnet50 like
-  mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], expansion=1, input_shape=(112, 112, 3), deep_stem=False, num_classes=0, se_ratio=1/4, stem_down_sample=False, strides=2)
-
-  # Basic
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=None, deep_stem=True, strides=1)
-
-  # BotNet like
-  attn = [None, None, "mhsa", "mhsa"]
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
-
-  # HaloNet like
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="halo", deep_stem=True, strides=1)
-
-  # Resnest50 like
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="sa", deep_stem=True, strides=1)
-
-  # Cotnet50 like
-  mm = aotnet.AotNet50(inp也是ut_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types="cot", deep_stem=True, strides=1)
-
-  # SECotnetD50 like
-  attn = ["sa", "sa", ["cot", "sa"] * 50, "cot"]
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, deep_stem=True, strides=1)
-
-  # Mixing se and outlook and halo and mhsa
-  attn = [None, "outlook", ["mhsa", "halo"] * 50, ["mhsa", "halo"] * 4]
-  se_ratio = [0.25, 0.25, 0, 0]
-  mm = aotnet.AotNet50(input_shape=(112, 112, 3), num_classes=0, activation='relu', attn_types=attn, se_ratio=se_ratio, deep_stem=True)
-  ```
-  ```py
-  # Most se_ir_resnet50 like
-  # first conv, kernel_size=3, strides=1
-  # se_module, use_bias=False
-  mm = aotnet.AotNet(num_blocks=[3, 4, 14, 3], stack=aotnet.stack1, preact=True, stack_strides=[2, 2, 2, 2], input_shape=(112, 112, 3), num_classes=0, se_ratio=1/16, expansion=1, stem_downsample=False)
   ```
 ***
 

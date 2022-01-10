@@ -1,3 +1,6 @@
+# ___2021 - 02 - 25 Machine Learning Projects___
+***
+
 # 图像超分
   - [Github idealo/image-super-resolution](https://github.com/idealo/image-super-resolution)
     ```py
@@ -395,747 +398,1137 @@
   from .upsampling_layers import convert_resize
   ```
 ***
+
 ## 图神经网络
   - [Github /dmlc/dgl](https://github.com/dmlc/dgl)
 ***
 
-# Imagenet
-## Timm
-```sh
-pipi torch==1.10.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-pipi torchvision==0.11.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+# Attention
+  - [遍地开花的 Attention ，你真的懂吗？](https://developer.aliyun.com/article/713354)
+  - [综述---图像处理中的注意力机制](https://blog.csdn.net/xys430381_1/article/details/89323444)
+  - [全连接的图卷积网络(GCN)和self-attention这些机制有什么区别联系](https://www.zhihu.com/question/366088445/answer/1023290162)
+  - [Attention Is All You Need](https://arxiv.org/pdf/1706.03762.pdf)
+  - [《Attention is All You Need》浅读（简介+代码）](https://spaces.ac.cn/archives/4765)
+  - [3W字长文带你轻松入门视觉transformer](https://zhuanlan.zhihu.com/p/308301901)
+  - `keras.layers.Attention` a.k.a. Luong-style attention.
+  - `keras.layers.AdditiveAttention` a.k.a. Bahdanau-style attention. [Eager 执行环境与 Keras 定义 RNN 模型使用注意力机制为图片命名标题](https://github.com/leondgarse/Atom_notebook/blob/master/public/2018/09-06_tensorflow_tutotials.md#eager-%E6%89%A7%E8%A1%8C%E7%8E%AF%E5%A2%83%E4%B8%8E-keras-%E5%AE%9A%E4%B9%89-rnn-%E6%A8%A1%E5%9E%8B%E4%BD%BF%E7%94%A8%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E4%B8%BA%E5%9B%BE%E7%89%87%E5%91%BD%E5%90%8D%E6%A0%87%E9%A2%98)
+  - `keras.layers.MultiHeadAttention` multi-headed scaled dot-product attention based on "Attention is all you Need"
+  - [Github Keras Attention Augmented Convolutions](https://github.com/titu1994/keras-attention-augmented-convs)
+***
 
-git clone https://github.com.cnpmjs.org/NVIDIA/apex.git && cd apex/
-vi setup.py
-# Comment off `RuntimeError` after `if (bare_metal_major != torch_binary_major) or (bare_metal_minor != torch_binary_minor):`
-sudo touch /usr/local/cuda-11.2/targets/x86_64-linux/include/cuda_profiler_api.h
-pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-
-CUDA_VISIBLE_DEVICES='1' python train_tf.py FOO -c _79_83-fusedlamb-cosine-lr0.00500-wd0.020000-n0-rand-m7-mstd0.5-inc1-m0.1-sd0.1-d0.0-ls0.0-301-299-resnet50-args.yaml.txt
-
-CUDA_VISIBLE_DEVICES='0' python train.py $HOME/tensorflow_datasets/ -c _79_83-fusedlamb-cosine-lr0.00500-wd0.020000-n0-rand-m7-mstd0.5-inc1-m0.1-sd0.1-d0.0-ls0.0-301-299-resnet50-args.yaml.txt --batch-size 256 --lr 4e-3
-
-CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211109-111121-resnet50-160/checkpoint-99.pth.tar
-
-CUDA_VISIBLE_DEVICES='0' python validate_tf.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --channels-last --checkpoint ../keras_cv_attention_models/checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_epoch_102_val_acc_0.7494.h5
-
-```
-```sh
-CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211109-111121-resnet50-160/checkpoint-99.pth.tar
-# * Acc@1 78.066 (21.934) Acc@5 93.680 (6.320)
-CUDA_VISIBLE_DEVICES='0' python validate.py $HOME/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224 --crop-pct 0.95 --model resnet50 --checkpoint ./output/train/20211115-150528-resnet50-160/checkpoint-96.pth.tar
-# * Acc@1 78.206 (21.794) Acc@5 93.878 (6.122)
-```
-```py
-def parse_timm_log(log_filee):
-    with open(log_filee, 'r') as ff:
-        aa = ff.readlines()
-
-    train_epoch_started, train_epoch_end_pattern, previous_line = False, "", ""
-    for ii in aa:
-        if ii.startswith("Train:"):
-            train_epoch_started = True
-            previous_line = ii
-        elif train_epoch_started and not ii.startswith("Train:"):
-            train_epoch_end_pattern = previous_line.split("[")[1].split("]")[0]
-            break
-
-    test_epoch_started, test_epoch_end_pattern, previous_line = False, "", ""
-    for ii in aa:
-        if ii.startswith("Test:"):
-            test_epoch_started = True
-            previous_line = ii
-        elif test_epoch_started and not ii.startswith("Test:"):
-            test_epoch_end_pattern = previous_line.split("[")[1].split("]")[0]
-            break
-
-    train_loss = [float(ii.split('Loss: ')[1].split(" ")[1][1:-1]) for ii in aa if train_epoch_end_pattern in ii]
-    lr = [float(ii.split('LR: ')[1].split(" ")[0]) for ii in aa if train_epoch_end_pattern in ii]
-    val_loss = [float(ii.split('Loss: ')[1].strip().split(" ")[1][1:-1]) for ii in aa if test_epoch_end_pattern in ii]
-    val_acc = [float(ii.split('Acc@1: ')[1].strip().split("Acc@5:")[0].split("(")[1].split(")")[0]) for ii in aa if test_epoch_end_pattern in ii]
-
-    # print(f"{len(train_loss) = }, {len(lr) = }, {len(val_loss) = }, {len(val_acc) = }")
-    return {"loss": train_loss, "lr": lr, "val_loss": val_loss, "val_acc": val_acc}
-
-aa = parse_timm_log('log.foo')
-from keras_cv_attention_models.imagenet import plot_hists
-plot_hists(aa, 'timm resnet50')
-```
-## Init dataset
-  - [ILSVRC2012_img_train.tar](magnet:?xt=urn:btih:umdds7gptqxk2jyvlgb4evbcpqh5sohc)
-  - [ILSVRC2012_img_val.tar](magnet:?xt=urn:btih:lvwq357nqhx5jhfjt2shg7qk4xr2l4xf)
-  - [Kaggle imagenet object localization patched 2019](https://www.kaggle.com/c/imagenet-object-localization-challenge/data)
-    ```sh
-    unzip imagenet-object-localization-challenge.zip -d imagenet-object-localization-challenge
-    cd imagenet-object-localization-challenge
-    tar xvf imagenet_object_localization_patched2019.tar.gz
-
-    cd ILSVRC/Data/CLS-LOC/train/
-    ls -1 | xargs -I '{}' tar cvf {}.tar {}
-    tar cvf ILSVRC2019_img_train.tar ./*.tar
-
-    cd ../test
-    ls > foo && tar cvf ILSVRC2019_img_test.tar -T foo  # exclude the directory `./`
-    cd ../val
-    tar cvf ILSVRC2019_img_val.tar $(ls *.JPEG)  # exclude the directory `./`
-    cd ..
-
-    DATASET_PATH='/media/SD/tdtest/imagenet_2019'
-    mkdir $DATASET_PATH
-    mv train/ILSVRC2019_img_train.tar test/ILSVRC2019_img_test.tar val/ILSVRC2019_img_val.tar $DATASET_PATH
-
-    mkdir -p ~/tensorflow_datasets/downloads/manual
-    rm -f ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_*.tar
-    ln -s $DATASET_PATH/ILSVRC2019_img_train.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_train.tar
-    ln -s $DATASET_PATH/ILSVRC2019_img_val.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_val.tar
-    ln -s $DATASET_PATH/ILSVRC2019_img_test.tar ~/tensorflow_datasets/downloads/manual/ILSVRC2012_img_test.tar
-
-    mv ~/tensorflow_datasets/imagenet2012 ~/tensorflow_datasets/imagenet2012.bak
+# BERT
+## 单词嵌入向量 Word embeddings
+  - **keras.layers.Embedding** 将输入中的单个正整数转化为指定长度的编码，其中 `input_dim` 表示单词表长度，`output_dim` 便是输出向量维度，即使用 `output_dim` 长度的向量表示 `input_dim` 个单词
+    ```py
+    # Turns positive integers (indexes) into dense vectors of fixed size.
+    __init__(self, input_dim, output_dim, embeddings_initializer='uniform', ..., input_length=None, **kwargs)
     ```
     ```py
-    import tensorflow_datasets as tfds
-    aa = tfds.image_classification.Imagenet2012()
-    aa.download_and_prepare()
-    train_ds, val_ds = aa.as_dataset(split='train'), aa.as_dataset(split='validation')
+    embedding_layer = keras.layers.Embedding(1000, 5)
+    result = embedding_layer(tf.constant([1, 2, 3, 2]))
+    print(result.numpy())
+    # [[ 0.03924643  0.02580811 -0.04168688  0.03953223 -0.03951649]
+    #  [-0.02290255 -0.03661262 -0.01429547  0.00083493  0.01542655]
+    #  [-0.00508757  0.00465842  0.00856078 -0.02349824 -0.00282664]]
+    #  [-0.02290255 -0.03661262 -0.01429547  0.00083493  0.01542655]
+    print(embedding_layer(tf.constant([[1, 2, 3], [2, 3, 5]])).shape)
+    # (2, 3, 5)
     ```
+  - **IMDB 电影评论情感分类**
     ```py
     import tensorflow_datasets as tfds
-    train_ds, val_ds = tfds.load('imagenet2012', split='train'), tfds.load('imagenet2012', split='validation')
+    (train_data, test_data), info = tfds.load('imdb_reviews/subwords8k', split=(tfds.Split.TRAIN, tfds.Split.TEST), with_info=True, as_supervised=True)
+    train_batches = train_data.shuffle(1000).padded_batch(10) # Pad to max length
+    test_batches = test_data.shuffle(1000).padded_batch(10) # Pad to max length
+    encoder = info.features['text'].encoder
 
-    data = val_ds.as_numpy_iterator().next()
-    print(data.keys())
-    # dict_keys(['file_name', 'image', 'label'])
-    plt.imshow(data['image'])
+    embedding_dim = 16
+    model = keras.Sequential([
+        keras.layers.Embedding(encoder.vocab_size, embedding_dim),
+        keras.layers.GlobalAveragePooling1D(),
+        keras.layers.Dense(16, activation='relu'),
+        keras.layers.Dense(1)
+    ])
+
+    model.summary()
+    model.compile(optimizer='adam', loss=tf.keras.losses.BinaryCrossentropy(from_logits=True), metrics=['accuracy'])
+    history = model.fit(train_batches, epochs=10, validation_data=test_batches, validation_steps=20)
     ```
-## Training
-```py
-keras.mixed_precision.set_global_policy("mixed_float16")
-strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
+    **plot history**
+    ```py
+    history_dict = history.history
 
-from keras_cv_attention_models.imagenet import data
-from keras_cv_attention_models.imagenet import callbacks
-from keras_cv_attention_models import model_surgery
-from keras_cv_attention_models import aotnet, coatnet, cmt
-import tensorflow_addons as tfa
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    axes[0].plot(history_dict['loss'], 'bo', label='Training loss')
+    axes[0].plot(history_dict['val_loss'], 'b', label='Validation loss')
+    axes[0].set_title('Training and validation loss')
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].legend()
 
-input_shape = (160, 160, 3)
-batch_size = 256 * strategy.num_replicas_in_sync
-lr_base_512 = 8e-3
-l2_weight_decay = 0
-optimizer_wd_mul = 0.02
-label_smoothing = 0
-lr_decay_steps = 100 # [30, 60, 90] for constant decay
-lr_warmup = 5
-lr_min = 1e-6
-epochs = 105
-initial_epoch = 0
-basic_save_name = None
+    axes[1].plot(history_dict['accuracy'], 'bo', label='Training acc')
+    axes[1].plot(history_dict['val_accuracy'], 'b', label='Validation acc')
+    axes[1].set_title('Training and validation accuracy')
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('Accuracy')
+    axes[1].set_ylim((0.5, 1))
+    axes[1].legend(loc='lower right')
+    ```
+    ![](images/word_embedding.svg)
+  - **Embedding Projector 可视化嵌入向量**
+    ```py
+    from tensorboard.plugins import projector
 
-data_name = "imagenet2012"
-magnitude = 6
-mixup_alpha = 0.1
-cutmix_alpha = 1.0
-central_crop = 1
-random_crop_min = 0.08
+    weights = model.layers[0].get_weights()[0]
+    print(weights.shape) # (8185, 16)
 
-train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
-    data_name=data_name,
-    input_shape=input_shape,
-    batch_size=batch_size,
-    mixup_alpha=mixup_alpha,
-    cutmix_alpha=cutmix_alpha,
-    rescale_mode="torch",
-    central_crop=central_crop,
-    random_crop_min=random_crop_min,
-    resize_method="bicubic",
-    random_erasing_prob=0.0,
-    magnitude=magnitude,
-)
+    log_dir = '/tmp/embedding-example/'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    tensor_path = os.path.join(log_dir, 'vecs.tsv')
+    metadata_path = os.path.join(log_dir, 'meta.tsv')
 
-# model = coatnet.CoAtNet0(num_classes=1000, activation='gelu', drop_connect_rate=0.2, drop_rate=0.2)
-# model = cmt.CMTTiny(input_shape=input_shape, num_classes=num_classes, drop_connect_rate=0.1, drop_rate=0.1)
-model = aotnet.AotNet50(num_classes=num_classes, input_shape=input_shape)
-# model = keras.models.load_model('checkpoints/resnet50_imagenet2012_batch_size_256_randaug_5_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.002_wd0.02_latest.h5')
+    print(encoder.subwords[:20])
+    with open(tensor_path, "w") as out_v, open(metadata_path, "w") as out_m:
+        for num, word in enumerate(encoder.subwords):
+            vec = weights[num + 1] # skip 0, it's padding.
+            out_m.write(word + "\n")
+            out_v.write('\t'.join([str(x) for x in vec]) + "\n")
 
-lr_base = lr_base_512 * batch_size / 512
-if isinstance(lr_decay_steps, list):
-    constant_lr_sch = lambda epoch: callbacks.constant_scheduler(epoch, lr_base=lr_base, lr_decay_steps=lr_decay_steps, warmup=lr_warmup)
-    lr_scheduler = keras.callbacks.LearningRateScheduler(constant_lr_sch)
-    epochs = epochs if epochs != 0 else lr_decay_steps[-1] + lr_decay_steps[0] + lr_warmup   # 124 for lr_decay_steps=[30, 60, 90], lr_warmup=4
-else:
-    lr_scheduler = callbacks.CosineLrScheduler(lr_base, first_restart_step=lr_decay_steps, m_mul=0.5, t_mul=2.0, lr_min=lr_min, warmup=lr_warmup, steps_per_epoch=-1)
-    # lr_scheduler = callbacks.CosineLrSchedulerEpoch(lr_base, first_restart_step=lr_decay_steps, m_mul=0.5, t_mul=2.0, lr_min=lr_min, warmup=lr_warmup)
-    epochs = epochs if epochs != 0 else lr_decay_steps * 3 + lr_warmup  # 94 for lr_decay_steps=30, lr_warmup=4
+    config = projector.ProjectorConfig()
+    embedding = config.embeddings.add()
+    embedding.tensor_path = tensor_path
+    embedding.metadata_path = metadata_path
+    projector.visualize_embeddings(log_dir, config)
 
-if model.optimizer is None:
-    if l2_weight_decay != 0:
-        model = model_surgery.add_l2_regularizer_2_model(model, weight_decay=l2_weight_decay, apply_to_batch_normal=False)
+    !tensorboard --logdir {log_dir}
+    # http://localhost:6006/#projector
+    ```
+## Word2Vec
+  These papers proposed two methods for learning representations of words:
 
-    if optimizer_wd_mul > 0:
-        # optimizer = tfa.optimizers.AdamW(learning_rate=lr_base, weight_decay=lr_base * optimizer_wd_mul)
-        optimizer = tfa.optimizers.LAMB(learning_rate=lr_base, weight_decay_rate=optimizer_wd_mul)
-    else:
-        optimizer = keras.optimizers.SGD(learning_rate=lr_base, momentum=0.9)
-    model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing), metrics=["acc"])
+  Continuous Bag-of-Words Model which predicts the middle word based on surrounding context words. The context consists of a few words before and after the current (middle) word. This architecture is called a bag-of-words model as the order of words in the context is not important.
+  Continuous Skip-gram Model which predict words within a certain range before and after the current word in the same sentence. A worked example of this is given below.
 
-compiled_opt = model.optimizer
-compiled_opt = compiled_opt.inner_optimizer if isinstance(compiled_opt, keras.mixed_precision.LossScaleOptimizer) else compiled_opt
-if basic_save_name is None:
-    basic_save_name = "{}_{}_batch_size_{}".format(model.name, data_name, batch_size)
-    basic_save_name += "_randaug_{}_mixup_{}_cutmix_{}_RRC_{}".format(magnitude, mixup_alpha, cutmix_alpha, random_crop_min)
-    basic_save_name += "_{}_lr{}_wd{}".format(compiled_opt.__class__.__name__, lr_base_512, optimizer_wd_mul or l2_weight_decay)
-print(">>>> basic_save_name =", basic_save_name)
-
-""" imagenet.train.train """
-if hasattr(lr_scheduler, "steps_per_epoch") and lr_scheduler.steps_per_epoch == -1:
-    lr_scheduler.build(steps_per_epoch)
-is_lr_on_batch = True if hasattr(lr_scheduler, "steps_per_epoch") and lr_scheduler.steps_per_epoch > 0 else False
-
-# ckpt_path = os.path.join("checkpoints", basic_save_name + "epoch_{epoch:03d}_val_acc_{val_acc:.4f}.h5")
-# cur_callbacks = [keras.callbacks.ModelCheckpoint(ckpt_path, monitor="val_loss", save_best_only=True)]
-# cur_callbacks = [keras.callbacks.ModelCheckpoint(os.path.join("checkpoints", basic_save_name + ".h5"))]
-cur_callbacks = [callbacks.MyCheckpoint(basic_save_name, monitor='val_acc')]
-hist_file = os.path.join("checkpoints", basic_save_name + "_hist.json")
-if initial_epoch == 0 and os.path.exists(hist_file):
-    os.remove(hist_file)
-cur_callbacks.append(callbacks.MyHistory(initial_file=hist_file))
-cur_callbacks.append(keras.callbacks.TerminateOnNaN())
-if lr_scheduler is not None:
-    cur_callbacks.append(lr_scheduler)
-
-if lr_scheduler is not None and isinstance(compiled_opt, tfa.optimizers.weight_decay_optimizers.DecoupledWeightDecayExtension):
-    print(">>>> Append weight decay callback...")
-    lr_base, wd_base = model.optimizer.lr.numpy(), model.optimizer.weight_decay.numpy()
-    wd_callback = callbacks.OptimizerWeightDecay(lr_base, wd_base, is_lr_on_batch=is_lr_on_batch)
-    cur_callbacks.append(wd_callback)  # should be after lr_scheduler
-
-model.fit(
-    train_dataset,
-    epochs=epochs,
-    verbose=1,
-    callbacks=cur_callbacks,
-    initial_epoch=initial_epoch,
-    steps_per_epoch=steps_per_epoch,
-    validation_data=test_dataset,
-    use_multiprocessing=True,
-    workers=4,
-)
-```
-```sh
-TF_XLA_FLAGS="--tf_xla_auto_jit=2" CUDA_VISIBLE_DEVICES='0' ./train_script.py --random_crop_min 0
-CUDA_VISIBLE_DEVICES='0' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 86 --random_crop_min 0.08
-CUDA_VISIBLE_DEVICES='1' ./train_script.py -r checkpoints/aotnet50_imagenet2012_batch_size_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.0_LAMB_lr0.008_wd0.02_latest.h5 --initial_epoch 95 --random_crop_min 0
-```
-```sh
-watch -n 10 sh -c "nvidia-smi > /dev/null || ssh leondgarse@192.168.16.189 -C 'notify-send --urgency=low \"[83 Error] nvidia fall\"'"
-```
-## Validation
-```py
-sys.path.append('../automl/efficientnetv2/')
-import datasets as orign_datasets
-import effnetv2_model as orign_effnetv2_model
-
-dataset = "imagenetft"
-model_type = "s"
-load_weights = "imagenet21k-ft1k"
-cc = orign_datasets.get_dataset_config(dataset)
-if cc.get("model", None):
-    cc.model.num_classes = cc.data.num_classes
-else:
-    cc['model'] = None
-model = orign_effnetv2_model.get_model('efficientnetv2-{}'.format(model_type), model_config=cc.model, weights=load_weights)
-
-from keras_cv_attention_models import imagenet
-imagenet.evaluation(model, input_shape=(384, 384), rescale_mode="tf", resize_method='bicubic', central_crop=0.99)
-```
-```py
-import timm
-mm = timm.models.regnetz_d(pretrained=True)
-_ = mm.evaluation()
-from keras_cv_attention_models import imagenet
-imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
-```
-```py
-import keras_cv_attention_models
-from keras_cv_attention_models import imagenet
-mm = keras_cv_attention_models.regnet.RegNetZD()
-imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
-```
-
-| model   | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
-| ------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
-| EffV2B0 | 224              | tf           | bilinear          | 0.875        | 0.75304     | 0.92606     |
-| EffV2B0 | 224              | tf           | bicubic           | 0.875        | 0.7581      | 0.92858     |
-| EffV2B0 | 224              | torch        | bilinear          | 0.875        | 0.78594     | 0.94262     |
-| EffV2B0 | 224              | torch        | bicubic           | 0.875        | **0.78748** | 0.94386     |
-| EffV2B0 | 224              | torch        | bicubic antialias | 0.875        | 0.7833      | 0.94038     |
-| EffV2B0 | 224              | torch        | bicubic           | 0.87         | 0.787       | 0.9436      |
-| EffV2B0 | 224              | torch        | bicubic           | 0.95         | 0.78732     | **0.94412** |
-| EffV2B0 | 224              | torch        | bicubic antialias | 0.95         | 0.78288     | 0.93998     |
-| EffV2B0 | 224              | torch        | bicubic           | 1.0          | 0.78536     | 0.94404     |
-
-| model   | Input Resolution | rescale_mode | resize_method | central_crop     | top 1       | top 5       |
-| ------- | ---------------- | ------------ | ------------- | ---------------- | ----------- | ----------- |
-| EffV2B1 | 240              | torch        | bicubic       | 0.87             | 0.79722     | **0.94938** |
-| EffV2B1 | 240              | torch        | bicubic       | 240/272 (0.882)  | 0.79788     | 0.94924     |
-| EffV2B1 | 240              | torch        | bicubic       | 0.95             | **0.7987**  | 0.94936     |
-| EffV2B2 | 260              | torch        | bicubic       | 260/292 (0.890)  | 0.80428     | 0.95184     |
-| EffV2B2 | 260              | torch        | bicubic       | 0.95             | **0.80642** | **0.95262** |
-| EffV2B3 | 300              | torch        | bicubic       | 300/332 (0.9036) | 0.81974     | 0.95818     |
-| EffV2B3 | 300              | torch        | bicubic       | 0.95             | **0.82098** | **0.95896** |
-| EffV2B3 | 300              | torch        | bicubic       | 1.0              | 0.82        | 0.9587      |
-| EffV2T  | 288              | torch        | bicubic       | 0.99             | 0.82186     | 0.96112     |
-| EffV2T  | 320              | torch        | bicubic       | 0.99             | **0.82506** | **0.96228** |
-
-| model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
-| ----------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
-| EffV2S      | 384              | tf           | bicubic           | 0.95         | 0.83788     | 0.96602     |
-| EffV2S      | 384              | torch        | bicubic           | 0.95         | 0.29858     | 0.46904     |
-| EffV2S      | 384              | tf           | bicubic           | 0.99         | **0.8386**  | **0.967**   |
-| EffV2S      | 384              | tf           | bicubic antialias | 0.99         | 0.8387      | 0.967       |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.94         | 0.84006     | 0.97118     |
-| EffV2S ft1k | 384              | torch        | bicubic           | 0.94         | 0.13104     | 0.21656     |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.95         | 0.84076     | 0.97134     |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.96         | 0.8417      | 0.97176     |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.97         | 0.84188     | 0.972       |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.98         | 0.84302     | 0.9727      |
-| EffV2S ft1k | 384              | tf           | bicubic           | 0.99         | 0.84328     | 0.97254     |
-| EffV2S ft1k | 384              | tf           | bicubic antialias | 0.99         | 0.84336     | 0.97256     |
-| EffV2S ft1k | 384              | tf           | bicubic           | 1.0          | 0.84312     | **0.97292** |
-| EffV2S ft1k | 384              | tf           | bicubic antialias | 1.0          | **0.84348** | 0.97288     |
-
-| model        | Input Resolution | rescale_mode | resize_method     | central_crop | top 1   | top 5   |
-| ------------ | ---------------- | ------------ | ----------------- | ------------ | ------- | ------- |
-| EffV2M       | 480              | tf           | bicubic           | 0.99         | 0.8509  | 0.973   |
-| EffV2M       | 480              | tf           | bicubic antialias | 0.99         | 0.85086 | 0.9731  |
-| EffV2L       | 480              | tf           | bicubic           | 0.99         | 0.855   | 0.97324 |
-| EffV2L       | 480              | tf           | bicubic antialias | 0.99         |         |         |
-| EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
-| EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
-| EffV2XL ft1k | 512              | tf           | bicubic           | 0.99         | 0.86532 | 0.97866 |
-
-| model        | rescale_mode        | resize_method | central_crop | top 1   | top 5   | Reported |
-| ------------ | ------------------- | ------------- | ------------ | ------- | ------- | -------- |
-| halonet26t   | torch               | bicubic       | 0.95         | 0.78588 | 0.94078 | 79.134   |
-| halonet26t   | tf                  | bicubic       | 0.95         | 0.7766  | 0.93588 |          |
-| halonet50t   | torch               | bicubic       | 0.94         | 0.81134 | 0.95202 | 81.350   |
-| halonet50t   | tf                  | bicubic       | 0.94         | 0.8068  | 0.9493  |          |
-| aotnet50     | torch (resize-crop) | bicubic       | 0.95         | 0.79292 | 0.94126 | 80.4     |
-| aotnet50     | torch (crop-resize) | bicubic       | 0.95         | 0.79384 | 0.94164 |          |
-| aotnet50     | torch (resize-crop) | bicubic       | 0.875        | 0.7938  | 0.94148 |          |
-| aotnet50     | torch (crop-resize) | bicubic       | 0.875        | 0.79444 | 0.94222 |          |
-| aotnet50     | tf                  | bicubic       | 0.95         | 0.78208 | 0.93604 |          |
-| aotnet50 160 | torch               | bicubic       | 0.95         | 0.72594 | 0.90654 |          |
-| aotnet50 160 | torch               | bicubic       | 0.875        | 0.73132 | 0.91042 |          |
-| aotnet50 160 | torch (224)         | bicubic       | 0.95         | 0.7668  | 0.93066 | 78.1     |
-| aotnet50 160 | torch (224)         | bicubic       | 0.875        | 0.7674  | 0.93    |          |
-| aotnet50 160 | tf (224)            | bicubic       | 0.95         | 0.73926 | 0.9148  |          |
-| regnetzd 256 | tf                  | bicubic       | 0.95         | 0.83244 | 0.96636 | 84.034   |
-| regnetzd 256 | torch               | bicubic       | 0.95         | 0.80944 | 0.95612 |          |
-
-| model      | rescale_mode | resize_method | central_crop | top 1   | top 5   | Reported |
-| ---------- | ------------ | ------------- | ------------ | ------- | ------- | -------- |
-| RegNetY032 | torch (288)  | bicubic       | 0.875        | 0.82446 | 0.96248 | 82.722   |
-| RegNetY040 | torch        | bicubic       | 0.875        | 0.80568 | 0.9512  | 81.5     |
-| RegNetY040 | tf           | bicubic       | 0.875        | 0.80108 | 0.9478  |          |
-| RegNetY080 | torch        | bicubic       | 0.875        | 0.8148  | 0.94876 | 82.2     |
-| RegNetY160 | torch        | bicubic       | 0.875        | 0.81432 | 0.94456 | 82.0     |
-| RegNetY320 | torch        | bicubic       | 0.875        | 0.81738 | 0.94152 | 82.5     |
-
-| model              | rescale_mode        | resize_method      | central_crop | top 1   | top 5   |
-| ------------------ | ------------------- | ------------------ | ------------ | ------- | ------- |
-| timm resnet50 (CE) | torch (clip 255)    | bicubic antialias  | 0.95         | 0.77    | 0.93722 |
-| timm resnet50 (CE) | torch               | bicubic antialias  | 0.95         | 0.77026 | 0.93716 |
-| timm resnet50 (CE) | torch               | bilinear antialias | 0.95         | 0.76898 | 0.93746 |
-| timm resnet50 (CE) | torch               | bilinear           | 0.95         | 0.76404 | 0.93412 |
-| AotNet50 (CE)      | torch               | bilinear           | 0.95         | 0.7694  | 0.93704 |
-| AotNet50 (CE)      | torch               | bicubic            | 0.95         | 0.77004 | 0.93702 |
-| AotNet50 (CE)      | torch               | bicubic antialias  | 0.95         | 0.7647  | 0.9335  |
-| AotNet50 (CE)      | torch (clip 255)    | bicubic            | 0.95         | 0.76996 | 0.9371  |
-| AotNet50 (CE)      | torch (resize_crop) | bicubic            | 0.95         | 0.76956 | 0.93696 |
-
+  - Vectorize an example sentence
   ```py
-  import sys, os, time, re, gc
-  from pathlib import Path
-  from glob import glob
+  sentence = "The wide road shimmered in the hot sun"
+  tokens = list(sentence.lower().split())
+  print(len(tokens))
 
-  import tensorflow as tf
-  import numpy as np
-  import matplotlib.pyplot as plt
+  vocab, index = {}, 1  # start indexing from 1
+  vocab['<pad>'] = 0  # add a padding token
+  for token in tokens:
+      if token not in vocab:
+          vocab[token] = index
+          index += 1
+  vocab_size = len(vocab)
+  print(vocab)
 
-  from tensorflow.keras import backend as K
-  from tensorflow.keras.utils import to_categorical
-  from tensorflow.keras.applications import vgg16, vgg19, resnet_v2
+  inverse_vocab = {index: token for token, index in vocab.items()}
+  print(inverse_vocab)
 
-  path_imagenet_val_dataset = Path("data/") # path/to/data/
-  dir_images = Path("data/val") # path/to/images/directory
-  path_labels = Path("data/ILSVRC2012_validation_ground_truth.txt")
-  path_synset_words = Path("data/synset_words.txt")
-  path_meta = Path("data/meta.mat")
-
-  x_val_paths = glob(str(path_imagenet_val_dataset / "x_val*.npy"))
-
-  # Sort filenames in ascending order
-  x_val_paths.sort(key=lambda f: int(re.sub('\D', '', f)))
-  y_val = np.load(str(path_imagenet_val_dataset / "y_val.npy"))
-  y_val_one_hot = to_categorical(y_val, 1000)
-  def top_k_accuracy(y_true, y_pred, k=1, tf_enabled=True):
-      if tf_enabled:
-          argsorted_y = tf.argsort(y_pred)[:,-k:]
-          matches = tf.cast(tf.math.reduce_any(tf.transpose(argsorted_y) == tf.argmax(y_true, axis=1, output_type=tf.int32), axis=0), tf.float32)
-          return tf.math.reduce_mean(matches).numpy()
-      else:
-          argsorted_y = np.argsort(y_pred)[:,-k:]
-          return np.any(argsorted_y.T == y_true.argmax(axis=1), axis=0).mean()
-
-  K.clear_session()
-  # model = vgg19.VGG19()
-  import keras_efficientnet_v2
-  model = keras_efficientnet_v2.EfficientNetV2B0()
-
-  y_pred = None
-  for i, x_val_path in enumerate(x_val_paths):
-      x_val = np.load(x_val_path).astype('float32') # loaded as RGB
-      x_val = vgg19.preprocess_input(x_val) # converted to BGR
-      y_pred_sharded = model.predict(x_val, verbose=0, use_multiprocessing=True, batch_size=16, callbacks=None)
-
-      try:
-          y_pred = np.concatenate([y_pred, y_pred_sharded])
-      except ValueError:
-          y_pred = y_pred_sharded
-
-      del x_val
-      gc.collect()
-
-      completed_percentage = (i + 1) * 100 / len(x_val_paths)
-      if completed_percentage % 5 == 0:
-          print("{:5.1f}% completed.".format(completed_percentage))
-
-  print(top_k_accuracy(y_val_one_hot, y_pred, k=1))
-  # 0.71248
-  print(top_k_accuracy(y_val_one_hot, y_pred, k=5))
+  example_sequence = [vocab[word] for word in tokens]
+  print(example_sequence)
   ```
-```py
-class CosineLrScheduler(keras.callbacks.Callback):
-    def __init__(self, lr_base, first_restart_step, steps_per_epoch, m_mul=0.5, t_mul=2.0, lr_min=1e-5, warmup=0):
-        super(CosineLrScheduler, self).__init__()
-        self.warmup = warmup * steps_per_epoch
-        self.first_restart_step = first_restart_step * steps_per_epoch
-        self.steps_per_epoch = steps_per_epoch
-        self.init_step_num, self.cur_epoch = 0, 0
-
-        if lr_min == lr_base * m_mul: # Without restart
-            self.schedule = keras.experimental.CosineDecay(lr_base, self.first_restart_step, alpha=lr_min / lr_base)
-        else:
-            self.schedule = keras.experimental.CosineDecayRestarts(lr_base, self.first_restart_step, t_mul=t_mul, m_mul=m_mul, alpha=lr_min / lr_base)
-
-        if warmup != 0:
-            self.warmup_lr_func = lambda ii: lr_min + (lr_base - lr_min) * ii / self.warmup
-
-    def on_train_batch_begin(self, cur_epoch, logs=None):
-        self.init_step_num = int(self.steps_per_epoch * cur_epoch)
-        self.cur_epoch = cur_epoch
-
-    def on_train_batch_begin(self, iterNum, logs=None):
-        global_iterNum = iterNum + self.init_step_num
-        if global_iterNum < self.warmup:
-            lr = self.warmup_lr_func(global_iterNum)
-        else:
-            lr = self.schedule(global_iterNum - self.warmup)
-
-        if self.model is not None:
-            K.set_value(self.model.optimizer.lr, lr)
-        if iterNum == 0:
-            print("\nLearning rate for iter {} is {}".format(self.cur_epoch + 1, lr))
-        return lr
-
-def constant_scheduler(epoch, lr_base, lr_decay_steps, decay_rate=0.1, lr_min=0, warmup=0):
-    if epoch < warmup:
-        lr = (lr_base - lr_min) * (epoch + 1) / (warmup + 1)
-    else:
-        epoch -= warmup
-        lr = lr_base * decay_rate ** np.sum(epoch >= np.array(lr_decay_steps))
-        lr = lr if lr > lr_min else lr_min
-    print("\nLearning rate for iter {} is {}".format(epoch + 1, lr))
-    return lr
-
-def exp_scheduler(epoch, lr_base=0.1, decay_step=1, decay_rate=0.9, lr_min=0, warmup=0):
-    if epoch < warmup:
-        lr = (lr_base - lr_min) * (epoch + 1) / (warmup + 1)
-    else:
-        epoch -= warmup
-        lr = lr_base * decay_rate ** (epoch / decay_step)
-        lr = lr if lr > lr_min else lr_min
-    # print("Learning rate for iter {} is {}".format(epoch + 1, lr))
-    return lr
-
-from keras_cv_attention_models.imagenet.callbacks import exp_scheduler, constant_scheduler, CosineLrScheduler
-epochs = np.arange(60)
-plt.figure(figsize=(14, 6))
-plt.plot(epochs, [exp_scheduler(ii, 0.1, 0.9) for ii in epochs], label="lr=0.1, decay=0.9")
-plt.plot(epochs, [exp_scheduler(ii, 0.1, 0.7) for ii in epochs], label="lr=0.1, decay=0.7")
-plt.plot(epochs, [constant_scheduler(ii, 0.1, [10, 20, 30, 40], 0.1) for ii in epochs], label="Constant, lr=0.1, decay_steps=[10, 20, 30, 40], decay_rate=0.1")
-
-steps_per_epoch = 100
-batchs = np.arange(60 * steps_per_epoch)
-aa = CosineLrScheduler(0.1, first_restart_step=50, lr_min=1e-6, warmup=0, m_mul=1e-5, steps_per_epoch=steps_per_epoch)
-plt.plot(batchs / steps_per_epoch, [aa.on_train_batch_begin(ii) for ii in batchs], label="Cosine, first_restart_step=50, min=1e-6, m_mul=1e-3")
-
-bb = CosineLrScheduler(0.1, first_restart_step=16, lr_min=1e-7, warmup=1, m_mul=0.4, steps_per_epoch=steps_per_epoch)
-plt.plot(batchs / steps_per_epoch, [bb.on_train_batch_begin(ii) for ii in batchs], label="Cosine restart, first_restart_step=16, min=1e-7, warmup=1, m_mul=0.4")
-
-plt.xlim(0, 60)
-plt.legend()
-# plt.grid()
-plt.tight_layout()
-```
-```py
-fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-xx = np.arange(0, 350)
-ax.plot(xx, [exp_scheduler(ii, lr_base=0.256, decay_step=2.4, decay_rate=0.97) for ii in xx])
-xx = np.arange(0, 52)
-ax.twiny().plot(xx, [exp_scheduler(ii, lr_base=0.256, decay_step=1, decay_rate=0.915, warmup=2) for ii in xx], color='r')
-```
-```py
-from keras_cv_attention_models.imagenet import data
-from keras_cv_attention_models import model_surgery
-
-with tf.distribute.MirroredStrategy().scope():
-    keras.mixed_precision.set_global_policy("mixed_float16")
-    input_shape = (224, 224, 3)
-    batch_size = 64
-    train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(batch_size=batch_size, input_shape=input_shape)
-    model = keras.applications.ResNet50V2(input_shape=input_shape, weights=None)
-    model = model_surgery.add_l2_regularizer_2_model(model, weight_decay=5e-4, apply_to_batch_normal=False)
-
-    optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
-    # callbacks = myCallbacks.basic_callbacks(checkpoint="keras_checkpoints.h5", lr=0.1, lr_decay=0.1, lr_min=1e-5, lr_decay_steps=[20, 30, 40])
-    lr_schduler = CosineLrScheduler(0.1, first_restart_step=16, m_mul=0.5, t_mul=2.0, lr_min=1e-05, warmup=2, steps_per_epoch=steps_per_epoch)
-    callbacks = [lr_schduler, keras.callbacks.ModelCheckpoint(model.name + ".h5", monitor='val_loss', save_best_only=True)]
-
-    model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=['acc'])
-    model.fit(
-        train_dataset,
-        epochs=50,
-        verbose=1,
-        callbacks=callbacks,
-        initial_epoch=0,
-        steps_per_epoch=steps_per_epoch,
-        validation_data=test_dataset,
-        use_multiprocessing=True,
-        workers=4
-    )
-```
-```py
-hhs = {
-    # "resnet50v2_imagenet_batch_size_128_magnitude_5": "checkpoints/saved/resnet50v2_imagenet_batch_size_128_magnitude_5_hist.json",
-    # "coatnet0_imagenet_batch_size_64_magnitude_5": "checkpoints/saved/coatnet0_imagenet_batch_size_64_magnitude_5_hist.json",
-    # "aotnet50_swish_preact_avg_down_drop02_mixup_0_imagenet_batch_size_512_magnitude_5": "checkpoints/saved/aotnet50_swish_preact_avg_down_drop02_mixup_0_imagenet_batch_size_512_magnitude_5_hist.json",
-    # "coatnet0_imagenet2012_batch_size_32_randaug_10_mixup_0_lr0.01_wd0.1": "checkpoints/coatnet0_imagenet2012_batch_size_32_randaug_10_mixup_0_lr0.01_wd0.1_hist.json",
-    # "cmt_tiny_imagenet2012_batch_size_128_randaug_10_mixup_0_lr0.01_wd0.1": "checkpoints/cmt_tiny_imagenet2012_batch_size_128_randaug_10_mixup_0_lr0.01_wd0.1_hist.json",
-    # "aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
-    # "aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.01_wd0.1": "checkpoints/aotnet50_swish_preact_avg_down_drop02_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.01_wd0.1_hist.json",
-    "aotnet50, E20, randaug_10_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_10_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
-    "aotnet50, E20, randaug_10_mixup_0_AdamW_lr0.001_wd0.": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_10_mixup_0_AdamW_lr0.001_wd0.1_hist.json",
-    "aotnet50, E20, randaug_5_mixup_0_AdamW_lr0.001_wd0.1_on_epoch": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_5_mixup_0_AdamW_lr0.001_wd0.1_on_epoch_hist.json",
-    "aotnet50, E20, randaug_5_mixup_0_SGD_lr0.1_wd0.0005": "checkpoints/aotnet50_swish_preact_avg_down_drop02_E20_imagenet2012_batch_size_128_randaug_5_mixup_0_SGD_lr0.1_wd0.0005_hist.json",
-}
-
-fig = imagenet.plot_hists(hhs.values(), list(hhs.keys()), addition_plots=None)
-
-```
-## inception crop
+  - Generate skip-grams from one sentence
   ```py
-  if inception_crop:
-      channels = im.shape[-1]
-      begin, size, _ = tf.image.sample_distorted_bounding_box(
-          tf.shape(im),
-          tf.zeros([0, 0, 4], tf.float32),
-          area_range=(0.05, 1.0),
-          min_object_covered=0,  # Don't enforce a minimum area.
-          use_image_if_no_bounding_boxes=True)
-      im = tf.slice(im, begin, size)
-      # Unfortunately, the above operation loses the depth-dimension. So we
-      # need to restore it the manual way.
-      im.set_shape([None, None, channels])
-      im = tf.image.resize(im, [crop_size, crop_size])
-  else:
-      im = tf.image.resize(im, [resize_size, resize_size])
-      im = tf.image.random_crop(im, [crop_size, crop_size, 3])
-  if tf.random.uniform(shape=[]) > 0.5:
-      im = tf.image.flip_left_right(im)
+  window_size = 2
+  positive_skip_grams, _ = tf.keras.preprocessing.sequence.skipgrams(
+        example_sequence,
+        vocabulary_size=vocab_size,
+        window_size=window_size,
+        negative_samples=0)
+  print(len(positive_skip_grams))
+
+  for target, context in positive_skip_grams[:5]:
+      print(f"({target}, {context}): ({inverse_vocab[target]}, {inverse_vocab[context]})")
+  ```
+  - Negative sampling for one skip-gram
+  ```py
+  # Get target and context words for one positive skip-gram.
+  target_word, context_word = positive_skip_grams[0]
+
+  # Set the number of negative samples per positive context.
+  num_ns = 4
+
+  context_class = tf.reshape(tf.constant(context_word, dtype="int64"), (1, 1))
+  negative_sampling_candidates, _, _ = tf.random.log_uniform_candidate_sampler(
+      true_classes=context_class,  # class that should be sampled as 'positive'
+      num_true=1,  # each positive skip-gram has 1 positive context class
+      num_sampled=num_ns,  # number of negative context words to sample
+      unique=True,  # all the negative samples should be unique
+      range_max=vocab_size,  # pick index of the samples from [0, vocab_size]
+      seed=SEED,  # seed for reproducibility
+      name="negative_sampling"  # name of this operation
+  )
+  print(negative_sampling_candidates)
+  print([inverse_vocab[index.numpy()] for index in negative_sampling_candidates])
+  ```
+  - Construct one training example
+  ```py
+  # Add a dimension so you can use concatenation (on the next step).
+  negative_sampling_candidates = tf.expand_dims(negative_sampling_candidates, 1)
+
+  # Concat positive context word with negative sampled words.
+  context = tf.concat([context_class, negative_sampling_candidates], 0)
+
+  # Label first context word as 1 (positive) followed by num_ns 0s (negative).
+  label = tf.constant([1] + [0]*num_ns, dtype="int64")
+
+  # Reshape target to shape (1,) and context and label to (num_ns+1,).
+  target = tf.squeeze(target_word)
+  context = tf.squeeze(context)
+  label = tf.squeeze(label)
+
+  print(f"target_index    : {target}")
+  print(f"target_word     : {inverse_vocab[target_word]}")
+  print(f"context_indices : {context}")
+  print(f"context_words   : {[inverse_vocab[c.numpy()] for c in context]}")
+  print(f"label           : {label}")
+
+  print("target  :", target)
+  print("context :", context)
+  print("label   :", label)
+  ```
+  ```py
+  dd = {ii : np.stack([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[0].numpy() for jj in range(1000)]) for ii in range(8)}
+  cc = {ii: pd.value_counts(dd[ii].flatten()).to_dict() for ii in dd}
+  print(cc[0])
+  # {0: 864, 1: 715, 2: 569, 3: 481, 4: 389, 5: 371, 6: 314, 7: 297}
+  print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[1].numpy()[0][0] for jj in range(1000)]) for ii in range(8)})
+  # {0: 0.99967235, 1: 0.7245632, 2: 0.5737029, 3: 0.47004792, 4: 0.3987442, 5: 0.34728608, 6: 0.3084587, 7: 0.27554017}
+  print({ii : np.mean([tf.random.log_uniform_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, seed=42)[2].numpy() for jj in range(1000)]) for ii in range(8)})
+  # {0: 0.59829926, 1: 0.59250146, 2: 0.59380203, 3: 0.59515625, 4: 0.5941352, 5: 0.60234785, 6: 0.5936593, 7: 0.5999326}
+
+  pairs, labels = tf.keras.preprocessing.sequence.skipgrams([1, 2, 3, 4, 5, 1, 6, 7], vocabulary_size=8, window_size=2, negative_samples=4)
+  # list(zip(pairs, labels))
+  pairs, labels = np.array(pairs), np.array(labels)
+  negs, poses = pairs[labels == 0], pairs[labels == 1]
+  poses = [tuple(ii) for ii in poses]
+  neg_in_pos = np.sum([tuple(ii) in poses for ii in negs])
+  print(neg_in_pos, neg_in_pos / negs.shape[0])
+  # 62 0.5961538461538461
+
+  rr_contexts = np.array(contexts)[:, :, 0]
+  rr = [rr_contexts[ii][0] in rr_contexts[ii][1:] for ii in range(rr_contexts.shape[0])]
+  print("Total negatives containing positive:", np.sum(rr), "ratio:", np.sum(rr) / rr_contexts.shape[0])
+  # Total negatives containing positive: 2226 ratio: 0.03430843685459758
+  print("Sample:", rr_contexts[np.array(rr)][:5].tolist())
+  # Sample: [[1, 3, 0, 73, 1], [1, 1, 2, 47, 625], [4, 9, 717, 11, 4], [8, 15, 37, 26, 8], [1, 97, 1, 4, 120]]
+
+  ff = np.logical_not(rr)
+  dataset = tf.data.Dataset.from_tensor_slices(((targets[ff], contexts[ff]), labels[ff]))
+
+  targets, contexts, labels = np.array(targets), np.array(contexts), np.array(labels)
+  dd = pd.DataFrame({"targets": targets.tolist(), "pos": contexts[:, 0, 0].tolist(), "neg": contexts[:, 1:, 0].tolist()})
+  cc = dd.groupby('targets').apply(lambda ii: np.sum([jj in ii['pos'].values for jj in np.concatenate(ii['neg'].values)]))
+  print("Total negatives pairs containing positive pairs:", cc.sum(), "ratio:", cc.sum() / dd.shape[0])
+  # Total negatives pairs containing positive pairs: 38660 ratio: 0.5953095887035925
+
+  checkpoint = tf.train.Checkpoint(embedding=tf.Variable(word2vec.get_layer('w2v_embedding').get_weights()[0]))
+  checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+  ```
+  ```py
+  unigrams = [0.99967235, 0.7245632, 0.5737029, 0.47004792, 0.3987442, 0.34728608, 0.3084587, 0.27554017]
+  sample_func = lambda ii: tf.nn.fixed_unigram_candidate_sampler(true_classes=[[ii]], num_true=1, num_sampled=4, unique=True, range_max=8, unigrams=unigrams)
+  dd = {ii : np.stack([sample_func(ii)[0].numpy() for jj in range(1000)]) for ii in range(8)}
   ```
 ***
-## Timm validation
-```py
-from validate_tf import *
-setup_default_logging()
-args = parser.parse_args('/home/tdtest/tensorflow_datasets/ --dataset tfds/imagenet2012 --img-size 224'.split(' '))
-data = '/home/tdtest/tensorflow_datasets/'
-dataset = "tfds/imagenet2012"
-dataset = create_dataset(root=data, name=dataset, split='validation', load_bytes=False, class_map="")
 
-model = create_model("resnet50", pretrained=False, num_classes=1000, in_chans=3)
-data_config = resolve_data_config(vars(args), model=model, use_test_size=True, verbose=True)
-loader = create_loader(
-        dataset,
-        input_size=data_config['input_size'],
-        batch_size=256,
-        use_prefetcher=True,
-        interpolation=data_config['interpolation'],
-        mean=data_config['mean'],
-        std=data_config['std'],
-        num_workers=4,
-        crop_pct=0.95,
-        pin_memory=False,
-        tf_preprocessing=False)
-```
-```py
-sys.path.append('../keras_cv_attention_models/')
-from keras_cv_attention_models import aotnet
-mm = aotnet.AotNet50(input_shape=(224, 224, 3), classifier_activation=None)
-mm.load_weights('../keras_cv_attention_models/aotnet50_160_imagenet.h5')
-y_true, y_pred_top_1, y_pred_top_5 = [], [], []
-for ii in range(int(np.ceil(50000/256))):
-    input = np.load('imagenet_eval/input_{}.npy'.format(ii))
-    target = np.load('imagenet_eval/target_{}.npy'.format(ii))
-    print(ii, input.shape, target.shape)
-    predicts = mm(input).numpy()
-    pred_argsort = predicts.argsort(-1)
-    y_pred_top_1.extend(pred_argsort[:, -1])
-    y_pred_top_5.extend(pred_argsort[:, -5:])
-    y_true.extend(target)
+# BiT
+  - [Colabs big_transfer_tf2.ipynb](https://colab.research.google.com/github/google-research/big_transfer/blob/master/colabs/big_transfer_tf2.ipynb)
+  - [tfhub bit/m-r50x1](https://tfhub.dev/google/bit/m-r50x1/imagenet21k_classification/1)
+  ```py
+  def add_name_prefix(name, prefix=None):
+    return prefix + "/" + name if prefix else name
 
-y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
-accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
-accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
-print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
-# >>>> Accuracy top1: 0.78066 top5: 0.9368
-```
-```py
-import tensorflow_datasets as tfds
+  class StandardizedConv2D(tf.keras.layers.Conv2D):
+    """Implements the abs/1903.10520 technique (see go/dune-gn).
+    You can simply replace any Conv2D with this one to use re-parametrized
+    convolution operation in which the kernels are standardized before conv.
+    Note that it does not come with extra learnable scale/bias parameters,
+    as those used in "Weight normalization" (abs/1602.07868). This does not
+    matter if combined with BN/GN/..., but it would matter if the convolution
+    was used standalone.
+    Author: Lucas Beyer
+    """
 
-def evaluation_process_resize_crop(datapoint, target_shape=(224, 224), central_crop=1.0, resize_method="bilinear"):
-    image = datapoint["image"]
-    shape = tf.shape(image)
-    height, width = shape[0], shape[1]
-    min_border = tf.cast(tf.minimum(height, width), tf.float32)
-    scale_size = tf.cast(tf.minimum(*target_shape), tf.float32) / central_crop
-    hh_scale = tf.cast(tf.floor(tf.cast(height, tf.float32) * scale_size / min_border), tf.int32)
-    ww_scale = tf.cast(tf.floor(tf.cast(width, tf.float32) * scale_size / min_border), tf.int32)
-    image = tf.image.resize(image, (hh_scale, ww_scale), method=resize_method)
+    def build(self, input_shape):
+      super(StandardizedConv2D, self).build(input_shape)
+      # Wrap a standardization around the conv OP.
+      default_conv_op = self._convolution_op
 
-    y, x = (hh_scale - target_shape[0]) // 2, (ww_scale - target_shape[1]) // 2
-    image = tf.image.crop_to_bounding_box(image, y, x, target_shape[0], target_shape[1])
-    image = tf.clip_by_value(image, 0, 255)
+      def standardized_conv_op(inputs, kernel):
+        # Kernel has shape HWIO, normalize over HWI
+        mean, var = tf.nn.moments(kernel, axes=[0, 1, 2], keepdims=True)
+        # Author code uses std + 1e-5
+        return default_conv_op(inputs, (kernel - mean) / tf.sqrt(var + 1e-10))
 
-    label = datapoint["label"]
-    return image, label
+      self._convolution_op = standardized_conv_op
+      self.built = True
 
-data_name, input_shape, eval_central_crop, resize_method = "imagenet2012", (224, 224), 0.95, "bicubic"
-mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
-std = tf.constant([0.229, 0.224, 0.225]) * 255.0
-rescaling = lambda xx: (xx - mean) / std
-as_one_hot = lambda yy: tf.one_hot(yy, num_classes)
+  class PaddingFromKernelSize(tf.keras.layers.Layer):
+    """Layer that adds padding to an image taking into a given kernel size."""
 
-dataset, info = tfds.load(data_name, with_info=True)
-test_process = lambda xx: evaluation_process_resize_crop(xx, input_shape[:2], eval_central_crop, resize_method)  # timm
-test_dataset = dataset["validation"].map(test_process)
-test_dataset = test_dataset.batch(batch_size).map(lambda xx, yy: (rescaling(xx), as_one_hot(yy)))
-```
-```py
-import math
-import torch
-from torchvision import transforms
-from PIL import Image
-from tqdm import tqdm
-import tensorflow_datasets as tfds
+    def __init__(self, kernel_size, **kwargs):
+      super(PaddingFromKernelSize, self).__init__(**kwargs)
+      self.kernel_size = kernel_size
+      pad_total = kernel_size - 1
+      self._pad_beg = pad_total // 2
+      self._pad_end = pad_total - self._pad_beg
 
-img_size, crop_pct, batch_size = 224, 0.95, 64
-tfl = [
-    transforms.Resize(int(math.floor(img_size / crop_pct)), interpolation=transforms.InterpolationMode.BICUBIC),
-    transforms.CenterCrop(img_size),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=torch.tensor([0.485, 0.456, 0.406]), std=torch.tensor([0.229, 0.224, 0.225]))
-]
-tfl = transforms.Compose(tfl)
+    def compute_output_shape(self, input_shape):
+      batch_size, height, width, channels = tf.TensorShape(input_shape).as_list()
+      if height is not None:
+        height = height + self._pad_beg + self._pad_end
+      if width is not None:
+        width = width + self._pad_beg + self._pad_end
+      return tf.TensorShape((batch_size, height, width, channels))
 
-test_process = lambda image: np.array(tfl(Image.fromarray(image)).permute([1, 2, 0]))
-ds = tfds.load("imagenet2012", with_info=False)["validation"]
+    def call(self, x):
+      padding = [
+          [0, 0],
+          [self._pad_beg, self._pad_end],
+          [self._pad_beg, self._pad_end],
+          [0, 0]]
+      return tf.pad(x, padding)
 
-from keras_cv_attention_models import aotnet
-mm = aotnet.AotNet50(input_shape=(img_size, img_size, 3), classifier_activation=None)
-mm.load_weights('aotnet50_160_imagenet.h5')
+    def get_config(self):
+      config = super(PaddingFromKernelSize, self).get_config()
+      config.update({"kernel_size": self.kernel_size})
+      return config
 
-total = len(ds)
-id = 0
-inputs = []
-y_true, y_pred_top_1, y_pred_top_5 = [], [], []
-mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
-std = tf.constant([0.229, 0.224, 0.225]) * 255.0
-for data_point in tqdm(ds.as_numpy_iterator(), total=len(ds)):
-# for data_point in ds.as_numpy_iterator():
-    imm, label = test_process(data_point['image']), data_point['label']
-    imm = (imm - mean) / std
-    id += 1
-    inputs.append(imm)
-    y_true.append(label)
-    if id % batch_size != 0 and id != total:
-        continue
-    # print(id, np.shape(inputs), np.shape(y_true))
+    @classmethod
+    def from_config(cls, config):
+      return cls(**config)
 
-    predicts = mm(np.array(inputs)).numpy()
-    pred_argsort = predicts.argsort(-1)
-    y_pred_top_1.extend(pred_argsort[:, -1])
-    y_pred_top_5.extend(pred_argsort[:, -5:])
-    inputs = []
-y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
-accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
-accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
-print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
-# >>>> Accuracy top1: 0.78066 top5: 0.9368
-```
-```py
-from tensorflow.keras.preprocessing.image import array_to_img, img_to_array
+  class BottleneckV2Unit(tf.keras.layers.Layer):
+    """Implements a standard ResNet's unit (version 2).
+    """
 
-def test_process(image, target_shape=(224, 224), central_crop=0.95, resize_method="bilinear"):
-    shape = tf.shape(image)
-    height, width = shape[0], shape[1]
-    min_border = tf.cast(tf.minimum(height, width), tf.float32)
-    scale_size = tf.cast(tf.minimum(*target_shape), tf.float32) / central_crop
-    hh_scale = tf.cast(tf.floor(tf.cast(height, tf.float32) * scale_size / min_border), tf.int32)
-    ww_scale = tf.cast(tf.floor(tf.cast(width, tf.float32) * scale_size / min_border), tf.int32)
-    # image = tf.convert_to_tensor(np.array(Image.fromarray(image).resize((ww_scale, hh_scale), resample=Image.BICUBIC)))
-    resize_func = lambda xx: img_to_array(array_to_img(xx).resize((ww_scale, hh_scale), resample=Image.BICUBIC)).astype('float32')
-    image = tf.numpy_function(resize_func, [image], tf.float32)
-    # image = tf.image.resize(image, (hh_scale, ww_scale), method=resize_method)
+    def __init__(self, num_filters, stride=1, **kwargs):
+      """Initializer.
+      Args:
+        num_filters: number of filters in the bottleneck.
+        stride: specifies block's stride.
+        **kwargs: other tf.keras.layers.Layer keyword arguments.
+      """
+      super(BottleneckV2Unit, self).__init__(**kwargs)
+      self._num_filters = num_filters
+      self._stride = stride
 
-    y, x = (hh_scale - target_shape[0]) // 2, (ww_scale - target_shape[1]) // 2
-    image = tf.image.crop_to_bounding_box(image, y, x, target_shape[0], target_shape[1])
-    # image = tf.clip_by_value(image, 0, 255)
-    return tf.cast(image, 'float32')
+      self._proj = None
+      self._unit_a = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+      ])
+      self._unit_a_conv = StandardizedConv2D(
+          filters=num_filters,
+          kernel_size=1,
+          use_bias=False,
+          padding="VALID",
+          trainable=self.trainable,)
 
-# >>>> Accuracy top1: 0.78058 top5: 0.93622
-# >>>> Accuracy top1: 0.78068 top5: 0.93622
-```
-```py
-mean = tf.constant([0.485, 0.456, 0.406]) * 255.0
-std = tf.constant([0.229, 0.224, 0.225]) * 255.0
-rescaling = lambda xx: (xx - mean) / std
+      self._unit_b = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+          PaddingFromKernelSize(kernel_size=3),
+          StandardizedConv2D(
+              filters=num_filters,
+              kernel_size=3,
+              strides=stride,
+              use_bias=False,
+              padding="VALID",
+              trainable=self.trainable,)
+      ])
 
-test_dataset = dataset["validation"].map(lambda data_point: (test_process(data_point['image']), data_point['label']))
-test_dataset = test_dataset.batch(batch_size).map(lambda xx, yy: (rescaling(xx), yy))
+      self._unit_c = tf.keras.Sequential([
+          normalization.GroupNormalization(),
+          ReLU(),
+          StandardizedConv2D(
+              filters=4 * num_filters,
+              kernel_size=1,
+              use_bias=False,
+              padding="VALID",
+              trainable=self.trainable)
+      ])
 
-y_true, y_pred_top_1, y_pred_top_5 = [], [], []
-for img_batch, true_labels in tqdm(test_dataset.as_numpy_iterator(), "Evaluating", total=len(test_dataset)):
-    predicts = np.array(model_interf(img_batch))
-    pred_argsort = predicts.argsort(-1)
-    y_pred_top_1.extend(pred_argsort[:, -1])
-    y_pred_top_5.extend(pred_argsort[:, -5:])
-    y_true.extend(np.array(true_labels).argmax(-1))
-y_true, y_pred_top_1, y_pred_top_5 = np.array(y_true), np.array(y_pred_top_1), np.array(y_pred_top_5)
-accuracy_1 = np.sum(y_true == y_pred_top_1) / y_true.shape[0]
-accuracy_5 = np.sum([ii in jj for ii, jj in zip(y_true, y_pred_top_5)]) / y_true.shape[0]
-print(">>>> Accuracy top1:", accuracy_1, "top5:", accuracy_5)
-return y_true, y_pred_top_1, y_pred_top_5
-```
+    def build(self, input_shape):
+      input_shape = tf.TensorShape(input_shape).as_list()
+
+      # Add projection layer if necessary.
+      if (self._stride > 1) or (4 * self._num_filters != input_shape[-1]):
+        self._proj = StandardizedConv2D(
+            filters=4 * self._num_filters,
+            kernel_size=1,
+            strides=self._stride,
+            use_bias=False,
+            padding="VALID",
+            trainable=self.trainable)
+      self.built = True
+
+    def compute_output_shape(self, input_shape):
+      current_shape = self._unit_a.compute_output_shape(input_shape)
+      current_shape = self._unit_a_conv.compute_output_shape(current_shape)
+      current_shape = self._unit_b.compute_output_shape(current_shape)
+      current_shape = self._unit_c.compute_output_shape(current_shape)
+      return current_shape
+
+    def call(self, x):
+      x_shortcut = x
+      # Unit "a".
+      x = self._unit_a(x)
+      if self._proj is not None:
+        x_shortcut = self._proj(x)
+      x = self._unit_a_conv(x)
+      # Unit "b".
+      x = self._unit_b(x)
+      # Unit "c".
+      x = self._unit_c(x)
+
+      return x + x_shortcut
+
+    def get_config(self):
+      config = super(BottleneckV2Unit, self).get_config()
+      config.update({"num_filters": self._num_filters, "stride": self._stride})
+      return config
+
+    @classmethod
+    def from_config(cls, config):
+      return cls(**config)
+  ```
+  ```py
+  from tensorflow.keras.layers import ReLU
+  import tensorflow_addons.layers.normalizations as normalization
+
+  num_units = (3, 4, 6, 3)
+  num_outputs = 1000
+  filters_factor = 4
+  strides = (1, 2, 2, 2)
+  trainable = False
+
+  num_blocks = len(num_units)
+  num_filters = tuple(16 * filters_factor * 2**b for b in range(num_blocks))
+
+  def create_root_block(num_filters, conv_size=7, conv_stride=2, pool_size=3, pool_stride=2):
+      layers = [
+          PaddingFromKernelSize(conv_size),
+          StandardizedConv2D(filters=num_filters, kernel_size=conv_size, strides=conv_stride, trainable=trainable, use_bias=False, name="standardized_conv2d"),
+          PaddingFromKernelSize(pool_size),
+          tf.keras.layers.MaxPool2D(pool_size=pool_size, strides=pool_stride, padding="valid")
+      ]
+      return tf.keras.Sequential(layers, name="root_block")
+
+  def create_block(num_units, num_filters, stride, name):
+      layers = []
+      for i in range(1, num_units + 1):
+          layers.append(BottleneckV2Unit(num_filters=num_filters, stride=(stride if i == 1 else 1), name=name + "_unit%02d" % i))
+      return tf.keras.Sequential(layers, name=name)
+
+  root = create_root_block(num_filters=num_filters[0])
+  blocks = []
+  for b, (f, u, s) in enumerate(zip(num_filters, num_units, strides), 1):
+      n = "block{}".format(b)
+      blocks.append(create_block(num_units=u, num_filters=f, stride=s, name=n))
+
+  pre_head = [
+      normalization.GroupNormalization(name="group_norm"),
+      ReLU(),
+      tf.keras.layers.GlobalAveragePooling2D()
+  ]
+
+  xx = keras.Input([None, None, 3])
+  nn = root(xx)
+  for block in blocks:
+      nn = block(nn)
+  for layer in pre_head:
+      nn = layer(nn)
+  dd = keras.models.Model(xx, nn)
+
+  mm = keras.models.load_model('../module_cache/4ff8fefe176c863be939e3880dfa769989df4e32')
+  mm.save_weights('aa.h5')
+
+  dd.load_weights('aa.h5')
+  dd.save('dd.h5', include_optimizer=False)
+  ```
+  ```py
+  from tensorflow.keras.layers import ReLU
+  import tensorflow_addons.layers.normalizations as normalization
+
+  num_units = (3, 4, 6, 3)
+  num_outputs = 1000
+  filters_factor = 4
+  strides = (1, 2, 2, 2)
+  trainable = False
+
+  num_blocks = len(num_units)
+  num_filters = tuple(16 * filters_factor * 2**b for b in range(num_blocks))
+
+  xx = keras.Input([None, None, 3])
+  nn = PaddingFromKernelSize(7)(xx)
+  nn = StandardizedConv2D(filters=num_filters[0], kernel_size=7, strides=2, trainable=trainable, use_bias=False, name="standardized_conv2d")(nn)
+  nn = PaddingFromKernelSize(3)(nn)
+  nn = tf.keras.layers.MaxPool2D(pool_size=3, strides=2, padding="valid")(nn)
+
+  for bb, (ff, uu, ss) in enumerate(zip(num_filters, num_units, strides), 1):
+      name = "block{}".format(bb)
+      # create_block(num_units=u, num_filters=f, stride=s, name=n)
+      for ii in range(1, uu + 1):
+          nn = BottleneckV2Unit(num_filters=ff, stride=(ss if ii == 1 else 1), name=name + "_unit%02d" % ii)(nn)
+
+  nn = normalization.GroupNormalization(name="group_norm")(nn)
+  nn = ReLU()(nn)
+  nn = tf.keras.layers.GlobalAveragePooling2D()(nn)
+
+  dd = keras.models.Model(xx, nn)
+
+  mm = keras.models.load_model('../module_cache/4ff8fefe176c863be939e3880dfa769989df4e32')
+  mm.save_weights('aa.h5')
+
+  dd.load_weights('aa.h5')
+  dd.save('dd.h5', include_optimizer=False)
+  ```
+***
+
+# Transformer
+## 位置编码 Positional encoding
+  ```sh
+  PE(pos, 2i) = sin(pos / 10000 ** (2i / d_model))
+  PE(pos, 2i + 1) = cos(pos / 10000 ** (2i / d_model))
+  ```
+  ```py
+  def positional_encoding(position, d_model):
+      """
+      position, d_model = 50, 512
+      d_model_range = np.expand_dims(np.arange(d_model), 0) --> [0, 1, 2, 3,..., 509, 510, 511]
+      (2 * (d_model_range // 2)) / np.float32(d_model) --> [0, 0, 2, 2,..., 508, 510, 510] / 512
+      np.power(1e4, (2 * (d_model_range // 2)) / np.float32(d_model)) --> ~ [1, 1, ..., 1e4, 1e4]
+      angle_rads --> ~ [1, 1, ..., 1e-4, 1e-4]
+      angle_rads --> [angle_rads * 0, angle_rads * 1, angle_rads * 2, ..., angle_rads * 49]
+      [sin] angle_rads[0] --> [0]
+      [sin] angle_rads[1] --> ~[sin(1), sin(1), ..., 0, 0]
+      [cos] angle_rads[0] --> [1]
+      [cos] angle_rads[1] --> ~[cos(1), cos(1), ..., 1, 1]
+      """
+      d_model_range = np.expand_dims(np.arange(d_model), 0)
+      angle_rads = 1 / np.power(1e4, (2 * (d_model_range // 2)) / np.float32(d_model))
+      angle_rads = np.expand_dims(np.arange(position), 1) * angle_rads
+
+      # 将 sin 应用于数组中的偶数索引（indices）；2i
+      angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+      # 将 cos 应用于数组中的奇数索引；2i+1
+      angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+
+      pos_encoding = np.expand_dims(angle_rads, 0)
+      return tf.cast(pos_encoding, dtype=tf.float32)
+
+  pos_encoding = positional_encoding(50, 512)
+  print(f'{pos_encoding.shape = }') # pos_encoding.shape = TensorShape([1, 50, 512])
+  plt.pcolormesh(pos_encoding[0], cmap='RdBu')
+  plt.xlabel('Depth')
+  plt.xlim((0, 512))
+  plt.ylabel('Position')
+  plt.colorbar()
+  ```
+  ![](images/position_encoding_colormesh.svg)
+  ```py
+  for ii in range(0, 50, 10):
+      plt.plot(pos_encoding[0, ii, ::2], label="sin, {}".format(ii))
+      plt.plot(pos_encoding[0, ii, 1::2], label="cos, {}".format(ii))
+  plt.legend()
+  plt.title("Position values")
+  ```
+  ![](images/position_encoding_position_values.svg)
+  ```py
+  print((pos_encoding.numpy()[0] ** 2).sum(1))
+  # [256] * 50
+
+  print(np.dot(pos_encoding.numpy()[0], pos_encoding.numpy()[0, 0]))
+  # [256.      249.10211 231.73363 211.74947 196.68826 189.59668 188.2482 187.86502 184.96516 179.45654 173.78973 170.35315 169.44649 169.34525
+  #  168.0597  165.0636  161.53304 159.08392 158.2816  158.24513 157.57397 155.64383 153.08748 151.10722 150.33557 150.30371 149.94781 148.61731
+  #  146.63585 144.93758 144.17035 144.1174  143.94557 143.00458 141.41406 139.9111  139.13742 139.0499  138.99149 138.32632 137.02701 135.67337
+  #  134.88887 134.7587  134.77036 134.31155 133.24333 132.01273 131.21637 131.03839]
+
+  for ii in range(0, 50, 10):
+      plt.plot(np.dot(pos_encoding.numpy()[0], pos_encoding.numpy()[0, ii]), label=str(ii))
+  plt.legend()
+  plt.title("Dists between values")
+  plt.xlabel('position id')
+  plt.ylabel('dist')
+  ```
+  ![](images/position_encoding_dist_values.svg)
+## Scaled dot product attention
+  - 点积注意力被缩小了深度的平方根倍。这样做是因为对于较大的深度值，点积的大小会增大，从而推动 softmax 函数往仅有很小的梯度的方向靠拢，导致了一种很硬的（hard）softmax。
+  ```py
+  def scaled_dot_product_attention(q, k, v, mask):
+      """计算注意力权重。
+      q, k, v 必须具有匹配的前置维度。
+      k, v 必须有匹配的倒数第二个维度，例如：seq_len_k = seq_len_v。
+      虽然 mask 根据其类型（填充或前瞻）有不同的形状，
+      但是 mask 必须能进行广播转换以便求和。
+
+      参数:
+        q: 请求的形状 == (..., seq_len_q, depth)
+        k: 主键的形状 == (..., seq_len_k, depth)
+        v: 数值的形状 == (..., seq_len_v, depth_v)
+        mask: Float 张量，其形状能转换成
+              (..., seq_len_q, seq_len_k)。默认为None。
+
+      返回值:
+        输出，注意力权重
+      """
+      matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+
+      # 缩放 matmul_qk
+      dk = tf.cast(tf.shape(k)[-1], tf.float32)
+      scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+      # 将 mask 加入到缩放的张量上。
+      if mask is not None:
+          scaled_attention_logits += (mask * -1e9)  
+
+      # softmax 在最后一个轴（seq_len_k）上归一化，因此分数相加等于1。
+      attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+      output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+      return output, attention_weights
+  ```
+  ```py
+  temp_k = tf.expand_dims([1., 2, 3, 4], 1)
+  temp_v = tf.expand_dims([1., 2, 3, 4], 1)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(tf.constant([[5.]]), temp_k, temp_v, None)))
+  # Output: [[3.9932165]], Attention: [[0.0000003  0.00004509 0.00669255 0.9932621 ]]
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(tf.constant([[50.]]), temp_k, temp_v, None)))
+  # Output: [[4.]], Attention: [[0. 0. 0. 1.]]
+
+  temp_k = tf.constant([[10, 0, 0], [0, 10, 0], [0, 0, 10], [0, 0, 10]], dtype=tf.float32)  # (4, 3)
+  temp_v = tf.constant([[1, 0], [10, 0], [100, 5], [1000, 6]], dtype=tf.float32)  # (4, 2)
+
+  # 这条 `请求（query）符合第二个`主键（key）`，因此返回了第二个`数值（value）`。
+  temp_q = tf.constant([[0, 10, 0]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[10.  0.]], Attention: [[0. 1. 0. 0.]]
+
+  # 这条请求符合重复出现的主键（第三第四个），因此，对所有的相关数值取了平均。
+  temp_q = tf.constant([[0, 0, 10]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[550.    5.5]], Attention: [[0.  0.  0.5 0.5]]
+
+  # 这条请求符合第一和第二条主键，因此，对它们的数值去了平均。
+  temp_q = tf.constant([[10, 10, 0]], dtype=tf.float32)  # (1, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[5.5 0. ]], Attention: [[0.5 0.5 0.  0. ]]
+
+  temp_q = tf.constant([[0, 0, 10], [0, 10, 0], [10, 10, 0]], dtype=tf.float32)  # (3, 3)
+  print("Output: {}, Attention: {}".format(*scaled_dot_product_attention(temp_q, temp_k, temp_v, None)))
+  # Output: [[550.    5.5] [ 10.    0. ] [  5.5   0. ]], Attention: [[0.  0.  0.5 0.5] [0.  1.  0.  0. ] [0.5 0.5 0.  0. ]]
+  ```
+## 多头注意力 Multi-head attention
+  多头注意力由四部分组成：
+
+  线性层并分拆成多头。
+  按比缩放的点积注意力。
+  多头及联。
+  最后一层线性层。
+  每个多头注意力块有三个输入：Q（请求）、K（主键）、V（数值）。这些输入经过线性（Dense）层，并分拆成多头。
+
+  将上面定义的 scaled_dot_product_attention 函数应用于每个头（进行了广播（broadcasted）以提高效率）。注意力这步必须使用一个恰当的 mask。然后将每个头的注意力输出连接起来（用tf.transpose 和 tf.reshape），并放入最后的 Dense 层。
+
+  Q、K、和 V 被拆分到了多个头，而非单个的注意力头，因为多头允许模型共同注意来自不同表示空间的不同位置的信息。在分拆后，每个头部的维度减少，因此总的计算成本与有着全部维度的单个注意力头相同。
+  ```py
+  query: Query `Tensor` of shape `[B, T, dim]`
+  value: Value `Tensor` of shape `[B, S, dim]`
+  key: Optional key `Tensor` of shape `[B, S, dim]`
+  attention_mask: a boolean mask of shape `[B, T, S]`
+  attention_output: The result of the computation, of shape [B, T, E] where `T` is for target sequence shapes and `E` is the query input last dimension
+
+  N = `num_attention_heads`
+  H = `size_per_head`
+  `query` = [B, T, N ,H]
+  `key` = [B, S, N, H]
+  `value` = [B, S, N, H]
+  ```
+  ```py
+  from tensorflow.python.ops import math_ops
+  from tensorflow.python.ops import special_math_ops
+  from icecream import ic
+  inputs = keras.layers.Input([14, 16, 1024])
+
+  nn = keras.layers.MultiHeadAttention(num_heads=4, key_dim=128)
+  ic(nn(inputs, inputs).shape.as_list())
+  # ic| nn(inputs, inputs).shape.as_list(): [None, 14, 16, 1024]
+
+  query = nn._query_dense(inputs)
+  key = nn._key_dense(inputs)
+  value = nn._value_dense(inputs)
+  ic(query.shape.as_list(), key.shape.as_list(), value.shape.as_list())
+  # ic| query.shape.as_list(): [None, 14, 16, 4, 128]
+
+  # attention_output, attention_scores = nn._compute_attention(query, key, value)
+  query = math_ops.multiply(query, 1.0 / math.sqrt(float(nn._key_dim)))
+  # 'afgde,abcde->adbcfg', 'bhHWd,bhPQd->bhHWPQ' == 'afgde,adbce->afgdbc'
+  attention_scores = special_math_ops.einsum(nn._dot_product_equation, key, query)
+  ic(attention_scores.shape.as_list())
+  # ic| attention_scores.shape.as_list(): [None, 4, 14, 16, 14, 16]
+
+  attention_scores = nn._masked_softmax(attention_scores, None)
+  attention_scores_dropout = nn._dropout_layer(attention_scores, training=False)
+  attention_output = special_math_ops.einsum(nn._combine_equation, attention_scores_dropout, value)
+  ic(attention_output.shape.as_list())
+  # ic| attention_output.shape.as_list(): [None, 14, 16, 4, 128]
+
+  attention_output = nn._output_dense(attention_output)
+  ic(attention_output.shape.as_list())
+  # ic| attention_output.shape.as_list(): [None, 14, 16, 1024]
+  ```
+***
+
+# Visualizing
+## VIT visualize
+  ```py
+  import cv2
+  from vit_keras import vit, visualize, layers
+
+  # Load a model
+  image_size = 384
+  model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
+  # classes = utils.get_imagenet_classes()
+
+  # Get an image and compute the attention map
+  url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
+  imm = plt.imread(keras.utils.get_file('aa.jpg', url))
+
+  """ attention_map """
+  size = model.input_shape[1]
+  grid_size = int(np.sqrt(model.layers[5].output_shape[0][-2] - 1))
+
+  # Prepare the input
+  X = vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis, :]  # type: ignore
+
+  # Get the attention weights from each transformer.
+  outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
+  weights = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
+  num_layers = weights.shape[0]
+  num_heads = weights.shape[2]
+  reshaped = weights.reshape((num_layers, num_heads, grid_size ** 2 + 1, grid_size ** 2 + 1))
+
+  # From Appendix D.6 in the paper ...
+  # Average the attention weights across all heads.
+  reshaped = reshaped.mean(axis=1)
+
+  # From Section 3 in https://arxiv.org/pdf/2005.00928.pdf ...
+  # To account for residual connections, we add an identity matrix to the
+  # attention matrix and re-normalize the weights.
+  reshaped = reshaped + np.eye(reshaped.shape[1])
+  reshaped = reshaped / reshaped.sum(axis=(1, 2))[:, np.newaxis, np.newaxis]
+
+  # Recursively multiply the weight matrices
+  v = reshaped[-1]
+  for ii in reshaped[::-1][1:]:
+      v = np.matmul(v, ii)
+      # v *= ii
+
+  # Attention from the output token to the input space.
+  mask = v[0, 1:].reshape(grid_size, grid_size)
+  mask = cv2.resize(mask / mask.max(), (imm.shape[1], imm.shape[0]))[..., np.newaxis]
+  # return (mask * imm).astype("uint8")
+  attention_map = (mask * imm).astype("uint8")
+
+  # print('Prediction:', classes[model.predict(vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis])[0].argmax()])
+  # Prediction: Eskimo dog, husky
+
+  # Plot results
+  fig, (ax1, ax2) = plt.subplots(ncols=2)
+  ax1.axis('off')
+  ax2.axis('off')
+  ax1.set_title('Original')
+  ax2.set_title('Attention Map')
+  _ = ax1.imshow(imm)
+  _ = ax2.imshow(attention_map)
+  ```
+  ```py
+  from skimage.data import chelsea
+  imm = chelsea()
+
+  url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
+  imm = plt.imread(keras.utils.get_file('aa.jpg', url))
+
+  fig, axes = plt.subplots(1, 3, figsize=(3 * 4, 4))
+  axes[0].imshow(imm)
+
+  from keras_cv_attention_models.visualizing import visualizing
+  from keras_cv_attention_models.beit import beit
+  mm = beit.BeitBasePatch16(input_shape=(384, 384, 3), pretrained="imagenet")
+
+  imm_inputs = keras.applications.imagenet_utils.preprocess_input(imm, mode='tf')
+  imm_inputs = tf.expand_dims(tf.image.resize(imm_inputs, mm.input_shape[1:3]), 0)
+  bb = keras.models.Model(mm.inputs[0], [ii.output for ii in mm.layers if ii.name.endswith('attention_scores')])
+  attn_scores = bb(imm_inputs)
+
+  """ BotNet """
+  mask = [ii.numpy()[0].mean((0)) for ii in attn_scores][::-1]
+  # aa = tf.nn.avg_pool(mask[1].reshape(1, 16, 16, -1), 2, 2, 'VALID').numpy().reshape(64, -1)
+  down_sample = lambda xx, ss, tt: tf.nn.avg_pool(xx.reshape(1, ss, ss, -1), ss // tt, ss // tt, 'VALID').numpy().reshape(tt * tt, -1) if ss != tt else xx
+  cum_mask = [mask[0]] + [down_sample(mask[ii], int(sqrt(mask[ii].shape[0])), int(sqrt(mask[ii - 1].shape[1]))) for ii in range(1, len(mask))]
+  cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
+  mask = [ii.mean(0) for ii in mask]
+
+  down_sample = lambda xx, rr: tf.nn.max_pool(xx[tf.newaxis, :, :, tf.newaxis], rr, rr, "VALID")[0, :, :, 0].numpy()
+  cum_mask = [matmul_prod(cum_mask[: ii + 1]).mean(0) for ii in range(len(cum_mask))]
+
+  ss = [int(np.sqrt(ii.shape[0])) for ii in mask]
+  mmask = [tf.image.resize(tf.reshape(ii, [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
+  plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[:ii+1], axis=0).numpy()) for ii in range(len(mmask))]))
+
+  ss = 8
+  idx = 0
+  tt = [mask[idx][ii].reshape(ss, ss) for ii in range(mask[idx].shape[0])]
+  tt = [ii / ii.max() for ii in tt]
+  _ = visualizing.stack_and_plot_images(tt, margin=1)
+
+  """ LeViT """
+  mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
+  cum_mask = [matmul_prod(mask[:ii+1]).mean(0) for ii in range(len(mask))]
+  mask = [ii.mean(0) for ii in mask]
+
+  """ HaloNet """
+  mask = [ii.numpy()[0].mean((0, 1, 2)) for ii in attn_scores]
+  plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1], False) for ii in range(len(mask))]))
+  plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mask))]))
+
+  mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
+  cum_mask = [ii.reshape(*ii.shape[:3], 14, 14)[..., :8, :8].reshape(*ii.shape[:3], 64) for ii in mask]
+  cum_mask = [tf.reduce_max(ii, axis=(0, 1)).numpy() for ii in cum_mask]
+  cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
+  mask = [ii.mean((0, 1, 2)) for ii in mask]
+
+  qqs = [int(np.sqrt(ii.shape[2])) for ii in mask]
+  vvs = [int(np.sqrt(ii.shape[3])) for ii in mask]
+  hhs = [(jj - ii) // 2 for ii, jj in zip(qqs, vvs)]
+  tt = [rearrange(ii, "hh ww (hb wb) cc -> (hh hb) (ww wb) cc", hb=qq, wb=qq) for ii, qq in zip(mask, qqs)]
+  tt = [tf.expand_dims(tf.pad(ii, [[hh, hh], [hh, hh], [0, 0]]), 0) for ii, hh in zip(tt, hhs)]
+  tt = [tpu_compatible_extract_patches(ii, vv, qq, padding='VALID', compressed=False).numpy()[0] for ii, vv, qq in zip(tt, vvs, qqs)]
+  # tt = [rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc").mean((0, 1)) for ii in tt]
+  tt = [tf.reduce_max(rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc"), axis=(0, 1)).numpy() for ii in tt]
+  cum_mask = [matmul_prod(tt[:ii+1]).mean(0) for ii in range(len(tt))]
+
+  """ Coat """
+  mask = [ii.numpy()[0].mean((0, 2)) for ii in attn_scores]
+  plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1][1:], False) for ii in range(len(mask))]))
+
+  ss = [int(np.sqrt(ii.shape[0] - 1)) for ii in mask]
+  mmask = [tf.image.resize(tf.reshape(ii[1:], [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
+  plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mmask))]))
+
+  """ VOLO """
+  aa = attention_layers.fold_by_conv2d_transpose(tf.reduce_mean(tf.concat(attn_scores, axis=0), axis=(3, 5)), (48, 48))[:, :, :, 0] + tf.eye(48)
+  attn_scores = (aa / tf.reduce_sum(aa, axis=(1, 2), keepdims=True)).numpy()
+
+  """ BEIT """
+  mask = [ii.numpy()[0].mean(0) + np.eye(ii.shape[-1]) for ii in attn_scores]
+  mask = [(ii / ii.sum()) for ii in mask]
+  cum_mask = [matmul_prod(mask[-ii-1:])[0][1:] for ii in range(len(mask))]
+  mask = [ii[0][1:]for ii in mask]
+
+  mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in mask])
+  cum_mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in cum_mask])
+  plt.imshow(mask_imm)
+  plt.imshow(cum_mask_imm)
+  plt.imshow(np.vstack([mask_imm, cum_mask_imm]))
+
+  def matmul_prod(aa):
+      vv = np.ones_like(aa[0], dtype='float64')
+      for ii in aa[::-1]:
+          vv = np.matmul(vv, ii)
+      return vv
+
+  def apply_mask_2_image(image, mask, has_cls_token=True):
+      # mask = vv[0]
+      if has_cls_token:
+          width = height = int(np.sqrt(mask.shape[0] - 1))
+          mask = mask[1:]
+      elif len(mask.shape) == 1:
+          width = height = int(np.sqrt(mask.shape[0]))
+      else:
+          height, width = mask.shape[:2]
+      mask = mask.reshape(width, height, 1)
+      mask = tf.image.resize(mask / mask.max(), image.shape[:2]).numpy()
+      return (mask * image).astype("uint8")
+
+  plt.imshow(apply_mask_2_image(imm, matmul_prod(attn_scores)[0], ww, hh))
+  plt.imsave('aa.png', np.hstack([apply_mask_2_image(imm, matmul_prod(attn_scores[-ii-1:])[0], ww, hh) for ii in range(len(attn_scores))]))
+  plt.imsave('bb.png', np.hstack([apply_mask_2_image(imm, matmul_prod([attn_scores[-ii-1]])[0], ww, hh) for ii in range(len(attn_scores))]))
+
+  axes[1].imshow(attention_map)
+  ```
+  ```py
+  from vit_keras import vit, layers
+  image_size = 384
+  model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
+  X = vit.preprocess_inputs(tf.image.resize(imm, (image_size, image_size)))[np.newaxis, :]
+  outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
+  attn_scores = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
+
+  fig = visualizing.plot_attention_score_maps(attn_scores, imm, attn_type='beit')
+  ```
+  ```py
+  import tensorflow_addons as tfa
+  xx = tf.random.uniform((1000, 32, 32, 3))
+  yy = tf.one_hot(tf.cast(tf.random.uniform((1000,)) * 10, 'int32'), depth=32)
+  mm = keras.models.Sequential([keras.layers.Input([32, 32, 3]), keras.layers.Flatten(), keras.layers.BatchNormalization(), keras.layers.Dense(32)])
+  mm.compile(optimizer=tfa.optimizers.AdamW(weight_decay=0.01, exclude_from_weight_decay=['/gamma', '/beta']), loss="categorical_crossentropy")
+  mm.fit(xx, yy)
+  mm.save('aa.h5')
+  bb = keras.models.load_model('aa.h5')
+  print(bb.optimizer.exclude_from_weight_decay)
+  ```
+  ```py
+  values * clip_norm / math_ops.maximum(l2norm, clip_norm)
+
+  max_norm = 5.0
+  total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]), norm_type)
+  clip_coef = max_norm / (total_norm + 1e-6)
+  clip_coef_clamped = torch.clamp(clip_coef, max=1.0)
+  p.grad.detach().mul_(clip_coef_clamped.to(p.grad.device))
+
+  grad * clip(max_norm / l2norm, 1)
+  ```
+  ```py
+  from tqdm import tqdm
+
+  aa = np.load('faces_casia_112x112_folders_shuffle.npz')
+  casia_image_classes = aa['image_classes']
+  print(">>>> Total images:", casia_image_classes.shape[0], "Total classes:", casia_image_classes.max())
+  # >>>> Total images: 490623 Total classes: 10571
+
+  bb = np.load('ms1m-retinaface-t1_112x112_folders_shuffle.npz')
+  image_classes, image_names = bb['image_classes'], bb['image_names']
+  ccs = np.random.permutation(np.arange(image_classes.max()))[:10000]
+  pick = [ii in ccs for ii in tqdm(image_classes)]
+  print(">>>> Total images:", np.sum(pick))
+  # >>>> Total images: 550625
+
+  class_map = {ii: id for id, ii in (enumerate(ccs))}
+  picked_image_names, picked_image_classes = image_names[pick], image_classes[pick]
+  picked_image_classes = [class_map[ii] for ii in picked_image_classes]
+  np.savez_compressed('ms1m_casia_scale_test.npz', image_names=picked_image_names, image_classes=picked_image_classes)
+
+  fig, axes = plt.subplots(1, 2)
+  _ = axes[0].hist(pd.value_counts(casia_image_classes).values, bins=256, label="CASIA distribution")
+  _ = axes[1].hist(pd.value_counts(image_classes).values, bins=256, label="Sub MS1MV3 distribution")
+  for ax in axes:
+      ax.legend()
+      ax.set_xlabel("Count of images in each class")
+  ```
+## tf keras vis
+  ```py
+  def get_seed_inputs(model, seed_inputs=None, input_ranges=((0, 255),)):
+      # Prepare seed_inputs
+      seed_inputs = []
+      if len(seed_inputs) == 0:
+          # Replace None to 0.0-1.0 or any properly value
+          input_ranges = ((0., 1.) if low is None and high is None else (low, high)
+                          for low, high in input_ranges)
+          input_ranges = ((high - np.abs(high / 2.0), high) if low is None else (low, high)
+                          for low, high in input_ranges)
+          input_ranges = ((low, low + np.abs(low * 2.0)) if high is None else (low, high)
+                          for low, high in input_ranges)
+          # Prepare input_shape
+          input_shapes = (input_tensor.shape[1:] for input_tensor in model.inputs)
+          # Generae seed-inputs
+          seed_inputs = (tf.random.uniform(shape, low, high)
+                         for (low, high), shape in zip(input_ranges, input_shapes))
+      # Convert numpy to tf-tensor
+      seed_inputs = (tf.cast(tf.constant(X), dtype=input_tensor.dtype)
+                     for X, input_tensor in zip(seed_inputs, model.inputs))
+      # Do expand_dims when an seed_input doesn't have the dim for samples
+      seed_inputs = (tf.expand_dims(X, axis=0) if len(X.shape) < len(input_tensor.shape) else X
+                     for X, input_tensor in zip(seed_inputs, model.inputs))
+      seed_inputs = list(seed_inputs)
+      if len(seed_inputs) != len(model.inputs):
+          raise ValueError(
+              "The lengths of seed_inputs and model's inputs don't match."
+              f" seed_inputs: {len(seed_inputs)}, model's inputs: {len(model.inputs)}")
+      return seed_inputs
+  ```
+  ```py
+  from tf_keras_vis.utils.scores import CategoricalScore
+  from tf_keras_vis.activation_maximization import ActivationMaximization
+  from tf_keras_vis.activation_maximization.callbacks import Progress
+  from tf_keras_vis.utils.model_modifiers import ExtractIntermediateLayer, ReplaceToLinear
+
+  model = keras.applications.VGG16(weights='imagenet', include_top=True)
+  layer_name = 'block5_conv3' # The target layer that is the last layer of VGG16.
+
+  filter_number = 3
+  score = CategoricalScore(filter_number)
+
+  model_modifier=[ExtractIntermediateLayer(index_or_name=layer_name), ReplaceToLinear()]
+  activation_maximization = ActivationMaximization(model, model_modifier=model_modifier, clone=True)
+  activations = activation_maximization(score, input_modifiers=None, regularizers=None, steps=30, callbacks=[Progress()])
+
+  f, ax = plt.subplots(figsize=(4, 4))
+  ax.imshow(activations[0])
+  ax.set_title('filter[{:03d}]'.format(filter_number), fontsize=16)
+  ax.axis('off')
+  plt.tight_layout()
+  plt.show()
+  ```
+## Visualizing Data using the Embedding Projector in TensorBoard
+  ```py
+  import os
+  import tensorflow_datasets as tfds
+  import tensorflow as tf
+  from tensorboard.plugins import projector
+  import models
+
+  log_dir='/tmp/embedding-example/'
+  model_path = "checkpoints/TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16.h5"
+  if not os.path.exists(log_dir):
+      os.makedirs(log_dir)
+
+  mm = tf.keras.models.load_model(model_path, custom_objects={"NormDense": models.NormDense}, compile=False)
+  checkpoint = tf.train.Checkpoint(embedding=tf.Variable(tf.transpose(mm.layers[-1].weights[0])))
+  checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
+
+  with open(os.path.join(log_dir, 'metadata.tsv'), "w") as ff:
+      for ii in range(mm.layers[-1].output.shape[-1]):
+          ff.write("{}\n".format(ii))
+  config = projector.ProjectorConfig()
+  embedding = config.embeddings.add()
+  embedding.tensor_name = "embedding/.ATTRIBUTES/VARIABLE_VALUE"
+  embedding.metadata_path = 'metadata.tsv'
+  projector.visualize_embeddings(log_dir, config)
+
+  !tensorboard --logdir /tmp/embedding-example/
+  ```
+***
+
+# Image segmentation
+  - [Tensorflow tutorials image segmentation](https://www.tensorflow.org/tutorials/images/segmentation)
+  ```sh
+  pip install pydot graphviz
+  sudo apt install python3-graphviz python3-pydot
+  ```
+  ```py
+  import tensorflow_datasets as tfds
+  dataset, info = tfds.load("oxford_iiit_pet:3.*.*", with_info=True)
+
+  def load_image_data(datapoint, randomness=False):
+      input_image = tf.image.resize(datapoint['image'], (128, 128))
+      input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+
+      if randomness and tf.random.uniform(()) > 0.5:
+          input_image = tf.image.flip_left_right(input_image)
+          input_mask = tf.image.flip_left_right(input_mask)
+
+      input_image = tf.cast(input_image, tf.float32) / 255.0
+      input_mask -= 1
+
+      return input_image, input_mask
+
+  TRAIN_LENGTH = info.splits['train'].num_examples
+  BATCH_SIZE = 64
+  BUFFER_SIZE = 1000
+
+  train = dataset['train'].map(lambda xx: load_image_data(xx, randomness=True), num_parallel_calls=tf.data.AUTOTUNE)
+  test = dataset['test'].map(load_image_data)
+
+  train_dataset = train.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+  train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+  test_dataset = test.batch(BATCH_SIZE)
+  ```
+  ```py
+  def show_images_masks(images, masks, predicts=None):
+      if predicts is None:
+          predicts = [None] * len(images)
+          columns = 2
+      else:
+          columns = 3
+      fig, axes = plt.subplots(len(images), columns, figsize=(columns * 3, len(images) * 3))
+      axes = axes if len(images) > 1 else [axes]
+
+      titles = ['Input Image', 'True Mask', 'Predicted Mask']
+      for image, mask, predict, row_axes in zip(images, masks, predicts, axes):
+          row_axes[0].imshow(image)
+          row_axes[1].imshow(mask)
+          if predict is not None:
+              row_axes[2].imshow(predict)
+          for ax, tt in zip(row_axes, titles):
+              ax.set_title(tt)
+              ax.set_axis_off()
+
+      fig.tight_layout()
+      return fig, axes
+
+  image, mask = train.as_numpy_iterator().next()
+  fig, axes = show_images_masks([image], [mask])
+  ```
+  ```py
+  def upsample(inputs, filters, kernel_size, norm_type='batchnorm', apply_dropout=False):
+      initializer = tf.random_normal_initializer(0., 0.02)
+
+      nn = tf.keras.layers.Conv2DTranspose(filters, kernel_size, strides=2, padding='same', kernel_initializer=initializer, use_bias=False)(inputs)
+      if norm_type.lower() == 'batchnorm':
+          nn = tf.keras.layers.BatchNormalization()(nn)
+      if apply_dropout:
+          nn = tf.keras.layers.Dropout(0.5)(nn)
+      nn = tf.keras.layers.ReLU()(nn)
+      return nn
+
+  def unet_model(input_shape=(128, 128, 3), output_channels=3):
+      base_model = tf.keras.applications.MobileNetV2(input_shape=input_shape, include_top=False)
+      base_model.trainable = False
+
+      # Down sampling, Use the activations of these layers
+      layer_names = [
+          'block_1_expand_relu',   # 64x64
+          'block_3_expand_relu',   # 32x32
+          'block_6_expand_relu',   # 16x16
+          'block_13_expand_relu',  # 8x8
+          'block_16_project',      # 4x4
+      ]
+      skip_conns = [base_model.get_layer(name).output for name in layer_names]
+
+      # Up sampling and establishing the skip connections
+      nn = skip_conns[-1]
+      up_filters = [512, 256, 128, 64]
+      up_kernels = [3, 3, 3, 3]
+      for up_filter, up_kernel, skip_conn in zip(up_filters, up_kernels, reversed(skip_conns[:-1])):
+          nn = upsample(nn, up_filter, up_kernel)
+          nn = tf.keras.layers.Concatenate()([nn, skip_conn])
+
+      # This is the last layer of the model, 64x64 -> 128x128
+      nn = tf.keras.layers.Conv2DTranspose(output_channels, 3, strides=2, padding='same')(nn)
+      return tf.keras.Model(inputs=base_model.inputs[0], outputs=nn)
+
+  model = unet_model(output_channels=3)
+  model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+
+  tf.keras.utils.plot_model(model, show_shapes=True)
+  pred = model(np.expand_dims(image, 0)).numpy()[0]
+  pred = np.argmax(pred, axis=-1)
+  fig, axes = show_images_masks([image], [mask], [pred])
+
+  image, mask = train.as_numpy_iterator().next()
+  image, mask = np.expand_dims(image, 0), np.expand_dims(mask, 0)
+  show_result = keras.callbacks.LambdaCallback(on_epoch_end=lambda epoch, logs=None: show_images_masks(image, mask, np.argmax(model(image), axis=-1))[0].savefig('pred_epoch_{}.png'.format(epoch)))
+  history = model.fit(train_dataset, epochs=20, validation_data=test_dataset, callbacks=[show_result])
+  ```
+  ```py
+  plt.figure()
+  plt.plot(history.history['loss'], 'r', label='Training loss')
+  plt.plot(history.history['val_loss'], 'bo', label='Validation loss')
+  plt.title('Training and Validation Loss')
+  plt.xlabel('Epoch')
+  plt.ylabel('Loss Value')
+  plt.ylim([0, 1])
+  plt.legend()
+  plt.show()
+
+  images, masks = train_dataset.as_numpy_iterator().next()
+  preds = model(images).numpy()
+  preds = np.argmax(preds, axis=-1)
+  fig, axes = show_images_masks(images[:5], masks[:5], preds[:5])
+  ```
+***

@@ -745,6 +745,87 @@
           return layer
       return keras.models.clone_model(model, clone_function=do_convert_bn_to_float32)
   ```
+## Pytorch float16
+  ```py
+  import torch
+  import time
+  import torch.nn as nn
+  import numpy as np
+  from torchvision import datasets, transforms
+  from tqdm import tqdm
+
+
+  class TestResNet(nn.Module):
+      def __init__(self, input=32, num_classes=10):
+          super(TestResNet, self).__init__()
+          self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, bias=False)
+          self.flatten = nn.Flatten()
+          conv_out_shape = int(np.ceil(input / 2)) - 3
+          self.linear = nn.Linear(64 * conv_out_shape * conv_out_shape, num_classes)
+          self.softmax = nn.Softmax(dim=-1)
+
+      def forward(self, x):
+          out = self.conv1(x)
+          out = self.flatten(out)
+          out = self.linear(out)
+          out = self.softmax(out)
+          return out
+
+
+  def load_cifar10(batch_size=512, image_shape=(32, 32)):
+      train_transforms = transforms.Compose([transforms.Resize(image_shape), transforms.ToTensor()])
+      trainset = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transforms)
+      train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
+      total = trainset.data.shape[0]
+      steps_per_epoch = int(np.ceil(total / batch_size))
+      return train_loader, steps_per_epoch
+
+
+  def run_test(input_shape=(32, 32), batch_size=512, use_fp16=False, epochs=2):
+      train_loader, steps_per_epoch = load_cifar10(batch_size=batch_size, image_shape=input_shape)
+
+      device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+      model = TestResNet(input=input_shape[0], num_classes=10).to(device)
+      if use_fp16:
+          model = model.half()
+
+      optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+      criterion = nn.CrossEntropyLoss()
+      for epoch in range(epochs):
+          since = time.time()
+          for inputs, labels in tqdm(train_loader, "Epoch {}/{}".format(epoch + 1, epochs), total=steps_per_epoch):
+              inputs = inputs.to(device).half() if use_fp16 else inputs.to(device)
+              labels = labels.to(device)
+              optimizer.zero_grad()
+              outputs = model(inputs)
+              loss = criterion(outputs, labels)
+              loss.backward()
+              optimizer.step()
+
+          total_time = time.time() - since
+          print(">>>> Total time: %.4fs, mean: %.4fms" % (total_time, total_time * 1000 / steps_per_epoch))
+
+
+  if __name__ == "__main__":
+      import sys
+      import argparse
+
+      parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+      parser.add_argument("-b", "--batch_size", type=int, default=512, help="Batch size")
+      parser.add_argument("-i", "--input_shape", type=int, default=32, help="Input shape")
+      parser.add_argument("-f", "--use_fp16", action="store_true", help="Use fp16")
+      parser.add_argument("-e", "--epochs", type=int, default=2, help="Epochs")
+
+      args = parser.parse_known_args(sys.argv[1:])[0]
+      run_test((args.input_shape, args.input_shape), args.batch_size, args.use_fp16, args.epochs)
+  ```
+
+  | input_shape | batch_size | use_fp16 | first epoch (ms/step) | second epoch (ms/step) |
+  | ----------- | ---------- | -------- | --------------------- | ---------------------- |
+  | 112         | 512        | False    | 84.5125               | 78.9935                |
+  | 112         | 512        | True     | 75.3213               | 76.9712                |
+  | 224         | 512        | False    | 228.2185              | 215.2186               |
+  | 224         | 512        | True     | 228.9982              | 254.9154               |
 ***
 
 # XLA Accelerated Linear Algebra
@@ -756,36 +837,6 @@
   ```
   ```sh
   $ TF_XLA_FLAGS="--tf_xla_auto_jit=2 --tf_xla_cpu_global_jit"
-  ```
-***
-
-# Visualizing Data using the Embedding Projector in TensorBoard
-  ```py
-  import os
-  import tensorflow_datasets as tfds
-  import tensorflow as tf
-  from tensorboard.plugins import projector
-  import models
-
-  log_dir='/tmp/embedding-example/'
-  model_path = "checkpoints/TT_ghostnet_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16.h5"
-  if not os.path.exists(log_dir):
-      os.makedirs(log_dir)
-
-  mm = tf.keras.models.load_model(model_path, custom_objects={"NormDense": models.NormDense}, compile=False)
-  checkpoint = tf.train.Checkpoint(embedding=tf.Variable(tf.transpose(mm.layers[-1].weights[0])))
-  checkpoint.save(os.path.join(log_dir, "embedding.ckpt"))
-
-  with open(os.path.join(log_dir, 'metadata.tsv'), "w") as ff:
-      for ii in range(mm.layers[-1].output.shape[-1]):
-          ff.write("{}\n".format(ii))
-  config = projector.ProjectorConfig()
-  embedding = config.embeddings.add()
-  embedding.tensor_name = "embedding/.ATTRIBUTES/VARIABLE_VALUE"
-  embedding.metadata_path = 'metadata.tsv'
-  projector.visualize_embeddings(log_dir, config)
-
-  !tensorboard --logdir /tmp/embedding-example/
   ```
 ***
 
@@ -1436,134 +1487,7 @@
   benchmark(tf.data.Dataset.range(2).interleave(lambda xx: aa.next(), num_parallel_calls=AUTOTUNE).batch(128))
   ```
 ***
-# Image segmentation
-  - [Tensorflow tutorials image segmentation](https://www.tensorflow.org/tutorials/images/segmentation)
-  ```sh
-  pip install pydot graphviz
-  sudo apt install python3-graphviz python3-pydot
-  ```
-  ```py
-  import tensorflow_datasets as tfds
-  dataset, info = tfds.load("oxford_iiit_pet:3.*.*", with_info=True)
 
-  def load_image_data(datapoint, randomness=False):
-      input_image = tf.image.resize(datapoint['image'], (128, 128))
-      input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
-
-      if randomness and tf.random.uniform(()) > 0.5:
-          input_image = tf.image.flip_left_right(input_image)
-          input_mask = tf.image.flip_left_right(input_mask)
-
-      input_image = tf.cast(input_image, tf.float32) / 255.0
-      input_mask -= 1
-
-      return input_image, input_mask
-
-  TRAIN_LENGTH = info.splits['train'].num_examples
-  BATCH_SIZE = 64
-  BUFFER_SIZE = 1000
-
-  train = dataset['train'].map(lambda xx: load_image_data(xx, randomness=True), num_parallel_calls=tf.data.AUTOTUNE)
-  test = dataset['test'].map(load_image_data)
-
-  train_dataset = train.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-  train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-  test_dataset = test.batch(BATCH_SIZE)
-  ```
-  ```py
-  def show_images_masks(images, masks, predicts=None):
-      if predicts is None:
-          predicts = [None] * len(images)
-          columns = 2
-      else:
-          columns = 3
-      fig, axes = plt.subplots(len(images), columns, figsize=(columns * 3, len(images) * 3))
-      axes = axes if len(images) > 1 else [axes]
-
-      titles = ['Input Image', 'True Mask', 'Predicted Mask']
-      for image, mask, predict, row_axes in zip(images, masks, predicts, axes):
-          row_axes[0].imshow(image)
-          row_axes[1].imshow(mask)
-          if predict is not None:
-              row_axes[2].imshow(predict)
-          for ax, tt in zip(row_axes, titles):
-              ax.set_title(tt)
-              ax.set_axis_off()
-
-      fig.tight_layout()
-      return fig, axes
-
-  image, mask = train.as_numpy_iterator().next()
-  fig, axes = show_images_masks([image], [mask])
-  ```
-  ```py
-  def upsample(inputs, filters, kernel_size, norm_type='batchnorm', apply_dropout=False):
-      initializer = tf.random_normal_initializer(0., 0.02)
-
-      nn = tf.keras.layers.Conv2DTranspose(filters, kernel_size, strides=2, padding='same', kernel_initializer=initializer, use_bias=False)(inputs)
-      if norm_type.lower() == 'batchnorm':
-          nn = tf.keras.layers.BatchNormalization()(nn)
-      if apply_dropout:
-          nn = tf.keras.layers.Dropout(0.5)(nn)
-      nn = tf.keras.layers.ReLU()(nn)
-      return nn
-
-  def unet_model(input_shape=(128, 128, 3), output_channels=3):
-      base_model = tf.keras.applications.MobileNetV2(input_shape=input_shape, include_top=False)
-      base_model.trainable = False
-
-      # Down sampling, Use the activations of these layers
-      layer_names = [
-          'block_1_expand_relu',   # 64x64
-          'block_3_expand_relu',   # 32x32
-          'block_6_expand_relu',   # 16x16
-          'block_13_expand_relu',  # 8x8
-          'block_16_project',      # 4x4
-      ]
-      skip_conns = [base_model.get_layer(name).output for name in layer_names]
-
-      # Up sampling and establishing the skip connections
-      nn = skip_conns[-1]
-      up_filters = [512, 256, 128, 64]
-      up_kernels = [3, 3, 3, 3]
-      for up_filter, up_kernel, skip_conn in zip(up_filters, up_kernels, reversed(skip_conns[:-1])):
-          nn = upsample(nn, up_filter, up_kernel)
-          nn = tf.keras.layers.Concatenate()([nn, skip_conn])
-
-      # This is the last layer of the model, 64x64 -> 128x128
-      nn = tf.keras.layers.Conv2DTranspose(output_channels, 3, strides=2, padding='same')(nn)
-      return tf.keras.Model(inputs=base_model.inputs[0], outputs=nn)
-
-  model = unet_model(output_channels=3)
-  model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-
-  tf.keras.utils.plot_model(model, show_shapes=True)
-  pred = model(np.expand_dims(image, 0)).numpy()[0]
-  pred = np.argmax(pred, axis=-1)
-  fig, axes = show_images_masks([image], [mask], [pred])
-
-  image, mask = train.as_numpy_iterator().next()
-  image, mask = np.expand_dims(image, 0), np.expand_dims(mask, 0)
-  show_result = keras.callbacks.LambdaCallback(on_epoch_end=lambda epoch, logs=None: show_images_masks(image, mask, np.argmax(model(image), axis=-1))[0].savefig('pred_epoch_{}.png'.format(epoch)))
-  history = model.fit(train_dataset, epochs=20, validation_data=test_dataset, callbacks=[show_result])
-  ```
-  ```py
-  plt.figure()
-  plt.plot(history.history['loss'], 'r', label='Training loss')
-  plt.plot(history.history['val_loss'], 'bo', label='Validation loss')
-  plt.title('Training and Validation Loss')
-  plt.xlabel('Epoch')
-  plt.ylabel('Loss Value')
-  plt.ylim([0, 1])
-  plt.legend()
-  plt.show()
-
-  images, masks = train_dataset.as_numpy_iterator().next()
-  preds = model(images).numpy()
-  preds = np.argmax(preds, axis=-1)
-  fig, axes = show_images_masks(images[:5], masks[:5], preds[:5])
-  ```
-***
 # SAM
   - [Sharpness-Aware Minimization for Efficiently Improving Generalization](https://arxiv.org/pdf/2010.01412.pdf)
   - [Keras SAM (Sharpness-Aware Minimization)](https://qiita.com/T-STAR/items/8c3afe3a116a8fc08429)
@@ -1721,6 +1645,7 @@
   ```
   ![](images/resnet50_cifar10_sam_sd.svg)
 ***
+
 # Stochastic Depth
   - [Deep Networks with Stochastic Depth](https://arxiv.org/pdf/1603.09382.pdf)
   - [tfa.layers.StochasticDepth](https://www.tensorflow.org/addons/api_docs/python/tfa/layers/StochasticDepth)
@@ -1767,85 +1692,450 @@
       return keras.models.clone_model(model, clone_function=__replace_stochastic_depth_with_add__)
   ```
 ***
-# Pytorch float16
+
+# Tape
   ```py
-  import torch
-  import time
-  import torch.nn as nn
-  import numpy as np
-  from torchvision import datasets, transforms
-  from tqdm import tqdm
+  (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+  x_train, x_test = tf.expand_dims(x_train, -1) / 255, tf.expand_dims(x_test, -1) / 255
+  train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle(10000).batch(32)
+  test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)
 
+  class MyModel(keras.models.Model):
+      def __init__(self, **kwargs):
+          super(MyModel, self).__init__(**kwargs)
+          self.conv = keras.layers.Conv2D(32, 3)
+          self.flatten = keras.layers.Flatten()
+          self.dense = keras.layers.Dense(10)
+      def call(self, xx):
+          xx = self.conv(xx)
+          xx = self.flatten(xx)
+          xx = self.dense(xx)
+          return xx
 
-  class TestResNet(nn.Module):
-      def __init__(self, input=32, num_classes=10):
-          super(TestResNet, self).__init__()
-          self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, bias=False)
-          self.flatten = nn.Flatten()
-          conv_out_shape = int(np.ceil(input / 2)) - 3
-          self.linear = nn.Linear(64 * conv_out_shape * conv_out_shape, num_classes)
-          self.softmax = nn.Softmax(dim=-1)
+      @tf.function
+      def train_step(self, data):
+          images, labels = data
+          with tf.GradientTape() as tape:
+              predictions = self(images, training=True)
+              loss = self.compiled_loss(labels, predictions)
+          gradients = tape.gradient(loss, self.trainable_variables)
+          self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+          return {"loss": loss, "predictions": predictions}
 
-      def forward(self, x):
-          out = self.conv1(x)
-          out = self.flatten(out)
-          out = self.linear(out)
-          out = self.softmax(out)
-          return out
+      @tf.function
+      def test_step(self, data):
+          images, labels = data
+          predictions = self(images, training=False)
+          loss = self.compiled_loss(labels, predictions)
+          return {"loss": loss, "predictions": predictions}
 
+  model = MyModel()
+  loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+  optimizer = tf.keras.optimizers.Adam()
+  model.compile(loss=loss_object, optimizer=optimizer)
 
-  def load_cifar10(batch_size=512, image_shape=(32, 32)):
-      train_transforms = transforms.Compose([transforms.Resize(image_shape), transforms.ToTensor()])
-      trainset = datasets.CIFAR10(root="./data", train=True, download=True, transform=train_transforms)
-      train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
-      total = trainset.data.shape[0]
-      steps_per_epoch = int(np.ceil(total / batch_size))
-      return train_loader, steps_per_epoch
+  # Metrics
+  train_loss = tf.keras.metrics.Mean(name='train_loss')
+  train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+  test_loss = tf.keras.metrics.Mean(name='test_loss')
+  test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')
 
+  # fit: model.fit(train_ds, validation_data=test_ds, epochs=10)
+  EPOCHS = 10
+  for epoch in range(EPOCHS):
+      start = time.time()
+      train_loss.reset_states()
+      train_accuracy.reset_states()
+      train_loss.reset_states()
+      test_accuracy.reset_states()
+      for batch_n, (images, labels) in enumerate(train_ds):
+          logs = model.train_step([images, labels])
+          train_loss.update_state(logs['loss'])
+          train_accuracy.update_state(labels, logs['predictions'])
+          if batch_n % 100 == 0:
+              print(f"Epoch {epoch+1} Batch {batch_n} Loss {logs['loss']:.4f}")
 
-  def run_test(input_shape=(32, 32), batch_size=512, use_fp16=False, epochs=2):
-      train_loader, steps_per_epoch = load_cifar10(batch_size=batch_size, image_shape=input_shape)
+      for test_images, test_labels in test_ds:
+          logs = model.test_step([test_images, test_labels])
+          test_loss.update_state(logs['loss'])
+          test_accuracy.update_state(test_labels, logs['predictions'])
 
-      device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-      model = TestResNet(input=input_shape[0], num_classes=10).to(device)
-      if use_fp16:
-          model = model.half()
+      # if (epoch + 1) % 5 == 0:
+      #     model.save_weights(checkpoint_prefix.format(epoch=epoch))
 
-      optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-      criterion = nn.CrossEntropyLoss()
-      for epoch in range(epochs):
-          since = time.time()
-          for inputs, labels in tqdm(train_loader, "Epoch {}/{}".format(epoch + 1, epochs), total=steps_per_epoch):
-              inputs = inputs.to(device).half() if use_fp16 else inputs.to(device)
-              labels = labels.to(device)
-              optimizer.zero_grad()
-              outputs = model(inputs)
-              loss = criterion(outputs, labels)
-              loss.backward()
-              optimizer.step()
-
-          total_time = time.time() - since
-          print(">>>> Total time: %.4fs, mean: %.4fms" % (total_time, total_time * 1000 / steps_per_epoch))
-
-
-  if __name__ == "__main__":
-      import sys
-      import argparse
-
-      parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-      parser.add_argument("-b", "--batch_size", type=int, default=512, help="Batch size")
-      parser.add_argument("-i", "--input_shape", type=int, default=32, help="Input shape")
-      parser.add_argument("-f", "--use_fp16", action="store_true", help="Use fp16")
-      parser.add_argument("-e", "--epochs", type=int, default=2, help="Epochs")
-
-      args = parser.parse_known_args(sys.argv[1:])[0]
-      run_test((args.input_shape, args.input_shape), args.batch_size, args.use_fp16, args.epochs)
+      print(
+          f'Epoch {epoch + 1}, '
+          f'Loss: {train_loss.result()}, '
+          f'Accuracy: {train_accuracy.result() * 100}, '
+          f'Test Loss: {test_loss.result()}, '
+          f'Test Accuracy: {test_accuracy.result() * 100}'
+      )
+      print(f'Time taken for 1 epoch {time.time() - start:.2f} sec')
+      print("_" * 80)
   ```
+***
 
-  | input_shape | batch_size | use_fp16 | first epoch (ms/step) | second epoch (ms/step) |
-  | ----------- | ---------- | -------- | --------------------- | ---------------------- |
-  | 112         | 512        | False    | 84.5125               | 78.9935                |
-  | 112         | 512        | True     | 75.3213               | 76.9712                |
-  | 224         | 512        | False    | 228.2185              | 215.2186               |
-  | 224         | 512        | True     | 228.9982              | 254.9154               |
+# Data augment
+## Tensorflow image random
+  ```py
+  import data
+  ds, steps_per_epoch = data.prepare_dataset('/datasets/faces_casia_112x112_folders/', random_status=0)
+  imms, labels = ds.as_numpy_iterator().next()
+
+  cc = (imms + 1) / 2
+  plt.imshow(np.vstack([np.hstack(cc[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(cc.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+
+  img = cc[4] * 255
+  random_status = 3
+  total = 10
+  aa = np.vstack([
+      np.hstack([tf.image.adjust_brightness(img, ii) for ii in arange(-12.75 * random_status, 12.75 * random_status, 12.75 * random_status * 2 / total)]),
+      np.hstack([tf.image.adjust_contrast(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
+      np.hstack([tf.image.adjust_saturation(img, ii) for ii in arange(1 - 0.1 * random_status, 1 + 0.1 * random_status, 0.1 * random_status * 2/ total)]),
+      np.hstack([tf.image.adjust_hue(img, ii) for ii in arange(1 - 0.02 * random_status, 1 + 0.02 * random_status, 0.02 * random_status * 2 / total)[:total]]),
+      np.hstack([tf.image.adjust_jpeg_quality(img / 255, ii) * 255 for ii in arange(80 - random_status * 5, 80 + random_status * 5, random_status * 5 * 2 / total)]),
+  ])
+  plt.imshow(aa / 255)
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## RandAugment
+  - [Github tensorflow/models augment.py](https://github.com/tensorflow/models/blob/HEAD/official/vision/image_classification/augment.py)
+  ```py
+  sys.path.append("/home/leondgarse/workspace/tensorflow_models/official/vision/image_classification")
+  import augment
+
+  aa = augment.RandAugment(magnitude=5)
+  # ['AutoContrast', 'Equalize', 'Invert', 'Rotate', 'Posterize', 'Solarize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Cutout', 'SolarizeAdd']
+  aa.available_ops = ['AutoContrast', 'Equalize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
+  dd = np.stack([aa.distort(tf.image.random_flip_left_right(tf.convert_to_tensor(ii * 255))) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+
+  enlarge = 2
+  aa = augment.RandAugment(magnitude=5 * enlarge)
+  aa.available_ops = ['AutoContrast', 'Equalize', 'Posterize', 'Color', 'Contrast', 'Brightness', 'Sharpness', 'ShearX', 'ShearY']
+  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## AutoAugment
+  ```py
+  policy = [
+      [('Equalize', 0.8, 1), ('ShearY', 0.8, 4)],
+      [('Color', 0.4, 9), ('Equalize', 0.6, 3)],
+      [('Color', 0.2, 0), ('Equalize', 0.8, 8)],
+      [('Color', 0.6, 1), ('Equalize', 1.0, 2)],
+      [('Equalize', 1.0, 9), ('ShearY', 0.6, 3)],
+      [('Color', 0.4, 7), ('Equalize', 0.6, 0)],
+      [('Posterize', 0.4, 6), ('AutoContrast', 0.4, 7)],
+      [('ShearY', 0.8, 0), ('Color', 0.6, 4)],
+      [('Equalize', 0.8, 4), ('Equalize', 0.0, 8)],
+      [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
+  ]
+  aa = augment.AutoAugment()
+  aa.policies = policy
+  dd = np.stack([aa.distort(tf.convert_to_tensor(ii * 255)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+  ```py
+  import autoaugment
+  policy = autoaugment.ImageNetPolicy()
+  policy_func = lambda img: np.array(policy(tf.keras.preprocessing.image.array_to_img(img)), dtype=np.float32)
+
+  dd = np.stack([policy_func(tf.convert_to_tensor(ii)) / 255 for ii in cc])
+  fig = plt.figure()
+  plt.imshow(np.vstack([np.hstack(dd[ii * 16:(ii+1)*16]) for ii in range(int(np.ceil(dd.shape[0] / 16)))]))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## mixup
+  - [mixup: BEYOND EMPIRICAL RISK MINIMIZATION](https://arxiv.org/pdf/1710.09412.pdf)
+    - For mixup, we find that α ∈ [0.1, 0.4] leads to improved performance over ERM, whereas for large α, mixup leads to underfitting.
+    - We also find that models with higher capacities and/or longer training runs are the ones to benefit the most from mixup.
+    - For example, when trained for 90 epochs, the mixup variants of ResNet-101 and ResNeXt-101 obtain a greater improvement (0.5% to 0.6%) over their ERM analogues than the gain of smaller models such as ResNet-50 (0.2%).
+    - When trained for 200 epochs, the top-1 error of the mixup variant of ResNet-50 is further reduced by 1.2% compared to the 90 epoch run, whereas its ERM analogue stays the same.
+  ```py
+  DEFAULT_ALPHA = 0.4
+  def sample_beta_distribution(size, concentration_0=DEFAULT_ALPHA, concentration_1=DEFAULT_ALPHA):
+      gamma_1_sample = tf.random.gamma(shape=[size], alpha=concentration_1)
+      gamma_2_sample = tf.random.gamma(shape=[size], alpha=concentration_0)
+      return gamma_1_sample / (gamma_1_sample + gamma_2_sample)
+
+  def mixup(image, label, alpha=DEFAULT_ALPHA):
+      """Applies Mixup regularization to a batch of images and labels.
+
+      [1] Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, David Lopez-Paz
+        Mixup: Beyond Empirical Risk Minimization.
+        ICLR'18, https://arxiv.org/abs/1710.09412
+
+      Arguments:
+        batch_size: The input batch size for images and labels.
+        alpha: Float that controls the strength of Mixup regularization.
+        image: a Tensor of batched images.
+        label: a Tensor of batch labels.
+
+      Returns:
+        A new dict of features with updated images and labels with the same
+        dimensions as the input with Mixup regularization applied.
+      """
+      # mix_weight = tfp.distributions.Beta(alpha, alpha).sample([batch_size, 1])
+      batch_size = tf.shape(image)[0]
+      mix_weight = sample_beta_distribution(batch_size, alpha, alpha)
+      mix_weight = tf.maximum(mix_weight, 1. - mix_weight)
+
+      # Regard values with `> 0.9` as no mixup, this probability is near `1 - alpha`
+      # alpha: no_mixup --> {0.2: 0.6714, 0.4: 0.47885, 0.6: 0.35132, 0.8: 0.26354, 1.0: 0.19931}
+      mix_weight = tf.where(mix_weight > 0.9, tf.ones_like(mix_weight), mix_weight)
+
+      label_mix_weight = tf.cast(tf.expand_dims(mix_weight, -1), "float32")
+      img_mix_weight = tf.cast(tf.reshape(mix_weight, [batch_size, 1, 1, 1]), image.dtype)
+
+      shuffle_index = tf.random.shuffle(tf.range(batch_size))
+      image = image * img_mix_weight + tf.gather(image, shuffle_index) * (1. - img_mix_weight)
+      label = tf.cast(label, "float32")
+      label = label * label_mix_weight + tf.gather(label, shuffle_index) * (1 - label_mix_weight)
+      return image, label
+
+  import tensorflow_datasets as tfds
+  preprocessing = lambda data: (tf.cast(data["image"], tf.float32) / 255.0, tf.one_hot(data["label"], depth=10))
+  dataset = tfds.load("cifar10", split="train").map(preprocessing).batch(64)
+  image, label = dataset.as_numpy_iterator().next()
+  aa, bb = mixup(image, label)
+  plt.imshow(np.vstack([np.hstack(aa[ii * 8: (ii + 1) * 8]) for ii in range(8)]))
+
+  cc = []
+  for alpha in np.arange(0, 1.2, 0.2):
+      aa = sample_beta_distribution(10000, alpha, alpha)
+      bb = tf.maximum(aa, 1 - aa).numpy()
+      name = "alpha {:.1f}".format(alpha)
+      print(name, dict(zip(*np.histogram(bb, bins=5)[::-1])))
+      cc.append((bb > 0.9).sum() / bb.shape[0])
+      # plt.plot(np.histogram(bb, bins=50)[0], label=name)
+      plt.hist(bb, bins=50, alpha=0.5, label=name)
+  plt.legend()
+  plt.xlim(0.5, 1)
+  plt.tight_layout()
+  # alpha 0.0 {0.0: 0, 0.2: 0, 0.4: 10000, 0.6: 0, 0.8: 0}
+  # alpha 0.2 {0.5001278: 663, 0.60010225: 710, 0.7000767: 814, 0.8000511: 1130, 0.90002555: 6683}
+  # alpha 0.4 {0.50006217: 1051, 0.60004973: 1166, 0.7000373: 1317, 0.80002487: 1647, 0.90001243: 4819}
+  # alpha 0.6 {0.5001339: 1521, 0.60010684: 1522, 0.70007986: 1613, 0.8000528: 1905, 0.90002584: 3439}
+  # alpha 0.8 {0.5001678: 1736, 0.6001339: 1779, 0.7001: 1848, 0.8000661: 2043, 0.9000322: 2594}
+  # alpha 1.0 {0.500016: 1959, 0.5999865: 2043, 0.699957: 2079, 0.7999276: 1973, 0.8998981: 1946}
+
+  print(dict(zip(np.arange(0, 1.2, 0.2), cc)))
+  # {0.0: 0.0, 0.2: 0.6714, 0.4: 0.47885, 0.6000000000000001: 0.35132, 0.8: 0.26354, 1.0: 0.19931}
+  ```
+## Cutout
+  ```py
+  def cutout(image: tf.Tensor, pad_size: int, replace: int = 0) -> tf.Tensor:
+      """Apply cutout (https://arxiv.org/abs/1708.04552) to image.
+
+      This operation applies a (2*pad_size x 2*pad_size) mask of zeros to
+      a random location within `img`. The pixel values filled in will be of the
+      value `replace`. The located where the mask will be applied is randomly
+      chosen uniformly over the whole image.
+
+      Args:
+        image: An image Tensor of type uint8.
+        pad_size: Specifies how big the zero mask that will be generated is that is
+          applied to the image. The mask will be of size (2*pad_size x 2*pad_size).
+        replace: What pixel value to fill in the image in the area that has the
+          cutout mask applied to it.
+
+      Returns:
+        An image Tensor that is of type uint8.
+      """
+      image_height = tf.shape(image)[0]
+      image_width = tf.shape(image)[1]
+
+      # Sample the center location in the image where the zero mask will be applied.
+      cutout_center_height = tf.random.uniform(shape=[], minval=0, maxval=image_height, dtype=tf.int32)
+
+      cutout_center_width = tf.random.uniform(shape=[], minval=0, maxval=image_width, dtype=tf.int32)
+
+      lower_pad = tf.maximum(0, cutout_center_height - pad_size)
+      upper_pad = tf.maximum(0, image_height - cutout_center_height - pad_size)
+      left_pad = tf.maximum(0, cutout_center_width - pad_size)
+      right_pad = tf.maximum(0, image_width - cutout_center_width - pad_size)
+
+      cutout_shape = [image_height - (lower_pad + upper_pad), image_width - (left_pad + right_pad)]
+      padding_dims = [[lower_pad, upper_pad], [left_pad, right_pad]]
+      mask = tf.pad(tf.zeros(cutout_shape, dtype=image.dtype), padding_dims, constant_values=1)
+      mask = tf.expand_dims(mask, -1)
+      mask = tf.tile(mask, [1, 1, 3])
+      image = tf.where(tf.equal(mask, 0), tf.ones_like(image, dtype=image.dtype) * replace, image)
+      return image
+
+  import skimage.data
+  imm = tf.convert_to_tensor(skimage.data.chelsea())
+  cutout_const = 80
+  cutout_cond = lambda img: cutout(img, cutout_const, 128) if np.random.uniform() > 0.5 else img
+  plt.imshow(np.hstack([cutout_cond(imm) / 255 for _ in range(5)]))
+  plt.axis("off")
+  plt.tight_layout()
+  ```
+  ![](images/cut_out.png)
+***
+
+# Fuse Conv2D and BatchNorm
+## Basic fuse layer test
+  ```py
+  def fuse_conv_bn(conv_layer, bn_layer):
+      # BatchNormalization returns: gamma * (batch - self.moving_mean) / sqrt(self.moving_var + epsilon) + beta
+      # --> conv_w_new = gamma * conv_w / np.sqrt(var + epsilon)
+      # --> conv_b_new = gamma * (conv_b - mean) / sqrt(var + epsilon) + beta
+      batch_std = tf.sqrt(bn_layer.moving_variance + bn_layer.epsilon)
+      if isinstance(conv_layer, keras.layers.DepthwiseConv2D):
+          ww = tf.transpose(conv_layer.depthwise_kernel, [0, 1, 3, 2]) * bn_layer.gamma / batch_std
+          ww = tf.transpose(ww, [0, 1, 3, 2])
+      else:
+          ww = conv_layer.kernel * bn_layer.gamma / batch_std
+
+      if conv_layer.use_bias:
+          bias = bn_layer.gamma * (conv_layer.bias - bn_layer.moving_mean) / batch_std + bn_layer.beta
+      else:
+          bias = bn_layer.gamma * (-1 * bn_layer.moving_mean) / batch_std + bn_layer.beta
+
+      cc = conv_layer.get_config()
+      cc['use_bias'] = True
+      fused_conv_bn = conv_layer.__class__.from_config(cc)
+      fused_conv_bn.build(conv_layer.input_shape)
+      fused_conv_bn.set_weights([ww, bias])
+      return fused_conv_bn
+
+  input_shape = (224, 224, 3)
+  mm = keras.models.Sequential([
+      keras.layers.InputLayer(input_shape),
+      keras.layers.Conv2D(64, 7, use_bias=False),
+      keras.layers.BatchNormalization(axis=-1),
+  ])
+  # Random set BatchNormalization weights
+  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
+
+  inputs = tf.ones([1, * input_shape])
+  orign_out = mm(inputs)
+
+  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
+  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
+  fused_out = fused_conv_bn(inputs)
+  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
+  # allclose: True
+  ```
+  ```py
+  input_shape = (56, 56, 64)
+  mm = keras.models.Sequential([
+      keras.layers.InputLayer(input_shape),
+      keras.layers.DepthwiseConv2D((7, 7), use_bias=False),
+      keras.layers.BatchNormalization(axis=-1),
+  ])
+  # Random set BatchNormalization weights
+  mm.layers[1].set_weights([tf.random.uniform(ii.shape) for ii in mm.layers[1].get_weights()])
+
+  inputs = tf.ones([1, * input_shape])
+  orign_out = mm(inputs)
+
+  conv_layer, bn_layer = mm.layers[0], mm.layers[1]
+  fused_conv_bn = fuse_conv_bn(conv_layer, bn_layer)
+  fused_out = fused_conv_bn(inputs)
+  print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
+  # allclose: True
+  ```
+## Fuse layers in model
+  ```py
+  import json
+
+  def convert_to_fused_conv_bn_model(model):
+      """ Check bn layers with conv layer input """
+      model_config = json.loads(model.to_json())
+      ee = {layer['name']: layer for layer in model_config['config']['layers']}
+      fuse_convs, fuse_bns = [], []
+      conv_names = ["Conv2D", "DepthwiseConv2D"]
+      for layer in model_config['config']['layers']:
+          if layer['class_name'] == "BatchNormalization" and len(layer["inbound_nodes"]) == 1:
+              input_node = layer["inbound_nodes"][0][0]
+              if isinstance(input_node, list) and ee.get(input_node[0], {"class_name": None})['class_name'] in conv_names:
+                  fuse_convs.append(input_node[0])
+                  fuse_bns.append(layer['name'])
+      print(f">>>> {len(fuse_convs) = }, {len(fuse_bns) = }")
+      # len(fuse_convs) = 53, len(fuse_bns) = 53
+
+      """ Create new model config """
+      layers = []
+      fused_bn_dict = dict(zip(fuse_bns, fuse_convs))
+      fused_conv_dict = dict(zip(fuse_convs, fuse_bns))
+      for layer in model_config['config']['layers']:
+          if layer["name"] in fuse_convs:
+              print(">>>> Fuse conv bn:", layer["name"])
+              layer["config"]["use_bias"] = True
+          elif layer["name"] in fuse_bns:
+              continue
+
+          if len(layer["inbound_nodes"]) != 0:
+              for ii in layer["inbound_nodes"][0]:
+                  if isinstance(ii, list) and ii[0] in fused_bn_dict:
+                      print(">>>> Replace inbound_nodes: {}, {} --> {}".format(layer["name"], ii[0], fused_bn_dict[ii[0]]))
+                      ii[0] = fused_bn_dict[ii[0]]
+          layers.append(layer)
+      model_config['config']['layers'] = layers
+      new_model = keras.models.model_from_json(json.dumps(model_config))
+
+      """ New model set layer weights by layer names """
+      for layer in new_model.layers:
+          if layer.name in fuse_bns:  # This should not happen
+              continue
+
+          orign_layer = model.get_layer(layer.name)
+          if layer.name in fused_conv_dict:
+              orign_bn_layer = model.get_layer(fused_conv_dict[layer.name])
+              print(">>>> Fuse conv bn", layer.name, orign_bn_layer.name)
+              conv_bn = fuse_conv_bn(orign_layer, orign_bn_layer)
+              layer.set_weights(conv_bn.get_weights())
+          else:
+              layer.set_weights(orign_layer.get_weights())
+      return new_model
+
+  """ Verification """
+  model = keras.applications.ResNet50(input_shape=(224, 224, 3))
+  new_model = convert_to_fused_conv_bn_model(model)
+
+  inputs = tf.ones((1, *model.input_shape[1:]))
+  orign_out = model(inputs).numpy()
+  fused_out = new_model(inputs).numpy()
+  print(f'{np.allclose(orign_out, fused_out, atol=1e-9) = }')
+  # np.allclose(orign_out, fused_out, atol=1e-9) = True
+
+  %timeit model(inputs)
+  # 69.6 ms ± 209 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
+  # 29.7 ms ± 172 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  %timeit new_model(inputs)
+  # 49.7 ms ± 185 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # CPU
+  # 16.8 ms ± 126 µs per loop (mean ± std. dev. of 7 runs, 100 loops each) # GPU
+  ```
+  ```py
+  import models
+  model = keras.models.load_model('./checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_l2_5e4_bs512_ms1m_cleaned_bnm09_bne1e4_cos16_batch_float16_basic_agedb_30_epoch_50_0.976333.h5')
+  model = models.convert_mixed_float16_to_float32(model)  # Don't use float16 when converting
+  new_model = convert_to_fused_conv_bn_model(model)
+
+  inputs = tf.ones((1, *model.input_shape[1:]))
+  orign_out = model(inputs).numpy()
+  fused_out = new_model(inputs).numpy()
+  print(f'{np.allclose(orign_out, fused_out, atol=1e-5) = }')
+  # np.allclose(orign_out, fused_out, atol=1e-5) = True
+
+  %timeit model(inputs)
+  # 47.6 ms ± 240 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  %timeit new_model(inputs)
+  # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
+  ```
 ***

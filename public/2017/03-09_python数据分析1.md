@@ -50,6 +50,7 @@
   	- [savetxt / loadtxt 存取文本文件](#savetxt-loadtxt-存取文本文件)
   	- [线性代数 (dot / linalg / inv / qr / var / det / eig / svd)](#线性代数-dot-linalg-inv-qr-var-det-eig-svd)
   	- [傅立叶变换 fft](#傅立叶变换-fft)
+  	- [polyfit / poly1d 曲线拟合](#polyfit-poly1d-曲线拟合)
   	- [示例：随机漫步 (randint / where / cumsum / abs / any / argmax)](#示例随机漫步-randint-where-cumsum-abs-any-argmax)
   - [pandas 一维数组对象Series](#pandas-一维数组对象series)
   	- [Series的创建](#series的创建)
@@ -119,7 +120,6 @@
 
   <!-- /TOC -->
 ***
-nonzero / where / choose
 
 # Q / A
   - GitHub上的数据文件及相关资料 http://github.com/pydata/pydata-book
@@ -1794,6 +1794,30 @@ nonzero / where / choose
     crossing_times.shape
     crossing_times.mean()
     ```
+## polyfit / poly1d 曲线拟合
+  - **np.polyfit / np.poly1d**
+    ```py
+    target = np.cos(np.arange(0, np.pi, 0.1))
+
+    zz = np.polyfit(np.arange(0, len(target)), target, 3)
+    yy = np.poly1d(zz)
+    plt.plot(yy(np.arange(0, target.shape[0] + 10)), label="np.polyfit")
+    ```
+  - **scipy.optimize.curve_fit**
+    ```py
+    from scipy.optimize import curve_fit
+
+    def func_curv(x, a, b, c, d):
+        return a * x ** 3 + b * x ** 2 + c * x + d
+    xx = np.arange(0, len(target))
+    popt, pcov = curve_fit(func_curv, xx, target)
+    print(popt) # [ 1.44409088e-04 -6.80135328e-03  7.96643659e-03  9.93140295e-01]
+    plt.plot(func_curv(np.arange(target.shape[0] + 10), *popt), label="scipy.optimize.curve_fit")
+
+    plt.legend()
+    ```
+    ![](images/polyfit.png)
+
 ***
 
 # pandas 一维数组对象Series

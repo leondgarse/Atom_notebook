@@ -18,6 +18,8 @@
   	- [图形绘制 add_patch](#图形绘制-addpatch)
   	- [将图表保存到文件 savefig](#将图表保存到文件-savefig)
   	- [matplotlib全局配置 rc方法](#matplotlib全局配置-rc方法)
+  	- [Plot styles](#plot-styles)
+  	- [Plot color palettes](#plot-color-palettes)
   - [pandas 绘图](#pandas-绘图)
   	- [Series / DataFrame的plot方法直接绘图](#series-dataframe的plot方法直接绘图)
   	- [Series 绘图选项](#series-绘图选项)
@@ -365,6 +367,60 @@
 
     ```
     要了解全部的自定义选项，请查阅matplotlib的配置文件matplotlibrc(位于matplotlib/mpl-data目录中)
+## Plot styles
+  ```py
+  big, baxes = plt.subplots(5, 5)
+  baxes = baxes.flatten()
+  styles = plt.style.available
+  print("total:", len(styles))
+  if 'dark_background' in styles: styles.remove('dark_background')
+  for bax, style in zip(baxes, styles):
+      fn = style + '.png'
+      if not os.path.exists(fn):
+          plt.style.use(style)
+          fig, axes = plt.subplots(2, 2)
+          axes[0][0].plot(np.random.randint(1, 10, 10), label='aa')
+          axes[0][0].plot(np.random.randint(1, 10, 10), label='bb')
+          axes[0][0].legend()
+          axes[0][1].scatter(np.random.randint(1, 10, 10), np.random.randint(1, 10, 10))
+          axes[1][0].hist(np.random.randint(1, 10, 10))
+          rect = plt.Rectangle((0.2, 0.75), 0.4, 0.15, color='k', alpha=0.3)
+          axes[1][1].add_patch(rect)
+          fig.suptitle(style, fontsize=18)
+          fig.savefig(fn)
+          plt.close()
+      bax.imshow(plt.imread(fn))
+      bax.axis('off')
+  big.tight_layout()
+  ```
+  ![](images/plt_styles.png)
+## Plot color palettes
+  ```py
+  import matplotlib.cm as cm
+  from cycler import cycler
+  import seaborn as sns
+
+  def get_colors(max_color, palette='husl'):
+      if palette == 'rainbow':
+          colors = cm.rainbow(np.linspace(0, 1, max_color))
+      else:
+          colors = sns.color_palette(palette, n_colors=max_color)
+      return colors
+
+  ccs = ['deep', 'muted', 'bright', 'pastel', 'dark', 'colorblind', 'rainbow', 'husl', 'hls']
+  max_color = 10
+  fig, axes = plt.subplots(3, 3, figsize=(15, 12))
+  axes = axes.flatten()
+  for cc, ax in zip (ccs, axes):
+      colors = get_colors(max_color, cc)
+      ax.set_prop_cycle(cycler('color', colors))
+      for ii in range(max_color):
+          ax.plot(np.random.randint(1, 10, 10), label=ii)
+      ax.legend(loc="upper right")
+      ax.set_title(cc)
+  fig.tight_layout()
+  ```
+  ![](images/color_palettes.png)
 ***
 
 # pandas 绘图

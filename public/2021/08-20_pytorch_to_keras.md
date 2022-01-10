@@ -47,6 +47,7 @@
 
   <!-- /TOC -->
 ***
+
 # Timm
 ## Timm results
   - [Github rwightman/pytorch-image-models](https://github.com/rwightman/pytorch-image-models)
@@ -155,6 +156,21 @@
           layer_names_matched_torch[id] = ii
   keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
   ```
+  - **sebotnet33ts_256**
+  ```py
+  import timm
+  from keras_cv_attention_models.botnet import botnet
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
+
+  tail_align_dict={"shortcut_conv": -6, "shortcut_bn": -7,
+      "stack4": {"shortcut_conv": -5, "shortcut_bn": -6},
+  }
+  additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+
+  torch_mdoel = timm.models.sebotnet33ts_256(pretrained=True)
+  mm = botnet.BotNetSE33T(classifier_activation=None)
+  keras_reload_from_torch_model(torch_mdoel, mm, input_shape=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
+  ```
 ## beit
   ```py
   unstack_weights = ["cls_token", "gamma_1", "gamma_2", "relative_position_bias_table", "q_bias", "v_bias"]
@@ -183,7 +199,7 @@
   keras_reload_from_torch(
       torch_model=timm.models.beit_large_patch16_224(pretrained=True),
       keras_model=mm,
-      input_resolution=(resolution, resolution),
+      input_shape=(resolution, resolution),
       skip_weights=skip_weights,
       unstack_weights=unstack_weights,
       tail_align_dict=tail_align_dict,
@@ -220,6 +236,19 @@
   keras_reload_from_torch_model(torch_model, mm, do_convert=True)
   ```
 ## HaloNet
+  - **halonet50ts / halo2botnet50ts_256**
+  ```py
+  import timm
+  from keras_cv_attention_models.halonet import halonet
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
+
+  tail_align_dict={"shortcut_conv": -4, "shortcut_bn": -5, "deep_2_haloquery_conv": -1}
+  additional_transfer = {halonet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+
+  torch_mdoel = timm.models.halonet50ts(pretrained=True)
+  mm = halonet.HaloNet50T(classifier_activation=None)
+  keras_reload_from_torch_model(torch_mdoel, mm, input_shape=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
+  ```
   - **eca_halonext26ts**
   ```py
   import timm
@@ -233,71 +262,7 @@
 
   torch_mdoel = timm.models.eca_halonext26ts(pretrained=True)
   mm = halonet.HaloNextECA26T(classifier_activation=None)
-  keras_reload_from_torch_model(torch_mdoel, mm, input_resolution=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
-  ```
-## MagFace
-  ```py
-  from keras_cv_attention_models import download_and_load
-  import models
-  mm = models.buildin_models('r50', output_layer='E', activation="PReLU", bn_momentum=0.9, bn_epsilon=2e-5, use_bias=True, scale=True)
-
-  tail_align_dict={"block1_2_conv": -1, "block1_3_bn": -2}
-  # [25088, 512] -> CHW + out [512, 7, 7, 512] -> HWC + out [7, 7, 512, 512] -> [25088, 512]
-  additional_transfer={"E_dense": lambda ww: [ww[0].reshape(512, 7, 7, 512).transpose([1, 2, 0, 3]).reshape([-1, 512]), ww[1]]}
-  download_and_load.keras_reload_from_torch_model('magface_iresnet50_MS1MV2_ddp_fp32.pth', keras_model=mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True, input_shape=(112, 112), additional_transfer=additional_transfer, save_name="magface_iresnet50_MS1MV2_ddp_fp32.h5")
-  ```
-  Input is `BGR` image in `[0, 1]`
-  ```py
-  import evals
-  bb = keras.models.load_model('magface_iresnet50_MS1MV2_ddp_fp32.h5')
-  ee = evals.eval_callback(lambda imms: bb(imms[:, :, :, ::-1] / 2 + 0.5), '/datasets/faces_casia/lfw.bin', batch_size=16)
-  ee.on_epoch_end()
-  # magface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.997500, cfp_fp: 0.981143, agedb_30: 0.978833, IJBB 0.930185
-  # mag-cosface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.998333, cfp_fp: 0.982714, agedb_30: 0.978667, IJBB 0.93408
-  # magface_iresnet50_MS1MV2_dp, lfw: 0.998167, cfp_fp: 0.981143, agedb_30: 0.980500, IJBB 0.943622
-  # magface_epoch_00025, lfw: 0.998333, cfp_fp: 0.987429, agedb_30: 0.983333, IJBB 0.949562
-  ```
-  ```py
-  import IJB_evals
-  mm = keras.models.load_model('magface_iresnet50_MS1MV2_dp.h5')
-  tt = IJB_evals.IJB_test(lambda imms: mm(imms[:, :, :, ::-1] / 255.0), data_path='/datasets/IJB_release/', subset='IJBB', batch_size=16)
-  score = tt.run_model_test_single()
-  IJB_evals.plot_roc_and_calculate_tpr([score], names=[mm.name + "_IJBB"], label=tt.label)
-  ```
-## Timm randaug
-  ```py
-  import timm.data.auto_augment as timm_auto_augment
-  from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
-
-  PIL_INTERP_DICT = {"bicubic": 3, "bilinear": 2}
-  target_shape = (224, 224)
-  resize_method = "bicubic"
-  magnitude = 6
-
-  aa_params = {
-      "translate_const": int(min(target_shape) * 0.45),
-      "img_mean": (124, 117, 104),    # MUST be tuple
-      "interpolation": PIL_INTERP_DICT.get(resize_method, PIL_INTERP_DICT["bilinear"]),
-  }
-  auto_augment = "rand-m{}-mstd0.5-inc1".format(magnitude)
-  rr = timm_auto_augment.rand_augment_transform(auto_augment, aa_params)
-  process = lambda img: img_to_array(rr(array_to_img(img)))
-
-  from skimage.data import chelsea
-  plt.imshow(np.vstack([np.hstack([process(chelsea()) for _ in range(10)]) for _ in range(10)]) / 255)
-  ```
-  ```py
-  from keras_cv_attention_models.imagenet import augment
-  from skimage.data import chelsea
-  aa = augment.RandAugment(num_layers=2, magnitude=6, translate_const=0.45)
-  image = tf.convert_to_tensor(chelsea().astype('float32'))
-  plt.imshow(np.vstack([np.hstack([aa(image) for _ in range(10)]) for _ in range(10)]) / 255)
-  ```
-  ```py
-  from keras_cv_attention_models.imagenet import data
-  train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset('cifar10', input_shape=(224, 224), batch_size=64, random_crop_min=0.6, mixup_alpha=0.1, cutmix_alpha=1.0, rescale_mode="tf", magnitude=6)
-  aa, bb = train_dataset.as_numpy_iterator().next()
-  plt.imshow(np.vstack([np.hstack(aa[ii * 8 : (ii + 1) * 8]) for ii in range(8)]) / 2 + 0.5)
+  keras_reload_from_torch_model(torch_mdoel, mm, input_shape=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
   ```
 ***
 
@@ -2705,7 +2670,7 @@
 ***
 
 # Attetion models
-## [ToDo] SimAM
+## SimAM
   - [Github ZjjConan/SimAM](https://github.com/ZjjConan/SimAM)
   ```py
   class simam_module(torch.nn.Module):
@@ -2734,74 +2699,6 @@
   xx = np.arange(28 * 192).reshape(1, 28, 192) / (28 * 192 // 2) - 1
   plt.plot(xx.ravel(), simam_act(xx).numpy().ravel())
   plt.plot(xx.ravel(), xx.ravel())
-  ```
-## CoAtNet
-  - [CoAtNet: Marrying Convolution and Attention for All Data Sizes](https://arxiv.org/pdf/2106.04803v1.pdf)
-  - [Github comvex/coatnet/model.py](https://github.com/blakechi/ComVEX/blob/master/comvex/coatnet/model.py)
-  ```py
-  from Keras_efficientnet_v2.efficientnet_v2 import MBConv
-
-  def conv_mlp(inputs, out_channel, kernel_size=1):
-      if kernel_size != 1:
-          inputs = keras.layers.ZeroPadding2D(1)(inputs)
-      nn = keras.layers.Conv2D(out_channel, kernel_size)(inputs)
-      nn = keras.layers.ReLU()(nn)
-      if kernel_size != 1:
-          nn = keras.layers.ZeroPadding2D(1)(nn)
-      nn = keras.layers.Conv2D(out_channel, kernel_size)(nn)
-      return nn
-
-  out_channels = [64, 96, 192, 384, 768]
-  inputs = keras.layers.Input([224, 224, 3])
-  nn = conv_mlp(inputs, 3, 3) # s0
-  nn = conv_mlp(nn, out_channels[0], 1) # mlp0
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = MBConv(nn, out_channels[0], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s1_") # s1
-  nn = conv_mlp(nn, out_channels[1], 1) # mlp1
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = MBConv(nn, out_channels[1], stride=1, expand_ratio=1, shortcut=True, use_se=0.25, is_fused=False, name="s2_") # s2
-  nn = conv_mlp(nn, out_channels[2], 1) # mlp2
-  nn = keras.layers.MaxPool2D(pool_size=2, strides=2)(nn)
-
-  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s3
-  nn = conv_mlp(nn, out_channels[3], 1) # mlp3
-  nn = keras.layers.MaxPool2D(pool_size=(1, 2), strides=(1, 2))(nn)  # [batch, height, width, channel]
-
-  nn = keras.layers.MultiHeadAttention(num_heads=8, key_dim=nn.shape[-1] // 8)(nn, nn)  # s4
-  nn = conv_mlp(nn, out_channels[4], 1) # mlp4
-  nn = keras.layers.MaxPool2D(pool_size=(2, 1), strides=(2, 1))(nn)
-
-  mm = keras.models.Model(inputs, nn)
-  ```
-  ```py
-  def _get_relative_indices(height: int, width: int) -> torch.tensor:
-      height, width = int(height), int(width)
-      ticks_y, ticks_x = torch.arange(height), torch.arange(width)
-      grid_y, grid_x = torch.meshgrid(ticks_y, ticks_x)
-      out = torch.empty(height*width, height*width).fill_(float("nan"))
-
-      for idx_y in range(height):
-          for idx_x in range(width):
-              rel_indices_y = grid_y - idx_y + height
-              rel_indices_x = grid_x - idx_x + width
-              flatten_indices = (rel_indices_y*width + rel_indices_x).flatten()
-              out[idx_y*width + idx_x] = flatten_indices
-      return out.to(torch.long)
-
-  def _interpolate_relative_bias(self, height: int, width: int) -> torch.Tensor:
-      out = rearrange(self.relative_bias, "h (n m) -> 1 h n m", n=(2*self.pre_height - 1))
-      out = nn.functional.interpolate(out, size=(2*height - 1, 2*width - 1), mode="bilinear", align_corners=True)
-
-      return rearrange(out, "1 h n m -> h (n m)")
-
-  relative_indices = self._get_relative_indices(H, W)
-  relative_bias = self._interpolate_relative_bias(H, W)
-
-  relative_indices = repeat(relative_indices, "n m -> b h n m", b=b, h=h)
-  relative_bias = repeat(relative_bias, "h r -> b h n r", b=b, n=H*W)  # r: number of relative biases, (2*H - 1)*(2*W - 1)
-  relative_biases = relative_bias.gather(dim=-1, index=relative_indices)
   ```
 ## HaloNet
   - [Scaling Local Self-Attention for Parameter Efficient Visual Backbones](https://arxiv.org/pdf/2103.12731.pdf)
@@ -3944,6 +3841,8 @@
   pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
   print(keras.applications.imagenet_utils.decode_predictions(pred)[0])
   ```
+***
+
 # Halonet timm
   ```py
   import timm
@@ -4175,332 +4074,108 @@
   | halonet50t      | 11.6M  | 256              | 0.98             | 0.8081   | 0.95034  |
   | halonet_se33t   | 13.7M  | 256              | 0.94             | 80.986   | 95.272   |
   | halonext_eca26t | 10.7M  | 256              | 0.9              | 78.842   | 94.188   |
-# RegNetZ
-```py
-stack 1
-32 --> 96 --> 48
-48 --> 144 --> 48
-stack 2
-48 --> 144 --> 96
-96 --> 96 * 3 --> 96
-x 5
-stack 3
-96 --> 96 * 3 --> 192
-192 --> 192 * 3 --> 192
-x 11
-stack 4
-192 --> 192 * 3 --> 288
-288 --> 288 * 3 --> 288
-
-hidden_channel_ratio
-[[2, 3], [1.5] + [3] * 5, [1.5] + [3] * 11, [2, 3]]
-```
-```py
-import timm
-import torch
-from torchsummary import summary
-from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
-
-torch_model = timm.models.regnetz_b(pretrained=True)
-torch_model.eval()
-summary(torch_model, (3, 256, 256))
-
-torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
-print("torch_model total_parameters :", np.sum(list(torch_params.values())))
-
-stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
-{kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
-
-from keras_cv_attention_models.halonet import halonet
-mm = halonet.HaloNet(num_blocks=[2, 2, 2, 2], attn_type=[None, None, [None, 'halo'], 'halo'], expansion=4, halo_block_size=8, halo_halo_size=2, num_heads=8, key_dim=16, tiered_stem=True, classifier_activation=None, pretrained=None)
-
-target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
-{ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
-
-additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
-keras_reload_stacked_state_dict(mm, stacked_state_dict, target_names, save_name=mm.name + "_imagenet.h5")
-```
-```py
-mm = aotnet.AotNet(
-    num_blocks=[2, 6, 12, 2],
-    strides=[2, 2, 2, 2],
-    out_channels=[48, 96, 192, 288],
-    hidden_channel_ratio=[[2, 3], [1.5] + [3] * 5, [1.5] + [3] * 11, [2, 3]],
-    use_block_output_activation=False,
-    stem_type="kernel_3x3",
-    stem_width=32,
-    stem_downsample=False,
-    se_ratio=0.25,
-    group_size=16,
-    shortcut_type=None,
-    output_num_features=1536,
-    activation='swish'
-)
-```
 ***
-```py
-def get_params(img, scale, ratio):
-    height, width = img.size[0], img.size[1]
-    area = height * width
 
-    for attempt in range(10):
-        target_area = random.uniform(*scale) * area
-        log_ratio = (math.log(ratio[0]), math.log(ratio[1]))
-        aspect_ratio = math.exp(random.uniform(*log_ratio))
+# RegNetZ
+  ```py
+  stack 1
+  32 --> 96 --> 48
+  48 --> 144 --> 48
+  stack 2
+  48 --> 144 --> 96
+  96 --> 96 * 3 --> 96
+  x 5
+  stack 3
+  96 --> 96 * 3 --> 192
+  192 --> 192 * 3 --> 192
+  x 11
+  stack 4
+  192 --> 192 * 3 --> 288
+  288 --> 288 * 3 --> 288
 
-        w = int(round(math.sqrt(target_area * aspect_ratio)))
-        h = int(round(math.sqrt(target_area / aspect_ratio)))
+  hidden_channel_ratio
+  [[2, 3], [1.5] + [3] * 5, [1.5] + [3] * 11, [2, 3]]
+  ```
+  ```py
+  import timm
+  import torch
+  from torchsummary import summary
+  from keras_cv_attention_models.download_and_load import state_dict_stack_by_layer, keras_reload_stacked_state_dict
 
-        if w <= width and h <= height:
-            i = random.randint(0, height - h)
-            j = random.randint(0, width - w)
-            return i, j, h, w
+  torch_model = timm.models.regnetz_b(pretrained=True)
+  torch_model.eval()
+  summary(torch_model, (3, 256, 256))
 
-    # Fallback to central crop
-    in_ratio = width / height
-    if in_ratio < min(ratio):
-        w = width
-        h = int(round(w / min(ratio)))
-    elif in_ratio > max(ratio):
-        h = height
-        w = int(round(h * max(ratio)))
-    else:  # whole image
-        w = width
-        h = height
-    i = (img.size[1] - h) // 2
-    j = (img.size[0] - w) // 2
-    return i, j, h, w
+  torch_params = {kk: (np.cumproduct(vv.shape)[-1] if len(vv.shape) != 0 else 1) for kk, vv in torch_model.state_dict().items() if ".num_batches_tracked" not in kk}
+  print("torch_model total_parameters :", np.sum(list(torch_params.values())))
 
-def get_params_2(img, scale, ratio, log_distribute=True):
-    width, height = img.size[0], img.size[1]  # img.size is (width, height)
-    area = height * width
-    scale_max = min(height * height * ratio[1] / area, width * width / ratio[0] / area, scale[1])
-    target_area = random.uniform(scale[0], scale_max) * area
+  stacked_state_dict = state_dict_stack_by_layer(torch_model.state_dict())
+  {kk: [1 if isinstance(jj, float) else jj.shape for jj in vv] for kk, vv in stacked_state_dict.items()}
 
-    ratio_min = max(target_area / (height * height), ratio[0])
-    ratio_max = min(width * width / target_area, ratio[1])
-    if log_distribute:  # More likely to select a smaller value
-        log_ratio = (math.log(ratio_min), math.log(ratio_max))
-        aspect_ratio = math.exp(random.uniform(*log_ratio))
-    else:
-        aspect_ratio = random.uniform(ratio_min, ratio_max)
+  from keras_cv_attention_models.halonet import halonet
+  mm = halonet.HaloNet(num_blocks=[2, 2, 2, 2], attn_type=[None, None, [None, 'halo'], 'halo'], expansion=4, halo_block_size=8, halo_halo_size=2, num_heads=8, key_dim=16, tiered_stem=True, classifier_activation=None, pretrained=None)
 
-    ww = int(round(math.sqrt(target_area * aspect_ratio)))
-    hh = int(round(math.sqrt(target_area / aspect_ratio)))
+  target_names = [ii.name for ii in mm.layers if len(ii.weights) != 0]
+  {ii.name: [jj.shape.as_list() for jj in ii.weights] for ii in mm.layers if len(ii.weights) != 0}
 
-    top = random.randint(0, height - hh)
-    left = random.randint(0, width - ww)
-    return top, left, hh, ww
-```
-```py
-import math, random
-from PIL import Image
+  additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}
+  keras_reload_stacked_state_dict(mm, stacked_state_dict, target_names, save_name=mm.name + "_imagenet.h5")
+  ```
+***
 
-img = Image.fromarray(np.zeros([100, 100, 3], 'uint8'))
-aa = np.array([get_params(img, scale=(0.08, 1.0), ratio=(0.75, 1.3333333)) for _ in range(100000)])
-hhs, wws = aa[:, 2], aa[:, 3]
-print("Scale range:", ((hhs * wws).min() / 1e4, (hhs * wws).max() / 1e4))
-# Scale range: (0.075, 0.9801)
-print("Ratio range:", ((wws / hhs).min(), (wws / hhs).max()))
-# Ratio range: (0.7272727272727273, 1.375)
+# CoAtNet
+  | Model       | stem                      | res_MBConv block      | res_mhsa block        | res_ffn block                 |
+  | ----------- | ------------------------- | --------------------- | --------------------- | ----------------------------- |
+  | CoAtNet0    | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,gelu,conv,bn,gelu,conv     |
+  | CoAtNet0_2  | conv,bn,gelu,conv,bn,gelu | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
+  | CoAtNet0_3  | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
+  | CoAtNet0_4  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm ln, V1        | ln,conv,gelu,conv             |
+  | CoAtNet0_5  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V1 | ln,conv,gelu,conv             |
+  | CoAtNet0_6  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | ln,conv,gelu,conv             |
+  | CoAtNet0_7  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,gelu,conv,gelu,conv        |
+  | CoAtNet0_8  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,conv,gelu,conv             |
+  | CoAtNet0_9  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,conv(bias),gelu,conv(bias) |
+  | CoAtNet0_11 | conv,bn,gelu,conv         | prenorm bn, V2        | prenorm bn, V2        | bn,conv,gelu,conv             |
+  | CoAtNet0_13 | conv,bn,gelu,conv         | prenorm bn + gelu, V1 | prenorm bn + gelu, V1 | bn,conv,gelu,conv             |
+  | CoAtNet0_14 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm bn, V1        | bn,conv,gelu,conv             |
+  | CoAtNet0_15 | conv,bn,gelu,conv         | prenorm bn, V2        | prenorm ln, V2        | ln,conv,gelu,conv             |
+  | CoAtNet0_16 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
+  | CoAtNet0_17 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V2        | ln,conv,gelu,conv             |
+***
 
-fig, axes = plt.subplots(4, 1, figsize=(6, 8))
-pp = {
-    "ratio distribute": wws / hhs,
-    "scale distribute": wws * hhs / 1e4,
-    "height distribute": hhs,
-    "width distribute": wws,
-}
-for ax, kk in zip(axes, pp.keys()):
-    _ = ax.hist(pp[kk], bins=1000, label=kk)
-    ax.set_title("[with attempt] " + kk)
-fig.tight_layout()
-```
+# MagFace model
+  ```py
+  from keras_cv_attention_models import download_and_load
+  import models
+  mm = models.buildin_models('r50', output_layer='E', activation="PReLU", bn_momentum=0.9, bn_epsilon=2e-5, use_bias=True, scale=True)
 
-# VIT visualize
-```py
-import cv2
-from vit_keras import vit, visualize, layers
-
-# Load a model
-image_size = 384
-model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
-# classes = utils.get_imagenet_classes()
-
-# Get an image and compute the attention map
-url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
-imm = plt.imread(keras.utils.get_file('aa.jpg', url))
-
-""" attention_map """
-size = model.input_shape[1]
-grid_size = int(np.sqrt(model.layers[5].output_shape[0][-2] - 1))
-
-# Prepare the input
-X = vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis, :]  # type: ignore
-
-# Get the attention weights from each transformer.
-outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
-weights = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
-num_layers = weights.shape[0]
-num_heads = weights.shape[2]
-reshaped = weights.reshape((num_layers, num_heads, grid_size ** 2 + 1, grid_size ** 2 + 1))
-
-# From Appendix D.6 in the paper ...
-# Average the attention weights across all heads.
-reshaped = reshaped.mean(axis=1)
-
-# From Section 3 in https://arxiv.org/pdf/2005.00928.pdf ...
-# To account for residual connections, we add an identity matrix to the
-# attention matrix and re-normalize the weights.
-reshaped = reshaped + np.eye(reshaped.shape[1])
-reshaped = reshaped / reshaped.sum(axis=(1, 2))[:, np.newaxis, np.newaxis]
-
-# Recursively multiply the weight matrices
-v = reshaped[-1]
-for ii in reshaped[::-1][1:]:
-    v = np.matmul(v, ii)
-    # v *= ii
-
-# Attention from the output token to the input space.
-mask = v[0, 1:].reshape(grid_size, grid_size)
-mask = cv2.resize(mask / mask.max(), (imm.shape[1], imm.shape[0]))[..., np.newaxis]
-# return (mask * imm).astype("uint8")
-attention_map = (mask * imm).astype("uint8")
-
-# print('Prediction:', classes[model.predict(vit.preprocess_inputs(cv2.resize(imm, (size, size)))[np.newaxis])[0].argmax()])
-# Prediction: Eskimo dog, husky
-
-# Plot results
-fig, (ax1, ax2) = plt.subplots(ncols=2)
-ax1.axis('off')
-ax2.axis('off')
-ax1.set_title('Original')
-ax2.set_title('Attention Map')
-_ = ax1.imshow(imm)
-_ = ax2.imshow(attention_map)
-```
-```py
-from skimage.data import chelsea
-imm = chelsea()
-
-url = 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Free%21_%283987584939%29.jpg'
-imm = plt.imread(keras.utils.get_file('aa.jpg', url))
-
-fig, axes = plt.subplots(1, 3, figsize=(3 * 4, 4))
-axes[0].imshow(imm)
-
-from keras_cv_attention_models.beit import beit
-mm = beit.BeitBasePatch16(input_shape=(384, 384, 3), pretrained="imagenet")
-
-imm_inputs = keras.applications.imagenet_utils.preprocess_input(imm, mode='tf')
-imm_inputs = tf.expand_dims(tf.image.resize(imm_inputs, mm.input_shape[1:3]), 0)
-bb = keras.models.Model(mm.inputs[0], [ii.output for ii in mm.layers if ii.name.endswith('attention_scores')])
-attn_scores = bb(imm_inputs)
-
-""" BotNet """
-mask = [ii.numpy()[0].mean((0)) for ii in attn_scores][::-1]
-down_sample = lambda xx, rr: tf.nn.max_pool(xx[tf.newaxis, :, :, tf.newaxis], rr, rr, 'VALID')[0, :, :, 0].numpy()
-cum_mask = [mask[0]] + [down_sample(mask[ii], int(mask[ii].shape[0] / mask[0].shape[0])) for ii in range(1, len(mask))]
-cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
-mask = [ii.mean(0) for ii in mask]
-
-ss = [int(np.sqrt(ii.shape[0])) for ii in mask]
-mmask = [tf.image.resize(tf.reshape(ii, [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
-plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[:ii+1], axis=0).numpy()) for ii in range(len(mmask))]))
-
-""" LeViT """
-mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
-cum_mask = [matmul_prod(mask[:ii+1]).mean(0) for ii in range(len(mask))]
-mask = [ii.mean(0) for ii in mask]
-
-""" HaloNet """
-mask = [ii.numpy()[0].mean((0, 1, 2)) for ii in attn_scores]
-plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1], False) for ii in range(len(mask))]))
-plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mask))]))
-
-mask = [ii.numpy()[0].mean(0) for ii in attn_scores][::-1]
-cum_mask = [ii.reshape(*ii.shape[:3], 14, 14)[..., :8, :8].reshape(*ii.shape[:3], 64) for ii in mask]
-cum_mask = [tf.reduce_max(ii, axis=(0, 1)).numpy() for ii in cum_mask]
-cum_mask = [matmul_prod(cum_mask[:ii+1]).mean(0) for ii in range(len(cum_mask))]
-mask = [ii.mean((0, 1, 2)) for ii in mask]
-
-qqs = [int(np.sqrt(ii.shape[2])) for ii in mask]
-vvs = [int(np.sqrt(ii.shape[3])) for ii in mask]
-hhs = [(jj - ii) // 2 for ii, jj in zip(qqs, vvs)]
-tt = [rearrange(ii, "hh ww (hb wb) cc -> (hh hb) (ww wb) cc", hb=qq, wb=qq) for ii, qq in zip(mask, qqs)]
-tt = [tf.expand_dims(tf.pad(ii, [[hh, hh], [hh, hh], [0, 0]]), 0) for ii, hh in zip(tt, hhs)]
-tt = [tpu_compatible_extract_patches(ii, vv, qq, padding='VALID', compressed=False).numpy()[0] for ii, vv, qq in zip(tt, vvs, qqs)]
-# tt = [rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc").mean((0, 1)) for ii in tt]
-tt = [tf.reduce_max(rearrange(ii, "hh ww hb wb cc -> hh ww (hb wb) cc"), axis=(0, 1)).numpy() for ii in tt]
-cum_mask = [matmul_prod(tt[:ii+1]).mean(0) for ii in range(len(tt))]
-
-""" Coat """
-mask = [ii.numpy()[0].mean((0, 2)) for ii in attn_scores]
-plt.imshow(np.hstack([apply_mask_2_image(imm, mask[-ii-1][1:], False) for ii in range(len(mask))]))
-
-ss = [int(np.sqrt(ii.shape[0] - 1)) for ii in mask]
-mmask = [tf.image.resize(tf.reshape(ii[1:], [jj, jj, 1]), imm.shape[:2])[:, :, 0] for ii, jj in zip(mask, ss)]
-plt.imshow(np.hstack([apply_mask_2_image(imm, tf.reduce_prod(mmask[-ii-1:], axis=0).numpy(), False) for ii in range(len(mmask))]))
-
-""" VOLO """
-aa = attention_layers.fold_by_conv2d_transpose(tf.reduce_mean(tf.concat(attn_scores, axis=0), axis=(3, 5)), (48, 48))[:, :, :, 0] + tf.eye(48)
-attn_scores = (aa / tf.reduce_sum(aa, axis=(1, 2), keepdims=True)).numpy()
-
-""" BEIT """
-mask = [ii.numpy()[0].mean(0) + np.eye(ii.shape[-1]) for ii in attn_scores]
-mask = [(ii / ii.sum()) for ii in mask]
-cum_mask = [matmul_prod(mask[-ii-1:])[0][1:] for ii in range(len(mask))]
-mask = [ii[0][1:]for ii in mask]
-
-mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in mask])
-cum_mask_imm = np.hstack([apply_mask_2_image(imm, ii) for ii in cum_mask])
-plt.imshow(mask_imm)
-plt.imshow(cum_mask_imm)
-plt.imshow(np.vstack([mask_imm, cum_mask_imm]))
-
-def matmul_prod(aa):
-    vv = np.ones_like(aa[0], dtype='float64')
-    for ii in aa[::-1]:
-        vv = np.matmul(vv, ii)
-    return vv
-
-def apply_mask_2_image(image, mask, has_cls_token=True):
-    # mask = vv[0]
-    if has_cls_token:
-        width = height = int(np.sqrt(mask.shape[0] - 1))
-        mask = mask[1:]
-    elif len(mask.shape) == 1:
-        width = height = int(np.sqrt(mask.shape[0]))
-    else:
-        height, width = mask.shape[:2]
-    mask = mask.reshape(width, height, 1)
-    mask = tf.image.resize(mask / mask.max(), image.shape[:2]).numpy()
-    return (mask * image).astype("uint8")
-
-plt.imshow(apply_mask_2_image(imm, matmul_prod(attn_scores)[0], ww, hh))
-plt.imsave('aa.png', np.hstack([apply_mask_2_image(imm, matmul_prod(attn_scores[-ii-1:])[0], ww, hh) for ii in range(len(attn_scores))]))
-plt.imsave('bb.png', np.hstack([apply_mask_2_image(imm, matmul_prod([attn_scores[-ii-1]])[0], ww, hh) for ii in range(len(attn_scores))]))
-
-axes[1].imshow(attention_map)
-```
-```py
-from vit_keras import vit, layers
-image_size = 384
-model = vit.vit_b16(image_size=image_size, activation='sigmoid', pretrained=True, include_top=True, pretrained_top=True)
-X = vit.preprocess_inputs(tf.image.resize(imm, (image_size, image_size)))[np.newaxis, :]
-outputs = [l.output[1] for l in model.layers if isinstance(l, layers.TransformerBlock)]
-attn_scores = np.array(tf.keras.models.Model(inputs=model.inputs, outputs=outputs).predict(X))
-
-fig = visualizing.plot_attention_score_maps(attn_scores, imm, attn_type='beit')
-```
-```py
-import tensorflow_addons as tfa
-xx = tf.random.uniform((1000, 32, 32, 3))
-yy = tf.one_hot(tf.cast(tf.random.uniform((1000,)) * 10, 'int32'), depth=32)
-mm = keras.models.Sequential([keras.layers.Input([32, 32, 3]), keras.layers.Flatten(), keras.layers.BatchNormalization(), keras.layers.Dense(32)])
-mm.compile(optimizer=tfa.optimizers.AdamW(weight_decay=0.01, exclude_from_weight_decay=['/gamma', '/beta']), loss="categorical_crossentropy")
-mm.fit(xx, yy)
-mm.save('aa.h5')
-bb = keras.models.load_model('aa.h5')
-print(bb.optimizer.exclude_from_weight_decay)
-```
+  tail_align_dict={"block1_2_conv": -1, "block1_3_bn": -2}
+  # [25088, 512] -> CHW + out [512, 7, 7, 512] -> HWC + out [7, 7, 512, 512] -> [25088, 512]
+  additional_transfer={"E_dense": lambda ww: [ww[0].reshape(512, 7, 7, 512).transpose([1, 2, 0, 3]).reshape([-1, 512]), ww[1]]}
+  download_and_load.keras_reload_from_torch_model('magface_iresnet50_MS1MV2_ddp_fp32.pth', keras_model=mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True, input_shape=(112, 112), additional_transfer=additional_transfer, save_name="magface_iresnet50_MS1MV2_ddp_fp32.h5")
+  ```
+  Input is `BGR` image in `[0, 1]`
+  ```py
+  import evals
+  bb = keras.models.load_model('magface_iresnet50_MS1MV2_ddp_fp32.h5')
+  ee = evals.eval_callback(lambda imms: bb(imms[:, :, :, ::-1] / 2 + 0.5), '/datasets/faces_casia/lfw.bin', batch_size=16)
+  ee.on_epoch_end()
+  # magface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.997500, cfp_fp: 0.981143, agedb_30: 0.978833, IJBB 0.930185
+  # mag-cosface_iresnet50_MS1MV2_ddp_fp32, lfw: 0.998333, cfp_fp: 0.982714, agedb_30: 0.978667, IJBB 0.93408
+  # magface_iresnet50_MS1MV2_dp, lfw: 0.998167, cfp_fp: 0.981143, agedb_30: 0.980500, IJBB 0.943622
+  # magface_epoch_00025, lfw: 0.998333, cfp_fp: 0.987429, agedb_30: 0.983333, IJBB 0.949562
+  ```
+  ```py
+  import IJB_evals
+  mm = keras.models.load_model('magface_iresnet50_MS1MV2_dp.h5')
+  tt = IJB_evals.IJB_test(lambda imms: mm(imms[:, :, :, ::-1] / 255.0), data_path='/datasets/IJB_release/', subset='IJBB', batch_size=16)
+  score = tt.run_model_test_single()
+  IJB_evals.plot_roc_and_calculate_tpr([score], names=[mm.name + "_IJBB"], label=tt.label)
+  ```
+  | Model name in IrvingMeng/MagFace      | lfw      | cfp_fp   | agedb_30 | IJBB     |
+  | ------------------------------------- | -------- | -------- | -------- | -------- |
+  | magface_iresnet50_MS1MV2_ddp_fp32     | 0.997500 | 0.981143 | 0.978833 | 0.930185 |
+  | mag-cosface_iresnet50_MS1MV2_ddp_fp32 | 0.998333 | 0.982714 | 0.978667 | 0.93408  |
+  | magface_iresnet50_MS1MV2_dp           | 0.998167 | 0.981143 | 0.980500 | 0.943622 |
+  | magface_epoch_00025                   | 0.998333 | 0.987429 | 0.983333 | 0.949562 |
+***

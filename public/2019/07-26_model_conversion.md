@@ -242,6 +242,26 @@
     python -m tf2onnx.convert --input frozen_graph.pb  --inputs X:0 --outputs output:0 --output model.onnx
     python -m tf2onnx.convert --checkpoint checkpoint.meta  --inputs X:0 --outputs output:0 --output model.onnx
     ```
+    ```py
+    model = keras.applications.ResNet50(weights='imagenet')
+    imgs = np.random.uniform(size=[1, 224, 224, 3]).astype('float32')
+    preds = model(imgs)
+
+    """ Convert """
+    import tf2onnx
+    spec = (tf.TensorSpec(model.input_shape, tf.float32, name="input"),)
+    output_path = model.name + ".onnx"
+    model_proto, _ = tf2onnx.convert.from_keras(model, input_signature=spec, opset=13, output_path=output_path)
+
+    """ Run test """
+    import onnxruntime as rt
+    output_names = [n.name for n in model_proto.graph.output]
+    providers = ['CPUExecutionProvider']
+    m = rt.InferenceSession(output_path, providers=providers)
+    onnx_pred = m.run(output_names, {"input": imgs})
+
+    print(np.allclose(preds, onnx_pred[0], rtol=1e-5))
+    ```
   - [keras2onnx](https://github.com/onnx/keras-onnx)
     ```py
     ! pip install keras2onnx
