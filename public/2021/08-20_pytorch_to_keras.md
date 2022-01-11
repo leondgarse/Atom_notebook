@@ -58,7 +58,6 @@
   - [NFNets](#nfnets)
   - [Halonet timm](#halonet-timm)
   - [RegNetZ](#regnetz)
-  - [CoAtNet](#coatnet)
   - [MagFace model](#magface-model)
 
   <!-- /TOC -->
@@ -4139,25 +4138,6 @@
   ```
 ***
 
-# CoAtNet
-  | Model       | stem                      | res_MBConv block      | res_mhsa block        | res_ffn block                 |
-  | ----------- | ------------------------- | --------------------- | --------------------- | ----------------------------- |
-  | CoAtNet0    | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,gelu,conv,bn,gelu,conv     |
-  | CoAtNet0_2  | conv,bn,gelu,conv,bn,gelu | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
-  | CoAtNet0_3  | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
-  | CoAtNet0_4  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm ln, V1        | ln,conv,gelu,conv             |
-  | CoAtNet0_5  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V1 | ln,conv,gelu,conv             |
-  | CoAtNet0_6  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | ln,conv,gelu,conv             |
-  | CoAtNet0_7  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,gelu,conv,gelu,conv        |
-  | CoAtNet0_8  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,conv,gelu,conv             |
-  | CoAtNet0_9  | conv,bn,gelu,conv         | prenorm bn + gelu, V2 | prenorm bn + gelu, V2 | bn,conv(bias),gelu,conv(bias) |
-  | CoAtNet0_11 | conv,bn,gelu,conv         | prenorm bn, V2        | prenorm bn, V2        | bn,conv,gelu,conv             |
-  | CoAtNet0_13 | conv,bn,gelu,conv         | prenorm bn + gelu, V1 | prenorm bn + gelu, V1 | bn,conv,gelu,conv             |
-  | CoAtNet0_14 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm bn, V1        | bn,conv,gelu,conv             |
-  | CoAtNet0_15 | conv,bn,gelu,conv         | prenorm bn, V2        | prenorm ln, V2        | ln,conv,gelu,conv             |
-  | CoAtNet0_16 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V1        | ln,conv,gelu,conv             |
-  | CoAtNet0_17 | conv,bn,gelu,conv         | prenorm bn, V1        | prenorm ln, V2        | ln,conv,gelu,conv             |
-***
 
 # MagFace model
   ```py

@@ -1,3 +1,9 @@
+# ___2022 - 01 - 10 EfficientDet___
+***
+- [Unet Plus Plus with EfficientNet Encoder](https://www.kaggle.com/meaninglesslives/unet-plus-plus-with-efficientnet-encoder)
+- [mask-rcnn with augmentation and multiple masks](https://www.kaggle.com/abhishek/mask-rcnn-with-augmentation-and-multiple-masks)
+***
+
 # EfficientDet
 ```py
 import hparams_config

@@ -1043,7 +1043,7 @@
   aa = glob('checkpoints/TT_effv2_*.json')
   _ = choose_accuracy(aa)
   ```
-  - **AdamW**
+  - **AdamW and LAMB**
   ```py
   hist_path = "checkpoints/"
   pp = {}
@@ -1056,12 +1056,22 @@
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos49", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd1e1lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_float16_2_hist.json", fig_label="F, point_wise 512, wd 1e-3, dr 0.2, adamw cos16_epoch", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd1e2lr_arc_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="F, point_wise 512, wd 1e-2, not exclude_bn, dr 0.2, adamw cos16", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd1e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_float16_hist.json", fig_label="F, point_wise 512, wd 1e-2, exclude_bn, dr 0.2, adamw cos16", **pp)
+
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd1e1lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos16_float16_hist.json", fig_label="F, point_wise 512, wd 1e-1, exclude_bn, dr 0.2, adamw cos16", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_bias_false_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos16_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos16, epoch, bias_false", **pp)
 
   pp["epochs"] = [1, 3, 13, 33]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos49_epoch", init_epoch=3, **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos16_epoch", init_epoch=3, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos49_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos49, epoch, bias_true", init_epoch=3, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_01_wd5e2lr_arc_emb512_adamw_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, point_wise 512, wd 5e-4, dr 0.2, adamw cos16, epoch, bias_true", init_epoch=3, **pp)
 
+  # pp["epochs"] = [3, 1, 3, 13, 33]
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_bias_false_dr02_drc02_lr_5e3_wd1e2_arc_emb512_lamb_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, lr_5e3_wd1e2, cos16_epoch", init_epoch=3, **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_bias_false_dr02_drc02_lr_1e2_wd1e2_arc_emb512_lamb_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, lr_1e2_wd1e2, cos16_epoch", **pp)
+  # pp["epochs"] = [1, 3, 13, 33]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_bias_false_dr02_drc02_lr_5e3_wd5e3_arc_emb512_lamb_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, lr_5e3_wd5e3, cos16_epoch", init_epoch=3, **pp)
   ```
 ***
 
