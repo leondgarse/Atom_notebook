@@ -15,8 +15,8 @@
 ***
 
 ## YOLOV5 Face and convert tests
-  - [Github ultralytics/yolov5](https://github.com.cnpmjs.org/ultralytics/yolov5.git)
-  - [Github deepcam-cn/yolov5-face](https://github.com.cnpmjs.org/deepcam-cn/yolov5-face.git)
+  - [Github ultralytics/yolov5](https://github.com/ultralytics/yolov5.git)
+  - [Github deepcam-cn/yolov5-face](https://github.com/deepcam-cn/yolov5-face.git)
   - **Test**
     ```py
     import torch

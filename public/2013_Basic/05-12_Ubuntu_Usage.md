@@ -1420,6 +1420,20 @@
     # 测试
     curl www.google.com
     ```
+    privoxy 如果指定了 127 以外的 listen-address，由于在 networks 初始化完之前启动，开机启动会失败，配置 supervisor
+    ```sh
+    $ sudo update-rc.d privoxy disable
+    $ cat /etc/supervisor/conf.d/privoxy.conf
+    [program:privoxy]
+    command=service privoxy restart
+    autorestart = false
+    autostart = true
+    startsecs = 5    
+    user = root
+    stdout_logfile_maxbytes = 20MB  
+    stdout_logfile_backups = 20    
+    stdout_logfile = /var/log/privoxy.log
+    ```
   - **PAC 代理** [Github leondgarse/SSS_PAC](https://github.com/leondgarse/SSS_PAC)
     ```sh
     # 通过 Apache2 配置 SwitchyOmega 使用本地文件，PAC URL: http://127.0.0.1/blacklist.pac

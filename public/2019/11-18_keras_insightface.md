@@ -965,7 +965,7 @@
                   poses.extend(stack_pos_name[valid_pos])
                   negs.extend(img_names[valid_neg])
                   # self.minning_print_func(pos_imgs, valid_pos, valid_neg, stack_anchor_name, stack_pos_name, labels, stack_dists)
-          print(">>>> %d triplets found." % (len(anchors)))
+          print(">>>> %d triplets pairs mined." % (len(anchors)))
           return anchors, poses, negs
 
       def gen_triplet_train_dataset(self, anchors, poses, negs):

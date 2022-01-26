@@ -609,6 +609,19 @@
   | EffV2B0 | 224              | torch        | bicubic antialias | 0.95         | 0.78288     | 0.93998     |
   | EffV2B0 | 224              | torch        | bicubic           | 1.0          | 0.78536     | 0.94404     |
 
+  | model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1   | top 5   |
+  | ----------- | ---------------- | ------------ | ----------------- | ------------ | ------- | ------- |
+  | EffV2B2,21k | 260              | torch        | bicubic           | 0.95         | 0.19478 | 0.31922 |
+  | EffV2B2,21k | 260              | tf           | bicubic           | 0.95         | 0.79118 | 0.94922 |
+  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.95         | 0.79254 | 0.94992 |
+  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.99         | 0.79482 | 0.95022 |
+  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.99         | 0.79034 | 0.94978 |
+  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.87         | 0.7819  | 0.9436  |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.95         | 0.77418 | 0.94134 |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.875        | 0.76786 | 0.93682 |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.99         | 0.7755  | 0.94208 |
+  | EffV2B3,21k | 224              | tf           | bicubic antialias | 0.99         | 0.82462 | 0.96524 |
+
   | model   | Input Resolution | rescale_mode | resize_method | central_crop     | top 1       | top 5       |
   | ------- | ---------------- | ------------ | ------------- | ---------------- | ----------- | ----------- |
   | EffV2B1 | 240              | torch        | bicubic       | 0.87             | 0.79722     | **0.94938** |
@@ -626,8 +639,8 @@
   | ----------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
   | EffV2S      | 384              | tf           | bicubic           | 0.95         | 0.83788     | 0.96602     |
   | EffV2S      | 384              | torch        | bicubic           | 0.95         | 0.29858     | 0.46904     |
-  | EffV2S      | 384              | tf           | bicubic           | 0.99         | **0.8386**  | **0.967**   |
-  | EffV2S      | 384              | tf           | bicubic antialias | 0.99         | 0.8387      | 0.967       |
+  | EffV2S      | 384              | tf           | bicubic           | 0.99         | 0.8386      | 0.967       |
+  | EffV2S      | 384              | tf           | bicubic antialias | 0.99         | **0.8387**  | **0.967**   |
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.94         | 0.84006     | 0.97118     |
   | EffV2S ft1k | 384              | torch        | bicubic           | 0.94         | 0.13104     | 0.21656     |
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.95         | 0.84076     | 0.97134     |

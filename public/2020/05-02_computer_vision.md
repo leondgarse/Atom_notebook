@@ -1071,8 +1071,10 @@
               # "medianflow": cv2.TrackerMedianFlow_create,
               # "mosse": cv2.TrackerMOSSE_create
           }
-          self.tracker = OPENCV_OBJECT_TRACKERS[tracker]()
-          self.initBB = None
+          pp = cv2.TrackerCSRT_Params()
+          pp.psr_threshold = 0.1
+          self.tracker = OPENCV_OBJECT_TRACKERS[tracker](parameters=pp)
+          self.initBB, self.initFrame, self.frame_shape = None, None, None
 
       def __call__(self, frame):
           # if the 's' key is selected, we are going to "select" a bounding box to track
@@ -1080,23 +1082,34 @@
           if key == ord("s"):
               # select the bounding box of the object we want to track (make sure you press ENTER or SPACE after selecting the ROI)
               self.initBB = cv2.selectROI(self.title, frame, fromCenter=False, showCrosshair=True)
+              self.initFrame = frame.copy()
+              self.frame_shape = frame.shape
               # start OpenCV object tracker using the supplied bounding box coordinates, then start the FPS throughput estimator as well
               self.tracker = self.tracker.create()
-              ret = self.tracker.init(frame, self.initBB)
+              ret = self.tracker.init(self.initFrame, self.initBB)
               print("Init tracker:", ret)
 
           # check to see if we are currently tracking an object
           if self.initBB is not None:
               # grab the new bounding box coordinates of the object
               success, box = self.tracker.update(frame)
+              # print(f"{success = }, {box = }")
               if success:
                   x, y, w, h = [int(v) for v in box]
                   cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-              cv2.putText(frame, "Success" if success else "Fail", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                  rr = "Success" + " ({}, {}, {}, {})".format(x, y, self.frame_shape[1] - (x + w), self.frame_shape[0] - (y + h))
+                  color = (0, 255, 0)
+              else:
+                  rr = "Fail"
+                  color = (0, 0, 255)
+              cv2.putText(frame, rr, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+              # self.tracker.create()
+              # self.tracker.init(self.initFrame, self.initBB)
 
           return frame
 
-  video_test(func=ObjectTrack())
+  aa = ObjectTrack()
+  video_test(func=aa)
   ```
 ## QR code
   ```py

@@ -22,6 +22,7 @@
     - [BotNet positional embedding](#botnet-positional-embedding)
     - [Relative positional embedding by gathering](#relative-positional-embedding-by-gathering)
     - [Bias Relative positional embedding](#bias-relative-positional-embedding)
+    - [Show PositionalEmbedding](#show-positionalembedding)
   - [VOLO](#volo)
     - [PyTorch fold and unfold and conv2d](#pytorch-fold-and-unfold-and-conv2d)
     - [TF extract patches and Torch unfold](#tf-extract-patches-and-torch-unfold)
@@ -278,6 +279,26 @@
   torch_mdoel = timm.models.eca_halonext26ts(pretrained=True)
   mm = halonet.HaloNextECA26T(classifier_activation=None)
   keras_reload_from_torch_model(torch_mdoel, mm, input_shape=(256, 256), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
+  ```
+## ConvNeXt
+  ```py
+  sys.path.append('../ConvNeXt/')
+  from models import convnext as torch_convnext
+  torch_model = torch_convnext.convnext_tiny(pretrained=True, in_22k=False)
+
+  from keras_cv_attention_models import download_and_load, convnext
+  mm = convnext.ConvNeXtTiny(classifier_activation=None)
+  full_name_align_dict = {
+      "stack2_downsample_ln": 2,
+      "stack2_downsample_conv": 3,
+      "stack3_downsample_ln": 4,
+      "stack3_downsample_conv": 5,
+      "stack4_downsample_ln": 6,
+      "stack4_downsample_conv": 7,
+  }
+  tail_align_dict = {"gamma": -4}
+
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
 ***
 
@@ -817,6 +838,73 @@
   # dd[:, :, 2, 2] = array([[42, 41, 40, 39, 38],
   #        [33, 32, 31, 30, 29],
   #        [24, 23, 22, 21, 20]])
+  ```
+## Show PositionalEmbedding
+  ```py
+  def show_pos_emb_1(layer, base_size=4):
+      import matplotlib.pyplot as plt
+
+      fig, axes = plt.subplots(3, 2, figsize=(base_size * 2, base_size * 3))
+      axes[0][0].imshow(layer.pos_emb_h)
+      axes[0][1].imshow(layer.pos_emb_w)
+      hh_sum = tf.ones([1, 1, layer.input_height, layer.pos_emb_h.shape[0]]) @ layer.pos_emb_h
+      ww_sum = tf.ones([1, 1, layer.input_width, layer.pos_emb_w.shape[0]]) @ layer.pos_emb_w
+      axes[1][0].imshow(hh_sum[0, 0])
+      axes[1][1].imshow(ww_sum[0, 0])
+      axes[2][0].imshow(layer.rel_to_abs(hh_sum)[0, 0])
+      axes[2][1].imshow(layer.rel_to_abs(ww_sum)[0, 0])
+      titles = ["pos_emb_h", "pos_emb_w", "sum pos_emb_h", "sum pos_emb_w", "rel_to_abs pos_emb_h", "rel_to_abs pos_emb_w"]
+      for ax, title in zip(axes.flatten(), titles):
+          ax.set_title(title)
+          ax.set_axis_off()
+      fig.tight_layout()
+      return fig
+  ```
+  ```py
+  def show_pos_emb_2(layer, base_size=4):
+      import matplotlib.pyplot as plt
+
+      if layer.pos_emb_h.shape[0] > layer.pos_emb_h.shape[1] * 2:
+          fig, axes = plt.subplots(1, 4, figsize=(base_size * 4, base_size * 1))
+      else:
+          fig, axes = plt.subplots(2, 2, figsize=(base_size * 2, base_size * 2))
+      axes = axes.flatten()
+      axes[0].imshow(layer.pos_emb_h)
+      axes[1].imshow(layer.pos_emb_w)
+
+      hh_sub_total = int(tf.math.ceil(layer.pos_emb_h.shape[0] / layer.input_height))
+      hh_sep = [layer.pos_emb_h[ii * layer.input_height : (ii + 1) * layer.input_height] for ii in range(hh_sub_total)]
+      hh_sep = tf.concat([layer.rel_to_abs(ii[tf.newaxis, tf.newaxis])[0, 0] for ii in hh_sep], axis=0)
+      axes[2].imshow(hh_sep)
+
+      ww_sub_total = int(tf.math.ceil(layer.pos_emb_w.shape[0] / layer.input_width))
+      ww_sep = [layer.pos_emb_w[ii * layer.input_width : (ii + 1) * layer.input_width] for ii in range(ww_sub_total)]
+      ww_sep = tf.concat([layer.rel_to_abs(ii[tf.newaxis, tf.newaxis])[0, 0] for ii in ww_sep], axis=0)
+      axes[3].imshow(ww_sep)
+
+      titles = ["pos_emb_h", "pos_emb_w", "rel_to_abs pos_emb_h", "rel_to_abs pos_emb_w"]
+      for ax, title in zip(axes.flatten(), titles):
+          ax.set_title(title)
+          ax.set_axis_off()
+      fig.tight_layout()
+      return fig
+  ```
+  ```py
+  def show_pos_emb(layer, base_size=4):
+      import matplotlib.pyplot as plt
+
+      fig, axes = plt.subplots(1, 3, figsize=(base_size * 3, base_size * 1))
+      axes[0].imshow(layer.pos_emb_h)
+      axes[1].imshow(layer.pos_emb_w)
+      hh_sum = tf.ones([1, layer.pos_emb_h.shape[0]]) @ layer.pos_emb_h
+      ww_sum = tf.ones([1, layer.pos_emb_w.shape[0]]) @ layer.pos_emb_w
+      axes[2].imshow(tf.transpose(hh_sum) + ww_sum)
+      titles = ["pos_emb_h", "pos_emb_w", "sum"]
+      for ax, title in zip(axes.flatten(), titles):
+          ax.set_title(title)
+          ax.set_axis_off()
+      fig.tight_layout()
+      return fig
   ```
 ***
 
