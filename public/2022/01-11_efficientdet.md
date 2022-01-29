@@ -460,3 +460,34 @@
   mm.save("{}_{}_coco.h5".format(mm.name, mm.input_shape[1]))
   ```
 ***
+
+# Train
+```py
+from keras_cv_attention_models import efficientnet, efficientdet
+from keras_cv_attention_models.coco import data, losses
+from keras_cv_attention_models.imagenet import train_func
+
+strategy = train_func.init_global_strategy()
+
+input_shape, batch_size, basic_save_name, initial_epoch = (256, 256, 3), 32, "effd0_test", 0
+lr_base_512, weight_decay, lr_decay_steps, lr_min, lr_decay_on_batch, lr_warmup = 8e-3, 0.02, 32, 1e-6, False, 1e-4
+warmup_steps, cooldown_steps = 3, 3
+train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
+    input_shape=input_shape,
+    batch_size=batch_size,
+    resize_method="bicubic",
+    resize_antialias=True,
+    random_crop_min=0.08,
+    magnitude=6,
+)
+
+backbone = efficientnet.EfficientNetV1B0(input_shape=input_shape, num_classes=0)
+model = efficientdet.EfficientDet(backbone, freeze_backbone=True, num_classes=80)
+
+lr_base = lr_base_512 * batch_size / 512
+lr_scheduler, lr_total_epochs = train_func.init_lr_scheduler(lr_base, lr_decay_steps, lr_min, lr_decay_on_batch, lr_warmup, warmup_steps, cooldown_steps)
+epochs = lr_total_epochs
+
+model = train_func.compile_model(model, "adamw", lr_base, weight_decay, loss=losses.FocalLossWithBbox(), metrics=losses.ClassAccuracyWithBbox())
+latest_save, hist = train_func.train(model, epochs, train_dataset, test_dataset, initial_epoch, lr_scheduler, basic_save_name)
+```

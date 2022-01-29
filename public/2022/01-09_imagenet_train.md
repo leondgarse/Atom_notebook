@@ -33,9 +33,22 @@
       "A3, adamw_4e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
       "A3, adamw_8e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
       "A3, progressive_3_lr_steps_33_lr_t_mul_1": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_hist.json",
-      "A3, adamw_8e3_wd5e2, cutmix reverse, CE_mixup_0.8": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_CE_mixup_0.8_hist.json",
+      "A3, progressive_3_lr_steps_33_lr_t_mul_1_on_batch": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_on_batch_hist.json",
+      # "A3, adamw_8e3_wd5e2, cutmix reverse, CE_mixup_0.8": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_CE_mixup_0.8_hist.json",
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=40, base_size=8)
+  ```
+  ```py
+  import json
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "A3, lamb, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_reverse_hist.json",
+      "A3, adamw, lr 4e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_4e3_wd5e2_hist.json",
+      # "A3, adamw, lr 8e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_hist.json",
+      "A3, adamw, lr 4e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
+      "A3, adamw, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
+  }
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
   ```
 |                                                            | Train acc | Eval loss | Eval 160     | Eval 224         | Epoch 106        |
 | ---------------------------------------------------------- | --------- | --------- | ------------ | ---------------- | ---------------- |
@@ -55,11 +68,19 @@
 |                                                | Train acc | Eval loss | Eval 160     | Eval 224         | Epoch 106        |
 | ---------------------------------------------- | --------- | --------- | ------------ | ---------------- | ---------------- |
 | A3, aug_nearest                                | 0.6331    | 0.001458  | E101, 0.7653 | 0.78196, 0.9401  |                  |
-| A3, resize_bilinear                            | 0.6310    | 0.001455  | E103, 0.7642 | 0.78024, 0.93974 |                  |
+| A3, resize_bilinear                            | 0.6310    | 0.001455  | E103, 0.7642 | 0.78024, 0.93974 | 0.78072, 0.93996 |
 | A3, bicubic_no_antialias                       | 0.6313    | 0.001481  | E97, 0.7626  | 0.77994, 0.938   | 0.77956, 0.93808 |
 | A3, rescale_mode_tf                            | 0.6328    | 0.001452  | E97, 0.7671  | 0.78316, 0.93898 | 0.78310, 0.93910 |
 | A3, rescale_mode_tf, cutmix_reverse            | 0.6319    | 0.001458  | E100, 0.7688 | 0.78274, 0.94066 | 0.78292, 0.94046 |
 | A3, resize_bilinear, antialias, cutmix_reverse | 0.6296    | 0.001491  | E104, 0.7676 | 0.78152, 0.93924 | 0.78128, 0.93944 |
+
+- **Adamw**
+
+| lr base | Weight decay | Train acc | Best Eval loss, acc on 160  | Eval acc top1, top5 on 224 | Epoch 105 eval acc |
+| ------- | ------------ | --------- | --------------------------- | -------------------------- | ------------------ |
+| 4e-3    | 0.05         | 0.6216    | Epoch 102, 0.001468, 0.7638 | 0.77862, 0.93876           |                    |
+| 4e-3    | 0.02         | 0.6346    | Epoch 100, 0.001471, 0.7669 | 0.78060, 0.93842           | 0.78058, 0.93856   |
+| 8e-3    | 0.02         | 0.6285    | Epoch 105, 0.001463, 0.7675 | 0.78268, 0.93828           | 0.78268, 0.93828   |
 
 - **A2 224**
   ```py
@@ -114,6 +135,18 @@
       "CoAtNet0_160_dpc_0.05, bs 128": "checkpoints/CoAtNet0_drc_005_hist.json",
   }
 
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=8, pred_curve=[0] * (len(hhs) - 1) + [20])
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=8)
   ```
 ***
+```py
+from sklearn.preprocessing import normalize
+emb_unk = normalize(emb_unk)
+
+# Use emb_unk[0] as known emb for test
+cos_dist = np.dot(emb_unk[0], emb_unk.T)
+euc_dist = np.sqrt(((emb_unk[0] - emb_unk) ** 2).sum(1))
+print(np.allclose(np.sqrt(2 - 2 * cos_dist), euc_dist))
+
+(2 - euc_dist ** 2) / 2
+# True
+```
