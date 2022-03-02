@@ -408,6 +408,7 @@
       left = random.randint(0, width - ww)
       return top, left, hh, ww
   ```
+  **Show results**
   ```py
   import math, random
   from PIL import Image
@@ -431,6 +432,30 @@
       _ = ax.hist(pp[kk], bins=1000, label=kk)
       ax.set_title("[with attempt] " + kk)
   fig.tight_layout()
+  ```
+  **TF function**
+  ```py
+  def random_crop_fraction_timm(image, scale=(0.08, 1.0), ratio=(0.75, 1.3333333), compute_dtype="float32"):
+      size = tf.shape(image)
+      height, width = tf.cast(size[0], dtype=compute_dtype), tf.cast(size[1], dtype=compute_dtype)
+      area = height * width
+      in_ratio = width / height
+
+      target_areas = tf.random.uniform((10,), scale[0], scale[1]) * area
+      log_min, log_max = tf.math.log(ratio[0]), tf.math.log(ratio[1])
+      aspect_ratios = tf.random.uniform((10,), log_min, log_max, dtype=compute_dtype)
+      aspect_ratios = tf.math.exp(aspect_ratios)
+
+      ww_crops, hh_crops = tf.sqrt(target_areas * aspect_ratios), tf.sqrt(target_areas / aspect_ratios)
+      pick = tf.argmax(tf.logical_and(hh_crops <= height, ww_crops <= width))
+      hh_crop = tf.cast(tf.math.floor(hh_crops[pick]), "int32")
+      ww_crop = tf.cast(tf.math.floor(ww_crops[pick]), "int32")
+      # return hh_crop, ww_crop
+      return tf.cond(
+          tf.logical_and(hh_crop <= size[0], ww_crop <= size[1]),
+          lambda: tf.image.random_crop(image, (hh_crop, ww_crop, 3)),
+          lambda: tf.image.central_crop(image, tf.minimum(tf.minimum(ratio[1] / in_ratio, in_ratio * ratio[0]), scale[1])),
+      )
   ```
 ***
 

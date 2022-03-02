@@ -1279,6 +1279,18 @@
     ```sh
     ls -1 | sort -R | head -n 100 | xargs -I {} sh -c 'ls {}/*.jpg | sort -R | head -n 5' | xargs -I {} sh -c "echo $PWD/{}" > ~/foo
     ```
+  - **md5**
+    ```sh
+    ls -1 ./*.h5 | xargs -I {} md5sum {}
+    ```
+  - **code format**
+    ```sh
+    find ./* -name "*.py" | grep -v __init__ | grep -v setup.py | xargs -I {} black -l 160 {} --diff
+    ```
+  - **sed replace**
+    ```sh
+    find ./* -name "*.md" -or -name "*.py" | xargs -I {} sed -i 's/pretraind/pretrained/' {}
+    ```
 ***
 
 # bc 计算

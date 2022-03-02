@@ -38,18 +38,7 @@
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=40, base_size=8)
   ```
-  ```py
-  import json
-  from keras_cv_attention_models.imagenet import eval_func
-  hhs = {
-      "A3, lamb, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_reverse_hist.json",
-      "A3, adamw, lr 4e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_4e3_wd5e2_hist.json",
-      # "A3, adamw, lr 8e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_hist.json",
-      "A3, adamw, lr 4e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
-      "A3, adamw, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
-  }
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
-  ```
+
 |                                                            | Train acc | Eval loss | Eval 160     | Eval 224         | Epoch 106        |
 | ---------------------------------------------------------- | --------- | --------- | ------------ | ---------------- | ---------------- |
 | A3, cutmix reverse, get_box no-rectangle                   | 0.6322    | 0.001470  | E100, 0.7667 | 0.78214, 0.94126 | 0.78206, 0.94114 |
@@ -75,12 +64,26 @@
 | A3, resize_bilinear, antialias, cutmix_reverse | 0.6296    | 0.001491  | E104, 0.7676 | 0.78152, 0.93924 | 0.78128, 0.93944 |
 
 - **Adamw**
+```py
+import json
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "A3, lamb, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_reverse_hist.json",
+    "A3, adamw, lr 4e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_4e3_wd5e2_hist.json",
+    # "A3, adamw, lr 8e-3, wd 5e-2": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_hist.json",
+    "A3, adamw, lr 4e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
+    "A3, adamw, lr 8e-3, wd 2e-2": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
+    "A3, adamw, lr 8e-3, wd 2e-2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd2e2_hist.json",
+}
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
+```
 
-| lr base | Weight decay | Train acc | Best Eval loss, acc on 160  | Eval acc top1, top5 on 224 | Epoch 105 eval acc |
-| ------- | ------------ | --------- | --------------------------- | -------------------------- | ------------------ |
-| 4e-3    | 0.05         | 0.6216    | Epoch 102, 0.001468, 0.7638 | 0.77862, 0.93876           |                    |
-| 4e-3    | 0.02         | 0.6346    | Epoch 100, 0.001471, 0.7669 | 0.78060, 0.93842           | 0.78058, 0.93856   |
-| 8e-3    | 0.02         | 0.6285    | Epoch 105, 0.001463, 0.7675 | 0.78268, 0.93828           | 0.78268, 0.93828   |
+| lr base | Weight decay   | Train acc | Best Eval loss, acc on 160  | Eval acc top1, top5 on 224 | Epoch 105 eval acc |
+| ------- | -------------- | --------- | --------------------------- | -------------------------- | ------------------ |
+| 4e-3    | 0.05           | 0.6216    | Epoch 102, 0.001468, 0.7638 | 0.77862, 0.93876           | 0.77918, 0.93850   |
+| 4e-3    | 0.02           | 0.6346    | Epoch 100, 0.001471, 0.7669 | 0.78060, 0.93842           | 0.78058, 0.93856   |
+| 8e-3    | 0.02           | 0.6285    | Epoch 105, 0.001463, 0.7675 | 0.78268, 0.93828           | 0.78268, 0.93828   |
+| 8e-3    | 0.02 (reverse) | 0.6274    | Epoch 103, 0.001511, 0.7646 | 0.78184, 0.93860           | 0.78142, 0.93862   |
 
 - **A2 224**
   ```py
@@ -126,27 +129,133 @@
       # "CoAtNet0_7, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_7_hist.json",
       "CoAtNet0_8, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_8_hist.json",
       # "CoAtNet0_9, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_9_hist.json",
-      "CoAtNet0_11, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_11_hist.json",
+      # "CoAtNet0_11, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_11_hist.json",
       # "CoAtNet0_13, A3": "checkpoints/ccoatnet0/oatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_13_hist.json",
       # "CoAtNet0_14, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_14_hist.json",
-      "CoAtNet0_15, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_15_hist.json",
+      # "CoAtNet0_15, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_15_hist.json",
       "CoAtNet0_16, A3": "checkpoints/coatnet0/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_16_hist.json",
-      "CoAtNet0_160_dpc_02, bs 90": "checkpoints/coatnet.CoAtNet0_160_dpc_02_hist.json",
+      # "CoAtNet0_160_dpc_02, bs 90": "checkpoints/coatnet.CoAtNet0_160_dpc_02_hist.json",
       "CoAtNet0_160_dpc_0.05, bs 128": "checkpoints/CoAtNet0_drc_005_hist.json",
+      "CoAtNet0_160, wd_exclude_pos_emb, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_hist.json",
+      "CoAtNet0_160, wd_exclude_pos_emb, mag_10, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_mag_10_hist.json",
+      "CoAtNet0_160_act_first, bs 128": "checkpoints/CoAtNet0_160_act_first_hist.json",
   }
 
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=8)
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=25, base_size=8)
   ```
+  - **fine-tune 224, lr_decay_steps 32, lr_base_512 0.004, batch_size 64**
+  ```sh
+  CUDA_VISIBLE_DEVICES='0' TF_XLA_FLAGS='--tf_xla_auto_jit=2' ./train_script.py --seed 0 \
+  -m coatnet.CoAtNet0 --pretrained imagenet -i 224 --batch_size 64 \
+  --lr_decay_steps 32 --lr_warmup_steps 0 --lr_base_512 0.004 \
+  --additional_model_kwargs '{"drop_connect_rate": 0.05}' --magnitude 7 \
+  -s coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_7
+  ```
+  ```py
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "ft 224, magnitude 6, drc 0, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_hist.json",
+      "ft 224, magnitude 7, drc 0, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_magnitude_7_hist.json",
+      "ft 224, magnitude 7, drc 0.05, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_7_hist.json",
+      "ft 224, magnitude 7, drc 0.2, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc02_magnitude_7_hist.json",
+      "ft 224, magnitude 10, drc 0.05, bs 64, ": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_10_1_hist.json",
+      "ft 224, magnitude 10, drc 0.05, wd exc pos_emb, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_10_hist.json",
+  }
+
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
+  ```
+
+| magnitude | drop_connect_rate | Best val loss, acc                                                          |
+| --------- | ----------------- | --------------------------------------------------------------------------- |
+| 6         | 0                 | Epoch 35/37 loss: 0.0023 - acc: 0.7288 - val_loss: 0.0012 - val_acc: 0.8160 |
+| 7         | 0                 | Epoch 34/37 loss: 0.0024 - acc: 0.7218 - val_loss: 0.0012 - val_acc: 0.8161 |
+| 7         | 0.05              | Epoch 36/37 loss: 0.0026 - acc: 0.7026 - val_loss: 0.0011 - val_acc: 0.8193 |
+| 7         | 0.2               | Epoch 34/37 loss: 0.0030 - acc: 0.6658 - val_loss: 0.0011 - val_acc: 0.8176 |
+| 10        | 0.05              | Epoch 36/37 loss: 0.0028 - acc: 0.6783 - val_loss: 0.0011 - val_acc: 0.8199 |
 ***
-```py
-from sklearn.preprocessing import normalize
-emb_unk = normalize(emb_unk)
 
-# Use emb_unk[0] as known emb for test
-cos_dist = np.dot(emb_unk[0], emb_unk.T)
-euc_dist = np.sqrt(((emb_unk[0] - emb_unk) ** 2).sum(1))
-print(np.allclose(np.sqrt(2 - 2 * cos_dist), euc_dist))
-
-(2 - euc_dist ** 2) / 2
-# True
+# CMT
+```sh
+CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS='--tf_xla_auto_jit=2' ./train_script.py --seed 0 -m cmt.CMTTiny -b 256 --lr_decay_steps 50 -s cmt.CMTTiny_160_downsample_ln_use_bias_false
 ```
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "basic, bs 256": "checkpoints/cmt.CMTTiny_160_LAMB_imagenet2012_batchsize_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+    "downsample_ln, bs 256": "checkpoints/cmt.CMTTiny_160_downsample_ln_hist.json",
+    "downsample_ln, use_bias_false, bs 256": "checkpoints/cmt.CMTTiny_160_downsample_ln_use_bias_false_hist.json",
+    "downsample_ln, stem_use_bias, bs 256": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_hist.json",
+    "wd_exclude_pos": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_bot_pos_wd_exclude_pos_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
+```
+| Model                           | Train acc | Best Eval loss, acc on 160   |
+| ------------------------------- | --------- | ---------------------------- |
+| Basic                           | 0.5949    | Epoch 53, 0.0017, 0.7445     |
+| - downsample_ln                 | 0.5988    | Epoch 54, 0.0016, 0.7486     |
+| - downsample_ln, use_bias_false | 0.5674    | Epoch 43, 0.0016, 0.7283     |
+| - downsample_ln, stem_use_bias  | 0.6013    | Epoch 55, 0.0016, **0.7523** |
+| + wd_exclude_pos                | 0.5927    | Epoch 47, 0.0016, 0.7472     |
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "downsample_ln, stem_use_bias, value, [dim, head, 2], bs 256": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_hist.json",
+    "value, [split_2, head, dim]": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_fixed_pos_hist.json",
+    "value, [split_2, dim, head]": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_kv_dim_heads_hist.json",
+    "value, [dim, head, 2], 2": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_2_hist.json",
+    "value, [dim, head, 2], wd_exc_bias": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_kv_hist.json",
+    "value, [head, dim, 2]": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_kv_reshape_head_dim_hist.json",
+    "value, [head, dim, 2], wd_exc_bias": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_kv_reshape_head_dim_wd_exc_bias_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
+```
+| Model                                                       | Train acc | Best Eval loss, acc on 160   |
+| ----------------------------------------------------------- | --------- | ---------------------------- |
+| downsample_ln, stem_use_bias, value, [dim, head, 2], bs 256 | 0.6013    | Epoch 55, 0.0016, **0.7523** |
+| value, [split_2, head, dim]                                 | 0.6007    | Epoch 52, 0.0016, 0.7499     |
+| value, [split_2, dim, head]                                 | 0.3178    | Epoch 12, 0.0032, 0.4766     |
+| value, [dim, head, 2], 2                                    | 0.5997    | Epoch 55, 0.0016, **0.7517** |
+| value, [dim, head, 2], wd_exc_bias                          | 0.5166    | Epoch 34, 0.0020, 0.6895     |
+| value, [head, dim, 2]                                       | 0.5995    | Epoch 55, 0.0015, 0.7483     |
+| value, [head, dim, 2], wd_exc_bias                          | 0.5980    | Epoch 55, 0.0016, 0.7500     |
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "downsample_ln, stem_use_bias, bs 256": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_hist.json",
+    "beit_pos, value, [split_2, head, dim], num_heads 1": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_fixed_pos_beit_pos_hist.json",
+    "beit_pos, value, [split_2, head, dim], MH": "checkpoints/cmt.CMTTiny_160_downsample_ln_stem_use_bias_fixed_pos_beit_pos_multi_head_hist.json",
+    "beit_pos, value, [dim, head, 2], wd_exc_bias": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_kv_beit_pos_hist.json",
+    "beit_pos, value, [head, dim, 2], wd_exc_bias": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_head_dim_kv_beit_pos_hist.json",
+    "beit_pos, value, [split_2, head, dim], wd_exc_bias": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_hist.json",
+    # "beit_pos, [split_2, head, dim], irffn_v2": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_irffn_v2_hist.json",
+    "beit_pos, [split_2, head, dim], output_act_first": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_output_act_first_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
+```
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "beit_pos, [split_2, head, dim], output_act_first": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_output_act_first_hist.json",
+    "[split_2, head, dim], avg_pool": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_kv_avg_pool_hist.json",
+    "[split_2, head, dim], max_pool": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_kv_max_pool_hist.json",
+    "[dim, head, 2], avg_pool": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_kv_beit_pos_kv_max_pool_hist.json",
+    "[split_2, head, dim], avg_pool, stack_conv_bias": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_kv_head_dim_beit_pos_avg_pool_stack_conv_bias_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
+```
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "lmhsa, avg pool": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_A3_hist.json",
+    "lmhsa, dw_ln": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_lmhsa_dw_ln_A3_hist.json",
+    "lmhsa, conv": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_lmhsa_conv_A3_hist.json",
+    "lmhsa, dw_ln, split2_head_dim": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_split2_head_dim_stack_conv_bias_lmhsa_dw_ln_A3_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
+```
+***

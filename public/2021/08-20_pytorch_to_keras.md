@@ -147,14 +147,6 @@
   print(">>>> Saving to:", pp)
   mm.save(pp)
   ```
-  **md5**
-  ```sh
-  ls -1 ./regnetz_*.h5 | xargs -I {} md5sum {}
-  ```
-  **code formatter**
-  ```sh
-  find ./* -name "*.py" | grep -v __init__ | grep -v setup.py | xargs -I {} black -l 160 {} --diff
-  ```
 ## botnet
   ```py
   additional_transfer = {botnet.RelativePositionalEmbedding: lambda ww: [ww[0].T, ww[1].T]}

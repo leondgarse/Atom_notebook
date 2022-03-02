@@ -2112,18 +2112,13 @@
   - [Github ntop/n2n](https://github.com/ntop/n2n)
   - [N2N 中心节点](http://www.supernode.ml/)
   ```sh
-  # use the stable version
-  wget -O n2n-2.8.tar.gz https://github.com/ntop/n2n/archive/2.8.tar.gz
-  tar xvf n2n-2.8.tar.gz && cd n2n-2.8/
-  ./autogen.sh && ./configure && make
-  sudo make install
-
-  sudo edge -d T3 -a 172.3.0.101 -c n2n -k test -Efr -l n2n.udpfile.com:10086
+  $ sudo dpkg -i n2n_3.0.0-1038_amd64.deb
+  $ sudo edge -a 172.3.0.101 -c n2n -k test -Efr -l n2n.lucktu.com:10090
   ```
   ```sh
   $ sudo vi /etc/supervisor/conf.d/n2n_edge.conf
   [program:n2n_edge]
-  command=/usr/local/sbin/edge -d T3 -a 172.3.0.101 -c n2n -k test -Efr -l n2n.udpfile.com:10086
+  command=/usr/sbin/edge -a 172.3.0.101 -c n2n -k test -Efr -l n2n.lucktu.com:10090
   autorestart = true
   autostart = true
   startsecs = 5    
@@ -2134,7 +2129,8 @@
   stdout_logfile = /var/log/n2n_edge.log
 
   $ sudo service supervisor restart
-  $ sudo supervisorctl
+  $ sudo supervisorctl status
+  $ sudo supervisorctl restart n2n_edge
   ```
 ## md5sum sha256sum
   - 查看文件 MD5 / SHA256 值
