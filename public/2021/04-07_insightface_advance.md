@@ -1351,7 +1351,7 @@
     ```sh
     git clone https://github.com/gmalivenko/onnx2keras.git
     cd onnx2keras
-    vi /opt/anaconda3/lib/python3.8/site-packages/onnx2keras/converter.py
+    vi onnx2keras/converter.py
     - 203             1: 3,
     + 203             1: -1,
 

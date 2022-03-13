@@ -619,6 +619,7 @@
       "V1B0, bs 64": "checkpoints/EfficientDet_EfficientNetV1B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
       "V2B0, bs 64": "checkpoints/EfficientDet_EfficientNetV2B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
       "V1B0, bs 8": "checkpoints/EfficientDet_EfficientNetV1B0_256_adamw_coco_2017_batchsize_8_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+      "V1B0, mosaic 0.5, bs 64": "checkpoints/EfficientDetD0_256_mosaic_05_bs_64_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
@@ -637,6 +638,20 @@
   backbone = efficientnet.EfficientNetV2B0(input_shape=(256, 256, 3), num_classes=0)
   pretrained = "checkpoints/EfficientDet_EfficientNetV2B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_epoch_39_val_acc_0.7912.h5"
   model = efficientdet.EfficientDetD0(backbone=backbone, pretrained=pretrained, num_classes=80)
+
+  # Run prediction
+  from keras_cv_attention_models import test_images
+  imm = test_images.dog_cat()
+  bboxs, lables, confidences = model.decode_predictions(model(model.preprocess_input(imm)))[0]
+
+  # Show result
+  from keras_cv_attention_models.coco import data
+  data.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
+  ```py
+  from keras_cv_attention_models import efficientdet
+
+  model = efficientdet.EfficientDetD0(pretrained="checkpoints/EfficientDetD0_256_mosaic_05_bs_64_epoch_70_val_acc_0.8274.h5", num_classes=80, input_shape=[256, 256, 3])
 
   # Run prediction
   from keras_cv_attention_models import test_images

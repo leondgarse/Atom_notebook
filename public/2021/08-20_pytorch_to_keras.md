@@ -292,6 +292,129 @@
 
   download_and_load.keras_reload_from_torch_model(torch_model, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
+## Uniformer
+  ```py
+  from token_labeling.tlt.models import uniformer as torch_uniformer
+  torch_model = torch_uniformer.uniformer_small()
+  _ = torch_model.eval()
+  import torch
+  weights = torch.load('../../keras_cv_attention_models/uniformer_small_tl_224.pth')
+  torch_model.load_state_dict(weights['model'] if "model" in weights else weights)
+  _ = torch_model.eval()
+  aa = torch_model.forward_features(torch.ones([1, 3, 224, 224]))
+  ```
+  ```py
+  import torch
+  import torch.nn.functional as F
+  import torchvision.transforms as T
+  # from models import uniformer as torch_uniformer
+  from token_labeling.tlt.models import uniformer as torch_uniformer
+
+  def inference(model, image):
+      image_transform = T.Compose([T.Resize(224), T.CenterCrop(224), T.ToTensor(), T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+      image = image_transform(image)
+      image = image.unsqueeze(0)
+      prediction = model(image)
+      prediction = F.softmax(prediction, dim=1).flatten()
+      return prediction
+
+  model = torch_uniformer.uniformer_small()
+  weights = torch.load('../../keras_cv_attention_models/uniformer_small_tl_224.pth')
+  model.load_state_dict(weights['model'] if "model" in weights else weights)
+  model = model.eval()
+
+  from skimage.data import chelsea
+  from PIL import Image
+  imm = Image.fromarray(chelsea()) # Chelsea the cat
+  out = inference(model, imm)
+  print(out.argsort()[-5:])
+  # tensor([224, 196, 223, 410, 599])
+
+  keras.applications.imagenet_utils.decode_predictions(out.detach().numpy()[None])
+  ```
+  ```py
+  import tlt.models
+  from timm.models import create_model, load_checkpoint
+  model = create_model('uniformer_small', num_classes=1000, global_pool=None, img_size=224)
+  load_checkpoint(model, '../../keras_cv_attention_models/uniformer_small_tl_224.pth', use_ema=False, strict=False)
+  ```
+  ```py
+  # tensor([284, 287, 281, 282, 285])
+  ```
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.uniformer import uniformer
+
+  full_name_align_dict = {
+      "stem_ln": 0,
+      "stack2_downsample_conv": 2,
+      "stack2_downsample_ln": 2, # ln is ahead of conv for pytorch weights
+      "stack3_downsample_conv": 4,
+      "stack3_downsample_ln": 4,
+      "stack4_downsample_conv": 6,
+      "stack4_downsample_ln": 6,
+      "predictions": -1, # for token_label models
+  }
+  tail_align_dict = {"attn_2_conv": -1}
+
+  mm = uniformer.UniformerSmall32(mix_token=False, token_label_top=True, classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model('uniformer_small_in1k.pth', mm, full_name_align_dict=full_name_align_dict, tail_align_dict=tail_align_dict, do_convert=True, save_name=mm.name + "_224_imagenet.h5")
+  ```
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.uniformer import uniformer
+
+  full_name_align_dict = {
+      "stem_ln": 0,
+      "stack2_downsample_conv": 4,
+      "stack2_downsample_bn": 5,
+      "stack3_downsample_conv": 6,
+      "stack3_downsample_bn": 7,
+      "stack4_downsample_conv": 8,
+      "stack4_downsample_bn": 9,
+      "predictions": -1, # for token_label models
+  }
+  tail_align_dict = {"attn_2_conv": -1}
+
+  mm = uniformer.UniformerSmallPlus32(mix_token=False, token_label_top=True, classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model('uniformer_small_plus_in1k.pth', mm, full_name_align_dict=full_name_align_dict, tail_align_dict=tail_align_dict, do_convert=True, save_name=mm.name + "_224_imagenet.h5")
+  ```
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.uniformer import uniformer
+
+  full_name_align_dict = {
+      "stem_ln": 0,
+      "stack2_downsample_conv": 2,
+      "stack2_downsample_ln": 2, # ln is ahead of conv for pytorch weights
+      "stack3_downsample_conv": 4,
+      "stack3_downsample_ln": 4,
+      "stack4_downsample_conv": 6,
+      "stack4_downsample_ln": 6,
+      "predictions": -1, # for token_label models
+  }
+  tail_align_dict = {
+      "stack1": {"attn_2_conv": -1, "1_gamma": -5, "2_gamma": -8}, # gamma for layer_scale models conv_blocks
+      "stack2": {"attn_2_conv": -1, "1_gamma": -5, "2_gamma": -8}, # gamma for layer_scale models conv_blocks
+      "stack3": {"attn_2_conv": -1, "1_gamma": -4, "2_gamma": -7}, # gamma for layer_scale models attention_blocks
+      "stack4": {"attn_2_conv": -1, "1_gamma": -4, "2_gamma": -7}, # gamma for layer_scale models attention_blocks
+  }
+
+  unstack_weights = ["gamma_1", "gamma_2"]
+  additional_transfer = {uniformer.ChannelAffine: lambda ww: [np.squeeze(ww[0])]}
+
+  mm = uniformer.UniformerLarge64(input_shape=(384, 384, 3), mix_token=False, token_label_top=True, classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model(
+      'uniformer_large_ls_tl_384.pth',
+      mm,
+      full_name_align_dict=full_name_align_dict,
+      tail_align_dict=tail_align_dict,
+      unstack_weights=unstack_weights,
+      additional_transfer=additional_transfer,
+      do_convert=True,
+      save_name=mm.name + "_384_imagenet.h5"
+  )
+  ```
 ***
 
 # Resnest

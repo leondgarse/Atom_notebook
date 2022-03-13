@@ -419,9 +419,17 @@
       layers[node_name] = hard_sigmoid(input_0)
   ```
   ```py
+  # /opt/anaconda3/lib/python3.7/site-packages/onnx2keras/layers.py
   from .activation_layers import convert_hard_sigmoid
   from .elementwise_layers import convert_reciprocal
   from .upsampling_layers import convert_resize
+
+  AVAILABLE_CONVERTERS = {
+      ...
+      'Hardsigmoid': convert_hard_sigmoid,
+      'Reciprocal': convert_reciprocal,
+      'Resize': convert_resize,
+  }
   ```
 ***
 

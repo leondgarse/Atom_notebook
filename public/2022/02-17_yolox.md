@@ -341,7 +341,7 @@
 # Train
 ```py
  def get_losses(imgs, num_classes, x_shifts, y_shifts, expanded_strides, labels, outputs, origin_preds, dtype):
-     bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
+     bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4], decoded. origin_preds is encoded preds
      obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
      cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
 
@@ -559,11 +559,116 @@ is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_ima
 from keras_cv_attention_models import yolox, test_images
 from keras_cv_attention_models.coco import anchors_func, data
 mm = yolox.YOLOXS()
-pred = mm(mm.preprocess_input(test_images.dog()))
+img = test_images.dog_cat()
+pred = mm(mm.preprocess_input(img))
 
 aa = anchors_func.AnchorFreeAssignMatching()
 bbs, lls, ccs = mm.decode_predictions(pred)[0]
-bbox_labels_true = tf.concat([bbs, tf.one_hot(lls, 80), tf.ones([1, 1])], axis=-1)
+bbox_labels_true = tf.concat([bbs, tf.one_hot(lls, 80), tf.ones([bbs.shape[0], 1])], axis=-1)
 bboxes_true, labels_true, object_true, bboxes_pred, labels_pred = aa(tf.expand_dims(bbox_labels_true, 0), pred)
-data.show_image_with_bboxes(test_images.dog(), bboxes_pred, labels_pred.numpy().argmax(-1))
+data.show_image_with_bboxes(img, bboxes_pred, labels_pred.numpy().argmax(-1))
+```
+# Loss
+```py
+class IOUloss(nn.Module):
+    def __init__(self, reduction="none", loss_type="iou"):
+        super(IOUloss, self).__init__()
+        self.reduction = reduction
+        self.loss_type = loss_type
+
+    def forward(self, pred, target):
+        assert pred.shape[0] == target.shape[0]
+
+        pred = pred.view(-1, 4)
+        target = target.view(-1, 4)
+        tl = torch.max((pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2))
+        br = torch.min((pred[:, :2] + pred[:, 2:] / 2), (target[:, :2] + target[:, 2:] / 2))
+
+        area_p = torch.prod(pred[:, 2:], 1)
+        area_g = torch.prod(target[:, 2:], 1)
+
+        en = (tl < br).type(tl.type()).prod(dim=1)
+        area_i = torch.prod(br - tl, 1) * en
+        area_u = area_p + area_g - area_i
+        iou = (area_i) / (area_u + 1e-16) # Only iou type
+
+        return 1 - iou ** 2
+```
+```py
+for ...:
+    if self.use_l1:
+        l1_target = self.get_l1_target(outputs.new_zeros((num_fg_img, 4)), gt_bboxes_per_image[matched_gt_inds], expanded_strides[0][fg_mask], x_shifts=x_shifts[0][fg_mask], y_shifts=y_shifts[0][fg_mask])
+
+    if self.use_l1:
+        l1_targets.append(l1_target)
+
+cls_targets = torch.cat(cls_targets, 0)
+reg_targets = torch.cat(reg_targets, 0)
+obj_targets = torch.cat(obj_targets, 0)
+fg_masks = torch.cat(fg_masks, 0)
+if self.use_l1:
+    l1_targets = torch.cat(l1_targets, 0)
+
+num_fg = max(num_fg, 1)
+loss_iou = self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets).sum() / num_fg
+loss_obj = self.bcewithlog_loss(obj_preds.view(-1, 1), obj_targets).sum() / num_fg
+loss_cls = self.bcewithlog_loss(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets).sum() / num_fg
+if self.use_l1:
+    loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
+else:
+    loss_l1 = 0.0
+
+reg_weight = 5.0
+loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1
+
+return loss, reg_weight * loss_iou, loss_obj, loss_cls, loss_l1, num_fg / max(num_gts, 1)
+
+self.l1_loss = nn.L1Loss(reduction="none")
+self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
+self.iou_loss = IOUloss(reduction="none")
+
+def get_l1_target(self, l1_target, gt, stride, x_shifts, y_shifts, eps=1e-8):
+    l1_target[:, 0] = gt[:, 0] / stride - x_shifts
+    l1_target[:, 1] = gt[:, 1] / stride - y_shifts
+    l1_target[:, 2] = torch.log(gt[:, 2] / stride + eps)
+    l1_target[:, 3] = torch.log(gt[:, 3] / stride + eps)
+    return l1_target
+```
+```py
+output = torch.cat([reg_output, obj_output, cls_output], 1)
+output, grid = self.get_output_and_grid(
+    output, k, stride_this_level, xin[0].type()
+)
+x_shifts.append(grid[:, :, 0])
+y_shifts.append(grid[:, :, 1])
+expanded_strides.append(
+    torch.zeros(1, grid.shape[1])
+    .fill_(stride_this_level)
+    .type_as(xin[0])
+)
+if self.use_l1:
+    batch_size = reg_output.shape[0]
+    hsize, wsize = reg_output.shape[-2:]
+    reg_output = reg_output.view(
+        batch_size, self.n_anchors, 4, hsize, wsize
+    )
+    reg_output = reg_output.permute(0, 1, 3, 4, 2).reshape(
+        batch_size, -1, 4
+    )
+    origin_preds.append(reg_output.clone())
+
+return self.get_losses(
+    imgs,
+    x_shifts,
+    y_shifts,
+    expanded_strides,
+    labels,
+    torch.cat(outputs, 1),
+    origin_preds,
+    dtype=xin[0].dtype,
+)
+```
+# Anchors
+```py
+
 ```

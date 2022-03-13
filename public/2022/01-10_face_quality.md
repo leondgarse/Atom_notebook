@@ -143,6 +143,9 @@ def half_split_weighted_cosine_similarity(aa, bb):
   # axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_strides1_pw_1_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="M, F, pw -1, adamw cos16, mag 10_110_04_08", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_m_strides1_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs320_ms1m_float16_hist.json", fig_label="M, F, lr 0.01, adamw cos16, mag 10_110_04_08", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16_cos_49_hist.json", fig_label="adamw cos49, mag 10_110_04_08", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd1e2lr_no_exc_bn_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="adamw wd1e2lr_no_exc_bn, mag 10_110_04_08", **pp)
   ```
   - **Effv2B0 MagFace**
   ```py
@@ -187,4 +190,69 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_
 # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_E53_mag_1_51_045_1_5_adamw_lr00125_hist.json", fig_label="mag_1_51_045_1_5_adamw_lr00125", **pp)
 # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_E53_mag_1_51_045_1_5_adamw_LA_hist.json", fig_label="mag_1_51_045_1_5_adamw_LA", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_E53_mag_1_51_045_1_35_adamw_lr00125_hist.json", fig_label="mag_1_51_045_1_35_adamw_lr00125", **pp)
+```
+# TLA issue
+```py
+class NormDense(keras.layers.Layer):
+    def __init__(self, units=1000, append_norm=False, **kwargs):
+        super().__init__(**kwargs)
+        self.units, self.append_norm = units, append_norm
+
+    def build(self, input_shape):
+        self.w = self.add_weight(name="norm_dense_w", shape=(input_shape[-1], self.units), trainable=True)
+        super().build(input_shape)
+
+    def call(self, inputs, **kwargs):
+        # tf.print("tf.reduce_mean(self.w):", tf.reduce_mean(self.w))
+        norm_w = tf.nn.l2_normalize(self.w, axis=0)
+        norm_inputs = tf.nn.l2_normalize(inputs, axis=1)
+        output = tf.matmul(norm_inputs, norm_w)
+        if self.append_norm:
+            output = tf.concat([output, tf.norm(inputs, axis=1, keepdims=True) * -1], axis=-1)
+        return output
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"units": self.units, "append_norm": self.append_norm})
+        return config
+
+class NormDenseLoss(tf.keras.losses.Loss):
+    def __init__(self, from_logits=True, **kwargs):
+        super().__init__(**kwargs)
+        self.from_logits = from_logits        
+
+    def call(self, y_true, y_pred):
+        if y_pred.shape[-1] == y_true.shape[-1]:
+            norm_logits = y_pred
+            margin = 0.3
+            regularizer_loss = 0.0
+        else:
+            norm_logits, feature_norm = y_pred[:, :-1], y_pred[:, -1] * -1
+            margin = 0.04 * (feature_norm - 10) + 10.0
+            regularizer_loss = feature_norm / 1e4 + 1.0 / feature_norm
+
+        pick_cond = tf.where(y_true > 0)
+        y_pred_vals = tf.gather_nd(norm_logits, pick_cond)
+        theta_valid = y_pred_vals - margin
+
+        # tf.print(">>>>", norm_logits.shape, pick_cond, tf.reduce_sum(tf.cast(y_true > 0, "float32")), theta_valid.shape)
+        logits = tf.tensor_scatter_nd_update(norm_logits, pick_cond, theta_valid)
+        # theta_one_hot = tf.expand_dims(theta_valid, 1) * tf.cast(y_true, dtype=tf.float32)
+        # logits = tf.where(tf.cast(y_true, dtype=tf.bool), theta_one_hot, norm_logits)
+        # tf.print(">>>>", norm_logits.shape, logits.shape, y_true.shape)
+        cls_loss = tf.keras.losses.categorical_crossentropy(y_true, logits, from_logits=self.from_logits)
+
+        # tf.print(">>>>", cls_loss.shape, regularizer_loss.shape)
+        return cls_loss + regularizer_loss * 35.0
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"from_logits": self.from_logits})
+        return config
+
+xx = tf.random.uniform([160, 32, 32, 3])
+yy = tf.one_hot(tf.cast(tf.random.uniform([160], 0, 10), 'int32'), 10)
+mm = keras.models.Sequential([keras.layers.Input([32, 32, 3]), keras.layers.Flatten(), keras.layers.Dense(32), NormDense(10, append_norm=True)])
+mm.compile(loss=NormDenseLoss(), optimizer="adam")
+mm.fit(xx, yy)
 ```
