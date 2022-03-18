@@ -35,7 +35,7 @@
       depthwise = True
   """
   ```
-## Reload torch weights
+## Reload torch yolox weights
   ```py
   # conv1 -> deep, conv2 -> short, conv3 -> output
   tail_split_position = [1, 2] # 1 for backbone, 2 for pafpn
@@ -132,7 +132,9 @@
   from keras_cv_attention_models.yolox import yolox
   mm = yolox.YOLOXS()
 
-  download_and_load.keras_reload_from_torch_model(torch_model=mm.name + ".pth", keras_model=mm,
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=mm.name + ".pth",
+      keras_model=mm,
       input_shape=mm.input_shape[1:-1],
       tail_align_dict=tail_align_dict,
       full_name_align_dict=full_name_align_dict_s,
@@ -281,6 +283,7 @@
   ```
 ***
 
+# YOLOX training
 ## Mosaic mix
   ```py
   from keras_cv_attention_models import test_images
@@ -338,7 +341,7 @@
       area_i = torch.prod(br - tl, 2) * en  # * ((tl < br).all())
       return area_i / (area_a[:, None] + area_b - area_i)
   ```
-# Train
+## Train
   ```py
    def get_losses(imgs, num_classes, x_shifts, y_shifts, expanded_strides, labels, outputs, origin_preds, dtype):
        bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4], decoded. origin_preds is encoded preds
@@ -554,7 +557,7 @@
 
   is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, expanded_strides.shape[1], bboxes_true.shape[0])
   ```
-# Anchor free test
+## Anchor free test
   ```py
   from keras_cv_attention_models import yolox, test_images
   from keras_cv_attention_models.coco import anchors_func, data
@@ -568,7 +571,7 @@
   bboxes_true, labels_true, object_true, bboxes_pred, labels_pred = aa(tf.expand_dims(bbox_labels_true, 0), pred)
   data.show_image_with_bboxes(img, bboxes_pred, labels_pred.numpy().argmax(-1))
   ```
-# Loss
+## Loss
   ```py
   class IOUloss(nn.Module):
       def __init__(self, reduction="none", loss_type="iou"):
@@ -668,7 +671,10 @@
       dtype=xin[0].dtype,
   )
   ```
+***
+
 # YOLOR
+## PyTorch YOLOR
   ```py
   from models import models as torch_yolor
   torch_yolor.ONNX_EXPORT = False
@@ -725,12 +731,15 @@
   tail_split_position = [1, 2] # 1 for backbone, 2 for pafpn
   tail_align_dict = [
       {"short_conv": 'deep_pre_conv', "short_bn": 'deep_pre_bn'},
-      {"pafpn": {"short_conv": "block1_1_conv", "short_bn": "block1_1_bn"}}
+      # {"pafpn": {"short_conv": "block1_1_conv", "short_bn": "block1_1_bn"}}
+      {"pafpn": {"up_conv": -2, "up_bn": -2, "short_conv": "block1_1_conv", "short_bn": "block1_1_bn"}}
   ]
 
   full_name_align_dict = {
       "stack4_spp_short_conv": "stack4_spp_pre_1_conv", "stack4_spp_short_bn": "stack4_spp_pre_1_bn", "stack4_spp_output_bn": -1,
-      "pafpn_p4p5_up_conv": -2, "pafpn_p4p5_up_bn": -2, "pafpn_p4p5_output_bn": -1, "pafpn_p3p4p5_up_conv": -2, "pafpn_p3p4p5_up_bn": -2,
+      "stack5_spp_short_conv": "stack5_spp_pre_1_conv", "stack5_spp_short_bn": "stack5_spp_pre_1_bn", "stack5_spp_output_bn": -1,
+      # "pafpn_p4p5_up_conv": -2, "pafpn_p4p5_up_bn": -2, "pafpn_p4p5_output_bn": -1, "pafpn_p3p4p5_up_conv": -2, "pafpn_p3p4p5_up_bn": -2,
+      "pafpn_p5p6_output_bn": -1, "pafpn_p4p5p6_output_bn": -1
   }
 
   headers = [
@@ -740,9 +749,16 @@
       'head_2_1_conv', 'head_2_1_bn', 'head_2_2_conv',
       'head_3_1_conv', 'head_3_1_bn', 'head_3_2_conv',
   ]
-
+  headers_p6 = [
+    'head_1_shift_channel', 'head_2_shift_channel', 'head_3_shift_channel', 'head_4_shift_channel',
+    'head_1_control_channel', 'head_2_control_channel', 'head_3_control_channel', 'head_4_control_channel',
+    'head_1_1_conv', 'head_1_1_bn', 'head_1_2_conv',
+    'head_2_1_conv', 'head_2_1_bn', 'head_2_2_conv',
+    'head_3_1_conv', 'head_3_1_bn', 'head_3_2_conv',
+    'head_4_1_conv', 'head_4_1_bn', 'head_4_2_conv',
+  ]
   specific_match_func = lambda tt: tt[:- len(headers)] + headers
-  specific_match_func_nano = lambda tt: tt[:- len(headers_nano)] + headers_nano
+  specific_match_func_p6 = lambda tt: tt[:- len(headers_p6)] + headers_p6
 
   additional_transfer = {yolor.ChannelAffine: lambda ww: [np.squeeze(ww[0])], yolor.BiasLayer: lambda ww: [np.squeeze(ww[0])]}
 
@@ -758,11 +774,44 @@
       do_convert=True,
   )
   ```
+  **Convert bboxes output `[left, top, right, bottom]` -> `top, left, bottom, right`**
+  ```py
+  from keras_cv_attention_models.yolor import yolor
+  mm = yolor.YOLOR_CSP(pretrained="coco")
+  for ii in range(1, 4):
+      conv_layer = mm.get_layer('head_{}_2_conv'.format(ii))
+      new_ww = []
+      for ww in conv_layer.get_weights():
+          ww = np.reshape(ww, [*ww.shape[:-1], 3, 85])[..., [1, 0, 3, 2, *np.arange(5, 85), 4]]
+          ww = np.reshape(ww, [*ww.shape[:-2], -1])
+          new_ww.append(ww)
+      conv_layer.set_weights(new_ww)
+
+      channel_layer = mm.get_layer('head_{}_control_channel'.format(ii))
+      ww = channel_layer.get_weights()[0]
+      ww = np.reshape(ww, [*ww.shape[:-1], 3, 85])[..., [1, 0, 3, 2, *np.arange(5, 85), 4]]
+      ww = np.reshape(ww, [*ww.shape[:-2], -1])
+      channel_layer.set_weights([ww])
+
+  nn = yolor.YOLOR_CSP(pretrained="coco")
+  aa = nn(tf.ones([1, *nn.input_shape[1:]]))
+  bb = mm(tf.ones([1, *mm.input_shape[1:]]))
+  print(np.allclose(aa, bb.numpy()[:, :, [1, 0, 3, 2, 84, *np.arange(4, 84)]]))
+  # True
+  mm.save(mm.name + "_coco.h5")
+
+
+  from keras_cv_attention_models import test_images, coco
+  imm = test_images.dog_cat()
+  preds = mm(mm.preprocess_input(imm))
+  bboxs, lables, confidences = mm.decode_predictions(preds)[0]
+  coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
 ## Verification
   ```py
-  import kecam
+  from keras_cv_attention_models import yolor, test_images, coco
   # imm = np.ones([1, 640, 640, 3], dtype="float32")
-  imm = tf.image.resize(kecam.test_images.dog(), [640, 640]).numpy()[None] / 255
+  imm = tf.image.resize(test_images.dog(), [640, 640]).numpy()[None] / 255
 
   import torch
   sys.path.append('../yolor/')
@@ -775,20 +824,38 @@
   _ = model.eval()
   aa, bb = model.forward_once(torch.from_numpy(imm).permute([0, 3, 1, 2]))
 
-  mm = kecam.yolor.YOLOR_CSP(classifier_activation=None)
+  mm = yolor.YOLOR_CSP(classifier_activation=None)
   cc = mm(imm)
-  dd = tf.reshape(cc[:, :80 * 80 * 3], bb[0].shape)
+  # dd = tf.reshape(cc[:, :80 * 80 * 3], bb[0].shape)
+  dd = tf.reshape(tf.transpose(tf.reshape(cc[:, :np.prod(bb[0].shape[:-1])], [1, -1, 3, 85]), [0, 2, 1, 3]), bb[0].shape)
+  dd = tf.gather(dd, [1, 0, 3, 2, 84, *np.arange(4, 84)], axis=-1)
   print(np.allclose(bb[0].detach().numpy(), dd, atol=1e-4))
   # True
   ```
   **Decode**
   ```py
-  anchors = kecam.coco.anchors_func.get_yolor_anchors()
+  anchors = coco.anchors_func.get_yolor_anchors()
   dd = tf.sigmoid(cc)
 
   center_yx = (dd[:, :, :2] * 2 * anchors[:, 4:] + anchors[:, :2]) * 640
   hhww = ((dd[:, :, 2:4] * 2) ** 2 * anchors[:, 2:4]) * 640
-  print(np.allclose(aa.detach().numpy(), tf.concat([center_yx, hhww, dd[:, :, 4:]], axis=-1), atol=1e-3))
+
+  # center_yx = tf.reshape(tf.transpose(tf.reshape(center_yx, [1, -1, 3, 2]), [0, 2, 1, 3]), [1, -1, 2])
+  # hhww = tf.reshape(tf.transpose(tf.reshape(hhww, [1, -1, 3, 2]), [0, 2, 1, 3]), [1, -1, 2])
+  # print(np.allclose(aa.detach().numpy(), tf.concat([center_yx, hhww, dd[:, :, 4:]], axis=-1), atol=1e-3))
+  center_yx = tf.split(center_yx, [80 * 80 * 3, 40 * 40 * 3, 20 * 20 * 3], axis=1)
+  center_yx = tf.concat([tf.reshape(tf.transpose(tf.reshape(ii, [1, -1, 3, 2]), [0, 2, 1, 3]), [1, -1, 2]) for ii in center_yx], axis=1)
+  hhww = tf.split(hhww, [80 * 80 * 3, 40 * 40 * 3, 20 * 20 * 3], axis=1)
+  hhww = tf.concat([tf.reshape(tf.transpose(tf.reshape(ii, [1, -1, 3, 2]), [0, 2, 1, 3]), [1, -1, 2]) for ii in hhww], axis=1)
+  bboxes = tf.gather(tf.concat([center_yx, hhww], axis=-1), [1, 0, 3, 2], axis=-1)
+  print(np.allclose(aa.detach().numpy()[:, :, :4], bboxes, atol=1e-3))
+  # True
+
+  labels = tf.split(dd[:, :, 4:], [80 * 80 * 3, 40 * 40 * 3, 20 * 20 * 3], axis=1)
+  labels = tf.concat([tf.reshape(tf.transpose(tf.reshape(ii, [1, -1, 3, 81]), [0, 2, 1, 3]), [1, -1, 81]) for ii in labels], axis=1)
+  dd = tf.gather(tf.concat([center_yx, hhww, labels], axis=-1), [1, 0, 3, 2, 84, *np.arange(4, 84)], axis=-1)
+  print(np.allclose(aa.detach().numpy(), dd, atol=1e-3))
+  # True
   ```
   **Prediction**
   ```py
@@ -881,3 +948,22 @@
   bboxes, labels, scores = dd_nms[:, :4], dd_nms[:, 4:].argmax(-1), dd_nms[:, 4:].max(-1)
   print(f"{bboxes = }, {labels = }, {scores = }")
   ```
+  ```py
+  # [yolo]
+  # mask = 0,1,2
+  # anchors = 12, 16, 19
+  # classes=80
+  # num=9
+  # jitter=.3
+  # ignore_thresh = .7
+  # truth_thresh = 1
+  # random=1
+  # scale_x_y = 1.05
+  # iou_thresh=0.213
+  # cls_normalizer=1.0
+  # iou_normalizer=0.07
+  # iou_loss=ciou
+  # nms_kind=greedynms
+  # beta_nms=0.6
+  ```
+***
