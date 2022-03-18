@@ -1,11 +1,11 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
 
-# 目录
+# TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
   - [___2021 - 08 - 20 PyTorch to Keras___](#2021-08-20-pytorch-to-keras)
-  - [目录](#目录)
+  - [TOC](#toc)
   - [Timm](#timm)
     - [Timm results](#timm-results)
     - [Basic RegNetZ load Timm weights](#basic-regnetz-load-timm-weights)

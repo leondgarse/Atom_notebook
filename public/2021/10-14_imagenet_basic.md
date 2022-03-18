@@ -1,10 +1,10 @@
 # ___2021 - 10 - 14 ImageNet Basic___
 ***
-# 目录
+# TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
   - [___2021 - 10 - 14 ImageNet Basic___](#2021-10-14-imagenet-basic)
-  - [目录](#目录)
+  - [TOC](#toc)
   - [Init dataset](#init-dataset)
   - [Timm Imagenet](#timm-imagenet)
   	- [Timm Training](#timm-training)

@@ -339,336 +339,545 @@
       return area_i / (area_a[:, None] + area_b - area_i)
   ```
 # Train
-```py
- def get_losses(imgs, num_classes, x_shifts, y_shifts, expanded_strides, labels, outputs, origin_preds, dtype):
-     bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4], decoded. origin_preds is encoded preds
-     obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
-     cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
+  ```py
+   def get_losses(imgs, num_classes, x_shifts, y_shifts, expanded_strides, labels, outputs, origin_preds, dtype):
+       bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4], decoded. origin_preds is encoded preds
+       obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
+       cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
 
-     # calculate targets
-     nlabel = (labels.sum(dim=2) > 0).sum(dim=1)  # number of objects
+       # calculate targets
+       nlabel = (labels.sum(dim=2) > 0).sum(dim=1)  # number of objects
 
-     total_num_anchors = outputs.shape[1]
-     x_shifts = torch.cat(x_shifts, 1)  # [1, n_anchors_all]
-     y_shifts = torch.cat(y_shifts, 1)  # [1, n_anchors_all]
-     expanded_strides = torch.cat(expanded_strides, 1)
-     cls_targets = []
-     reg_targets = []
-     l1_targets = []
-     obj_targets = []
-     fg_masks = []
+       total_num_anchors = outputs.shape[1]
+       x_shifts = torch.cat(x_shifts, 1)  # [1, n_anchors_all]
+       y_shifts = torch.cat(y_shifts, 1)  # [1, n_anchors_all]
+       expanded_strides = torch.cat(expanded_strides, 1)
+       cls_targets = []
+       reg_targets = []
+       l1_targets = []
+       obj_targets = []
+       fg_masks = []
 
-     num_fg = 0.0
-     num_gts = 0.0
+       num_fg = 0.0
+       num_gts = 0.0
 
-     for batch_idx in range(outputs.shape[0]):
-         num_gt = int(nlabel[batch_idx])
-         num_gts += num_gt
+       for batch_idx in range(outputs.shape[0]):
+           num_gt = int(nlabel[batch_idx])
+           num_gts += num_gt
 
-         gt_bboxes_per_image = labels[batch_idx, :num_gt, 1:5]
-         gt_classes = labels[batch_idx, :num_gt, 0]
-         bboxes_preds_per_image = bbox_preds[batch_idx]
+           gt_bboxes_per_image = labels[batch_idx, :num_gt, 1:5]
+           gt_classes = labels[batch_idx, :num_gt, 0]
+           bboxes_preds_per_image = bbox_preds[batch_idx]
 
-         gt_matched_classes, is_in_boxes_anchor, pred_ious_this_matching, matched_gt_inds, num_fg_img = get_assignments(
-             batch_idx,
-             num_classes,
-             num_gt,
-             total_num_anchors,
-             gt_bboxes_per_image,
-             gt_classes,
-             bboxes_preds_per_image,
-             expanded_strides,
-             x_shifts,
-             y_shifts,
-             cls_preds,
-             bbox_preds,
-             obj_preds,
-             labels,
-             imgs,
-         )
+           gt_matched_classes, is_in_boxes_anchor, pred_ious_this_matching, matched_gt_inds, num_fg_img = get_assignments(
+               batch_idx,
+               num_classes,
+               num_gt,
+               total_num_anchors,
+               gt_bboxes_per_image,
+               gt_classes,
+               bboxes_preds_per_image,
+               expanded_strides,
+               x_shifts,
+               y_shifts,
+               cls_preds,
+               bbox_preds,
+               obj_preds,
+               labels,
+               imgs,
+           )
 
-         num_fg += num_fg_img
+           num_fg += num_fg_img
 
-         cls_target = F.one_hot(gt_matched_classes.to(torch.int64), num_classes) * pred_ious_this_matching.unsqueeze(-1)
-         obj_target = is_in_boxes_anchor.unsqueeze(-1)
-         reg_target = gt_bboxes_per_image[matched_gt_inds]
+           cls_target = F.one_hot(gt_matched_classes.to(torch.int64), num_classes) * pred_ious_this_matching.unsqueeze(-1)
+           obj_target = is_in_boxes_anchor.unsqueeze(-1)
+           reg_target = gt_bboxes_per_image[matched_gt_inds]
 
-         cls_targets.append(cls_target)
-         reg_targets.append(reg_target)
-         obj_targets.append(obj_target.to(dtype))
-         fg_masks.append(is_in_boxes_anchor)
+           cls_targets.append(cls_target)
+           reg_targets.append(reg_target)
+           obj_targets.append(obj_target.to(dtype))
+           fg_masks.append(is_in_boxes_anchor)
 
-     cls_targets = torch.cat(cls_targets, 0)
-     reg_targets = torch.cat(reg_targets, 0)
-     obj_targets = torch.cat(obj_targets, 0)
-     fg_masks = torch.cat(fg_masks, 0)
+       cls_targets = torch.cat(cls_targets, 0)
+       reg_targets = torch.cat(reg_targets, 0)
+       obj_targets = torch.cat(obj_targets, 0)
+       fg_masks = torch.cat(fg_masks, 0)
 
-     num_fg = max(num_fg, 1)
-     return cls_targets, reg_targets, obj_targets, fg_masks, num_fg, bbox_preds.view(-1, 4)[fg_masks], cls_preds.view(-1, num_classes)[fg_masks]
+       num_fg = max(num_fg, 1)
+       return cls_targets, reg_targets, obj_targets, fg_masks, num_fg, bbox_preds.view(-1, 4)[fg_masks], cls_preds.view(-1, num_classes)[fg_masks]
 
- def get_assignments(
-     batch_idx,
-     num_classes,
-     num_gt,
-     total_num_anchors,
-     gt_bboxes_per_image,
-     gt_classes,
-     bboxes_preds_per_image,
-     expanded_strides,
-     x_shifts,
-     y_shifts,
-     cls_preds,
-     bbox_preds,
-     obj_preds,
-     labels,
-     imgs,
-     mode="gpu",
- ):
-     # is_in_boxes_anchor, is_in_boxes_and_center
-     is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, total_num_anchors, num_gt)
+   def get_assignments(
+       batch_idx,
+       num_classes,
+       num_gt,
+       total_num_anchors,
+       gt_bboxes_per_image,
+       gt_classes,
+       bboxes_preds_per_image,
+       expanded_strides,
+       x_shifts,
+       y_shifts,
+       cls_preds,
+       bbox_preds,
+       obj_preds,
+       labels,
+       imgs,
+       mode="gpu",
+   ):
+       # is_in_boxes_anchor, is_in_boxes_and_center
+       is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, total_num_anchors, num_gt)
 
-     bboxes_preds_per_image = bboxes_preds_per_image[is_in_boxes_anchor]
-     cls_preds_ = cls_preds[batch_idx][is_in_boxes_anchor]
-     obj_preds_ = obj_preds[batch_idx][is_in_boxes_anchor]
-     num_in_boxes_anchor = bboxes_preds_per_image.shape[0]
+       bboxes_preds_per_image = bboxes_preds_per_image[is_in_boxes_anchor]
+       cls_preds_ = cls_preds[batch_idx][is_in_boxes_anchor]
+       obj_preds_ = obj_preds[batch_idx][is_in_boxes_anchor]
+       num_in_boxes_anchor = bboxes_preds_per_image.shape[0]
 
-     pair_wise_ious = bboxes_iou(gt_bboxes_per_image, bboxes_preds_per_image, False)
-     pair_wise_ious_loss = -torch.log(pair_wise_ious + 1e-8)
+       pair_wise_ious = bboxes_iou(gt_bboxes_per_image, bboxes_preds_per_image, False)
+       pair_wise_ious_loss = -torch.log(pair_wise_ious + 1e-8)
 
-     gt_cls_per_image = F.one_hot(gt_classes.to(torch.int64), num_classes).float().unsqueeze(1).repeat(1, num_in_boxes_anchor, 1)
-     cls_preds_ = cls_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_() * obj_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
-     pair_wise_cls_loss = F.binary_cross_entropy(cls_preds_.sqrt_(), gt_cls_per_image, reduction="none").sum(-1)
+       gt_cls_per_image = F.one_hot(gt_classes.to(torch.int64), num_classes).float().unsqueeze(1).repeat(1, num_in_boxes_anchor, 1)
+       cls_preds_ = cls_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_() * obj_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
+       pair_wise_cls_loss = F.binary_cross_entropy(cls_preds_.sqrt_(), gt_cls_per_image, reduction="none").sum(-1)
 
-     cost = pair_wise_cls_loss + 3.0 * pair_wise_ious_loss + 100000.0 * (~is_in_boxes_and_center)
-     num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds = dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, is_in_boxes_anchor)
+       cost = pair_wise_cls_loss + 3.0 * pair_wise_ious_loss + 100000.0 * (~is_in_boxes_and_center)
+       num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds = dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, is_in_boxes_anchor)
 
-     return gt_matched_classes, is_in_boxes_anchor, pred_ious_this_matching, matched_gt_inds, num_fg
+       return gt_matched_classes, is_in_boxes_anchor, pred_ious_this_matching, matched_gt_inds, num_fg
 
- def get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, total_num_anchors, num_gt):
-     expanded_strides_per_image = expanded_strides[0]
-     x_shifts_per_image = x_shifts[0] * expanded_strides_per_image
-     y_shifts_per_image = y_shifts[0] * expanded_strides_per_image
-     x_centers_per_image = (x_shifts_per_image + 0.5 * expanded_strides_per_image).unsqueeze(0).repeat(num_gt, 1)  # [n_anchor] -> [n_gt, n_anchor]
-     y_centers_per_image = (y_shifts_per_image + 0.5 * expanded_strides_per_image).unsqueeze(0).repeat(num_gt, 1)
+   def get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, total_num_anchors, num_gt):
+       expanded_strides_per_image = expanded_strides[0]
+       x_shifts_per_image = x_shifts[0] * expanded_strides_per_image
+       y_shifts_per_image = y_shifts[0] * expanded_strides_per_image
+       x_centers_per_image = (x_shifts_per_image + 0.5 * expanded_strides_per_image).unsqueeze(0).repeat(num_gt, 1)  # [n_anchor] -> [n_gt, n_anchor]
+       y_centers_per_image = (y_shifts_per_image + 0.5 * expanded_strides_per_image).unsqueeze(0).repeat(num_gt, 1)
 
-     gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0] - 0.5 * gt_bboxes_per_image[:, 2]).unsqueeze(1).repeat(1, total_num_anchors)
-     gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0] + 0.5 * gt_bboxes_per_image[:, 2]).unsqueeze(1).repeat(1, total_num_anchors)
-     gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1] - 0.5 * gt_bboxes_per_image[:, 3]).unsqueeze(1).repeat(1, total_num_anchors)
-     gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1] + 0.5 * gt_bboxes_per_image[:, 3]).unsqueeze(1).repeat(1, total_num_anchors)
+       gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0] - 0.5 * gt_bboxes_per_image[:, 2]).unsqueeze(1).repeat(1, total_num_anchors)
+       gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0] + 0.5 * gt_bboxes_per_image[:, 2]).unsqueeze(1).repeat(1, total_num_anchors)
+       gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1] - 0.5 * gt_bboxes_per_image[:, 3]).unsqueeze(1).repeat(1, total_num_anchors)
+       gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1] + 0.5 * gt_bboxes_per_image[:, 3]).unsqueeze(1).repeat(1, total_num_anchors)
 
-     b_l = x_centers_per_image - gt_bboxes_per_image_l
-     b_r = gt_bboxes_per_image_r - x_centers_per_image
-     b_t = y_centers_per_image - gt_bboxes_per_image_t
-     b_b = gt_bboxes_per_image_b - y_centers_per_image
-     bbox_deltas = torch.stack([b_l, b_t, b_r, b_b], 2)
+       b_l = x_centers_per_image - gt_bboxes_per_image_l
+       b_r = gt_bboxes_per_image_r - x_centers_per_image
+       b_t = y_centers_per_image - gt_bboxes_per_image_t
+       b_b = gt_bboxes_per_image_b - y_centers_per_image
+       bbox_deltas = torch.stack([b_l, b_t, b_r, b_b], 2)
 
-     is_in_boxes = bbox_deltas.min(dim=-1).values > 0.0
-     is_in_boxes_all = is_in_boxes.sum(dim=0) > 0
-     # in fixed center
+       is_in_boxes = bbox_deltas.min(dim=-1).values > 0.0
+       is_in_boxes_all = is_in_boxes.sum(dim=0) > 0
+       # in fixed center
 
-     center_radius = 2.5
+       center_radius = 2.5
 
-     gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(1, total_num_anchors) - center_radius * expanded_strides_per_image.unsqueeze(0)
-     gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(1, total_num_anchors) + center_radius * expanded_strides_per_image.unsqueeze(0)
-     gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(1, total_num_anchors) - center_radius * expanded_strides_per_image.unsqueeze(0)
-     gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(1, total_num_anchors) + center_radius * expanded_strides_per_image.unsqueeze(0)
+       gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(1, total_num_anchors) - center_radius * expanded_strides_per_image.unsqueeze(0)
+       gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(1, total_num_anchors) + center_radius * expanded_strides_per_image.unsqueeze(0)
+       gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(1, total_num_anchors) - center_radius * expanded_strides_per_image.unsqueeze(0)
+       gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(1, total_num_anchors) + center_radius * expanded_strides_per_image.unsqueeze(0)
 
-     c_l = x_centers_per_image - gt_bboxes_per_image_l
-     c_r = gt_bboxes_per_image_r - x_centers_per_image
-     c_t = y_centers_per_image - gt_bboxes_per_image_t
-     c_b = gt_bboxes_per_image_b - y_centers_per_image
-     center_deltas = torch.stack([c_l, c_t, c_r, c_b], 2)
-     is_in_centers = center_deltas.min(dim=-1).values > 0.0
-     is_in_centers_all = is_in_centers.sum(dim=0) > 0
+       c_l = x_centers_per_image - gt_bboxes_per_image_l
+       c_r = gt_bboxes_per_image_r - x_centers_per_image
+       c_t = y_centers_per_image - gt_bboxes_per_image_t
+       c_b = gt_bboxes_per_image_b - y_centers_per_image
+       center_deltas = torch.stack([c_l, c_t, c_r, c_b], 2)
+       is_in_centers = center_deltas.min(dim=-1).values > 0.0
+       is_in_centers_all = is_in_centers.sum(dim=0) > 0
 
-     # in boxes and in centers
-     is_in_boxes_anchor = is_in_boxes_all | is_in_centers_all
+       # in boxes and in centers
+       is_in_boxes_anchor = is_in_boxes_all | is_in_centers_all
 
-     is_in_boxes_and_center = is_in_boxes[:, is_in_boxes_anchor] & is_in_centers[:, is_in_boxes_anchor]
-     return is_in_boxes_anchor, is_in_boxes_and_center
+       is_in_boxes_and_center = is_in_boxes[:, is_in_boxes_anchor] & is_in_centers[:, is_in_boxes_anchor]
+       return is_in_boxes_anchor, is_in_boxes_and_center
 
- def dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, is_in_boxes_anchor):
-     matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
+   def dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, is_in_boxes_anchor):
+       matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
 
-     n_candidate_k = min(10, pair_wise_ious.size(1))
-     topk_ious, _ = torch.topk(pair_wise_ious, n_candidate_k, dim=1)
-     dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
-     dynamic_ks = dynamic_ks.tolist()
-     for gt_idx in range(num_gt):
-         _, pos_idx = torch.topk(cost[gt_idx], k=dynamic_ks[gt_idx], largest=False)
-         matching_matrix[gt_idx][pos_idx] = 1
+       n_candidate_k = min(10, pair_wise_ious.size(1))
+       topk_ious, _ = torch.topk(pair_wise_ious, n_candidate_k, dim=1)
+       dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
+       dynamic_ks = dynamic_ks.tolist()
+       for gt_idx in range(num_gt):
+           _, pos_idx = torch.topk(cost[gt_idx], k=dynamic_ks[gt_idx], largest=False)
+           matching_matrix[gt_idx][pos_idx] = 1
 
-     anchor_matching_gt = matching_matrix.sum(0)
-     if (anchor_matching_gt > 1).sum() > 0:
-         _, cost_argmin = torch.min(cost[:, anchor_matching_gt > 1], dim=0)
-         matching_matrix[:, anchor_matching_gt > 1] *= 0
-         matching_matrix[cost_argmin, anchor_matching_gt > 1] = 1
-     fg_mask_inboxes = matching_matrix.sum(0) > 0
-     num_fg = fg_mask_inboxes.sum().item()
+       anchor_matching_gt = matching_matrix.sum(0)
+       if (anchor_matching_gt > 1).sum() > 0:
+           _, cost_argmin = torch.min(cost[:, anchor_matching_gt > 1], dim=0)
+           matching_matrix[:, anchor_matching_gt > 1] *= 0
+           matching_matrix[cost_argmin, anchor_matching_gt > 1] = 1
+       fg_mask_inboxes = matching_matrix.sum(0) > 0
+       num_fg = fg_mask_inboxes.sum().item()
 
-     is_in_boxes_anchor[is_in_boxes_anchor.clone()] = fg_mask_inboxes
+       is_in_boxes_anchor[is_in_boxes_anchor.clone()] = fg_mask_inboxes
 
-     matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
-     gt_matched_classes = gt_classes[matched_gt_inds]
+       matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
+       gt_matched_classes = gt_classes[matched_gt_inds]
 
-     pred_ious_this_matching = (matching_matrix * pair_wise_ious).sum(0)[fg_mask_inboxes]
-     return num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds
-```
-```py
-# [num_bboxes, num_anchors]
-pair_wise_ious, cost = torch.rand([3, 12]), torch.rand([3, 12])
-matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
-n_candidate_k = min(10, pair_wise_ious.size(1))
-topk_ious, _ = torch.topk(pair_wise_ious, n_candidate_k, dim=1) # [num_bboxes, 10]
-dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1) # [num_bboxes]
-num_gt = dynamic_ks.size(0)
-dynamic_ks = dynamic_ks.tolist()
-for gt_idx in range(num_gt):
-    _, pos_idx = torch.topk(cost[gt_idx], k=dynamic_ks[gt_idx], largest=False)
-    matching_matrix[gt_idx][pos_idx] = 1
-```
-```py
-from keras_cv_attention_models.coco import anchors_func
-aa = anchors_func.AnchorFreeAssignMatching()
+       pred_ious_this_matching = (matching_matrix * pair_wise_ious).sum(0)[fg_mask_inboxes]
+       return num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds
+  ```
+  ```py
+  # [num_bboxes, num_anchors]
+  pair_wise_ious, cost = torch.rand([3, 12]), torch.rand([3, 12])
+  matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
+  n_candidate_k = min(10, pair_wise_ious.size(1))
+  topk_ious, _ = torch.topk(pair_wise_ious, n_candidate_k, dim=1) # [num_bboxes, 10]
+  dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1) # [num_bboxes]
+  num_gt = dynamic_ks.size(0)
+  dynamic_ks = dynamic_ks.tolist()
+  for gt_idx in range(num_gt):
+      _, pos_idx = torch.topk(cost[gt_idx], k=dynamic_ks[gt_idx], largest=False)
+      matching_matrix[gt_idx][pos_idx] = 1
+  ```
+  ```py
+  from keras_cv_attention_models.coco import anchors_func
+  aa = anchors_func.AnchorFreeAssignMatching()
 
-# Fake data
-batch_size, num_bboxes, num_classes = 4, 32, 10
-bboxes_true = tf.random.uniform([batch_size, num_bboxes, 4])
-labels_true = tf.one_hot(tf.random.uniform([batch_size, num_bboxes], 0, num_classes, dtype=tf.int32), num_classes)
-valid_bboxes_pick = tf.cast(tf.random.uniform([batch_size, num_bboxes, 1]) > 0.5, tf.float32)
-bbox_labels_true = tf.concat([bboxes_true, labels_true, valid_bboxes_pick], axis=-1)
-bbox_labels_pred = tf.random.uniform([batch_size, aa.num_anchors, 4 + num_classes + 1])
+  # Fake data
+  batch_size, num_bboxes, num_classes = 4, 32, 10
+  bboxes_true = tf.random.uniform([batch_size, num_bboxes, 4])
+  labels_true = tf.one_hot(tf.random.uniform([batch_size, num_bboxes], 0, num_classes, dtype=tf.int32), num_classes)
+  valid_bboxes_pick = tf.cast(tf.random.uniform([batch_size, num_bboxes, 1]) > 0.5, tf.float32)
+  bbox_labels_true = tf.concat([bboxes_true, labels_true, valid_bboxes_pick], axis=-1)
+  bbox_labels_pred = tf.random.uniform([batch_size, aa.num_anchors, 4 + num_classes + 1])
 
-""" torch run """
-import torch
-bbox_labels_true_1 = tf.gather(bbox_labels_true[0], tf.where(bbox_labels_true[0, :, -1] > 0)[:, 0])
-bboxes_true, labels_true = bbox_labels_true_1[:, :4], bbox_labels_true_1[:, 4:-1]
+  """ torch run """
+  import torch
+  bbox_labels_true_1 = tf.gather(bbox_labels_true[0], tf.where(bbox_labels_true[0, :, -1] > 0)[:, 0])
+  bboxes_true, labels_true = bbox_labels_true_1[:, :4], bbox_labels_true_1[:, 4:-1]
 
-gt_bboxes_per_image = np.concatenate(anchors_func.corners_to_center_xywh_nd(bboxes_true), axis=-1)[:, [1, 0, 3, 2]]
-gt_bboxes_per_image = torch.from_numpy(gt_bboxes_per_image)
+  gt_bboxes_per_image = np.concatenate(anchors_func.corners_to_center_xywh_nd(bboxes_true), axis=-1)[:, [1, 0, 3, 2]]
+  gt_bboxes_per_image = torch.from_numpy(gt_bboxes_per_image)
 
-center_xy, wh = anchors_func.corners_to_center_xywh_nd(aa.anchors)
-expanded_strides = torch.from_numpy(wh[:, 0].numpy().reshape(1, -1))
-x_shifts = torch.from_numpy(center_xy[:, 1].numpy().reshape(1, -1))
-y_shifts = torch.from_numpy(center_xy[:, 0].numpy().reshape(1, -1))
+  center_xy, wh = anchors_func.corners_to_center_xywh_nd(aa.anchors)
+  expanded_strides = torch.from_numpy(wh[:, 0].numpy().reshape(1, -1))
+  x_shifts = torch.from_numpy(center_xy[:, 1].numpy().reshape(1, -1))
+  y_shifts = torch.from_numpy(center_xy[:, 0].numpy().reshape(1, -1))
 
-is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, expanded_strides.shape[1], bboxes_true.shape[0])
-```
+  is_in_boxes_anchor, is_in_boxes_and_center = get_in_boxes_info(gt_bboxes_per_image, expanded_strides, x_shifts, y_shifts, expanded_strides.shape[1], bboxes_true.shape[0])
+  ```
 # Anchor free test
-```py
-from keras_cv_attention_models import yolox, test_images
-from keras_cv_attention_models.coco import anchors_func, data
-mm = yolox.YOLOXS()
-img = test_images.dog_cat()
-pred = mm(mm.preprocess_input(img))
+  ```py
+  from keras_cv_attention_models import yolox, test_images
+  from keras_cv_attention_models.coco import anchors_func, data
+  mm = yolox.YOLOXS()
+  img = test_images.dog_cat()
+  pred = mm(mm.preprocess_input(img))
 
-aa = anchors_func.AnchorFreeAssignMatching()
-bbs, lls, ccs = mm.decode_predictions(pred)[0]
-bbox_labels_true = tf.concat([bbs, tf.one_hot(lls, 80), tf.ones([bbs.shape[0], 1])], axis=-1)
-bboxes_true, labels_true, object_true, bboxes_pred, labels_pred = aa(tf.expand_dims(bbox_labels_true, 0), pred)
-data.show_image_with_bboxes(img, bboxes_pred, labels_pred.numpy().argmax(-1))
-```
+  aa = anchors_func.AnchorFreeAssignMatching()
+  bbs, lls, ccs = mm.decode_predictions(pred)[0]
+  bbox_labels_true = tf.concat([bbs, tf.one_hot(lls, 80), tf.ones([bbs.shape[0], 1])], axis=-1)
+  bboxes_true, labels_true, object_true, bboxes_pred, labels_pred = aa(tf.expand_dims(bbox_labels_true, 0), pred)
+  data.show_image_with_bboxes(img, bboxes_pred, labels_pred.numpy().argmax(-1))
+  ```
 # Loss
-```py
-class IOUloss(nn.Module):
-    def __init__(self, reduction="none", loss_type="iou"):
-        super(IOUloss, self).__init__()
-        self.reduction = reduction
-        self.loss_type = loss_type
+  ```py
+  class IOUloss(nn.Module):
+      def __init__(self, reduction="none", loss_type="iou"):
+          super(IOUloss, self).__init__()
+          self.reduction = reduction
+          self.loss_type = loss_type
 
-    def forward(self, pred, target):
-        assert pred.shape[0] == target.shape[0]
+      def forward(self, pred, target):
+          assert pred.shape[0] == target.shape[0]
 
-        pred = pred.view(-1, 4)
-        target = target.view(-1, 4)
-        tl = torch.max((pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2))
-        br = torch.min((pred[:, :2] + pred[:, 2:] / 2), (target[:, :2] + target[:, 2:] / 2))
+          pred = pred.view(-1, 4)
+          target = target.view(-1, 4)
+          tl = torch.max((pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2))
+          br = torch.min((pred[:, :2] + pred[:, 2:] / 2), (target[:, :2] + target[:, 2:] / 2))
 
-        area_p = torch.prod(pred[:, 2:], 1)
-        area_g = torch.prod(target[:, 2:], 1)
+          area_p = torch.prod(pred[:, 2:], 1)
+          area_g = torch.prod(target[:, 2:], 1)
 
-        en = (tl < br).type(tl.type()).prod(dim=1)
-        area_i = torch.prod(br - tl, 1) * en
-        area_u = area_p + area_g - area_i
-        iou = (area_i) / (area_u + 1e-16) # Only iou type
+          en = (tl < br).type(tl.type()).prod(dim=1)
+          area_i = torch.prod(br - tl, 1) * en
+          area_u = area_p + area_g - area_i
+          iou = (area_i) / (area_u + 1e-16) # Only iou type
 
-        return 1 - iou ** 2
-```
-```py
-for ...:
-    if self.use_l1:
-        l1_target = self.get_l1_target(outputs.new_zeros((num_fg_img, 4)), gt_bboxes_per_image[matched_gt_inds], expanded_strides[0][fg_mask], x_shifts=x_shifts[0][fg_mask], y_shifts=y_shifts[0][fg_mask])
+          return 1 - iou ** 2
+  ```
+  ```py
+  for ...:
+      if self.use_l1:
+          l1_target = self.get_l1_target(outputs.new_zeros((num_fg_img, 4)), gt_bboxes_per_image[matched_gt_inds], expanded_strides[0][fg_mask], x_shifts=x_shifts[0][fg_mask], y_shifts=y_shifts[0][fg_mask])
 
-    if self.use_l1:
-        l1_targets.append(l1_target)
+      if self.use_l1:
+          l1_targets.append(l1_target)
 
-cls_targets = torch.cat(cls_targets, 0)
-reg_targets = torch.cat(reg_targets, 0)
-obj_targets = torch.cat(obj_targets, 0)
-fg_masks = torch.cat(fg_masks, 0)
-if self.use_l1:
-    l1_targets = torch.cat(l1_targets, 0)
+  cls_targets = torch.cat(cls_targets, 0)
+  reg_targets = torch.cat(reg_targets, 0)
+  obj_targets = torch.cat(obj_targets, 0)
+  fg_masks = torch.cat(fg_masks, 0)
+  if self.use_l1:
+      l1_targets = torch.cat(l1_targets, 0)
 
-num_fg = max(num_fg, 1)
-loss_iou = self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets).sum() / num_fg
-loss_obj = self.bcewithlog_loss(obj_preds.view(-1, 1), obj_targets).sum() / num_fg
-loss_cls = self.bcewithlog_loss(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets).sum() / num_fg
-if self.use_l1:
-    loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
-else:
-    loss_l1 = 0.0
+  num_fg = max(num_fg, 1)
+  loss_iou = self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets).sum() / num_fg
+  loss_obj = self.bcewithlog_loss(obj_preds.view(-1, 1), obj_targets).sum() / num_fg
+  loss_cls = self.bcewithlog_loss(cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets).sum() / num_fg
+  if self.use_l1:
+      loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
+  else:
+      loss_l1 = 0.0
 
-reg_weight = 5.0
-loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1
+  reg_weight = 5.0
+  loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1
 
-return loss, reg_weight * loss_iou, loss_obj, loss_cls, loss_l1, num_fg / max(num_gts, 1)
+  return loss, reg_weight * loss_iou, loss_obj, loss_cls, loss_l1, num_fg / max(num_gts, 1)
 
-self.l1_loss = nn.L1Loss(reduction="none")
-self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
-self.iou_loss = IOUloss(reduction="none")
+  self.l1_loss = nn.L1Loss(reduction="none")
+  self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
+  self.iou_loss = IOUloss(reduction="none")
 
-def get_l1_target(self, l1_target, gt, stride, x_shifts, y_shifts, eps=1e-8):
-    l1_target[:, 0] = gt[:, 0] / stride - x_shifts
-    l1_target[:, 1] = gt[:, 1] / stride - y_shifts
-    l1_target[:, 2] = torch.log(gt[:, 2] / stride + eps)
-    l1_target[:, 3] = torch.log(gt[:, 3] / stride + eps)
-    return l1_target
-```
-```py
-output = torch.cat([reg_output, obj_output, cls_output], 1)
-output, grid = self.get_output_and_grid(
-    output, k, stride_this_level, xin[0].type()
-)
-x_shifts.append(grid[:, :, 0])
-y_shifts.append(grid[:, :, 1])
-expanded_strides.append(
-    torch.zeros(1, grid.shape[1])
-    .fill_(stride_this_level)
-    .type_as(xin[0])
-)
-if self.use_l1:
-    batch_size = reg_output.shape[0]
-    hsize, wsize = reg_output.shape[-2:]
-    reg_output = reg_output.view(
-        batch_size, self.n_anchors, 4, hsize, wsize
-    )
-    reg_output = reg_output.permute(0, 1, 3, 4, 2).reshape(
-        batch_size, -1, 4
-    )
-    origin_preds.append(reg_output.clone())
+  def get_l1_target(self, l1_target, gt, stride, x_shifts, y_shifts, eps=1e-8):
+      l1_target[:, 0] = gt[:, 0] / stride - x_shifts
+      l1_target[:, 1] = gt[:, 1] / stride - y_shifts
+      l1_target[:, 2] = torch.log(gt[:, 2] / stride + eps)
+      l1_target[:, 3] = torch.log(gt[:, 3] / stride + eps)
+      return l1_target
+  ```
+  ```py
+  output = torch.cat([reg_output, obj_output, cls_output], 1)
+  output, grid = self.get_output_and_grid(
+      output, k, stride_this_level, xin[0].type()
+  )
+  x_shifts.append(grid[:, :, 0])
+  y_shifts.append(grid[:, :, 1])
+  expanded_strides.append(
+      torch.zeros(1, grid.shape[1])
+      .fill_(stride_this_level)
+      .type_as(xin[0])
+  )
+  if self.use_l1:
+      batch_size = reg_output.shape[0]
+      hsize, wsize = reg_output.shape[-2:]
+      reg_output = reg_output.view(
+          batch_size, self.n_anchors, 4, hsize, wsize
+      )
+      reg_output = reg_output.permute(0, 1, 3, 4, 2).reshape(
+          batch_size, -1, 4
+      )
+      origin_preds.append(reg_output.clone())
 
-return self.get_losses(
-    imgs,
-    x_shifts,
-    y_shifts,
-    expanded_strides,
-    labels,
-    torch.cat(outputs, 1),
-    origin_preds,
-    dtype=xin[0].dtype,
-)
-```
-# Anchors
-```py
+  return self.get_losses(
+      imgs,
+      x_shifts,
+      y_shifts,
+      expanded_strides,
+      labels,
+      torch.cat(outputs, 1),
+      origin_preds,
+      dtype=xin[0].dtype,
+  )
+  ```
+# YOLOR
+  ```py
+  from models import models as torch_yolor
+  torch_yolor.ONNX_EXPORT = False
+  mm = torch_yolor.Darknet('cfg/yolor_csp.cfg', [640, 640])
+  _ = mm.eval()
 
-```
+  # download_and_load.try_save_pth_and_onnx(mm, [640, 640], True, True)
+  import torch
+  input_shape = [640, 640]
+  output_name = mm.__class__.__name__ + ".onnx"
+  torch.onnx.export(
+      model=mm,
+      args=torch.randn(10, 3, *input_shape),
+      f=output_name,
+      verbose=False,
+      keep_initializers_as_inputs=True,
+      training=torch.onnx.TrainingMode.PRESERVE,
+      do_constant_folding=True,
+      opset_version=13,
+  )
+  ```
+  ```py
+  import torch
+  from models import models as yolor
+  img_size = [640, 640]
+  weights_file = "yolor_csp_star.pt"
+  model = yolor.Darknet('cfg/yolor_csp.cfg', img_size)
+  weights = torch.load(weights_file, map_location=torch.device('cpu'))['model']
+  model.load_state_dict(weights)
+  _ = model.eval()
+
+  img = torch.zeros((1, 3, *img_size))
+  output = model(img)  # dry run
+
+  import onnx
+  print('\nStarting ONNX export with onnx %s...' % onnx.__version__)
+  target_onnx_file = weights_file.replace('.pt', '.onnx')  # filename
+  # model.fuse()  # only for ONNX
+  torch.onnx.export(model, img, target_onnx_file, verbose=False, opset_version=12, input_names=['images'],
+                    output_names=['classes', 'boxes'] if output is None else ['output'])
+
+  # Checks
+  onnx_model = onnx.load(target_onnx_file)  # load onnx model
+  onnx.checker.check_model(onnx_model)  # check onnx model
+  print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
+  print('ONNX export success, saved as %s' % target_onnx_file)
+  ```
+## Reload YOLOR
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.yolor import yolor
+  mm = yolor.YOLOR()
+
+  tail_split_position = [1, 2] # 1 for backbone, 2 for pafpn
+  tail_align_dict = [
+      {"short_conv": 'deep_pre_conv', "short_bn": 'deep_pre_bn'},
+      {"pafpn": {"short_conv": "block1_1_conv", "short_bn": "block1_1_bn"}}
+  ]
+
+  full_name_align_dict = {
+      "stack4_spp_short_conv": "stack4_spp_pre_1_conv", "stack4_spp_short_bn": "stack4_spp_pre_1_bn", "stack4_spp_output_bn": -1,
+      "pafpn_p4p5_up_conv": -2, "pafpn_p4p5_up_bn": -2, "pafpn_p4p5_output_bn": -1, "pafpn_p3p4p5_up_conv": -2, "pafpn_p3p4p5_up_bn": -2,
+  }
+
+  headers = [
+      'head_1_shift_channel', 'head_2_shift_channel', 'head_3_shift_channel',
+      'head_1_control_channel', 'head_2_control_channel', 'head_3_control_channel',
+      'head_1_1_conv', 'head_1_1_bn', 'head_1_2_conv',
+      'head_2_1_conv', 'head_2_1_bn', 'head_2_2_conv',
+      'head_3_1_conv', 'head_3_1_bn', 'head_3_2_conv',
+  ]
+
+  specific_match_func = lambda tt: tt[:- len(headers)] + headers
+  specific_match_func_nano = lambda tt: tt[:- len(headers_nano)] + headers_nano
+
+  additional_transfer = {yolor.ChannelAffine: lambda ww: [np.squeeze(ww[0])], yolor.BiasLayer: lambda ww: [np.squeeze(ww[0])]}
+
+  download_and_load.keras_reload_from_torch_model(
+      '../yolor/yolor_csp_star.pt',
+      mm,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      full_name_align_dict=full_name_align_dict,
+      specific_match_func=specific_match_func,
+      additional_transfer=additional_transfer,
+      save_name=mm.name + "_coco.h5",
+      do_convert=True,
+  )
+  ```
+## Verification
+  ```py
+  import kecam
+  # imm = np.ones([1, 640, 640, 3], dtype="float32")
+  imm = tf.image.resize(kecam.test_images.dog(), [640, 640]).numpy()[None] / 255
+
+  import torch
+  sys.path.append('../yolor/')
+  from models import models as torch_yolor
+  img_size = [640, 640]
+  weights_file = "../yolor/yolor_csp_star.pt"
+  model = torch_yolor.Darknet('../yolor/cfg/yolor_csp.cfg', img_size)
+  weights = torch.load(weights_file, map_location=torch.device('cpu'))['model']
+  model.load_state_dict(weights)
+  _ = model.eval()
+  aa, bb = model.forward_once(torch.from_numpy(imm).permute([0, 3, 1, 2]))
+
+  mm = kecam.yolor.YOLOR_CSP(classifier_activation=None)
+  cc = mm(imm)
+  dd = tf.reshape(cc[:, :80 * 80 * 3], bb[0].shape)
+  print(np.allclose(bb[0].detach().numpy(), dd, atol=1e-4))
+  # True
+  ```
+  **Decode**
+  ```py
+  anchors = kecam.coco.anchors_func.get_yolor_anchors()
+  dd = tf.sigmoid(cc)
+
+  center_yx = (dd[:, :, :2] * 2 * anchors[:, 4:] + anchors[:, :2]) * 640
+  hhww = ((dd[:, :, 2:4] * 2) ** 2 * anchors[:, 2:4]) * 640
+  print(np.allclose(aa.detach().numpy(), tf.concat([center_yx, hhww, dd[:, :, 4:]], axis=-1), atol=1e-3))
+  ```
+  **Prediction**
+  ```py
+  # detect.py
+  from utils.general import non_max_suppression
+  pred = non_max_suppression(aa, conf_thres=0.4, iou_thres=0.5)
+  # Dog pred
+  # [tensor([[348.77496, 279.56995, 520.57544, 535.72040,   0.80469,  16.00000]]
+
+  nn = kecam.yolox.YOLOXS()
+  nn.decode_predictions(nn(nn.preprocess_input(test_images.dog())))[0][0] * 640
+  # [     276.95,       349.3,      550.25,      523.59]
+  ```
+  ```py
+  # https://github.com/WongKinYiu/yolor/tree/master/utils/general.py#L311
+  yolor output: (center x, center y, width, height)
+  ```
+  ```py
+  def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, merge=False, classes=None, agnostic=False):
+      nc = prediction[0].shape[1] - 5  # number of classes
+      xc = prediction[..., 4] > conf_thres  # candidates
+
+      # Settings
+      min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
+      max_det = 300  # maximum number of detections per image
+      time_limit = 10.0  # seconds to quit after
+      redundant = True  # require redundant detections
+      multi_label = nc > 1  # multiple labels per box (adds 0.5ms/img)
+
+      t = time.time()
+      output = [torch.zeros(0, 6)] * prediction.shape[0]
+      for xi, x in enumerate(prediction):  # image index, image inference
+          # Apply constraints
+          # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
+          x = x[xc[xi]]  # confidence
+
+          # If none remain process next image
+          if not x.shape[0]:
+              continue
+
+          # Compute conf
+          x[:, 5:] *= x[:, 4:5]  # conf = obj_conf * cls_conf
+
+          # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+          box = xywh2xyxy(x[:, :4])
+
+          # Detections matrix nx6 (xyxy, conf, cls)
+          if multi_label:
+              i, j = (x[:, 5:] > conf_thres).nonzero(as_tuple=False).T
+              x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
+          else:  # best class only
+              conf, j = x[:, 5:].max(1, keepdim=True)
+              x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres]
+
+          # If none remain process next image
+          n = x.shape[0]  # number of boxes
+          if not n:
+              continue
+
+          # Sort by confidence
+          # x = x[x[:, 4].argsort(descending=True)]
+
+          # Batched NMS
+          c = x[:, 5:6] * (0 if agnostic else max_wh)  # classes
+          boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
+          i = torch.ops.torchvision.nms(boxes, scores, iou_thres)
+          if i.shape[0] > max_det:  # limit detections
+              i = i[:max_det]
+          output[xi] = x[i]
+          if (time.time() - t) > time_limit:
+              break  # time limit exceeded
+
+      return output
+  ```
+  ```py
+  anchors = kecam.coco.anchors_func.get_yolor_anchors()
+  dd = tf.sigmoid(cc)
+
+  center_yx = (dd[:, :, :2] * 2 * anchors[:, 4:] + anchors[:, :2]) * 640
+  hhww = ((dd[:, :, 2:4] * 2) ** 2 * anchors[:, 2:4]) * 640
+  print(np.allclose(aa.detach().numpy(), tf.concat([center_yx, hhww, dd[:, :, 4:]], axis=-1), atol=1e-3))
+
+  from keras_cv_attention_models import coco
+  input_shape = mm.input_shape[1:-1]
+  anchors = coco.get_yolor_anchors(input_shape=input_shape, pyramid_levels=[3, 5])
+  ee = coco.decode_bboxes(dd[0], anchors).numpy()
+  confs = (tf.reduce_max(dd[0, :, 5:], axis=-1) * dd[0, :, 4]).numpy()
+  rr = tf.image.non_max_suppression(ee[:, :4], confs, score_threshold=0.3, max_output_size=15, iou_threshold=0.5)
+  dd_nms = tf.gather(ee, rr).numpy()
+  bboxes, labels, scores = dd_nms[:, :4], dd_nms[:, 4:].argmax(-1), dd_nms[:, 4:].max(-1)
+  print(f"{bboxes = }, {labels = }, {scores = }")
+  ```

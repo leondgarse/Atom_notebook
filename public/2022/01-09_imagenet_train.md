@@ -260,6 +260,8 @@ hhs = {
     "CMTTiny, lmhsa, avg pool, KV [dim, head, 2]": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_A3_hist.json",
     "CMTTiny, lmhsa, dw+ln, KV [split2, head, dim]": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_split2_head_dim_stack_conv_bias_lmhsa_dw_ln_A3_hist.json",
     "CMTTiny, epoch 300": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_hist.json', 'r')).items()},
+    "CMTTiny, epoch 300, mag15": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag15_hist.json', 'r')).items()},
+    "CMTTiny, epoch 300, mag7, drc0.05, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag7_drc_005_bs_240_hist.json', 'r')).items()},
     "AotNet50, A2, 224, Epoch 300": {kk: vv[::3] for kk, vv in json.load(open("checkpoints/aotnet.AotNet50_A2_hist.json", "r")).items()},
 }
 
