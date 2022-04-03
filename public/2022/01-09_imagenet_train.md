@@ -35,6 +35,7 @@
       "A3, progressive_3_lr_steps_33_lr_t_mul_1": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_hist.json",
       "A3, progressive_3_lr_steps_33_lr_t_mul_1_on_batch": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_on_batch_hist.json",
       # "A3, adamw_8e3_wd5e2, cutmix reverse, CE_mixup_0.8": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_CE_mixup_0.8_hist.json",
+      "A3, randaug_scale_03": "checkpoints/checkpoints/aotnet50_randaug_scale_03_hist.json",
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=40, base_size=8)
   ```
@@ -259,15 +260,16 @@ hhs = {
     "CMTTiny, lmhsa, dw+ln, KV [dim, head, 2]": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_lmhsa_dw_ln_A3_hist.json",
     "CMTTiny, lmhsa, avg pool, KV [dim, head, 2]": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_stack_conv_bias_A3_hist.json",
     "CMTTiny, lmhsa, dw+ln, KV [split2, head, dim]": "checkpoints/cmt.CMTTiny_160_exc_bias_key_value_split2_head_dim_stack_conv_bias_lmhsa_dw_ln_A3_hist.json",
-    "CMTTiny, epoch 300": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_hist.json', 'r')).items()},
-    "CMTTiny, epoch 300, mag15": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag15_hist.json', 'r')).items()},
-    "CMTTiny, epoch 300, mag7, drc0.05, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag7_drc_005_bs_240_hist.json', 'r')).items()},
-    "AotNet50, A2, 224, Epoch 300": {kk: vv[::3] for kk, vv in json.load(open("checkpoints/aotnet.AotNet50_A2_hist.json", "r")).items()},
+    "CMTTiny, epoch 305": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_hist.json', 'r')).items()},
+    "CMTTiny, epoch 305, mag15": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag15_hist.json', 'r')).items()},
+    "CMTTiny, epoch 305, mag7, drc0.05, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag7_drc_005_bs_240_hist.json', 'r')).items()},
 }
 
 fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=20, base_size=8)
 ```
-| 305 epochs | Best Eval loss, acc on 160                                                    | Eval 224                   |
-| ---------- | ----------------------------------------------------------------------------- | -------------------------- |
-|            | Epoch 304/305 loss: 0.0031 - acc: 0.6702 - val_loss: 0.0013 - val_acc: 0.7874 | top1: 0.79956 top5: 0.9485 |
+| 305 epochs             | Train acc | Best eval loss, acc on 160 | Epoch 105 Eval acc on 224   |
+| ---------------------- | --------- | -------------------------- | --------------------------- |
+| mag6, drc 0, bs 256    | 0.6702    | Epoch 304, 0.0013, 0.7874  | top1: 0.79956 top5: 0.94850 |
+| mag7, drc 0.05, bs 160 | 0.6577    | Epoch 294, 0.0013,0.7880   | top1: 0.80126 top5: 0.94898 |
+| mag15, drc 0, bs 256   | 0.6390    | Epoch 304, 0.0014,0.7824   | top1: 0.79630 top5: 0.94794 |
 ***

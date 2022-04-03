@@ -415,6 +415,32 @@
       save_name=mm.name + "_384_imagenet.h5"
   )
   ```
+## WaveMLP
+  ```py
+  from keras_cv_attention_models.mlp_family import wave_mlp
+  from keras_cv_attention_models import download_and_load
+  mm = wave_mlp.WaveMLP_S(pretrained=None, classifier_activation=None)
+
+  skip_weights = ['num_batches_tracked', 'total_ops', 'total_params']
+
+  tail_align_dict = {
+    "attn_theta_h_bn": -1, "attn_height_conv": -4, "attn_width_conv": -4, "attn_height_down_conv": -4, "attn_width_down_conv": -4,
+    "attn_channel_conv": -6, "attn_reweight_Conv_0": -4, "attn_reweight_Conv_1": -4, "attn_out_conv": -4
+  }
+  download_and_load.keras_reload_from_torch_model('./WaveMLP_S.pth.tar', mm, skip_weights=skip_weights, tail_align_dict=tail_align_dict, do_convert=False)
+  ```
+## MobileViT
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.mobilevit_s(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.mobilevit import mobilevit
+  from keras_cv_attention_models import download_and_load
+  mm = mobilevit.MobileViT_S(pretrained=None, classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, [256, 256], do_convert=True)
+  ```
 ***
 
 # Resnest

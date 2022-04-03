@@ -618,26 +618,29 @@
   hhs = {
       "V1B0, bs 64": "checkpoints/EfficientDet_EfficientNetV1B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
       "V2B0, bs 64": "checkpoints/EfficientDet_EfficientNetV2B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
-      "V1B0, bs 8": "checkpoints/EfficientDet_EfficientNetV1B0_256_adamw_coco_2017_batchsize_8_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+      # "V1B0, bs 8": "checkpoints/EfficientDet_EfficientNetV1B0_256_adamw_coco_2017_batchsize_8_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
       "V1B0, mosaic 0.5, bs 64": "checkpoints/EfficientDetD0_256_mosaic_05_bs_64_hist.json",
+      "V1B0, mosaic 0.5, anchor free, bs 64": "checkpoints/EfficientDetD0_256_mosaic_05_bs_64_anchor_free_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
   ```
 
-  | Model            | Epoch  | Trian loss, cls_loss, bbox_loss | Train cls_acc | Val loss, cls_acc |
-  | ---------------- | ------ | ------------------------------- | ------------- | ----------------- |
-  | EfficientNetV1B0 | 96/105 | 0.4975, 0.43799, 0.005196       | 0.8616        | 0.5791, 0.8380    |
-  | EfficientNetV2B0 | 87/105 | 0.4419, 0.32617, 0.004364       | 0.8874        | 0.5865, 0.8420    |
+  | Model            | Epoch   | Trian loss, cls_loss, bbox_loss | Train cls_acc | Val loss, cls_acc |
+  | ---------------- | ------- | ------------------------------- | ------------- | ----------------- |
+  | EfficientNetV1B0 | 96/105  | 0.4975, 0.43799, 0.005196       | 0.8616        | 0.5791, 0.8380    |
+  | - mosaic 0.5     | 104/105 | 0.6095, 0.33107, 0.004444       | 0.7989        | 0.5911, 0.8419    |
+  | EfficientNetV2B0 | 87/105  | 0.4419, 0.32617, 0.004364       | 0.8874        | 0.5865, 0.8420    |
 
   - **Test**
   ```py
-  from keras_cv_attention_models import efficientdet, efficientnet
+  from keras_cv_attention_models import efficientdet, efficientnet, yolox
 
   # model = efficientdet.EfficientDetD0(pretrained="checkpoints/EfficientDet_EfficientNetV1B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_epoch_96_val_acc_0.8380.h5", num_classes=80, input_shape=[256, 256, 3])
   backbone = efficientnet.EfficientNetV2B0(input_shape=(256, 256, 3), num_classes=0)
   pretrained = "checkpoints/EfficientDet_EfficientNetV2B0_256_coco_2017_adamw_batchsize_64_randaug_6_RRC_0.08_lr512_0.008_wd_0.02_epoch_39_val_acc_0.7912.h5"
   model = efficientdet.EfficientDetD0(backbone=backbone, pretrained=pretrained, num_classes=80)
+  # model = yolox.YOLOXTiny(pretrained='checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_8_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02_epoch_19_val_loss_5.3121.h5', input_shape=(256, 256, 3), rescale_mode='torch')
 
   # Run prediction
   from keras_cv_attention_models import test_images
@@ -869,6 +872,20 @@
   Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.033
   Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.340
   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.582
+
+  """ trained EffD0 256 mosaic 0.5 """
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.200
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.343
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.203
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.018
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.206
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.392
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.185
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.286
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.300
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.031
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.335
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.566
   ```
 ## automl main results
 ```sh

@@ -665,7 +665,11 @@
   | EffV2S      | 384              | tf           | bicubic           | 0.95         | 0.83788     | 0.96602     |
   | EffV2S      | 384              | torch        | bicubic           | 0.95         | 0.29858     | 0.46904     |
   | EffV2S      | 384              | tf           | bicubic           | 0.99         | 0.8386      | 0.967       |
-  | EffV2S      | 384              | tf           | bicubic antialias | 0.99         | **0.8387**  | **0.967**   |
+  | EffV2S      | 384              | tf           | bicubic antialias | 0.99         | 0.8387      | 0.967       |
+  | EffV2S      | 384              | tf           | bicubic antialias | -1           | 0.83764     | 0.96652     |
+  | EffV2S      | 384              | [128, 128]   | bicubic antialias | 0.99         | 0.8389      | 0.96712     |
+  | EffV2S      | 384              | [128, 128]   | bicubic antialias | 1.0          | **0.83892** | **0.96726** |
+  |             |                  |              |                   |              |             |             |
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.94         | 0.84006     | 0.97118     |
   | EffV2S ft1k | 384              | torch        | bicubic           | 0.94         | 0.13104     | 0.21656     |
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.95         | 0.84076     | 0.97134     |
@@ -674,18 +678,38 @@
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.98         | 0.84302     | 0.9727      |
   | EffV2S ft1k | 384              | tf           | bicubic           | 0.99         | 0.84328     | 0.97254     |
   | EffV2S ft1k | 384              | tf           | bicubic antialias | 0.99         | 0.84336     | 0.97256     |
-  | EffV2S ft1k | 384              | tf           | bicubic           | 1.0          | 0.84312     | **0.97292** |
-  | EffV2S ft1k | 384              | tf           | bicubic antialias | 1.0          | **0.84348** | 0.97288     |
+  | EffV2S ft1k | 384              | tf           | bicubic           | 1.0          | 0.84312     | 0.97292     |
+  | EffV2S ft1k | 384              | tf           | bicubic antialias | 1.0          | 0.84348     | 0.97288     |
+  | EffV2S ft1k | 384              | tf           | bicubic           | -1           | 0.84794     | 0.97494     |
+  | EffV2S ft1k | 384              | [128, 128]   | bicubic           | -1           | 0.84796     | 0.9751      |
+  | EffV2S ft1k | 384              | tf           | bicubic antialias | -1           | 0.84802     | 0.97504     |
+  | EffV2S ft1k | 384              | [128, 128]   | bicubic antialias | -1           | **0.84804** | **0.97514** |
 
-  | model        | Input Resolution | rescale_mode | resize_method     | central_crop | top 1   | top 5   |
-  | ------------ | ---------------- | ------------ | ----------------- | ------------ | ------- | ------- |
-  | EffV2M       | 480              | tf           | bicubic           | 0.99         | 0.8509  | 0.973   |
-  | EffV2M       | 480              | tf           | bicubic antialias | 0.99         | 0.85086 | 0.9731  |
-  | EffV2L       | 480              | tf           | bicubic           | 0.99         | 0.855   | 0.97324 |
-  | EffV2L       | 480              | tf           | bicubic antialias | 0.99         |         |         |
-  | EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
-  | EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606 | 0.9775  |
-  | EffV2XL ft1k | 512              | tf           | bicubic           | 0.99         | 0.86532 | 0.97866 |
+  | model        | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
+  | ------------ | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
+  | EffV2M       | 480              | tf           | bicubic           | 0.99         | 0.8509      | 0.973       |
+  | EffV2M       | 480              | tf           | bicubic antialias | 0.99         | **0.85086** | 0.9731      |
+  | EffV2M       | 480              | [128, 128]   | bicubic antialias | 0.99         | 0.8508      | **0.97314** |
+  | EffV2M       | 480              | [128, 128]   | bicubic antialias | 1.0          | 0.8503      | 0.9728      |
+  |              |                  |              |                   |              |             |             |
+  | EffV2L       | 480              | tf           | bicubic           | 0.99         | **0.855**   | **0.97324** |
+  | EffV2L       | 480              | tf           | bicubic antialias | 0.99         | 0.85478     | 0.9732      |
+  |              |                  |              |                   |              |             |             |
+  | EffV2M ft1k  | 480              | tf           | bicubic           | 0.99         | 0.85606     | 0.9775      |
+  | EffV2M ft1k  | 480              | tf           | bicubic           | -1           | 0.86082     | 0.9795      |
+  | EffV2M ft1k  | 480              | [128, 128]   | bicubic           | -1           | **0.8609**  | **0.97952** |
+  | EffV2M ft1k  | 480              | [128, 128]   | bicubic antialias | -1           | 0.86068     | 0.97952     |
+  |              |                  |              |                   |              |             |             |
+  | EffV2L ft1k  | 480              | tf           | bicubic           | 0.99         | 0.86294     | 0.9799      |
+  | EffV2L ft1k  | 480              | tf           | bicubic           | -1           | 0.86824     | **0.98162** |
+  | EffV2L ft1k  | 480              | tf           | bicubic antialias | -1           | 0.86824     | 0.98148     |
+  | EffV2L ft1k  | 480              | [128, 128]   | bicubic           | -1           | 0.86818     | 0.98162     |
+  | EffV2L ft1k  | 480              | [128, 128]   | bicubic antialias | -1           | **0.8683**  | 0.9815      |
+  |              |                  |              |                   |              |             |             |
+  | EffV2XL ft1k | 512              | tf           | bicubic           | 0.99         | 0.86532     | 0.97866     |
+  | EffV2XL ft1k | 512              | tf           | bicubic           | -1           | 0.86772     | **0.98066** |
+  | EffV2XL ft1k | 512              | [128, 128]   | bicubic           | -1           | **0.86782** | 0.9806      |
+  | EffV2XL ft1k | 512              | [128, 128]   | bicubic antialias | -1           | 0.86788     | 0.9806      |
 
   | model        | rescale_mode        | resize_method | central_crop | top 1   | top 5   | Reported |
   | ------------ | ------------------- | ------------- | ------------ | ------- | ------- | -------- |

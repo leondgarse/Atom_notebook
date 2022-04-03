@@ -687,7 +687,7 @@
   output_name = mm.__class__.__name__ + ".onnx"
   torch.onnx.export(
       model=mm,
-      args=torch.randn(10, 3, *input_shape),
+      args=torch.randn(1, 3, *input_shape),
       f=output_name,
       verbose=False,
       keep_initializers_as_inputs=True,
@@ -778,7 +778,7 @@
   ```py
   from keras_cv_attention_models.yolor import yolor
   mm = yolor.YOLOR_CSP(pretrained="coco")
-  for ii in range(1, 4):
+  for ii in range(1, 5):
       conv_layer = mm.get_layer('head_{}_2_conv'.format(ii))
       new_ww = []
       for ww in conv_layer.get_weights():
@@ -966,4 +966,910 @@
   # nms_kind=greedynms
   # beta_nms=0.6
   ```
+## Reload YOLOR paper weights
+  ```py
+  sys.path.append('../yolor-paper/')
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.yolor import yolor
+  mm = yolor.YOLOR_E6()
+
+  # downsample: conv_down_1, conv_down_2, max_down
+  # stack: deep_pre, short, output, concat_bn
+  # ssp: pre_1, short, pre_2, pre_3, post_1, post_2, concat_bn, output
+  # pafpn: up, down, pre, short, output, concat_bn
+  tail_split_position = [1, 2] # 1 for backbone, 2 for pafpn
+  tail_align_dict = [
+      {"conv_down_2_bn": -1, "short_conv": 'block1_1_conv', "output_conv": 'block1_1_bn', "output_bn": 'block1_2_conv', "concat_bn": "block1_1_bn"},
+      # {"pafpn": {"short_conv": "block1_1_conv", "short_bn": "block1_1_bn"}}
+      {"pafpn": {
+          "up_conv": -2, "up_bn": -2, "short_conv": "block1_1_conv", "output_conv": "block1_1_bn", "output_bn": "block1_2_conv", "concat_bn": "block1_1_bn",
+          "conv_down_2_bn": -1
+          }
+      }
+  ]
+
+  full_name_align_dict = {
+      "stack5_spp_short_conv": "stack5_spp_pre_2_conv", "stack5_spp_output_bn": -1,
+      'head_1_1_conv': "pafpn_c3n3_conv_down_1_conv", "head_1_1_bn": "pafpn_c3n3_conv_down_1_bn",
+      'head_2_1_conv': "pafpn_c3n4_conv_down_1_conv", "head_2_1_bn": "pafpn_c3n4_conv_down_2_conv",
+      'head_3_1_conv': "pafpn_c3n5_conv_down_1_conv", "head_3_1_bn": "pafpn_c3n5_conv_down_2_bn",
+  }
+
+  headers = [
+      'head_4_1_conv', 'head_4_1_bn',
+      'head_1_2_conv', 'head_2_2_conv', 'head_3_2_conv', 'head_4_2_conv',
+      'head_1_shift_channel', 'head_2_shift_channel', 'head_3_shift_channel', 'head_4_shift_channel',
+      'head_1_control_channel', 'head_2_control_channel', 'head_3_control_channel', 'head_4_control_channel',
+  ]
+  specific_match_func = lambda tt: tt[:- len(headers)] + headers
+
+  additional_transfer = {yolor.ChannelAffine: lambda ww: [np.squeeze(ww[0])], yolor.BiasLayer: lambda ww: [np.squeeze(ww[0])]}
+  skip_weights = ["num_batches_tracked", "anchors", "anchor_grid"]
+  download_and_load.keras_reload_from_torch_model(
+      '../yolor-paper/yolor-e6-paper-564.pt',
+      mm,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      full_name_align_dict=full_name_align_dict,
+      specific_match_func=specific_match_func,
+      additional_transfer=additional_transfer,
+      skip_weights=skip_weights,
+      save_name=mm.name + "_coco.h5",
+      do_convert=True,
+  )
+  ```
+  **Convert bboxes output `[left, top, right, bottom]` -> `top, left, bottom, right`**
+  ```py
+  from keras_cv_attention_models.yolor import yolor
+  mm = yolor.YOLOR_CSP(pretrained="coco")
+  for ii in range(1, 5):
+      conv_layer = mm.get_layer('head_{}_2_conv'.format(ii))
+      new_ww = []
+      for ww in conv_layer.get_weights():
+          ww = np.reshape(ww, [*ww.shape[:-1], 3, 85])[..., [1, 0, 3, 2, *np.arange(5, 85), 4]]
+          ww = np.reshape(ww, [*ww.shape[:-2], -1])
+          new_ww.append(ww)
+      conv_layer.set_weights(new_ww)
+
+      channel_layer = mm.get_layer('head_{}_control_channel'.format(ii))
+      ww = channel_layer.get_weights()[0]
+      ww = np.reshape(ww, [*ww.shape[:-1], 3, 85])[..., [1, 0, 3, 2, *np.arange(5, 85), 4]]
+      ww = np.reshape(ww, [*ww.shape[:-2], -1])
+      channel_layer.set_weights([ww])
+
+  nn = yolor.YOLOR_CSP(pretrained="coco")
+  aa = nn(tf.ones([1, *nn.input_shape[1:]]))
+  bb = mm(tf.ones([1, *mm.input_shape[1:]]))
+  print(np.allclose(aa, bb.numpy()[:, :, [1, 0, 3, 2, 84, *np.arange(4, 84)]]))
+  # True
+  mm.save(mm.name + "_coco.h5")
+
+  from keras_cv_attention_models import test_images, coco
+  imm = test_images.dog_cat()
+  preds = mm(mm.preprocess_input(imm))
+  bboxs, lables, confidences = mm.decode_predictions(preds)[0]
+  coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
+  **Fuse batchnorm**
+  ```py
+  def fuse_2_bn(bn_layer_1, bn_layer_2, inplace=False):
+      # BatchNormalization returns: gamma * (batch - self.moving_mean) / sqrt(self.moving_var + epsilon) + beta
+      batch_std_1 = tf.sqrt(bn_layer_1.moving_variance + bn_layer_1.epsilon)
+      batch_std_2 = tf.sqrt(bn_layer_2.moving_variance + bn_layer_2.epsilon)
+      new_gamma = bn_layer_1.gamma * bn_layer_2.gamma
+      new_moving_mean = bn_layer_1.moving_mean + bn_layer_2.moving_mean * batch_std_1 / bn_layer_1.gamma
+      new_moving_variance = (batch_std_1 * batch_std_2) ** 2 - bn_layer_1.epsilon
+      new_beta = bn_layer_2.gamma * bn_layer_1.beta / batch_std_2 + bn_layer_2.beta
+
+      if inplace:
+          bn_layer_1.set_weights([new_gamma, new_beta, new_moving_mean, new_moving_variance])
+          return bn_layer_1
+      else:
+          rr = keras.layers.BatchNormalization.from_config(bn_layer_1.get_config())
+          rr.build(bn_layer_1.input_shape)
+          rr.set_weights([new_gamma, new_beta, new_moving_mean, new_moving_variance])
+          return rr
+  ```
+  ```py
+  from keras_cv_attention_models.yolor import yolor_e6, yolor
+  mm = yolor_e6.YOLOR_E6(pretrained='yolor_e6_coco.h5')
+  nn = yolor.YOLOR_E6(pretrained='yolor_e6_coco.h5')
+
+  aa = [ii.name for ii in mm.layers if ii.name.endswith('_concat_bn')]
+  bb = [ii.name for ii in nn.layers if ii.name.endswith('_short_bn')]
+  for ss, tt in zip(aa, bb):
+      print("source:", ss, "target:", tt)
+      ss, tt = mm.get_layer(ss), nn.get_layer(tt)
+      tt.set_weights([np.split(ii, 2, axis=-1)[-1] for ii in ss.get_weights()])
+  ```
+## YOLOR Training
+- [load_image](https://github.com/WongKinYiu/yolor/blob/main/utils/datasets.py#L924): largest aspect_aware_resize_and_crop_image
+- [Data augment(https://github.com/WongKinYiu/yolor/blob/main/utils/datasets.py#L546): `load_mosaic` -> `random_perspective` -> `augment_hsv` -> `fliplr`
+```py
+# vary img-size +/- 50%%
+if opt.multi_scale:
+    sz = random.randrange(imgsz * 0.5, imgsz * 1.5 + gs) // gs * gs  # size
+    sf = sz / max(imgs.shape[2:])  # scale factor
+    if sf != 1:
+        ns = [math.ceil(x * sf / gs) * gs for x in imgs.shape[2:]]  # new shape (stretched to gs-multiple)
+        imgs = F.interpolate(imgs, size=ns, mode='bilinear', align_corners=False)
+
+# Training output https://github.com/WongKinYiu/yolor/blob/main/models/models.py#L399
+# p.view(bs, 255, 13, 13) -- > (bs, 3, 13, 13, 85)  # (bs, anchors, grid, grid, classes + xywh)
+p = p.view(bs, self.na, self.no, self.ny, self.nx).permute(0, 1, 3, 4, 2).contiguous()  # prediction
+```
+## YOLOR random perspective
+  ```py
+  affine = [
+    [scale_x, shear_x, translate_x]
+    [shear_y, scale_y, translate_y]
+    [perspective_x, perspective_y]
+  ]
+  ```
+  ```py
+  from keras_cv_attention_models.imagenet.augment import transform, wrap, unwrap
+  from keras_cv_attention_models.visualizing import stack_and_plot_images
+  from keras_cv_attention_models import test_images
+
+  def show_transformed(image, transforms):
+      stack_and_plot_images([transform(image=wrap(image), transforms=tt)[:, :, :3] for tt in transforms])
+
+  image = test_images.cat()
+  transforms = tf.convert_to_tensor([
+      [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+      [0.2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+      [1.8, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+      [1.0, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0],
+      [1.0, 0.0, 0.0, 0.0, 1.8, 0.0, 0.0, 0.0],
+  ])
+  show_transformed(image, transforms)
+  ```
+## YOLOR random hsv
+  ```py
+  def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
+      r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
+      hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+      dtype = img.dtype  # uint8
+
+      x = np.arange(0, 256, dtype=np.int16)
+      lut_hue = ((x * r[0]) % 180).astype(dtype)
+      lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
+      lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
+
+      img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
+      return cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
+  ```
+  ```py
+  def augment_hsv(img, hgain=1.0, sgain=1.0, vgain=1.0):
+      hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+      dtype = img.dtype  # uint8
+
+      x = np.arange(0, 256, dtype=np.int16)
+      lut_hue = ((x * hgain) % 180).astype(dtype)
+      lut_sat = np.clip(x * sgain, 0, 255).astype(dtype)
+      lut_val = np.clip(x * vgain, 0, 255).astype(dtype)
+
+      img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
+      return cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
+
+  from keras_cv_attention_models import test_images
+  image = test_images.cat()
+  hue_delta, saturation_delta, brightness_delta = 0.015, 0.7, 0.4
+  aa = tf.concat([augment_hsv(image, hgain=1 - hue_delta), augment_hsv(image, hgain=1 + hue_delta)], axis=1)
+  bb = tf.concat([augment_hsv(image, sgain=1 - saturation_delta), augment_hsv(image, sgain=1 + saturation_delta)], axis=1)
+  cc = tf.concat([augment_hsv(image, vgain=1 - brightness_delta), augment_hsv(image, vgain=1 + brightness_delta)], axis=1)
+  plt.imshow(tf.concat([aa, bb, cc], axis=0))
+  plt.axis('off')
+  plt.tight_layout()
+  ```
+## YOLOR assign anchors
+  ```py
+  # targets in format [center_w, center_h, ww, hh], tt: targets * input_shape / stride
+  def build_targets(pp, targets, model):
+      num_targets = targets.shape[0]  # number of anchors, targets
+      tcls, tbox, indices, anch = [], [], [], []
+      gain = torch.ones(6, device=targets.device)  # normalized to gridspace gain
+      off = torch.tensor([[1, 0], [0, 1], [-1, 0], [0, -1]], device=targets.device).float()  # overlap offsets
+
+      g = 0.5  # offset
+      multi_gpu = is_parallel(model)
+      for i, jj in enumerate(model.module.yolo_layers if multi_gpu else model.yolo_layers):
+          # get number of grid points and anchor vec for this yolo layer
+          # anchor_vec = self.anchors / self.stride
+          anchors = anchor_vec # [3， 2]
+          gain[2:] = torch.tensor(pp[i].shape)[[3, 2, 3, 2]]  # xyxy gain, gain = input_shape / stride
+
+          # Match targets to anchors, t: [num_targets, 6]
+          a, tt, offsets = [], targets * gain, 0
+          if num_targets:
+              num_anchors = anchors.shape[0]  # number of anchors, 3
+              at = torch.arange(num_anchors).view(num_anchors, 1).repeat(1, num_targets)  # [0, 1, 2] -> shape [3, num_targets]
+              r = tt[None, :, 4:6] / anchors[:, None]  # wh ratio, [3, num_targets, 2]
+              j = torch.max(r, 1. / r).max(2)[0] < model.hyp['anchor_t']  # compare, anchor_t = 4.0, j: [3, num_targets]
+              # j = wh_iou(anchors, t[:, 4:6]) > model.hyp['iou_t']  # iou(3,n) = wh_iou(anchors(3,2), gwh(n,2))
+              a, tt = at[j], tt.repeat(num_anchors, 1, 1)[j]  # filter, tt: [num_targets, 6] -> t.repeat(3, 1, 1): [3, num_targets, 6]
+
+              # overlaps
+              gxy = tt[:, 2:4]  # grid xy
+              z = torch.zeros_like(gxy)
+              j, k = ((gxy % 1. < g) & (gxy > 1.)).T
+              l, m = ((gxy % 1. > (1 - g)) & (gxy < (gain[[2, 3]] - 1.))).T
+              a, tt = torch.cat((a, a[j], a[k], a[l], a[m]), 0), torch.cat((tt, tt[j], tt[k], tt[l], tt[m]), 0)
+              offsets = torch.cat((z, z[j] + off[0], z[k] + off[1], z[l] + off[2], z[m] + off[3]), 0) * g
+
+          # Define
+          b, c = tt[:, :2].long().T  # image, class
+          gxy = tt[:, 2:4]  # grid xy
+          gwh = tt[:, 4:6]  # grid wh
+          gij = (gxy - offsets).long()
+          gi, gj = gij.T  # grid xy indices
+
+          # Append
+          #indices.append((b, a, gj, gi))  # image, anchor, grid indices
+          indices.append((b, a, gj.clamp_(0, gain[3] - 1), gi.clamp_(0, gain[2] - 1)))  # image, anchor, grid indices
+          tbox.append(torch.cat((gxy - gij, gwh), 1))  # box
+          anch.append(anchors[a])  # anchors
+          tcls.append(c)  # class
+
+      return tcls, tbox, indices, anch
+  ```
+  ```py
+  from keras_cv_attention_models.coco import data, anchors_func
+  tt = data.init_dataset(batch_size=3, use_anchor_free_mode=True)[0]
+  xx, yy = tt.as_numpy_iterator().next()
+  flatten_targets = []
+  for id, ii in enumerate(yy):
+      valid = ii[np.any(ii > 0, axis=-1)]
+      labels = tf.expand_dims(tf.cast(tf.argmax(valid[:, 4:-1], axis=-1), "float32"), 1)
+      center_bboxes = tf.concat(anchors_func.corners_to_center_yxhw_nd(valid[:, :4]), axis=-1)
+      batch_id = tf.zeros_like(valid[:, :1]) + id
+      targets = tf.concat([batch_id, labels, center_bboxes], axis=-1).numpy()
+      # print(targets.shape)
+      flatten_targets.append(targets)
+  flatten_targets = tf.concat(flatten_targets, axis=0).numpy()
+  # anchors = anchors_func.get_yolor_anchors([256, 256])
+
+  import torch
+  gain = torch.ones(6)
+  gain[2:] = torch.tensor([32, 32, 32, 32]) # 256 / 8
+
+  # anchors = torch.tensor([[16.0, 12], [36, 19], [28, 40]]) / torch.tensor([256, 256]) # [3, 2]
+  anchors = torch.tensor([[16.0, 12], [36, 19], [28, 40]]) / 8 # [3, 2]
+  num_targets = flatten_targets.shape[0]
+  num_anchors = anchors.shape[0]
+  at = torch.arange(num_anchors).view(num_anchors, 1).repeat(1, num_targets) # [0, 1, 2] -> shape [3, num_targets]
+  temp_targets = torch.from_numpy(flatten_targets) * gain # [num_targets, 6]
+  ratio = temp_targets[None, :, 4:6] / anchors[:, None] # wh ratio, [3, num_targets, 2]
+  pick = torch.max(ratio, 1. / ratio).max(2)[0] < 4.0  # compare, anchor_t = 4.0, j: [3, num_targets]
+  anchors_pick, temp_targets = at[pick], temp_targets.repeat(num_anchors, 1, 1)[pick] # a: [j], temp_targets: [j, 6]
+
+  # overlaps
+  offset = 0.5
+  off = torch.tensor([[1, 0], [0, 1], [-1, 0], [0, -1]]).float()  # overlap offsets
+  gxy = temp_targets[:, 2:4]  # grid xy, [j, 2], [center_w, center_h]
+  z = torch.zeros_like(gxy)
+  j, k = ((gxy % 1. < offset) & (gxy > 1.)).T
+  l, m = ((gxy % 1. > (1 - offset)) & (gxy < (gain[[2, 3]] - 1.))).T
+  anchors_pick = torch.cat((anchors_pick, anchors_pick[j], anchors_pick[k], anchors_pick[l], anchors_pick[m]), 0)
+  temp_targets = torch.cat((temp_targets, temp_targets[j], temp_targets[k], temp_targets[l], temp_targets[m]), 0)
+  offsets = torch.cat((z, z[j] + off[0], z[k] + off[1], z[l] + off[2], z[m] + off[3]), 0) * offset
+
+  # Define
+  b, c = temp_targets[:, :2].long().T  # image, class
+  gxy = temp_targets[:, 2:4]  # grid xy
+  gwh = temp_targets[:, 4:6]  # grid wh
+  gij = (gxy - offsets).long()
+  gi, gj = gij.T  # grid xy indices
+
+  # Append
+  #indices.append((b, a, gj, gi))  # image, anchor, grid indices
+  indices = (b, anchors_pick, gj.clamp_(0, gain[3] - 1), gi.clamp_(0, gain[2] - 1))  # image, anchor, grid indices
+  tbox = torch.cat((gxy - gij, gwh), 1)  # box
+  anch = anchors[anchors_pick]  # anchors
+  tcls = c  # class
+
+  # model output
+  from keras_cv_attention_models import yolor
+  mm = yolor.YOLOR_CSP(input_shape=[256, 256, 3])
+  pred = mm(xx)[:, :3072].numpy()
+  pred = pred.reshape([-1, 32, 32, 3, 85]).transpose([0, 3, 1, 2, 4])
+
+  b, a, gj, gi = indices # image, anchor, gridy, gridx
+  ps = pred[b, a, gj, gi]
+  ```
+  ```py
+  from keras_cv_attention_models.coco import data, anchors_func
+  tt = data.init_dataset(batch_size=3, use_anchor_free_mode=True)[0]
+  xx, yy = tt.as_numpy_iterator().next()
+
+  from keras_cv_attention_models import yolor
+  mm = yolor.YOLOR_CSP(input_shape=[256, 256, 3])
+  pred = mm(xx).numpy()
+
+  from keras_cv_attention_models.coco import data, anchors_func
+  input_shape = [256, 256]
+  anchor_ratios, feature_sizes = anchors_func.get_yolor_anchors([256, 256], pyramid_levels=[3, 5], is_for_training=True)
+  print(sum([ii * jj * 3 for ii, jj in feature_sizes]))
+  # 4032.0
+  # feature_sizes: [(32, 32), (16, 16), (8, 8)]
+  # anchor_ratios: [[[ 16.,  12.], [ 36.,  19.],[ 28.,  40.]],...]
+
+  bbox_labels = tf.concat([yy[0][:, :4], tf.expand_dims(tf.cast(tf.argmax(yy[0][:, 4:-1], -1) + 1, 'float32'), -1)], axis=-1) * yy[0][:, -1:]
+
+  bbox_labels = tf.gather_nd(yy[0], tf.where(yy[0][:, -1] > 0))
+  bboxes, labels = bbox_labels[:, :4], bbox_labels[:, 4:]
+  center_bboxes = tf.concat(anchors_func.corners_to_center_yxhw_nd(bboxes), axis=-1)
+  input_shape = tf.convert_to_tensor(input_shape, tf.float32)
+  anchor_aspect_thresh = 4.0
+  num_anchors = anchor_ratios.shape[1]
+  num_bboxes_true = bboxes.shape[0]
+  overlap_offset = 0.5
+
+  # pick by aspect ratio
+  temp_center_bboxes = center_bboxes * tf.tile(feature_sizes[0], [2])
+  aspect_ratio = tf.expand_dims(temp_center_bboxes[:, 2:], 0) / tf.expand_dims(anchor_ratios[0], 1)
+  aspect_pick = tf.reduce_max(tf.maximum(aspect_ratio, 1 / aspect_ratio), axis=-1) < anchor_aspect_thresh
+  anchors_pick = tf.repeat(tf.expand_dims(tf.range(num_anchors), -1), num_bboxes_true, axis=-1)[aspect_pick]
+  aspect_picked_bboxes_labels = tf.concat([temp_center_bboxes, labels], axis=-1)
+  aspect_picked_bboxes_labels = tf.repeat(tf.expand_dims(aspect_picked_bboxes_labels, 0), num_anchors, axis=0)[aspect_pick]
+
+  # pick by centers
+  centers = aspect_picked_bboxes_labels[:, :2]
+  top, left = tf.unstack(tf.logical_and(centers % 1 < overlap_offset, centers > 1), axis=-1)
+  bottom, right = tf.unstack(tf.logical_and(centers % 1 > (1 - overlap_offset), centers < (feature_sizes[0] - 1)), 2, axis=-1)
+  anchors_pick_all = tf.concat([anchors_pick, anchors_pick[top], anchors_pick[left], anchors_pick[bottom], anchors_pick[right]], axis=0)
+  matched_top, matched_left = aspect_picked_bboxes_labels[top], aspect_picked_bboxes_labels[left]
+  matched_bottom, matched_right = aspect_picked_bboxes_labels[bottom], aspect_picked_bboxes_labels[right]
+  matched_bboxes_all = tf.concat([aspect_picked_bboxes_labels, matched_top, matched_left, matched_bottom, matched_right], axis=0)
+
+  matched_bboxes_idx = tf.cast(aspect_picked_bboxes_labels[:, :2], "int32")
+  matched_top_idx = tf.cast(matched_top[:, :2] - [overlap_offset, 0], "int32")
+  matched_left_idx = tf.cast(matched_left[:, :2] - [0, overlap_offset], "int32")
+  matched_bottom_idx = tf.cast(matched_bottom[:, :2] + [overlap_offset, 0], "int32")
+  matched_right_idx = tf.cast(matched_right[:, :2] + [0, overlap_offset], "int32")
+  matched_bboxes_idx_all = tf.concat([matched_bboxes_idx, matched_top_idx, matched_left_idx, matched_bottom_idx, matched_right_idx], axis=0)
+
+  bboxes_true = tf.concat([matched_bboxes_all[:, :2] - tf.cast(matched_bboxes_idx_all, matched_bboxes_all.dtype), matched_bboxes_all[:, 2:]], axis=-1)
+
+  aa = tf.zeros([feature_sizes[0][0], feature_sizes[0][1], num_anchors, 5])
+  bb = tf.tensor_scatter_nd_update(aa, tf.concat([matched_bboxes_idx_all, tf.expand_dims(anchors_pick_all, 1)], axis=-1), bboxes_true)
+
+  print(tf.reduce_sum(tf.cast(tf.reduce_any(tf.reshape(bb, [-1, 5]) != 0, axis=-1), 'float32')))
+  ```
+  ```py
+  # YOLOLayer
+  io[..., :2] = (io[..., :2] * 2. - 0.5 + self.grid)
+  io[..., 2:4] = (io[..., 2:4] * 2) ** 2 * self.anchor_wh
+  io[..., :4] *= self.stride
+
+  # compute_loss
+  # anchors = YOLOLayer.anchor_vec = YOLOLayer.anchor_wh = YOLOLayer.anchors / strides
+  pxy = ps[:, :2].sigmoid() * 2. - 0.5
+  pwh = (ps[:, 2:4].sigmoid() * 2) ** 2 * anchors[i]
+  pbox = torch.cat((pxy, pwh), 1).to(device)  # predicted box
+  iou = bbox_iou(pbox.T, tbox[i], x1y1x2y2=False, CIoU=True)  # iou(prediction, target)
+  ```
+## YOLOR losses
+```py
+# https://github.com/WongKinYiu/yolor/blob/main/utils/general.py#L187
+def bbox_ciou(box1, box2, x1y1x2y2=True, GIoU=False, DIoU=False, CIoU=False, EIoU=False, ECIoU=False, eps=1e-9):
+    # Returns the IoU of box1 to box2. box1 is 4, box2 is nx4
+    box2 = box2.T
+
+    # Get the coordinates of bounding boxes
+    b1_x1, b1_x2 = box1[0] - box1[2] / 2, box1[0] + box1[2] / 2
+    b1_y1, b1_y2 = box1[1] - box1[3] / 2, box1[1] + box1[3] / 2
+    b2_x1, b2_x2 = box2[0] - box2[2] / 2, box2[0] + box2[2] / 2
+    b2_y1, b2_y2 = box2[1] - box2[3] / 2, box2[1] + box2[3] / 2
+
+    # Intersection area
+    inter = (torch.min(b1_x2, b2_x2) - torch.max(b1_x1, b2_x1)).clamp(0) * (torch.min(b1_y2, b2_y2) - torch.max(b1_y1, b2_y1)).clamp(0)
+
+    # Union Area
+    w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
+    w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
+    union = w1 * h1 + w2 * h2 - inter + eps
+
+    iou = inter / union
+
+    cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)  # convex (smallest enclosing box) width
+    ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)  # convex height
+
+    c2 = cw ** 2 + ch ** 2 + eps  # convex diagonal squared
+    rho2 = ((b2_x1 + b2_x2 - b1_x1 - b1_x2) ** 2 + (b2_y1 + b2_y2 - b1_y1 - b1_y2) ** 2) / 4  # center distance squared
+    v = (4 / math.pi ** 2) * torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
+    with torch.no_grad():
+        alpha = v / ((1 + eps) - iou + v)
+    return iou - (rho2 / c2 + v * alpha)  # CIoU
+```
+```py
+def compute_loss(p, targets, model):  # predictions, targets, model
+    device = targets.device
+    #print(device)
+    lcls, lbox, lobj = torch.zeros(1, device=device), torch.zeros(1, device=device), torch.zeros(1, device=device)
+    tcls, tbox, indices, anchors = build_targets(p, targets, model)  # targets
+    h = model.hyp  # hyperparameters
+
+    # Define criteria
+    BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([h['cls_pw']])).to(device)
+    BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([h['obj_pw']])).to(device)
+
+    # Class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
+    cp, cn = smooth_BCE(eps=0.0)
+
+    # Focal loss
+    g = h['fl_gamma']  # focal loss gamma
+    if g > 0:
+        BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
+
+    # Losses
+    nt = 0  # number of targets
+    no = len(p)  # number of outputs
+    balance = [4.0, 1.0, 0.4] if no == 3 else [4.0, 1.0, 0.4, 0.1]  # P3-5 or P3-6
+    balance = [4.0, 1.0, 0.5, 0.4, 0.1] if no == 5 else balance
+    for i, pi in enumerate(p):  # layer index, layer predictions
+        b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
+        tobj = torch.zeros_like(pi[..., 0], device=device)  # target obj
+
+        n = b.shape[0]  # number of targets
+        if n:
+            nt += n  # cumulative targets
+            ps = pi[b, a, gj, gi]  # prediction subset corresponding to targets
+
+            # Regression
+            pxy = ps[:, :2].sigmoid() * 2. - 0.5
+            pwh = (ps[:, 2:4].sigmoid() * 2) ** 2 * anchors[i]
+            pbox = torch.cat((pxy, pwh), 1).to(device)  # predicted box
+            iou = bbox_iou(pbox.T, tbox[i], x1y1x2y2=False, CIoU=True)  # iou(prediction, target)
+            lbox += (1.0 - iou).mean()  # iou loss
+
+            # Objectness
+            tobj[b, a, gj, gi] = (1.0 - model.gr) + model.gr * iou.detach().clamp(0).type(tobj.dtype)  # iou ratio
+
+            # Classification
+            if model.nc > 1:  # cls loss (only if multiple classes)
+                t = torch.full_like(ps[:, 5:], cn, device=device)  # targets
+                t[range(n), tcls[i]] = cp
+                lcls += BCEcls(ps[:, 5:], t)  # BCE
+
+            # Append targets to text file
+            # with open('targets.txt', 'a') as file:
+            #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
+
+        lobj += BCEobj(pi[..., 4], tobj) * balance[i]  # obj loss
+
+    s = 3 / no  # output count scaling
+    lbox *= h['box'] * s
+    lobj *= h['obj'] * s * (1.4 if no >= 4 else 1.)
+    lcls *= h['cls'] * s
+    bs = tobj.shape[0]  # batch size
+
+    loss = lbox + lobj + lcls
+    return loss * bs, torch.cat((lbox, lobj, lcls, loss)).detach()
+```
 ***
+## YOLOXTiny eval
+| nms_score_threshold | nms_iou_or_sigma | clip_bbox | nms_method | nms_mode      | nms_topk | others          | Val AP |
+| ------------------- | ---------------- | --------- | ---------- | ------------- | -------- | --------------- | ------ |
+| 0.001               | 0.5              | True      | gaussian   | per_class     | 5000     |                 | 0.289  |
+| 0.001               | 0.65             | True      | hard       | torch_batched | 5000     |                 | 0.291  |
+| 0.001               | 0.65             | True      | hard       | per_class     | 5000     |                 | 0.291  |
+| 0.001               | 0.65             | True      | hard       | torch_batched | 5000     | antialias False | 0.290  |
+| 0.001               | 0.65             | True      | hard       | torch_batched | 5000     | input 640       | 0.305  |
+| 0.001               | 0.65             | True      | hard       | torch_batched | -1       | input 640       | 0.303  |
+| 0.001               | 0.65             | True      | hard       | torch_batched | 5000     | BGR             | 0.329  |
+
+```py
+CUDA_VISIBLE_DEVICES='1' ./coco_eval_script.py -m yolox.YOLOXTiny --nms_method hard --nms_iou_or_sigma 0.65 --use_bgr_input --use_anchor_free_mode
+ # Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.329
+ # Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.504
+ # Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.349
+ # Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.138
+ # Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.360
+ # Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.499
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.287
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.458
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.486
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.230
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.549
+ # Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.692
+```
+## YOLOR_CSP eval
+| nms_score_threshold | nms_iou_or_sigma | clip_bbox | nms_method | nms_mode  | nms_topk | others    | Val AP        |
+| ------------------- | ---------------- | --------- | ---------- | --------- | -------- | --------- | ------------- |
+| 0.001               | 0.65             | True      | hard       | per_class | -1       |           | 0.487 - 0.775 |
+| 0.001               | 0.65             | True      | hard       | per_class | 5000     |           | 0.488 - 0.779 |
+| 0.001               | 0.65             | True      | hard       | per_class | 5000     | bilinear  | 0.488 - 0.777 |
+| 0.001               | 0.65             | True      | hard       | per_class | 5000     | letterbox | 0.488 - 0.785 |
+| 0.001               | 0.65             | True      | hard       | per_class | 5000     | BGR       | 0.455 - 0.754 |
+
+```py
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.488
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.674
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.530
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.324
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.539
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.627
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.365
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.592
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.634
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.447
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.684
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.779
+# letterbox
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.488
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.674
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.529
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.321
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.540
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.630
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.366
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.592
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.632
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.441
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.685
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.785
+```
+```py
+dataloader = create_dataloader(path, imgsz, batch_size, 64, opt, pad=0.5, rect=True)[0]
+
+create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=False, cache=False, pad=0.0, rect=False, rank=-1, world_size=1, workers=8)
+
+# Rectangular Training
+if self.rect:
+    # Sort by aspect ratio
+    s = self.shapes  # wh
+    ar = s[:, 1] / s[:, 0]  # aspect ratio
+    irect = ar.argsort()
+    self.img_files = [self.img_files[i] for i in irect]
+    self.label_files = [self.label_files[i] for i in irect]
+    self.labels = [self.labels[i] for i in irect]
+    self.shapes = s[irect]  # wh
+    ar = ar[irect]
+
+    # Set training image shapes
+    shapes = [[1, 1]] * nb
+    for i in range(nb):
+        ari = ar[bi == i]
+        mini, maxi = ari.min(), ari.max()
+        if maxi < 1:
+            shapes[i] = [maxi, 1]
+        elif mini > 1:
+            shapes[i] = [1, 1 / mini]
+
+    self.batch_shapes = np.ceil(np.array(shapes) * img_size / stride + pad).astype(np.int) * stride
+
+# Load image
+img, (h0, w0), (h, w) = load_image(self, index)
+
+# Letterbox
+shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
+img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
+shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
+
+# Load labels
+labels = []
+x = self.labels[index]
+if x.size > 0:
+    # Normalized xywh to pixel xyxy format
+    labels = x.copy()
+    labels[:, 1] = ratio[0] * w * (x[:, 1] - x[:, 3] / 2) + pad[0]  # pad width
+    labels[:, 2] = ratio[1] * h * (x[:, 2] - x[:, 4] / 2) + pad[1]  # pad height
+    labels[:, 3] = ratio[0] * w * (x[:, 1] + x[:, 3] / 2) + pad[0]
+    labels[:, 4] = ratio[1] * h * (x[:, 2] + x[:, 4] / 2) + pad[1]
+```
+***
+
+# YOLOX training
+```py
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "YOLOXTiny, bs 64, basic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02_hist.json",
+    "randaug_after_mosaic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
+    "randaug_after_mosaic, randaug_scale_03": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_hist.json",
+    "randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_random_hsv_hist.json",
+    # "randaug_after_mosaic, randaug_scale_03, effd_anchors": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_effd_anchors_hist.json",
+    "416, randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
+    "416, randaug_after_mosaic, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale_hist.json",
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
+```
+- **Test**
+```py
+from keras_cv_attention_models import efficientdet, efficientnet, yolox
+
+model = yolox.YOLOXTiny(pretrained='checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02.h5', input_shape=(256, 256, 3), rescale_mode='torch')
+
+# Run prediction
+from keras_cv_attention_models import test_images
+imm = test_images.dog_cat()
+bboxs, lables, confidences = model.decode_predictions(model(model.preprocess_input(imm)))[0]
+
+# Show result
+from keras_cv_attention_models.coco import data
+data.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+```
+```py
+# YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.158
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.274
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.159
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.042
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.158
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.275
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.178
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.294
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.311
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.079
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.336
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.535
+# latest
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.152
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.270
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.151
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.039
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.153
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.262
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.172
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.285
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.301
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.073
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.328
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.512
+
+# YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosaic
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.158
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.273
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.159
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.038
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.156
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.274
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.175
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.289
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.306
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.073
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.332
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.520
+# lastest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.155
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.269
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.157
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.041
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.150
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.270
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.176
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.291
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.308
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.077
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.338
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.522
+
+# YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.160
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.276
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.162
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.041
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.158
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.277
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.179
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.295
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.312
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.076
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.343
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.532
+
+# YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_random_hsv, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.169
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.288
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.171
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.048
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.164
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.298
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.182
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.299
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.316
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.092
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.343
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.531
+```
+| optimizer | color      | scale | best           | latest |
+| --------- | ---------- | ----- | -------------- | ------ |
+| adamw     | random_hsv | 0     | Epoch 52 0.234 | 0.219  |
+| adamw     | random_hsv | 0.3   | Epoch 48 0.242 | 0.230  |
+| lamb      | random_hsv | 0.3   | Epoch 49 0.210 | 0.206  |
+| sgdw      | random_hsv | 0     | Epoch 52 0.217 | 0.218  |
+| adamw     | randaug    | 0.5   | Epoch 53 0.234 | 0.234  |
+| adamw     | randaug    | 0.3   | Epoch 50 0.236 | 0.231  |
+
+```py
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale, epoch 52
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.234
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.389
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.089
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.250
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.363
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.235
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.389
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.415
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.169
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.459
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.624
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.219
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.378
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.225
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.081
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.321
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.223
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.371
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.394
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.161
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.438
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.575
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, epoch 48
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.254
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.082
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.253
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.381
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.241
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.397
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.422
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.164
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.649
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.230
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.386
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.239
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.082
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.350
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.232
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.382
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.406
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.169
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.447
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.605
+
+# YOLOXTiny_416_lamb_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_03, epoch_49
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.210
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.353
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.218
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.068
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.219
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.333
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.220
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.369
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.391
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.142
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.425
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.613
+# YOLOXTiny_416_lamb_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_03, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.206
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.352
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.212
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.072
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.217
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.317
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.216
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.367
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.391
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.153
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.432
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.585
+
+# YOLOXTiny_416_agdw_coco_2017_batchsize_64_l1008_wde54_randaug_after_mosac_random_hsv_no_randaug_scale, sgdw lr 0.08 wd 0.05, epoch_52
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.217
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.370
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.224
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.074
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.236
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.335
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.224
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.370
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.394
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.140
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.437
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.591
+# latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.218
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.364
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.227
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.082
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.235
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.330
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.227
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.378
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.402
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.149
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.445
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.597
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_randaug_color_scale_05, latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.234
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.382
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.245
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.079
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.247
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.363
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.235
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.390
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.415
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.157
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.628
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_randaug_color_scale, scale_03, epoch 50
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.236
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.384
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.247
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.077
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.251
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.370
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.238
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.392
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.417
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.150
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.461
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.641
+# latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.231
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.379
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.239
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.079
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.244
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.355
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.232
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.386
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.411
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.457
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.620
+```
+***
+# YOLOV4 Anchors
+```py
+# yolor_p6
+19,27,  44,40,  38,94,  96,68,  86,152,  180,137,  140,301,  303,264,  238,542,  436,615,  739,380,  925,792
+
+# yolov4_p6
+13,17,  31,25,  24,51, 61,45,  48,102,  119,96,  97,189,  217,184,  171,384,  324,451, 545,357, 616,618
+
+# yolov4_p7
+13,17,  22,25,  27,66, 57,88,  112,69,  69,177,  136,138,  287,114,  134,275,  268,248,  232,504, 445,416,  812,393,  477,808,  1070,908
+```
+***
+# Flops
+```py
+import kecam
+from keras_flops import get_flops
+from inspect import getmembers
+exclude = ["aotnet", "attention_layers", "coco", "common_layers", "download_and_load", "imagenet", "mlp_family", "model_surgery", "resnet_family", "test_images", "version", "visualizing"]
+aa = [ii for ii in getmembers(kecam) if not ii[0].startswith("_") and not ii[0] in exclude]
+bb = [ii for ii in getmembers(aa[0][1]) if ii[0][0].isupper()]
+
+rrs = {}
+for ii in getmembers(aa[0][1]):
+    if ii[0][0].isupper():
+        print(">>>>", ii[0])
+        rrs[ii[0]] = get_flops(ii[1](pretrained=None))
+        print(rrs)
+```
+```py
+from tensorflow.python.profiler import model_analyzer, option_builder
+import kecam
+
+mm = kecam.uniformer.UniformerSmall64()
+input_signature = [tf.TensorSpec(shape=(1, *ii.shape[1:]), dtype=ii.dtype, name=ii.name) for ii in mm.inputs]
+forward_graph = tf.function(mm, input_signature).get_concrete_function().graph
+options = option_builder.ProfileOptionBuilder.float_operation()
+graph_info = model_analyzer.profile(forward_graph, options=options)
+flops = graph_info.total_float_ops // 2
+print('Flops: {:,}, GFlops: {:.4f}G'.format(flops, flops / 1e9))
+```
