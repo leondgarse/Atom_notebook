@@ -158,7 +158,7 @@ def half_split_weighted_cosine_similarity(aa, bb):
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 5e-4, adamw cos16", names=names, **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warmup_3_float16_hist.json", fig_label="B0, wd 5e-4, SGD cos16", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warmup_3_float16_hist.json", fig_label="B0, wd 5e-4, SGD cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_no_exc_bn_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, no execlude bn cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_out_0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_hist.json", fig_label="B0 out 0, wd 5e-4, adamw, cos16", **pp)
@@ -170,7 +170,24 @@ def half_split_weighted_cosine_similarity(aa, bb):
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag045_1_FN_1_51_RL_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 5e-4, adamw cos16, mag 0.45_1, FN_1_51, RL 5", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag04_1_FN_1_51_RL_35_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 5e-4, adamw cos16, mag 0.4_1, FN_1_51, RL 35", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag04_1_FN_1_51_RL_35_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warm3_hist.json", fig_label="B0, l2 5e-4, sgd cos16, mag 0.4_1, FN_1_51, RL 35", **pp)
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag04_1_FN_1_51_RL_35_emb512_dr0_sgd_l2_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warm3_hist.json", fig_label="B0, l2 5e-4, sgd cos16, mag 0.4_1, FN_1_51, RL 35", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, 10_110_04_08_35", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
+  ```
+  - **ms1mv3_cleaned_asian**
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [3, 1, 3, 13, 33]
+  pp["skip_epochs"] = 10
+  names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, 10_110_04_08_35", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_200_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
   ```
 # Fine-tune
 ```py

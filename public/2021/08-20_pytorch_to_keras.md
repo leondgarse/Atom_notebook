@@ -218,10 +218,11 @@
       do_convert=True,
   )
   ```
-## resnet regnety
+## resnet regnety regnetz
   ```py
+  sys.path.append('../pytorch-image-models/')
   import timm
-  from keras_cv_attention_models import aotnet
+  from keras_cv_attention_models import aotnet, regnet
   from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model
 
   torch_model = timm.models.resnet50(pretrained=True)
@@ -440,6 +441,34 @@
   from keras_cv_attention_models import download_and_load
   mm = mobilevit.MobileViT_S(pretrained=None, classifier_activation=None)
   download_and_load.keras_reload_from_torch_model(torch_model, mm, [256, 256], do_convert=True)
+  ```
+## EvoNorm models
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.regnetz_c16_evos(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models import download_and_load, regnet, attention_layers
+  mm = regnet.RegNetZC16_EVO(pretrained=None, classifier_activation=None)
+
+  additional_transfer = {attention_layers.EvoNormalization: lambda ww: [ii[None, None, None] for ii in ww]}
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, input_shape=(256, 256), additional_transfer=additional_transfer, do_convert=True)
+  ```
+## SwinV2
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.swin_v2_cr_small_224(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.swin_transformer_v2 import swin_transformer_v2
+  from keras_cv_attention_models import download_and_load
+  mm = swin_transformer_v2.SwinTransformerV2Small224(pretrained=None, classifier_activation=None)
+
+  tail_align_dict = {"attn_scale": -3, "attn_output": -2}
+  additional_transfer = {swin_transformer_v2.DivideScale: lambda ww: [ww[0][None, :, None, None]]}
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, input_shape=(224, 224), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
   ```
 ***
 

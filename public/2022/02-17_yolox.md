@@ -1475,6 +1475,10 @@ CUDA_VISIBLE_DEVICES='1' ./coco_eval_script.py -m yolox.YOLOXTiny --nms_method h
  # Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.692
 ```
 ## YOLOR_CSP eval
+```sh
+python test.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.65 --device 0 --cfg cfg/yolor_csp.cfg --weights yolor_csp_star.pt --name yolor_csp_val
+```
+
 | nms_score_threshold | nms_iou_or_sigma | clip_bbox | nms_method | nms_mode  | nms_topk | others    | Val AP        |
 | ------------------- | ---------------- | --------- | ---------- | --------- | -------- | --------- | ------------- |
 | 0.001               | 0.65             | True      | hard       | per_class | -1       |           | 0.487 - 0.775 |
@@ -1673,14 +1677,18 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.092
 Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.343
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.531
 ```
-| optimizer | color      | scale | best           | latest |
-| --------- | ---------- | ----- | -------------- | ------ |
-| adamw     | random_hsv | 0     | Epoch 52 0.234 | 0.219  |
-| adamw     | random_hsv | 0.3   | Epoch 48 0.242 | 0.230  |
-| lamb      | random_hsv | 0.3   | Epoch 49 0.210 | 0.206  |
-| sgdw      | random_hsv | 0     | Epoch 52 0.217 | 0.218  |
-| adamw     | randaug    | 0.5   | Epoch 53 0.234 | 0.234  |
-| adamw     | randaug    | 0.3   | Epoch 50 0.236 | 0.231  |
+| optimizer | color      | scale | rotate_shear | best           | latest |
+| --------- | ---------- | ----- | ------------ | -------------- | ------ |
+| adamw     | random_hsv | 0     | True         | Epoch 52 0.234 | 0.219  |
+| sgdw      | random_hsv | 0     | True         | Epoch 52 0.217 | 0.218  |
+| adamw     | random_hsv | 0.3   | True         | Epoch 48 0.242 | 0.230  |
+| lamb      | random_hsv | 0.3   | True         | Epoch 49 0.210 | 0.206  |
+| adamw     | randaug    | 0.3   | True         | Epoch 50 0.236 | 0.231  |
+| adamw     | random_hsv | 0.5   | True         | Epoch 49 0.242 | 0.243  |
+| adamw     | randaug    | 0.5   | True         | Epoch 53 0.234 | 0.234  |
+| adamw     | random_hsv | 0.5   | False        | Epoch 55 0.246 | 0.246  |
+| adamw     | random_hsv | 0.5   | mag 10       | Epoch 48 0.231 | 0.229  |
+| adamw     | random_hsv | 0.8   | True         | Epoch 55 0.241 | 0.241  |
 
 ```py
 # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale, epoch 52
@@ -1831,6 +1839,88 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.411
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
 Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.457
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.620
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05, epoch 49
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.394
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.255
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.083
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.256
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.374
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.236
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.392
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.417
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.466
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.638
+# latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.243
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.392
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.257
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.085
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.252
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.374
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.238
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.393
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.419
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.159
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.466
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.622
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05_no_rotate_shear, epoch_55
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.246
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.260
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.087
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.260
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.385
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.246
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.402
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.429
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.160
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.477
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.655
+
+YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05_mag_10_latest.h5
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.231
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.378
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.079
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.244
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.367
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.235
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.386
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.410
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.150
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.449
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.637
+# latest
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.229
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.373
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.081
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.366
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.237
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.389
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.414
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.154
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.451
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.641
+
+# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_08, epoch_55
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.241
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.391
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.255
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.093
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.260
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.370
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.239
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.397
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.423
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.170
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.470
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
 ```
 ***
 # YOLOV4 Anchors

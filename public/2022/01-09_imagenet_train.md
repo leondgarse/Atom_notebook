@@ -141,6 +141,7 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "CoAtNet0_160, wd_exclude_pos_emb, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_hist.json",
       "CoAtNet0_160, wd_exclude_pos_emb, mag_10, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_mag_10_hist.json",
       "CoAtNet0_160_act_first, bs 128": "checkpoints/CoAtNet0_160_act_first_hist.json",
+      "swin_transformer_v2, bs 128": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=25, base_size=8)
