@@ -470,6 +470,31 @@
   additional_transfer = {swin_transformer_v2.DivideScale: lambda ww: [ww[0][None, :, None, None]]}
   download_and_load.keras_reload_from_torch_model(torch_model, mm, input_shape=(224, 224), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
   ```
+## MobilenetV3
+  - mobilenetv3_small_075, mobilenetv3_small_100, mobilenetv3_large_100, mobilenetv3_large_100_miil
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.mobilenetv3_large_100(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.mobilenetv3 import mobilenetv3
+  from keras_cv_attention_models import download_and_load
+  mm = mobilenetv3.MobilenetV3Large100(pretrained=None, classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, do_convert=True)
+  ```
+  - LCNet reload from PaddlePaddle
+  ```py
+  aa = np.load('PPLCNet_x1_5_pretrained.pdparams', allow_pickle=True)
+  aa = {kk: aa[kk] for kk in aa.keys() if kk != "StructuredToParameterName@@"}
+
+  from keras_cv_attention_models.mobilenetv3_family import lcnet
+  from keras_cv_attention_models import download_and_load
+  mm = lcnet.LCNet150()
+
+  additional_transfer = {"predictions": lambda ww: [ww[0].T, ww[1]]} # prediction dense layer don't need to transpose
+  download_and_load.keras_reload_from_torch_model(aa, mm, do_convert=True, additional_transfer=additional_transfer)
+  ```
 ***
 
 # Resnest

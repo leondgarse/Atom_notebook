@@ -715,6 +715,9 @@
   detection_results = eval_func.model_eval_results(model, ds, pred_decoder)
   eval_func.coco_evaluation(detection_results)
   ```
+  ```py
+  to_coco_json = lambda xx: {"image_id": int(xx[0]), "bbox": xx[1:5].tolist(), "score": float(xx[5]), "category_id": int(xx[6])}
+  ```
 ## D0 evaluation results
   - **From ckpt**
   ```py

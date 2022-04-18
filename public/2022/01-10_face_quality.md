@@ -81,6 +81,9 @@ def half_split_weighted_cosine_similarity(aa, bb):
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="mag, margin (0.4, 0.8), FN (10, 110)", **pp)
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_1_51_04_1_35_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="mag, margin (0.4, 1.0), FN (1, 51)", **pp)
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="ms1mv3_cleaned_asian, mag_10_110_04_08_35", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr03_drc03_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="ms1mv3_cleaned_asian, mag_10_110_04_08_35, dr 0.3", **pp)
   ```
   | margin min max | Epoch 53 margin mean | lfw      | cfp_fp   | agedb_30 | IJBB         | IJBC         |
   | -------------- | -------------------- | -------- | -------- | -------- | ------------ | ------------ |
@@ -158,6 +161,8 @@ def half_split_weighted_cosine_similarity(aa, bb):
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 5e-4, adamw cos16", names=names, **pp)
   pp["axes"] = axes
 
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="B0, arcface, VPL", names=names, **pp)
+
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warmup_3_float16_hist.json", fig_label="B0, wd 5e-4, SGD cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_no_exc_bn_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, no execlude bn cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, cos16", **pp)
@@ -187,7 +192,7 @@ def half_split_weighted_cosine_similarity(aa, bb):
   pp["axes"] = axes
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_200_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_200_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, randaug_200", **pp)
   ```
 # Fine-tune
 ```py
