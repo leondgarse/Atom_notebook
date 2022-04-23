@@ -130,7 +130,10 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
   import json
   from keras_cv_attention_models.imagenet import eval_func
   hhs = {
+      "log_my_RRC, Resnet50, A3, 160, Epoch 100": eval_func.parse_timm_log("../pytorch-image-models/log_my_RRC.foo", pick_keys=['loss', 'val_acc']),
+      # "log_timm_RRC, Resnet50, A3, 160, Epoch 100": eval_func.parse_timm_log("../pytorch-image-models/log_timm_RRC.foo", pick_keys=['loss', 'val_acc']),
       "AotNet50, A3, 160, Epoch 100": "checkpoints/aotnet.AotNet50_LAMB_nobn_globclip1_imagenet2012_batchsize_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_bce_0.2_mixup_timm_cutmix_hist.json",
+      "AotNet50, A3, 160, Epoch 100, evonorm": "checkpoints/aotnet50_evonorm_hist.json",
       "AotNet50, A2, 224, Epoch 100": "checkpoints/aotnet.AotNet50_224_LAMB_imagenet2012_batchsize_128_randaug_7_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.005_wd_0.02_hist.json",
       "AotNet50, A2, 224, Epoch 300": {kk: vv[::3] for kk, vv in json.load(open("checkpoints/aotnet.AotNet50_A2_hist.json", "r")).items()},
       # "ConvNeXt-T": {kk: vv[::3] for kk, vv in log.bb.items()},
@@ -179,6 +182,7 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "CoAtNet0_160, wd_exclude_pos_emb, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_hist.json",
       "CoAtNet0_160, wd_exclude_pos_emb, mag_10, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_mag_10_hist.json",
       "CoAtNet0_160_act_first, bs 128": "checkpoints/CoAtNet0_160_act_first_hist.json",
+      "CoAtNet0_160, vv_equal_key_dim, bs 128": "checkpoints/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_vv_equal_key_dim_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=25, base_size=8)
@@ -203,6 +207,7 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "ft 224, magnitude 15, drc 0.05, wd exc pos_emb, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
       "ft 224, magnitude 10, drc 0.05, act_first": "checkpoints/coatnet.CoAtNet0_act_first_ft_224_lr_steps_32_lr4e3_drc005_magnitude_10_hist.json",
       "ft 224, magnitude 15, drc 0.05, act_first": "checkpoints/coatnet.CoAtNet0_act_first_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
+      "ft 224, magnitude 15, drc 0.05, vv_equal_key_dim": "checkpoints/coatnet.CoAtNet0_vv_equal_key_dim_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
@@ -301,15 +306,29 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "CMTTiny, epoch 305": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_hist.json', 'r')).items()},
       "CMTTiny, epoch 305, mag15": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag15_hist.json', 'r')).items()},
       "CMTTiny, epoch 305, mag7, drc0.05, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag7_drc_005_bs_240_hist.json', 'r')).items()},
+      "CMTTiny, epoch 305, mag7, dr 0.1, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_LAMB_imagenet2012_batchsize_160_randaug_7_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json', 'r')).items()},
   }
 
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=20, base_size=8)
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=6)
   ```
   | 305 epochs             | Train acc | Best eval loss, acc on 160 | Epoch 105 Eval acc on 224   |
   | ---------------------- | --------- | -------------------------- | --------------------------- |
   | mag6, drc 0, bs 256    | 0.6702    | Epoch 304, 0.0013, 0.7874  | top1: 0.79956 top5: 0.94850 |
   | mag7, drc 0.05, bs 160 | 0.6577    | Epoch 294, 0.0013,0.7880   | top1: 0.80126 top5: 0.94898 |
   | mag15, drc 0, bs 256   | 0.6390    | Epoch 304, 0.0014,0.7824   | top1: 0.79630 top5: 0.94794 |
+
+  **Fine-tune 224**
+  ```py
+  import json
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "224, randaug_6": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_hist.json",
+      "224, randaug_15": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_magnitude_15_hist.json",
+      "224, randaug_15, drc 0.05": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_drc005_magnitude_15_hist.json",
+  }
+
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=6)
+  ```
 ***
 # SwinTransformerV2Tiny_ns
 ```py

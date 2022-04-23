@@ -158,10 +158,11 @@ def half_split_weighted_cosine_similarity(aa, bb):
   pp["epochs"] = [3, 1, 3, 13, 33]
   pp["skip_epochs"] = 10
   names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 5e-4, adamw cos16", names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16", names=names, **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="B0, arcface, VPL", names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 8000, delta 200", names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_128_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 2000, delta 50", names=names, **pp)
 
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warmup_3_float16_hist.json", fig_label="B0, wd 5e-4, SGD cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_no_exc_bn_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, no execlude bn cos16", **pp)
@@ -213,7 +214,7 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_
 # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_E53_mag_1_51_045_1_5_adamw_LA_hist.json", fig_label="mag_1_51_045_1_5_adamw_LA", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_E53_mag_1_51_045_1_35_adamw_lr00125_hist.json", fig_label="mag_1_51_045_1_35_adamw_lr00125", **pp)
 ```
-# TLA issue
+# XLA issue
 ```py
 class NormDense(keras.layers.Layer):
     def __init__(self, units=1000, append_norm=False, **kwargs):
@@ -277,4 +278,37 @@ yy = tf.one_hot(tf.cast(tf.random.uniform([160], 0, 10), 'int32'), 10)
 mm = keras.models.Sequential([keras.layers.Input([32, 32, 3]), keras.layers.Flatten(), keras.layers.Dense(32), NormDense(10, append_norm=True)])
 mm.compile(loss=NormDenseLoss(), optimizer="adam")
 mm.fit(xx, yy)
+```
+# DepthwiseConv2D float16 issue
+```py
+keras.mixed_precision.set_global_policy("mixed_float16")
+
+xx = tf.random.uniform([160, 32, 32, 3])
+yy = tf.one_hot(tf.cast(tf.random.uniform([160], 0, 10), 'int32'), 10)
+bb = keras.models.Sequential([
+    keras.layers.Input([32, 32, 3]),
+    keras.layers.Conv2D(32, 1, use_bias=False),
+    keras.layers.DepthwiseConv2D(1, use_bias=False),
+    keras.layers.Activation("swish"),
+    keras.layers.DepthwiseConv2D(32, use_bias=False),
+    # keras.layers.Flatten(),
+    # keras.layers.Dense(32, dtype="float32"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Conv2D(32, 1, use_bias=False),
+    keras.layers.Flatten(dtype="float32"),
+])
+mm = keras.models.Model(bb.inputs[0], keras.layers.Dense(10)(bb.output))
+
+def ds_gen():
+    embs = tf.stop_gradient(bb(xx))
+    embs = tf.nn.l2_normalize(embs, axis=-1)
+    dists = tf.matmul(embs, embs, transpose_b=True)
+    for ii, jj, dist in zip(xx, yy, dists):
+        yield ii, jj - tf.reduce_min(dist)
+
+output_signature = (tf.TensorSpec(shape=(32, 32, 3), dtype=tf.float32), tf.TensorSpec(shape=(10,), dtype=tf.int64))
+ds = tf.data.Dataset.from_generator(ds_gen, output_signature=output_signature).repeat().batch(16).prefetch(buffer_size=-1)
+
+mm.compile(loss="categorical_crossentropy", optimizer="adam")
+mm.fit(ds, steps_per_epoch=10)
 ```

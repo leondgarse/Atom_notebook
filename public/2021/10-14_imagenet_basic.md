@@ -621,7 +621,7 @@
   mm = keras_cv_attention_models.regnet.RegNetZD()
   imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_method="bicubic", central_crop=0.95)
   ```
-
+## EfficientNetV2 eval results
   | model   | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
   | ------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
   | EffV2B0 | 224              | tf           | bilinear          | 0.875        | 0.75304     | 0.92606     |
@@ -634,31 +634,46 @@
   | EffV2B0 | 224              | torch        | bicubic antialias | 0.95         | 0.78288     | 0.93998     |
   | EffV2B0 | 224              | torch        | bicubic           | 1.0          | 0.78536     | 0.94404     |
 
-  | model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1   | top 5   |
-  | ----------- | ---------------- | ------------ | ----------------- | ------------ | ------- | ------- |
-  | EffV2B2,21k | 260              | torch        | bicubic           | 0.95         | 0.19478 | 0.31922 |
-  | EffV2B2,21k | 260              | tf           | bicubic           | 0.95         | 0.79118 | 0.94922 |
-  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.95         | 0.79254 | 0.94992 |
-  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.99         | 0.79482 | 0.95022 |
-  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.99         | 0.79034 | 0.94978 |
-  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.87         | 0.7819  | 0.9436  |
-  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.95         | 0.77418 | 0.94134 |
-  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.875        | 0.76786 | 0.93682 |
-  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.99         | 0.7755  | 0.94208 |
-  | EffV2B3,21k | 224              | tf           | bicubic antialias | 0.99         | 0.82462 | 0.96524 |
+  | model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
+  | ----------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
+  | EffV2B2,21k | 260              | torch        | bicubic           | 0.95         | 0.19478     | 0.31922     |
+  | EffV2B2,21k | 260              | tf           | bicubic           | 0.95         | 0.79118     | 0.94922     |
+  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.95         | 0.79254     | 0.94992     |
+  | EffV2B2,21k | 260              | tf           | bicubic antialias | 0.99         | **0.79482** | **0.95022** |
+  |             |                  |              |                   |              |             |             |
+  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.99         | **0.79034** | **0.94978** |
+  | EffV2B1,21k | 240              | tf           | bicubic antialias | 0.87         | 0.7819      | 0.9436      |
+  |             |                  |              |                   |              |             |             |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.95         | 0.77418     | 0.94134     |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.875        | 0.76786     | 0.93682     |
+  | EffV2B0,21k | 224              | tf           | bicubic antialias | 0.99         | **0.7755**  | **0.94208** |
+  |             |                  |              |                   |              |             |             |
+  | EffV2B3,21k | 224              | tf           | bicubic antialias | 0.99         | **0.82462** | **0.96524** |
 
-  | model   | Input Resolution | rescale_mode | resize_method | central_crop     | top 1       | top 5       |
-  | ------- | ---------------- | ------------ | ------------- | ---------------- | ----------- | ----------- |
-  | EffV2B1 | 240              | torch        | bicubic       | 0.87             | 0.79722     | **0.94938** |
-  | EffV2B1 | 240              | torch        | bicubic       | 240/272 (0.882)  | 0.79788     | 0.94924     |
-  | EffV2B1 | 240              | torch        | bicubic       | 0.95             | **0.7987**  | 0.94936     |
-  | EffV2B2 | 260              | torch        | bicubic       | 260/292 (0.890)  | 0.80428     | 0.95184     |
-  | EffV2B2 | 260              | torch        | bicubic       | 0.95             | **0.80642** | **0.95262** |
-  | EffV2B3 | 300              | torch        | bicubic       | 300/332 (0.9036) | 0.81974     | 0.95818     |
-  | EffV2B3 | 300              | torch        | bicubic       | 0.95             | **0.82098** | **0.95896** |
-  | EffV2B3 | 300              | torch        | bicubic       | 1.0              | 0.82        | 0.9587      |
-  | EffV2T  | 288              | torch        | bicubic       | 0.99             | 0.82186     | 0.96112     |
-  | EffV2T  | 320              | torch        | bicubic       | 0.99             | **0.82506** | **0.96228** |
+  | model     | Input Resolution | rescale_mode | resize_method     | central_crop     | top 1       | top 5       |
+  | --------- | ---------------- | ------------ | ----------------- | ---------------- | ----------- | ----------- |
+  | EffV2B1   | 240              | torch        | bicubic           | 0.87             | 0.79722     | **0.94938** |
+  | EffV2B1   | 240              | torch        | bicubic           | 240/272 (0.882)  | 0.79788     | 0.94924     |
+  | EffV2B1   | 240              | torch        | bicubic           | 0.95             | **0.7987**  | 0.94936     |
+  |           |                  |              |                   |                  |             |             |
+  | EffV2B2   | 260              | torch        | bicubic           | 260/292 (0.890)  | 0.80428     | 0.95184     |
+  | EffV2B2   | 260              | torch        | bicubic           | 0.95             | **0.80642** | **0.95262** |
+  |           |                  |              |                   |                  |             |             |
+  | EffV2B3   | 300              | torch        | bicubic           | 300/332 (0.9036) | 0.81974     | 0.95818     |
+  | EffV2B3   | 300              | torch        | bicubic           | 0.95             | **0.82098** | **0.95896** |
+  | EffV2B3   | 300              | torch        | bicubic           | 1.0              | 0.82        | 0.9587      |
+  |           |                  |              |                   |                  |             |             |
+  | EffV2T    | 288              | torch        | bicubic           | 0.99             | 0.82186     | 0.96112     |
+  | EffV2T    | 288              | torch        | bicubic antialias | 0.99             | 0.82324     | 0.96114     |
+  | EffV2T    | 288              | torch        | bicubic antialias | 1.0              | 0.82272     | **0.96206** |
+  | EffV2T    | 288              | torch        | bicubic antialias | 0.95             | **0.82338** | 0.96072     |
+  | EffV2T    | 320              | torch        | bicubic antialias | 0.99             | 0.82588     | **0.96238** |
+  | EffV2T    | 320              | torch        | bicubic antialias | 0.95             | **0.82594** | 0.962       |
+  |           |                  |              |                   |                  |             |             |
+  | EffV2T_GC | 288              | torch        | bicubic antialias | 0.95             | 0.82404     | 0.96236     |
+  | EffV2T_GC | 288              | torch        | bicubic antialias | 0.99             | 0.82394     | 0.96282     |
+  | EffV2T_GC | 288              | torch        | bicubic antialias | 1.0              | **0.82458** | **0.96306** |
+  | EffV2T_GC | 320              | torch        | bicubic antialias | 1.0              | **0.82676** | **0.96372** |
 
   | model       | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
   | ----------- | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
@@ -687,8 +702,8 @@
 
   | model        | Input Resolution | rescale_mode | resize_method     | central_crop | top 1       | top 5       |
   | ------------ | ---------------- | ------------ | ----------------- | ------------ | ----------- | ----------- |
-  | EffV2M       | 480              | tf           | bicubic           | 0.99         | 0.8509      | 0.973       |
-  | EffV2M       | 480              | tf           | bicubic antialias | 0.99         | **0.85086** | 0.9731      |
+  | EffV2M       | 480              | tf           | bicubic           | 0.99         | **0.8509**  | 0.973       |
+  | EffV2M       | 480              | tf           | bicubic antialias | 0.99         | 0.85086     | 0.9731      |
   | EffV2M       | 480              | [128, 128]   | bicubic antialias | 0.99         | 0.8508      | **0.97314** |
   | EffV2M       | 480              | [128, 128]   | bicubic antialias | 1.0          | 0.8503      | 0.9728      |
   |              |                  |              |                   |              |             |             |
@@ -708,9 +723,9 @@
   |              |                  |              |                   |              |             |             |
   | EffV2XL ft1k | 512              | tf           | bicubic           | 0.99         | 0.86532     | 0.97866     |
   | EffV2XL ft1k | 512              | tf           | bicubic           | -1           | 0.86772     | **0.98066** |
-  | EffV2XL ft1k | 512              | [128, 128]   | bicubic           | -1           | **0.86782** | 0.9806      |
-  | EffV2XL ft1k | 512              | [128, 128]   | bicubic antialias | -1           | 0.86788     | 0.9806      |
-
+  | EffV2XL ft1k | 512              | [128, 128]   | bicubic           | -1           | 0.86782     | 0.9806      |
+  | EffV2XL ft1k | 512              | [128, 128]   | bicubic antialias | -1           | **0.86788** | 0.9806      |
+## HaloNet AotNet RegNet eval results
   | model        | rescale_mode        | resize_method | central_crop | top 1   | top 5   | Reported |
   | ------------ | ------------------- | ------------- | ------------ | ------- | ------- | -------- |
   | halonet26t   | torch               | bicubic       | 0.95         | 0.78588 | 0.94078 | 79.134   |

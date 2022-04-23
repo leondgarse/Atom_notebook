@@ -1235,22 +1235,9 @@
   ```
 ## YOLOR random hsv
   ```py
-  def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
-      r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
-      hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
-      dtype = img.dtype  # uint8
-
-      x = np.arange(0, 256, dtype=np.int16)
-      lut_hue = ((x * r[0]) % 180).astype(dtype)
-      lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
-      lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
-
-      img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
-      return cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
-  ```
-  ```py
+  import cv2
   def augment_hsv(img, hgain=1.0, sgain=1.0, vgain=1.0):
-      hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+      hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_RGB2HSV))
       dtype = img.dtype  # uint8
 
       x = np.arange(0, 256, dtype=np.int16)
@@ -1259,7 +1246,7 @@
       lut_val = np.clip(x * vgain, 0, 255).astype(dtype)
 
       img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
-      return cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR)
+      return cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
 
   from keras_cv_attention_models import test_images
   image = test_images.cat()
@@ -1270,6 +1257,10 @@
   plt.imshow(tf.concat([aa, bb, cc], axis=0))
   plt.axis('off')
   plt.tight_layout()
+  ```
+  **TF**
+  ```py
+
   ```
 ## YOLOR assign anchors
   ```py
@@ -1590,10 +1581,18 @@ data.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
 ```
 ```py
 import kecam
-mm = kecam.yolox.YOLOXTiny(use_anchor_free_mode=False, use_yolor_anchors_mode=True, pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
+mm = kecam.yolox.YOLOXTiny(anchors_mode="yolor", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
 
 imm = kecam.test_images.dog_cat()
 bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.05)[0]
+kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+```
+```py
+import kecam
+mm = kecam.yolox.YOLOXTiny(input_shape=(256, 256, 3), anchors_mode="efficientdet", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
+
+imm = kecam.test_images.dog_cat()
+bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.001)[0]
 kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
 ```
 | optimizer | color      | scale | positional   | rescale_mode | best           | latest |
@@ -1612,9 +1611,12 @@ kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=8
 | adamw     | random_hsv | 0.5   | rtsx         | tf           | Epoch 51 0.244 | 0.239  |
 | adamw     | random_hsv | 0.5   | rts          | tf           | Epoch 46 0.235 | 0.235  |
 | adamw     | random_hsv | 0.8   | rts          | tf           | Epoch 49 0.242 | 0.237  |
-| adamw     | random_hsv | 0.5   | t, mag 10    | tf           | Epoch 55 0.241 | 0.241  |
-| adamw     | random_hsv | 0.8   | tx           | tf           | TODO           |        |
-| adamw     | random_hsv | 0.8   | tx           | tf           | TODO           |        |
+| adamw     | random_hsv | 0.8   | t            | tf           | Epoch 55 0.241 | 0.241  |
+| adamw     | random_hsv | 0.8   | tx           | tf           | Epoch 54 0.243 | 0.245  |
+| adamw     | random_hsv | 0.8   | tx           | torch        | Epoch 45 0.241 | 0.232  |
+| adamw     | random_hsv | 0.5   | tx           | tf           | Epoch 54 0.249 | 0.244  |
+| adamw     | random_hsv | 0.5   | txr          | tf           | Epoch 45 0.244 | 0.242  |
+| adamw     | random_hsv | 0.5   | txs          | tf           | TODO           |        |
 
 ```py
 # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, epoch 48
