@@ -144,7 +144,7 @@
   fig.colorbar(surf, shrink=0.5, aspect=5)
   plt.show()
   ```
-  ![](images/mplot3d_sigmoid_mse.png.jpg)
+  ![](images/mplot3d_sigmoid_mse.jpg)
 ***
 
 # matplotlib
