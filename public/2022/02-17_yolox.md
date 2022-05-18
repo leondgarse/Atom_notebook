@@ -1595,28 +1595,30 @@ imm = kecam.test_images.dog_cat()
 bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.001)[0]
 kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
 ```
-| optimizer | color      | scale | positional   | rescale_mode | best           | latest |
-| --------- | ---------- | ----- | ------------ | ------------ | -------------- | ------ |
-| adamw     | random_hsv | 0     | rtsx         | torch        | Epoch 52 0.234 | 0.219  |
-| sgdw      | random_hsv | 0     | rtsx         | torch        | Epoch 52 0.217 | 0.218  |
-| adamw     | random_hsv | 0.3   | rtsx         | torch        | Epoch 48 0.242 | 0.230  |
-| lamb      | random_hsv | 0.3   | rtsx         | torch        | Epoch 49 0.210 | 0.206  |
-| adamw     | randaug    | 0.3   | rtsx         | torch        | Epoch 50 0.236 | 0.231  |
-| adamw     | random_hsv | 0.5   | rtsx         | torch        | Epoch 49 0.242 | 0.243  |
-| adamw     | randaug    | 0.5   | rtsx         | torch        | Epoch 53 0.234 | 0.234  |
-| adamw     | random_hsv | 0.5   | tx           | torch        | Epoch 55 0.246 | 0.246  |
-| adamw     | random_hsv | 0.5   | rtsx, mag 10 | torch        | Epoch 48 0.231 | 0.229  |
-| adamw     | random_hsv | 0.8   | rtsx         | torch        | Epoch 55 0.241 | 0.241  |
-| adamw     | autoaug    | 0.5   | rtsx         | torch        | Epoch 53 0.232 | 0.228  |
-| adamw     | random_hsv | 0.5   | rtsx         | tf           | Epoch 51 0.244 | 0.239  |
-| adamw     | random_hsv | 0.5   | rts          | tf           | Epoch 46 0.235 | 0.235  |
-| adamw     | random_hsv | 0.8   | rts          | tf           | Epoch 49 0.242 | 0.237  |
-| adamw     | random_hsv | 0.8   | t            | tf           | Epoch 55 0.241 | 0.241  |
-| adamw     | random_hsv | 0.8   | tx           | tf           | Epoch 54 0.243 | 0.245  |
-| adamw     | random_hsv | 0.8   | tx           | torch        | Epoch 45 0.241 | 0.232  |
-| adamw     | random_hsv | 0.5   | tx           | tf           | Epoch 54 0.249 | 0.244  |
-| adamw     | random_hsv | 0.5   | txr          | tf           | Epoch 45 0.244 | 0.242  |
-| adamw     | random_hsv | 0.5   | txs          | tf           | TODO           |        |
+| optimizer | color                 | scale | positional   | rescale_mode | best           | latest |
+| --------- | --------------------- | ----- | ------------ | ------------ | -------------- | ------ |
+| adamw     | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.234 | 0.219  |
+| sgdw      | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.217 | 0.218  |
+| adamw     | random_hsv            | 0.3   | rtsx         | torch        | Epoch 48 0.242 | 0.230  |
+| lamb      | random_hsv            | 0.3   | rtsx         | torch        | Epoch 49 0.210 | 0.206  |
+| adamw     | randaug               | 0.3   | rtsx         | torch        | Epoch 50 0.236 | 0.231  |
+| adamw     | random_hsv            | 0.5   | rtsx         | torch        | Epoch 49 0.242 | 0.243  |
+| adamw     | randaug               | 0.5   | rtsx         | torch        | Epoch 53 0.234 | 0.234  |
+| adamw     | random_hsv            | 0.5   | tx           | torch        | Epoch 55 0.246 | 0.246  |
+| adamw     | random_hsv            | 0.5   | rtsx, mag 10 | torch        | Epoch 48 0.231 | 0.229  |
+| adamw     | random_hsv            | 0.8   | rtsx         | torch        | Epoch 55 0.241 | 0.241  |
+| adamw     | autoaug               | 0.5   | rtsx         | torch        | Epoch 53 0.232 | 0.228  |
+| adamw     | random_hsv            | 0.5   | rtsx         | tf           | Epoch 51 0.244 | 0.239  |
+| adamw     | random_hsv            | 0.5   | rts          | tf           | Epoch 46 0.235 | 0.235  |
+| adamw     | random_hsv            | 0.8   | rts          | tf           | Epoch 49 0.242 | 0.237  |
+| adamw     | random_hsv            | 0.8   | t            | tf           | Epoch 55 0.241 | 0.241  |
+| adamw     | random_hsv            | 0.8   | tx           | tf           | Epoch 54 0.243 | 0.245  |
+| adamw     | random_hsv            | 0.8   | tx           | torch        | Epoch 45 0.241 | 0.232  |
+| adamw     | random_hsv            | 0.5   | tx           | tf           | Epoch 54 0.249 | 0.244  |
+| adamw     | random_hsv            | 0.5   | txr          | tf           | Epoch 45 0.244 | 0.242  |
+| adamw     | random_hsv + contrast | 0.5   | tx           | tf           | Epoch 52 0.247 | 0.241  |
+| adamw     | random_hsv            | 0.5   | txs          | tf           | Epoch 54 0.246 | 0.244  |
+| adamw     | random_hsv            | 0.5   | tx           | raw01        | Epoch 52 0.247 | 0.243  |
 
 ```py
 # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, epoch 48

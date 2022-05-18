@@ -468,6 +468,34 @@
   additional_transfer = {swin_transformer_v2.DivideScale: lambda ww: [ww[0][None, :, None, None]]}
   download_and_load.keras_reload_from_torch_model(torch_model, mm, input_shape=(224, 224), tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, do_convert=True)
   ```
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.swinv2_tiny_window8_256(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.swin_transformer_v2 import swin_transformer_v2
+  from keras_cv_attention_models import download_and_load
+  mm = swin_transformer_v2.SwinTransformerV2Tiny_window8(pretrained=None, classifier_activation=None)
+  # mm = swin_transformer_v2.SwinTransformerV2Large_window16(pretrained=None, pos_scale=[12, 12, 12, 6], classifier_activation=None)
+
+  unstack_weights = ['logit_scale', 'q_bias', 'v_bias']
+  skip_weights = ["num_batches_tracked", "attn_mask"]
+  tail_align_dict = {"attn_meta_dense_1": -1, "attn_meta_dense_2": -1, "attn_scale": -4, "attn_query_bias": -2, "attn_value_bias": -3}
+  additional_transfer = {swin_transformer_v2.ExpLogitScale: lambda ww: [ww[0][None]]}
+
+  download_and_load.keras_reload_from_torch_model(
+      torch_model,
+      mm,
+      input_shape=mm.input_shape[1:-1],
+      tail_align_dict=tail_align_dict,
+      additional_transfer=additional_transfer,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      do_convert=True,
+      save_name=mm.name + "_{}_imagenet.h5".format(mm.input_shape[1])
+  )
+  ```
 ## MobilenetV3
   - mobilenetv3_small_075, mobilenetv3_small_100, mobilenetv3_large_100, mobilenetv3_large_100_miil
   ```py
@@ -506,6 +534,74 @@
 
   tail_align_dict = {"block1_deep_3_conv": -1, "block1_3_bn": -2}
   download_and_load.keras_reload_from_torch_model(torch_model, mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True)
+  ```
+## DaViT
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.davit import davit
+
+  full_name_align_dict = {
+      "stack2_downsample_ln": 2,
+      "stack2_downsample_conv": 2,
+      "stack3_downsample_ln": 4,
+      "stack3_downsample_conv": 4,
+      "stack4_downsample_ln": 6,
+      "stack4_downsample_conv": 6,
+  }
+  tail_align_dict = {"pre_ffn_cpe_dw_conv": -3}
+
+  mm = davit.DaViT_T(classifier_activation=None, pretrained=None)
+  download_and_load.keras_reload_from_torch_model('davit_t_model_best.pth.tar', mm, full_name_align_dict=full_name_align_dict, tail_align_dict=tail_align_dict, do_convert=False)
+  ```
+## NAT
+  - **MultiHeadRelativePositionalBias**
+  ```py
+  """ Torch """
+  import torch
+  num_heads, kernel_size, height, width = 4, 7, 21, 21
+  rpb_size = 2 * kernel_size - 1
+  rpb = torch.nn.Parameter(torch.zeros(num_heads, rpb_size, rpb_size))
+  # trunc_normal_(rpb, std=.02)
+
+  idx_h = torch.arange(0, kernel_size)
+  idx_w = torch.arange(0, kernel_size)
+  idx_k = ((idx_h.unsqueeze(-1) * rpb_size) + idx_w).view(-1)
+
+  num_repeat_h = torch.ones(kernel_size, dtype=torch.long)
+  num_repeat_w = torch.ones(kernel_size, dtype=torch.long)
+  num_repeat_h[kernel_size//2] = height - (kernel_size-1)
+  num_repeat_w[kernel_size//2] = width - (kernel_size-1)
+  bias_hw = (idx_h.repeat_interleave(num_repeat_h).unsqueeze(-1) * (2*kernel_size-1)) + idx_w.repeat_interleave(num_repeat_w)
+  bias_idx = bias_hw.unsqueeze(-1) + idx_k
+  # Index flip
+  # Our RPB indexing in the kernel is in a different order, so we flip these indices to ensure weights match.
+  bias_idx = torch.flip(bias_idx.reshape(-1, kernel_size**2), [0])
+  pp = rpb.flatten(1, 2)[:, bias_idx].reshape(num_heads, height * width, 1, kernel_size ** 2).transpose(0, 1)
+
+  """ TF """
+  num_heads, size, height, width = 4, 7, 21, 21
+  pos_size = 2 * size - 1
+  idx_hh, idx_ww = tf.range(0, size), tf.range(0, size)
+  coords = tf.reshape(tf.expand_dims(idx_hh, -1) * pos_size + idx_ww, [-1])
+  bias_hh = tf.concat([idx_hh[:size // 2], tf.repeat(idx_hh[size // 2], height - size + 1), idx_hh[size // 2 + 1:]], axis=-1)
+  bias_ww = tf.concat([idx_ww[:size // 2], tf.repeat(idx_ww[size // 2], width - size + 1), idx_ww[size // 2 + 1:]], axis=-1)
+  bias_hw = tf.expand_dims(bias_hh, -1) * pos_size + bias_ww
+  bias_coords = tf.expand_dims(bias_hw, -1) + coords
+  bias_coords = tf.reshape(bias_coords, [-1, size ** 2])[::-1]  # torch.flip(bias_coords, [0])
+  print(f"{np.allclose(bias_coords, bias_idx.numpy()) = }")
+  # np.allclose(bias_coords, bias_idx.numpy()) = True
+  ```
+  **Convert**
+  ```py
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.nat import nat
+
+  mm = nat.NAT_Mini(classifier_activation=None, pretrained=None)
+  tail_align_dict = {"attn_pos": -1, "1_gamma": -4, "2_gamma": -7}
+  unstack_weights = ["gamma1", "gamma2"]
+
+  additional_transfer = {nat.MultiHeadRelativePositionalKernelBias: lambda ww: [np.reshape(ww[0], [ww[0].shape[0], -1])]}
+  download_and_load.keras_reload_from_torch_model('nat_mini.pth', mm, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, unstack_weights=unstack_weights, do_convert=True)
   ```
 ***
 

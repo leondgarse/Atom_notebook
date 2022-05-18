@@ -82,8 +82,11 @@ def half_split_weighted_cosine_similarity(aa, bb):
 
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_1_51_04_1_35_emb512_adamw_bs512_ms1m_float16_hist.json", fig_label="mag, margin (0.4, 1.0), FN (1, 51)", **pp)
 
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="mag_10_110_04_08_35, VPL", **pp)
+
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="ms1mv3_cleaned_asian, mag_10_110_04_08_35", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr03_drc03_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="ms1mv3_cleaned_asian, mag_10_110_04_08_35, dr 0.3", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr03_drc03_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="ms1mv3_cleaned_asian, mag, dr 0.3, adamw 1e-4", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_dr03_drc03_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_2_hist.json", fig_label="ms1mv3_cleaned_asian, mag, dr 0.3, adamw 5e-4", **pp)
   ```
   | margin min max | Epoch 53 margin mean | lfw      | cfp_fp   | agedb_30 | IJBB         | IJBC         |
   | -------------- | -------------------- | -------- | -------- | -------- | ------------ | ------------ |
@@ -161,9 +164,6 @@ def half_split_weighted_cosine_similarity(aa, bb):
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16", names=names, **pp)
   pp["axes"] = axes
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 8000, delta 200", names=names, **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_128_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 2000, delta 50", names=names, **pp)
-
   # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_sgd_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_warmup_3_float16_hist.json", fig_label="B0, wd 5e-4, SGD cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_no_exc_bn_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, no execlude bn cos16", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_1e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, wd 1e-4, adamw, cos16", **pp)
@@ -181,6 +181,26 @@ def half_split_weighted_cosine_similarity(aa, bb):
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, 10_110_04_08_35", **pp)
   axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
   ```
+  - **EffV2B0 VPL**
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [3, 1, 3, 13, 33]
+  pp["skip_epochs"] = 10
+  names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16", names=names, **pp)
+  pp["axes"] = axes
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 8000, delta 200", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_128_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 2000, delta 50", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_8000_100_hist.json", fig_label="B0, arcface, wd 5e-4, adamw cos16, VPL start 8000, delta 100", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_VPL_hist.json", fig_label="B0, ms1mv3_cleaned_asian, mag_10_110_04_08_35, VPL start 1, delta 100", **pp)
+
+
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, mag_10_110_04_08_35", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, mag_10_110_04_08_35", **pp)
+  ```
   - **ms1mv3_cleaned_asian**
   ```py
   hist_path = "checkpoints/"
@@ -189,11 +209,16 @@ def half_split_weighted_cosine_similarity(aa, bb):
   pp["epochs"] = [3, 1, 3, 13, 33]
   pp["skip_epochs"] = 10
   names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, 10_110_04_08_35", names=names, **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_hist.json", fig_label="B0, arcface", names=names, **pp)
   pp["axes"] = axes
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_1_51_04_08_5_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cos16_batch_float16_hist.json", fig_label="B0, magface 10_110_04_08_35", **pp)
 
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian", **pp)
-  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_200_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, randaug_200", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, arcface", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, magface 10_110_04_08_35", **pp)
+
+  # axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_200_cos16_batch_float16_hist.json", fig_label="B0, ms1mv3_cleaned_asian, randaug_200", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_randaug_cos16_batch_float16_vpl_1_200_hist.json", fig_label="B0, ms1mv3_cleaned_asian, arcface, vpl_1_200", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_efv2_b0_swish_GDC_mag_10_110_04_08_35_emb512_dr0_adamw_5e4_bs512_ms1mv3_cleaned_asian_randaug_cos16_batch_float16_VPL_hist.json", fig_label="B0, ms1mv3_cleaned_asian, magface 10_110_04_08_35, vpl_1_200", **pp)
   ```
 # Fine-tune
 ```py
@@ -311,4 +336,136 @@ ds = tf.data.Dataset.from_generator(ds_gen, output_signature=output_signature).r
 
 mm.compile(loss="categorical_crossentropy", optimizer="adam")
 mm.fit(ds, steps_per_epoch=10)
+```
+***
+# VPL
+- **Results**
+| VPL                   | lfw          | cfp_fp       | agedb_30     | IJBB 1e-4    | IJBC 1e-4    |
+| --------------------- | ------------ | ------------ | ------------ | ------------ | ------------ |
+| False                 | 0.997667     | 0.979429     | 0.978333     | **0.941188** | 0.955719     |
+| start 8000, delta 200 | 0.997667     | **0.979571** | **0.978500** | 0.938559     | 0.955054     |
+| start 2000, delta 50  | **0.998000** | 0.976429     | 0.977667     | 0.940117     | **0.956128** |
+
+- **IJBB / IJBC detail**
+| VPL                         |        1e-06 |        1e-05 |       0.0001 |        0.001 |         0.01 |          0.1 |          AUC |
+|:--------------------------- | ------------:| ------------:| ------------:| ------------:| ------------:| ------------:| ------------:|
+| False, IJBB                 |     0.338948 |     0.875365 | **0.941188** |     0.960467 |     0.974684 |     0.983642 |     0.991774 |
+| start 8000, delta 200, IJBB | **0.376241** |   **0.8815** |     0.938559 | **0.962902** | **0.976339** | **0.985881** | **0.992184** |
+| start 2000, delta 50, IJBB  |     0.353944 |     0.874002 |     0.940117 |     0.961538 |     0.974684 |     0.983934 |     0.991567 |
+| start 8000, delta 100, IJBB |     0.349562 |     0.886563 |     0.939727 |     0.962707 |     0.975365 |     0.984713 |     0.991944 |
+|                             |              |              |              |              |              |              |              |
+| False, IJBC                 |     0.848954 |     0.927954 |     0.955719 |     0.972184 |     0.982462 |     0.989109 |     0.994352 |
+| start 8000, delta 200, IJBC | **0.877895** | **0.928568** |     0.955054 | **0.973513** | **0.983689** | **0.990387** | **0.994527** |
+| start 2000, delta 50, IJBC  |     0.867004 |     0.926778 | **0.956128** |     0.972797 |     0.982257 |     0.989211 |     0.994179 |
+| start 8000, delta 100, IJBC |     0.876361 |     0.931431 |     0.956282 |     0.973411 |     0.983433 |      0.99008 |     0.994522 |
+
+- Distribution
+```py
+import evals
+aa = keras.models.load_model('checkpoints/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_basic_agedb_30_epoch_53.h5')
+
+data_basic_path = '/datasets/ms1m-retinaface-t1'
+eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
+ee = '/datasets/ms1m-retinaface-t1/lfw.bin'
+eea = evals.eval_callback(aa, ee, batch_size=16)
+eea.on_epoch_end()
+
+def plot_pos_neg_distribution(positive_dist=None, negative_dist=None, label="", density=True, ax=None):
+    # plot the histogram for positive and negative distribution
+    if ax is None:
+        fig, ax = plt.subplots()
+    if negative_dist is not None:
+        _ = ax.hist(negative_dist, bins=512, density=density, alpha=0.5, label="negative, " + label)
+    if positive_dist is not None:
+        _ = ax.hist(positive_dist, bins=512, density=density, alpha=0.5, label="positive, " + label)
+    ax.legend()
+    plt.tight_layout()
+    return ax
+
+_ = plot_pos_neg_distribution(eea.tt, eea.ff)
+```
+```py
+ijbb_labels = pd.read_csv('/datasets/IJB_release/IJBB/meta/ijbb_template_pair_label.txt', sep=" ", header=None).values[:, 2]
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_basic_agedb_30_epoch_53_IJBB_11.npz')
+ijbb_basic = aa['scores'][0]
+
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_basic_model_latest_IJBB_11.npz')
+ijbb_vpl_8000_200 = aa['scores'][0]
+
+import seaborn as sns
+pps = {
+  "IJBB positive, basic": ijbb_basic[ijbb_labels == 1],
+  "IJBB positive, vpl_8000_200": ijbb_vpl_8000_200[ijbb_labels == 1],
+}
+sns.histplot(pps, stat='density', kde=True)
+
+nns = {
+  "IJBB negative, basic": ijbb_basic[ijbb_labels == 0],
+  "IJBB negative, vpl_8000_200": ijbb_vpl_8000_200[ijbb_labels == 0],
+}
+sns.histplot(nns, stat='density', kde=True)
+```
+```py
+ijbc_labels = pd.read_csv('/datasets/IJB_release/IJBC/meta/ijbc_template_pair_label.txt', sep=" ", header=None).values[:, 2]
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_2_basic_agedb_30_epoch_53_IJBC_11.npz')
+ijbc_basic = aa['scores'][0]
+
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_basic_model_latest_IJBC_11.npz')
+ijbc_vpl_8000_200 = aa['scores'][0]
+
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_128_basic_model_latest_IJBC_11.npz')
+ijbc_vpl_2000_50 = aa['scores'][0]
+
+aa = np.load('IJB_result/TT_efv2_b0_swish_GDC_arc_emb512_dr0_adamw_5e4_bs512_ms1mv3_randaug_cos16_batch_float16_vpl_8000_100_basic_model_latest_IJBC_11.npz')
+ijbc_vpl_8000_100 = aa['scores'][0]
+
+import seaborn as sns
+pps = {
+  "IJBC positive, basic": ijbc_basic[ijbc_labels == 1],
+  "IJBC positive, vpl_8000_200": ijbc_vpl_8000_200[ijbc_labels == 1],
+  "IJBC positive, vpl_8000_100": ijbc_vpl_8000_100[ijbc_labels == 1],
+  "IJBC positive, vpl_2000_50": ijbc_vpl_2000_50[ijbc_labels == 1],
+}
+sns.histplot(pps, stat='density', kde=True)
+
+nns = {
+  "IJBC negative, basic": ijbc_basic[ijbc_labels == 0],
+  "IJBC negative, vpl_8000_200": ijbc_vpl_8000_200[ijbc_labels == 0],
+}
+sns.histplot(nns, stat='density', kde=True)
+```
+
+# Triplet offline mining
+```py
+# !waitGPU 0
+import losses, train, models
+import tensorflow_addons as tfa
+keras.mixed_precision.set_global_policy("mixed_float16")
+
+data_basic_path = '/datasets/ms1m-retinaface-t1'
+data_path = data_basic_path + '_112x112_folders'
+# data_path = '/datasets/ms1mv3_cleaned_asian'
+eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
+
+from keras_cv_attention_models import efficientnet
+basic_model = None
+model = 'checkpoints/TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16.h5'
+
+samples_per_mining = 0.1
+lr_decay_steps = int(16 / samples_per_mining / 3)  # 3 is because each sample contains [anchor, positive, negative]
+epoch = int(17 / samples_per_mining / 3)
+lr_base, lr_min = 0.0025, 1e-6
+lr_decay = lr_min / lr_base  # Do not restart lr
+
+tt = train.Train(data_path, eval_paths=eval_paths,
+    save_path='TT_effv2_s_strides1_pw512_F_dr02_drc02_lr_001_wd5e2lr_mag_10_110_04_08_35_emb512_adamw_bs512_ms1m_float16_E53_mining_01.h5',
+    basic_model=basic_model, model=model, lr_base=lr_base, lr_decay=lr_decay, lr_decay_steps=lr_decay_steps, lr_min=lr_min, lr_warmup_steps=0,
+    batch_size=480, random_status=100, eval_freq=4000, output_weight_decay=1, samples_per_mining=samples_per_mining)
+
+optimizer = tfa.optimizers.AdamW(learning_rate=1e-2, weight_decay=5e-4, exclude_from_weight_decay=["/gamma", "/beta"])
+sch = [
+    {"loss": losses.MagFaceLoss(scale=64, min_feature_norm=10, max_feature_norm=110, min_margin=0.4, max_margin=0.8, regularizer_loss_lambda=35), "epoch": epoch},
+]
+tt.train(sch, 0)
+exit()
 ```

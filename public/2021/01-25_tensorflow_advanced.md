@@ -27,6 +27,7 @@
   - [Auto Tuner](#auto-tuner)
     - [Keras Tuner](#keras-tuner)
     - [TensorBoard HParams](#tensorboard-hparams)
+    - [Parallel Coordinates Plot Using TensorBoard](#parallel-coordinates-plot-using-tensorBoard)
   - [Tensorflow Horovod and Distribute](#tensorflow-horovod-and-distribute)
     - [Multi GPU](#multi-gpu)
     - [Install horovod](#install-horovod)
@@ -1156,6 +1157,73 @@
 
     %tensorboard --logdir logs/hparam_tuning_cifar10
     ```
+## Parallel Coordinates Plot Using TensorBoard
+  ```py
+  import os
+  import json
+  import pandas as pd
+  import numpy as np
+  import tensorflow as tf
+  from tensorboard.plugins.hparams import api as hp
+
+  def tensorboard_parallel_coordinates_plot(dataframe, metrics_name, metrics_display_name=None, skip_columns=[], log_dir='logs/hparam_tuning'):
+      skip_columns = skip_columns + [metrics_name]
+      to_hp_discrete = lambda column: hp.HParam(column, hp.Discrete(np.unique(dataframe[column].values).tolist()))
+      hp_params_dict = {column: to_hp_discrete(column) for column in dataframe.columns if column not in skip_columns}
+
+      if dataframe[metrics_name].values.dtype == 'object': # Not numeric
+          metrics_map = {ii: id for id, ii in enumerate(np.unique(dataframe[metrics_name]))}
+          description = json.dumps(metrics_map)
+      else:
+          metrics_map, description = None, None
+
+      METRICS = metrics_name if metrics_display_name is None else metrics_display_name
+      with tf.summary.create_file_writer(log_dir).as_default():
+          metrics = [hp.Metric(METRICS, display_name=METRICS, description=description)]
+          hp.hparams_config(hparams=list(hp_params_dict.values()), metrics=metrics)
+
+      for id in dataframe.index:
+          log = dataframe.iloc[id]
+          hparams = {hp_unit: log[column] for column, hp_unit in hp_params_dict.items()}
+          print({hp_unit.name: hparams[hp_unit] for hp_unit in hparams})
+          run_dir = os.path.join(log_dir, 'run-%d' % id)
+          with tf.summary.create_file_writer(run_dir).as_default():
+              hp.hparams(hparams)  # record the values used in this trial
+              metric_item = log[metrics_name] if metrics_map is None else metrics_map[log[metrics_name]]
+              tf.summary.scalar(METRICS, metric_item, step=1)
+
+      print()
+      if metrics_map is not None:
+          print("metrics_map:", metrics_map)
+      print("Start tensorboard by: tensorboard --logdir {}".format(log_dir))
+  ```
+  **Plotting test**:
+  ```py
+  aa = pd.read_csv('https://raw.github.com/pandas-dev/pandas/main/pandas/tests/io/data/csv/iris.csv')
+  tensorboard_parallel_coordinates_plot(aa, "Name", log_dir="logs/iris")
+  # metrics_map: {'Iris-setosa': 0, 'Iris-versicolor': 1, 'Iris-virginica': 2}
+  # Start tensorboard by: tensorboard --logdir logs/iris
+
+  !tensorboard --logdir logs/iris
+  ```
+  - Open tesnorboard link, default `http://localhost:6006/`, go to `HPARAMS` -> `PARALLEL COORDINATES VIEW` will show the result:
+  - TensorBoard result is interactive. But this is designed for plotting model hyper parameters tuning results, so I think it's not friendly for plotting large dataset.
+  - It seems the final metrics item has to be numeric, while other axes don't have to.
+  ```py
+  fake_data = {
+      "optimizer": ["sgd", "adam", "adam", "lamb", "lamb", "lamb", "lamb"],
+      "weight_decay": [0.1, 0.1, 0.2, 0.1, 0.2, 0.2, 0.3],
+      "rescale_mode": ["tf", "tf", "tf", "tf", "tf", "torch", "torch"],
+      "accuracy": [78.5, 78.2, 78.8, 79.2, 79.3, 79.5, 79.6],
+  }
+
+  aa = pd.DataFrame(fake_data)
+  tensorboard_parallel_coordinates_plot(aa, 'accuracy', log_dir="logs/fake")
+  # Start tensorboard by: tensorboard --logdir logs/fake
+
+  !tensorboard --logdir logs/fake
+  # TensorBoard 2.8.0 at http://localhost:6006/ (Press CTRL+C to quit)
+  ```
 ***
 
 # Tensorflow Horovod and Distribute

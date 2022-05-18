@@ -73,6 +73,7 @@
       "A3, progressive_3_lr_steps_33_lr_t_mul_1_on_batch": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_on_batch_hist.json",
       # "A3, adamw_8e3_wd5e2, cutmix reverse, CE_mixup_0.8": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_CE_mixup_0.8_hist.json",
       "A3, evonorm": "checkpoints/aotnet50_evonorm_hist.json",
+      "A3, sigmoid": "checkpoints/aotnet.AotNet50_160_LAMB_imagenet2012_batchsize_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_sigmoid_hist.json",
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=40, base_size=8)
   ```
@@ -183,6 +184,7 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "CoAtNet0_160, wd_exclude_pos_emb, mag_10, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_mag_10_hist.json",
       "CoAtNet0_160_act_first, bs 128": "checkpoints/CoAtNet0_160_act_first_hist.json",
       "CoAtNet0_160, vv_equal_key_dim, bs 128": "checkpoints/coatnet.CoAtNet0_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_vv_equal_key_dim_hist.json",
+      "CoAtNet0_160, vv_equal_key_dim, bs 128": "checkpoints/coatnet.CoAtNet0_160_adamw_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
   }
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=25, base_size=8)
@@ -213,13 +215,25 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
   ```
 
-| magnitude | drop_connect_rate | Best val loss, acc                                                          |
-| --------- | ----------------- | --------------------------------------------------------------------------- |
-| 6         | 0                 | Epoch 35/37 loss: 0.0023 - acc: 0.7288 - val_loss: 0.0012 - val_acc: 0.8160 |
-| 7         | 0                 | Epoch 34/37 loss: 0.0024 - acc: 0.7218 - val_loss: 0.0012 - val_acc: 0.8161 |
-| 7         | 0.05              | Epoch 36/37 loss: 0.0026 - acc: 0.7026 - val_loss: 0.0011 - val_acc: 0.8193 |
-| 7         | 0.2               | Epoch 34/37 loss: 0.0030 - acc: 0.6658 - val_loss: 0.0011 - val_acc: 0.8176 |
-| 10        | 0.05              | Epoch 36/37 loss: 0.0028 - acc: 0.6783 - val_loss: 0.0011 - val_acc: 0.8199 |
+  | magnitude | drop_connect_rate | Best val loss, acc                                                          |
+  | --------- | ----------------- | --------------------------------------------------------------------------- |
+  | 6         | 0                 | Epoch 35/37 loss: 0.0023 - acc: 0.7288 - val_loss: 0.0012 - val_acc: 0.8160 |
+  | 7         | 0                 | Epoch 34/37 loss: 0.0024 - acc: 0.7218 - val_loss: 0.0012 - val_acc: 0.8161 |
+  | 7         | 0.05              | Epoch 36/37 loss: 0.0026 - acc: 0.7026 - val_loss: 0.0011 - val_acc: 0.8193 |
+  | 7         | 0.2               | Epoch 34/37 loss: 0.0030 - acc: 0.6658 - val_loss: 0.0011 - val_acc: 0.8176 |
+  | 10        | 0.05              | Epoch 36/37 loss: 0.0028 - acc: 0.6783 - val_loss: 0.0011 - val_acc: 0.8199 |
+  ```py
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "ft 224, magnitude 15, drc 0.05, wd exc pos_emb, bs 64": "checkpoints/coatnet.CoAtNet0_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
+      "ft 224, magnitude 15, drc 0.05, act_first": "checkpoints/coatnet.CoAtNet0_act_first_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
+      "ft 224, magnitude 15, drc 0.05, vv_equal_key_dim": "checkpoints/coatnet.CoAtNet0_vv_equal_key_dim_ft_224_lr_steps_32_lr4e3_drc005_magnitude_15_hist.json",
+      "ft 224, magnitude 15, dr 0.1, vv_equal_key_dim": "checkpoints/coatnet.CoAtNet0_224_LAMB_imagenet2012_batchsize_64_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_dr_01_hist.json",
+      "ft 224, magnitude 15, dr 0.4, vv_equal_key_dim": "checkpoints/coatnet.CoAtNet0_224_LAMB_imagenet2012_batchsize_64_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_dr_04_hist.json",
+  }
+
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
+  ```
 ***
 
 # CMT
@@ -307,9 +321,11 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "CMTTiny, epoch 305, mag15": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag15_hist.json', 'r')).items()},
       "CMTTiny, epoch 305, mag7, drc0.05, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_exc_bias_key_value_dim_head_2_beit_pos_dw_ln_300_mag7_drc_005_bs_240_hist.json', 'r')).items()},
       "CMTTiny, epoch 305, mag7, dr 0.1, bs 160": {kk: vv[::3] for kk, vv in json.load(open('checkpoints/cmt.CMTTiny_160_LAMB_imagenet2012_batchsize_160_randaug_7_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json', 'r')).items()},
+      "CMTTiny, teacher_CoAtNet0": "checkpoints/cmt.CMTTiny_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_teacher_CoAtNet0_hist.json",
+      "CMTTiny, teacher_CoAtNet0, weight1": "checkpoints/cmt.CMTTiny_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_teacher_CoAtNet0_weight1_hist.json",
   }
 
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=6)
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=10, base_size=8)
   ```
   | 305 epochs             | Train acc | Best eval loss, acc on 160 | Epoch 105 Eval acc on 224   |
   | ---------------------- | --------- | -------------------------- | --------------------------- |
@@ -325,19 +341,146 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
       "224, randaug_6": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_hist.json",
       "224, randaug_15": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_magnitude_15_hist.json",
       "224, randaug_15, drc 0.05": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_drc005_magnitude_15_hist.json",
+      "224, randaug_10, dr 0.1": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_64_randaug_10_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_dr_01_hist.json",
+      "224, randaug_8, dr 0.1": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_64_randaug_8_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_dr_01_hist.json",
+      "224, randaug_8, dr 0.2": "checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_64_randaug_8_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_dr_02_hist.json",
+      "224, randaug_8, dr 0.05, E69": {kk: vv[::2] for kk, vv in json.load(open("checkpoints/cmt.CMTTiny_224_LAMB_imagenet2012_batchsize_64_randaug_8_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_drc_005_hist.json", "r")).items()},
   }
 
-  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=6)
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
   ```
 ***
 # SwinTransformerV2Tiny_ns
 ```py
 from keras_cv_attention_models.imagenet import eval_func
 hhs = {
-    "CoAtNet0_160, wd_exclude_pos_emb, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_hist.json",
-    "swin_transformer_v2, bs 128": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
-    "swin_transformer_v2, bs 128, adamw": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_adamw_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+    # "CoAtNet0_160, wd_exclude_pos_emb, bs 128": "checkpoints/CoAtNet0_wd_exclude_pos_emb_hist.json",
+    "swin_v2_tiny_ns, bs 128, lamb lr 0.008": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_LAMB_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+    "swin_v2_tiny_ns, bs 128, adamw lr 0.008": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_adamw_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_hist.json",
+    "swin_v2_tiny_ns, bs 128, adamw lr 0.003": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_160_adamw_imagenet2012_batchsize_128_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.003_wd_0.02_hist.json",
 }
 
-fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=15, base_size=8)
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
 ```
+| Optimizer | lr_base_512 | Train acc | Best eval loss, acc on 160  | Epoch 105 eval acc on 224   |
+| --------- | ----------- | --------- | --------------------------- | --------------------------- |
+| lamb      | 0.008       | 0.6670    | Epoch 100, 0.001381, 0.7776 | top1: 0.78434 top5: 0.93982 |
+| adamw     | 0.008       | 0.6625    | Epoch 105, 0.001319, 0.7803 | top1: 0.7913 top5: 0.94458  |
+| adamw     | 0.003       | 0.6878    | Epoch 103, 0.001367, 0.7851 | top1: 0.79492 top5: 0.944   |
+```py
+import json
+from keras_cv_attention_models.imagenet import eval_func
+hhs = {
+    "swin_transformer_v2, 224, bs 128, lr 0.004, mag 15": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.004_wd_0.02_drc005_hist.json",
+    "swin_transformer_v2, 224, bs 128, lr 0.002, mag 10": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_10_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.002_wd_0.02_drc005_hist.json",
+    "swin_transformer_v2, 224, bs 128, lr 0.001, mag 8": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_8_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.001_wd_0.02_drc005_hist.json",
+    "swin_transformer_v2, 224, bs 128, lr 0.001, mag 15": "checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.001_wd_0.02_drc005_hist.json",
+    "swin_transformer_v2, 224, bs 128, lr 0.001, mag 15, E69": {kk: vv[::2] for kk, vv in json.load(open("checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.001_wd_0.02_drc005_E69_hist.json", "r")).items()},
+    "swin_transformer_v2, 224, bs 128, lr 0.0015, mag 15, E69": {kk: vv[::2] for kk, vv in json.load(open("checkpoints/swin_transformer_v2.SwinTransformerV2Tiny_ns_224_adamw_imagenet2012_batchsize_128_randaug_15_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.0015_wd_0.02_drc005_E69_hist.json", "r")).items()},
+}
+
+fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_size=8)
+```
+***
+# Freezing backbone
+- **Freezing backbone** by set `--freeze_backbone`, will set `layer.trainable=False` till model `GlobalAveragePooling2D`.
+  ```sh
+  # First stage freezing backbone. total epochs = lr_decay_steps + lr_cooldown_steps = 22
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --pretrained imagenet \
+  --freeze_backbone --summary --seed 0 -s freeze_backbone_test
+  # [Search pool layer] header_layer_id = 277, layer.name = predictions
+  # [Search pool layer] header_layer_id = 276, layer.name = head_drop
+  # [Search pool layer] header_layer_id = 275, layer.name = avg_pool
+  # ...
+  # Trainable params: 12,810
+  # Non-trainable params: 5,919,312
+  ```
+  Train a second stage using previous trained model with unfreezing backbone. Specify `--pretrained checkpoints/{basic_save_name}_latest.h5` for reloading weights.
+  ```sh
+  # Second stage unfreezing backbone. Learning rate scheduler using cosine lr restart.
+  # For default lr_t_mul=2, specify total epochs = lr_decay_steps * (1 + lr_t_mul) + lr_cooldown_steps * 2 = 64
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --epochs 64 \
+  --pretrained checkpoints/freeze_backbone_test_latest.h5 --initial_epoch 22 --seed 0 -s freeze_backbone_test
+  ```
+- **Freezing backbone, without learning rate restart**
+  ```sh
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 60 --lr_cooldown_steps 4 --batch_size 256 --epochs 22 \
+  --pretrained imagenet --freeze_backbone --seed 0 -s freeze_backbone_test_lr_not_restart
+
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 60 --lr_cooldown_steps 4 --batch_size 256 --initial_epoch 22 \
+  --pretrained checkpoints/freeze_backbone_test_lr_not_restart_latest.h5 --seed 0 -s freeze_backbone_test_lr_not_restart
+  ```
+- **Without freezing backbone** as a compare.
+  ```sh
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --epochs 64 \
+  --pretrained imagenet --seed 0 -s freeze_backbone_compare_test_lr_restart
+  # ...
+  # Trainable params: 5,871,514
+  # Non-trainable params: 60,608
+  ```
+- **Without freezing backbone, without learning rate restart** as a compare.
+  ```sh
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 60 --lr_cooldown_steps 4 --batch_size 256 --epochs 64 \
+  --pretrained imagenet --seed 0 -s freeze_backbone_compare_test_lr_not_restart
+  ```
+- **Freeze BatchNormalization layers only** by set `freeze_norm_layers`, will set `layer.trainable=False` for all `BatchNormalization` and `LayerNormlization`.
+  ```sh
+  # First stage freezing backbone. total epochs = lr_decay_steps + lr_cooldown_steps = 22
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --pretrained imagenet \
+  --freeze_norm_layers --summary --seed 0 -s freeze_bn_test
+  # ...
+  # Trainable params: 5,810,906
+  # Non-trainable params: 121,216
+  ```
+  Train a second stage using previous trained model with unfreezing norm layers. Specify `--pretrained checkpoints/{basic_save_name}_latest.h5` for reloading weights.
+  ```sh
+  # Second stage unfreezing norm layers. Learning rate scheduler using cosine lr restart.
+  # For default lr_t_mul=2, specify total epochs = lr_decay_steps * (1 + lr_t_mul) + lr_cooldown_steps * 2 = 64
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --epochs 64 \
+  --pretrained checkpoints/freeze_bn_test_latest.h5 --initial_epoch 22 --seed 0 -s freeze_bn_test
+  ```
+- **Freezing BatchNormalization layers for entire epochs**
+  ```sh
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
+  --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --epochs 64 \
+  --freeze_norm_layers --pretrained imagenet --seed 0 -s freeze_bn_test_entire
+  # ...
+  # Trainable params: 5,810,906
+  # Non-trainable params: 121,216
+  ```
+- **Results**
+  ```py
+  sys.path.append('../Keras_insightface/')
+  import plot
+  _ = plot.choose_accuracy(hhs.values(), key_picks=['loss', 'val_loss', 'acc', 'val_acc'])
+  ```
+  |                                      | Train acc, loss |        Best val_acc, val_loss | Epoch 64 val_acc |
+  |:------------------------------------ | ---------------:| -----------------------------:| ----------------:|
+  | freeze backbone                      | 0.78688, 0.1396 | Epoch 56, **0.9792**, 0.01478 |           0.9776 |
+  | w/o freeze backbone                  | 0.79654, 0.1332 |     Epoch 60, 0.9759, 0.01479 |           0.9754 |
+  | w/o freeze backbone, w/o lr restart  | 0.79072, 0.1371 |     Epoch 54, 0.9719, 0.01694 |           0.9718 |
+  | freeze batchnorm only                | 0.79436, 0.1356 |     Epoch 60, 0.9757, 0.01571 |           0.9755 |
+  | freeze batchnorm only, entire epochs | 0.79352, 0.1348 |     Epoch 60, 0.9752, 0.01722 |           0.9750 |
+- **Plot**
+  ```py
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "effb0 cifar10, freeze backbone": "checkpoints/freeze_backbone_test_hist.json",
+      # "effb0 cifar10, freeze backbone, w/o lr restart": "checkpoints/freeze_backbone_test_lr_not_restart_hist.json",
+      "effb0 cifar10, w/o freeze backbone": "checkpoints/freeze_backbone_compare_test_lr_restart_hist.json",
+      "effb0 cifar10, w/o freeze backbone, w/o lr restart": "checkpoints/freeze_backbone_compare_test_lr_not_restart_hist.json",
+      "effb0 cifar10, freeze batchnorm only": "checkpoints/freeze_bn_test_hist.json",
+      "effb0 cifar10, freeze batchnorm only, entire epochs": "checkpoints/freeze_bn_test_entire_hist.json",
+      "ConvNeXtTiny": "checkpoints/ConvNeXtTiny_freeze_backbone_test_hist.json",
+  }
+
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
+  ```
