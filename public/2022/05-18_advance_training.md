@@ -1,3 +1,4 @@
+# Token label
 ## Troch roi align
   - [token labeling](https://www.cnblogs.com/dan-baishucaizi/p/14994269.html)
   ```py
@@ -305,9 +306,7 @@
   print(f"{bb[0].shape = }, {bb[1].shape = }")
   # bb[0].shape = (32, 224, 224, 3), bb[1].shape = (32,)
   ```
-***
-
-# Model
+## Model
   ```py
   # mm = kecam.efficientnet.EfficientNetV2S()
   mm = keras.models.load_model('checkpoints/freeze_backbone_test_latest.h5', compile=False)
@@ -430,8 +429,7 @@
   )
   mm.fit(train_dataset, validation_data=test_dataset, epochs=2)
   ```
-***
-# Training
+## Training
   ```sh
   CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py -m efficientnet.EfficientNetV2B0 \
   --data_name cifar10 --lr_decay_steps 20 --lr_cooldown_steps 2 --batch_size 256 --pretrained imagenet \
@@ -508,8 +506,7 @@
   | ------------------------------------ | --------------- | ------------------------- | ---------------- |
   | None                                 | 0.72766, 0.1572 | Epoch 55, 0.9757, 0.01697 | 0.9749           |
   | cifar10_efficientnet_v2-b0_5_5_5.pkl | 0.78688, 0.1396 | Epoch 56, 0.9792, 0.01478 | 0.9776           |
-
-# ConvNeXtTiny Training
+## ConvNeXtTiny Training
   - **Freezing backbone** by set `--freeze_backbone`, will set `layer.trainable=False` till model `GlobalAveragePooling2D`.
   ```sh
   # First stage freezing backbone. total epochs = lr_decay_steps + lr_cooldown_steps = 22
