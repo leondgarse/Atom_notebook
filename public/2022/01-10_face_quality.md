@@ -434,7 +434,33 @@ nns = {
 }
 sns.histplot(nns, stat='density', kde=True)
 ```
+# PartialFC
+  ```py
+  hist_path = "checkpoints/"
+  pp = {}
+  pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+  pp["epochs"] = [3, 1, 3, 18]
+  pp["skip_epochs"] = 3
+  names = ["Warmup"] + ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_glint360k_mag_bs_256_test_random_0_E25_hist.json", fig_label="effv2_s, glint360k, no partialFC, bs256", names=names, **pp)
+  pp["axes"] = axes
 
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_glint360k_mag_bs_256_test_random_0_partial_4_E25_hist.json", fig_label="effv2_s, glint360k, partialFC 4, bs256", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_glint360k_mag_bs_480_test_random_100_partial_4_E25_hist.json", fig_label="effv2_s, glint360k, partialFC 4, bs480", **pp)
+  axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_glint360k_cos_bs_480_test_random_100_partial_4_E25_hist.json", fig_label="effv2_s, glint360k, partialFC 4, bs480, cos", **pp)
+  ```
+
+  | Method       | lfw      | cfp_fp       | agedb_30 | IJBB         | IJBC         |
+  | ------------ | -------- | ------------ | -------- | ------------ | ------------ |
+  | No PartialFC | 0.998500 | 0.992286     | 0.983667 | **0.958909** | **0.971212** |
+  | PartialFC 4  | 0.998167 | **0.993000** | 0.983833 | 0.956378     | 0.969218     |
+
+  | Method             | 1e-06    | 1e-05    | 0.0001       | 0.001    | 0.01     | 0.1      | AUC      |
+  | ------------------ | -------- | -------- | ------------ | -------- | -------- | -------- | -------- |
+  | IJBB, No PartialFC | 0.439435 | 0.923856 | **0.958909** | 0.969231 | 0.978286 | 0.985589 | 0.992529 |
+  | IJBC, No PartialFC | 0.89528  | 0.956691 | **0.971212** | 0.978933 | 0.985172 | 0.99008  | 0.994988 |
+  | IJBB, PartialFC 4  | 0.404284 | 0.92483  | 0.956378     | 0.970204 | 0.97887  | 0.987634 | 0.993442 |
+  | IJBC, PartialFC 4  | 0.889042 | 0.955003 | 0.969218     | 0.979649 | 0.985274 | 0.990745 | 0.994939 |
 # Triplet offline mining
 ```py
 # !waitGPU 0

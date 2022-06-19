@@ -1457,14 +1457,34 @@
     # log
     sudo cat /var/log/squid/access.log
     ```
-  - **clash** [Github Dreamacro/clash](https://github.com/Dreamacro/clash)
+## clash
+  - [Github Dreamacro/clash](https://github.com/Dreamacro/clash)
+    - 安装 github 开源版本 `go install github.com/Dreamacro/clash@latest`
+    - 或下载预编译的 premium 版本 [Github Dreamacro/clash premium](https://github.com/Dreamacro/clash/releases/tag/premium)
+  - 配置文件 [Github alanbobs999/TopFreeProxies](https://github.com/alanbobs999/TopFreeProxies)
     ```sh
-    go install github.com/Dreamacro/clash@latest
     clash # Run to download ~/.config/clash/Country.mmdb
-    curl https://sspool.herokuapp.com/clash/config > ~/.config/clash/config.yaml
+    
+    # curl https://sspool.herokuapp.com/clash/config > ~/.config/clash/config.yaml
+    curl https://raw.githubusercontent.com/alanbobs999/TopFreeProxies/master/Eternity.yml > ~/.config/clash/config.yaml
+    
     clash
     ```
-    - [clash settings](http://clash.razord.top/#/settings)
+  - 配置界面 使用 https 访问 [clash settings](https://clash.razord.top/#/settings)
+  - supervisor
+    ```sh
+    $ cat /etc/supervisor/conf.d/clash.conf 
+    [program:clash]
+    command=/home/leondgarse/local_bin/clash-linux-amd64 -d /home/leondgarse/.config/clash/
+    autorestart = true
+    autostart = true
+    startsecs = 5    
+    startretries = 3
+    user = leondgarse
+    stdout_logfile_maxbytes = 20MB  
+    stdout_logfile_backups = 20    
+    stdout_logfile = /var/log/clash.log
+    ```
 ## Github 访问
   - 通过 [IP Address Lookup](https://www.ipaddress.com/ip-lookup) 获取 `github.global.ssl.fastly.net` / `github.com` IP 地址
   - 修改 `/etc/hosts` 添加地址映射
@@ -2048,6 +2068,7 @@
     - **Firefox** [baidu-pan-exporter 插件](https://addons.mozilla.org/en-US/firefox/addon/baidu-pan-exporter/?src=search)
     - **Chrome** 可以 clone 源码，通过 Chrome -> `chrome://extensions/` -> `Load unpacked` -> 选择 `chrome/release` 文件夹
     - 安装插件后在浏览器中选择百度云文件后，会出现 `导出下载` 按钮，可以选择使用 `ARIA2 RPC` / `文本导出` / `设置`
+  - **去除 html 绑定** `vi ~/.config/mimeapps.list` -> `text/html=microsoft-edge.desktop`
 ## mplayer 视频流
   ```sh
   mplayer -tv driver=v4l2:width=352:height=288:device=/dev/video0 tv://

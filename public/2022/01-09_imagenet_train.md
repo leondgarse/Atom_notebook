@@ -63,17 +63,18 @@
       # "A3, rescale_mode_tf, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_rescale_tf_hist.json",
       # "A3, rescale_mode_tf, clip255, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_rescale_tf_clip255_hist.json",
       # "A3, progressive_4, cutmix reverse": "checkpoints/aotnet50_progressive_4_lr_steps_100_cutmix_reverse_hist.json",
-      "A3, bilinear_antialias, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_bilinear_antialias_hist.json",
-      "A3, adamw_1e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_1e3_wd5e2_hist.json",
-      "A3, adamw_4e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_4e3_wd5e2_hist.json",
-      "A3, adamw_8e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_hist.json",
-      "A3, adamw_4e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
-      "A3, adamw_8e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
-      "A3, progressive_3_lr_steps_33_lr_t_mul_1": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_hist.json",
-      "A3, progressive_3_lr_steps_33_lr_t_mul_1_on_batch": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_on_batch_hist.json",
+      # "A3, bilinear_antialias, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_bilinear_antialias_hist.json",
+      # "A3, adamw_1e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_1e3_wd5e2_hist.json",
+      # "A3, adamw_4e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_4e3_wd5e2_hist.json",
+      # "A3, adamw_8e3_wd5e2, cutmix reverse": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_hist.json",
+      # "A3, adamw_4e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_4e3_wd2e2_hist.json",
+      # "A3, adamw_8e3_wd2e2, cutmix random": "checkpoints/aotnet50_cutmix_random_adamw_8e3_wd2e2_hist.json",
+      # "A3, progressive_3_lr_steps_33_lr_t_mul_1": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_hist.json",
+      # "A3, progressive_3_lr_steps_33_lr_t_mul_1_on_batch": "checkpoints/aotnet50_progressive_3_lr_steps_33_lr_t_mul_1_on_batch_hist.json",
       # "A3, adamw_8e3_wd5e2, cutmix reverse, CE_mixup_0.8": "checkpoints/aotnet50_cutmix_reverse_adamw_8e3_wd5e2_CE_mixup_0.8_hist.json",
       "A3, evonorm": "checkpoints/aotnet50_evonorm_hist.json",
       "A3, sigmoid": "checkpoints/aotnet.AotNet50_160_LAMB_imagenet2012_batchsize_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_sigmoid_hist.json",
+      "A3, token_label": "checkpoints/aotnet.AotNet50_160_LAMB_imagenet2012_batchsize_200_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_token_label_hist.json",
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=40, base_size=8)
   ```
@@ -484,3 +485,4 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_si
 
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
   ```
+***
