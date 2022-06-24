@@ -4224,8 +4224,8 @@
   ```
 ***
 
-
-# MagFace model
+# Face model
+## MagFace model
   ```py
   from keras_cv_attention_models import download_and_load
   import models
@@ -4260,9 +4260,7 @@
   | mag-cosface_iresnet50_MS1MV2_ddp_fp32 | 0.998333 | 0.982714 | 0.978667 | 0.93408  |
   | magface_iresnet50_MS1MV2_dp           | 0.998167 | 0.981143 | 0.980500 | 0.943622 |
   | magface_epoch_00025                   | 0.998333 | 0.987429 | 0.983333 | 0.949562 |
-***
-
-# AdaFace model
+## AdaFace model
   ```py
   sys.path.append('../keras_cv_attention_models/')
   from keras_cv_attention_models import download_and_load
@@ -4287,6 +4285,7 @@
       save_name="adaface_ir101_webface4m.h5",
   )
   ```
+  **PyTorch AdaFace model**
   ```py
   import net
   model = net.build_model('ir_101')
@@ -4297,6 +4296,7 @@
   _ = model.eval()
   model(torch.ones([1, 3, 112, 112]))[0].shape
   ```
+  **AdaFace loss compare**
   ```py
   y_true = tf.one_hot(tf.random.uniform([32], 1, 10, dtype='int32'), 10)
   y_pred = tf.random.uniform([32, 10])
@@ -4308,61 +4308,24 @@
   sys.path.append('../AdaFace-master/')
   import torch
   import head
-  bb = head.AdaFace()
-  bb(torch.from_numpy(y_pred_norm[:, :-1].numpy()), torch.from_numpy(y_pred_norm[:, -1:].numpy()), torch.from_numpy(np.argmax(y_true, axis=-1)))
+  bb = head.AdaFace(t_alpha=0.01)
+  cc = bb(torch.from_numpy(y_pred_norm[:, :-1].numpy()), torch.from_numpy(y_pred_norm[:, -1:].numpy()), torch.from_numpy(np.argmax(y_true, axis=-1)))
+
+  print(f"{aa(y_true, y_pred_norm).numpy() = }, {cc.mean() = }")
+  # aa(y_true, y_pred_norm).numpy() = 30.912012, cc.mean() = tensor(30.9092)
+
+  print(f"{aa(y_true, y_pred_norm).numpy() / 64 = }, {cc.mean() / 64 = }")
+  # aa(y_true, y_pred_norm).numpy() / 64 = 0.4830001890659332, cc.mean() / 64 = tensor(0.4830)
   ```
-
-## Adaface
-- Model weights ported from [Github mk-minchul/AdaFace](https://github.com/mk-minchul/AdaFace). Paper [AdaFace: Quality Adaptive Margin for Face Recognition](https://arxiv.org/pdf/2204.00964.pdf). These models can be used testing face quality.
-- **Model architecture** is:
+  **AdaFace loss margin plot**
   ```py
-  import models
-  mm = models.buildin_models('r100', output_layer='E', activation="PReLU", bn_momentum=0.9, bn_epsilon=1e-5, use_bias=True, scale=False, use_max_pool=True)
-  ```
-- **Evaluation on `bin` test files**:
-  ```py
-  import evals
-  mm = keras.models.load_model('adaface_ir101_webface12m.h5')
-
-  eea = evals.eval_callback(mm, '/datasets/ms1m-retinaface-t1/cfp_fp.bin', batch_size=16)
-  eea.on_epoch_end()
-  # >>>> cfp_fp evaluation max accuracy: 0.992857, thresh: 0.184663
-
-  eeb = evals.eval_callback(mm, '/datasets/ms1m-retinaface-t1/agedb_30.bin', batch_size=16)
-  eeb.on_epoch_end()
-  # >>>> agedb_30 evaluation max accuracy: 0.980667, thresh: 0.185591
-
-  """ Plot face quality distribution using norm value of feature """
-  cc = tf.norm(eea.embs, axis=1).numpy()
-  _ = plt.hist(cc, bins=512, alpha=0.5, label='cfp_fp quality')
-  dd = tf.norm(eeb.embs, axis=1).numpy()
-  _ = plt.hist(dd, bins=512, alpha=0.5, label='agedb_30 quality')
+  pp = lambda xx, scaled_margin: tf.cos(tf.acos(xx) - scaled_margin) - (0.4 + scaled_margin)
+  xx = np.arange(-1, 1, 0.01)
+  for ss in np.arange(-0.4, 0.5, 0.1):
+      plt.plot(pp(xx, ss), label="scaled_margin={:.1f}".format(ss))
+  plt.plot(xx, label="xx=xx")
+  plt.grid(True)
   plt.legend()
   plt.tight_layout()
   ```
-  ![Selection_204](https://user-images.githubusercontent.com/5744524/172560193-81482cf5-7738-4f6c-9f64-e0aeb3ad964f.png)
-- **Evaluation**
-  ```py
-  CUDA_VISIBLE_DEVICES='0' ./evals.py -m adaface_ir101_webface12m.h5 -b 32 -t /datasets/ms1m-retinaface-t1/agedb_30.bin
-  CUAD_VISIBLE_DEVICES='0' ./IJB_evals.py -m adaface_ir101_webface12m.h5 -d /datasets/IJB_release/ -s IJBC
-  ```
-  | Model | lfw      | cfp_fp   | agedb_30 | IJBB     | IJBC |
-  | ------------------------------------- | -------- | -------- | -------- | -------- | -------- |
-  | adaface_ir101_webface4m     | 0.998500 | 0.991857 | 0.977833 | 0.957059 | 0.971724 |
-  | adaface_ir101_webface12m     | 0.998333 | 0.992857 | 0.980667 | 0.963389 | 0.975763 |
-
-  **Official reported** For `IJBB / IJBC` may using norm value helping evaluating accuracy
-
-  | Model | lfw      | cfp_fp   | agedb_30 | IJBB | IJBC |
-  | ------------------------------------- | -------- | -------- | -------- | -------- | -------- |
-  | adaface_ir101_webface4m     | 0.9980 | 0.9917 | 0.9790 | 96.03 | 97.39|
-  | adaface_ir101_webface12m     | 0.9982 | 0.9926 | 0.9800 | 96.41 | 97.66 |
-
-  **IJBB / IJBC detail**
-
-  | Model |    1e-06 |   1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 | AUC |
-  |:---------|---------:|--------:|---------:|---------:|---------:|---------:|---------:|
-  | adaface_ir101_webface4m, IJBB | 0.427069 | 0.924245 | 0.957059 | 0.971178 | 0.981402 | 0.989581 | 0.995355 |
-  | adaface_ir101_webface4m, IJBC | 0.915478 | 0.954594 | 0.971724 | 0.980723 | 0.987882 | 0.993046 | 0.996979 |
-  | adaface_ir101_webface12m, IJBB | 0.487439 | 0.93369 | 0.963389 | 0.973223 | 0.982084 | 0.988413 | 0.995177 |
-  | adaface_ir101_webface12m, IJBC |0.896201 | 0.960526 | 0.975763 | 0.982462 | 0.987882 | 0.992279 | 0.996488 |
+  ![](images/adaface_margin.png)
