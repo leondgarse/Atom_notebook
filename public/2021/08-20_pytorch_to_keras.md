@@ -4303,19 +4303,19 @@
   y_pred_norm = tf.concat([y_pred, tf.norm(y_pred, axis=-1, keepdims=True)], axis=-1)
   import losses
   aa = losses.AdaFaceLoss()
-  aa(y_true, y_pred_norm)
+  keras_out = aa(y_true, y_pred_norm).numpy()
 
   sys.path.append('../AdaFace-master/')
   import torch
   import head
   bb = head.AdaFace(t_alpha=0.01)
-  cc = bb(torch.from_numpy(y_pred_norm[:, :-1].numpy()), torch.from_numpy(y_pred_norm[:, -1:].numpy()), torch.from_numpy(np.argmax(y_true, axis=-1)))
+  torch_out = bb(torch.from_numpy(y_pred_norm[:, :-1].numpy()), torch.from_numpy(y_pred_norm[:, -1:].numpy()), torch.from_numpy(np.argmax(y_true, axis=-1)))
+  torch_out = torch_out.numpy().mean()
 
-  print(f"{aa(y_true, y_pred_norm).numpy() = }, {cc.numpy().mean() = }")
-  # aa(y_true, y_pred_norm).numpy() = -2.7808359, cc.numpy().mean() = -2.7838626
-
-  print(f"{aa(y_true, y_pred_norm).numpy() / 64 = }, {cc.numpy().mean() / 64 = }")
-  # aa(y_true, y_pred_norm).numpy() / 64 = -0.04345056042075157, cc.numpy().mean() / 64 = -0.043497852981090546
+  print(f"{keras_out = }, {torch_out = }")
+  # keras_out = -2.7808359, torch_out = -2.7838626
+  print(f"{keras_out / 64 = }, {torch_out / 64 = }")
+  # keras_out / 64 = -0.04345056042075157, torch_out / 64 = -0.043497852981090546
   ```
   **AdaFace loss margin plot**
   ```py
