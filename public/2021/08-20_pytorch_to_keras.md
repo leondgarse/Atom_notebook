@@ -4299,7 +4299,7 @@
   **AdaFace loss compare**
   ```py
   y_true = tf.one_hot(tf.random.uniform([32], 1, 10, dtype='int32'), 10)
-  y_pred = tf.random.uniform([32, 10])
+  y_pred = tf.random.uniform([32, 10], -1, 1)
   y_pred_norm = tf.concat([y_pred, tf.norm(y_pred, axis=-1, keepdims=True)], axis=-1)
   import losses
   aa = losses.AdaFaceLoss()
@@ -4311,11 +4311,11 @@
   bb = head.AdaFace(t_alpha=0.01)
   cc = bb(torch.from_numpy(y_pred_norm[:, :-1].numpy()), torch.from_numpy(y_pred_norm[:, -1:].numpy()), torch.from_numpy(np.argmax(y_true, axis=-1)))
 
-  print(f"{aa(y_true, y_pred_norm).numpy() = }, {cc.mean() = }")
-  # aa(y_true, y_pred_norm).numpy() = 30.912012, cc.mean() = tensor(30.9092)
+  print(f"{aa(y_true, y_pred_norm).numpy() = }, {cc.numpy().mean() = }")
+  # aa(y_true, y_pred_norm).numpy() = -2.7808359, cc.numpy().mean() = -2.7838626
 
-  print(f"{aa(y_true, y_pred_norm).numpy() / 64 = }, {cc.mean() / 64 = }")
-  # aa(y_true, y_pred_norm).numpy() / 64 = 0.4830001890659332, cc.mean() / 64 = tensor(0.4830)
+  print(f"{aa(y_true, y_pred_norm).numpy() / 64 = }, {cc.numpy().mean() / 64 = }")
+  # aa(y_true, y_pred_norm).numpy() / 64 = -0.04345056042075157, cc.numpy().mean() / 64 = -0.043497852981090546
   ```
   **AdaFace loss margin plot**
   ```py
