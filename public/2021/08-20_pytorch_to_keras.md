@@ -603,6 +603,85 @@
   additional_transfer = {nat.MultiHeadRelativePositionalKernelBias: lambda ww: [np.reshape(ww[0], [ww[0].shape[0], -1])]}
   download_and_load.keras_reload_from_torch_model('nat_mini.pth', mm, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, unstack_weights=unstack_weights, do_convert=True)
   ```
+## CMT
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../Efficient-AI-Backbones/')
+  resolution = 160
+
+  from cmt_pytorch import cmt as cmt_pytorch
+  import torch
+  tt = cmt_pytorch.cmt_ti(img_size=resolution, pretrained=True)
+  _ = tt.eval()
+  weight = torch.load('cmt_tiny.pth', map_location=torch.device('cpu'))  # Modify code, makes `proj` first in each block
+  tt.load_state_dict(weight['model'])
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.cmt import cmt
+  mm = cmt.CMTTiny_torch(input_shape=(resolution, resolution, 3), pretrained=None, classifier_activation=None)
+
+  unstack_weights = ['relative_pos_a', 'relative_pos_b', 'relative_pos_c', 'relative_pos_d']
+  # tail_align_dict = {
+  #     "light_mhsa_key": -2, "light_mhsa_value": -2, "light_mhsa_query": -4, "light_mhsa_output": -2,
+  #     "stack4": {"light_mhsa_query": -2}
+  # }
+  tail_align_dict = {
+      "light_mhsa_key": -2, "light_mhsa_value": -2, "light_mhsa_query": -1, "light_mhsa_output": -2,
+      "stack4": {}
+  }
+  full_name_align_dict = {
+      "stack1_pos_emb": 0, "stack2_pos_emb": 1, "stack3_pos_emb": 2, "stack4_pos_emb": 3,
+      "stack2_down_sampleconv": 9, "stack2_ln": 10, "stack3_down_sampleconv": 12, "stack3_ln": 13, "stack4_down_sampleconv": 15, "stack4_ln": 16,
+  }
+
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=tt,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      save_name=mm.name + "_{}_0.h5".format(resolution),
+      do_convert=True,
+  )
+  ```
+  ```py
+  from keras_cv_attention_models.cmt import cmt
+  mm = cmt.CMTTiny_torch(pretrained=None, classifier_activation=None)
+  weight_name = mm.name + "_{}".format(mm.input_shape[1])
+
+  mm.load_weights(weight_name + '_0.h5', by_name=True)
+  ss = keras.models.load_model(weight_name + '_0.h5')
+
+  num_heads = [1, 2, 4, 8]
+  for ii in mm.layers:
+      target_name = ii.name
+      if target_name.endswith('_light_mhsa_key_value'):
+          key_name = target_name.replace("_value", "")
+          value_name = target_name.replace("_key", "")
+          num_head = num_heads[int(target_name.split("stack")[1][0]) - 1]
+          print(f"{target_name = }, {key_name = }, {value_name= }, {num_head = }")
+
+          key_weights = ss.get_layer(key_name).get_weights()
+          value_weights = ss.get_layer(value_name).get_weights()
+
+          # [kv_hh * kv_ww, 2, num_heads, key_dim] -> [kv_hh * kv_ww, key_dim, num_heads, 2]
+          ww = np.concatenate([key_weights[0], value_weights[0]], axis=-1)
+          ww = ww.reshape([ww.shape[0], 2, num_head, -1]).transpose([0, 3, 2, 1]).reshape(ww.shape[0], -1)
+          bb = np.concatenate([key_weights[1], value_weights[1]], axis=-1)
+          bb = bb.reshape([2, num_head, -1]).transpose([2, 1, 0]).reshape(-1)
+          ii.set_weights([ww, bb])
+
+  import tensorflow as tf
+  from skimage.data import chelsea
+  imm = tf.keras.applications.imagenet_utils.preprocess_input(chelsea(), mode='torch') # Chelsea the cat
+  imm = tf.expand_dims(tf.image.resize(imm, mm.input_shape[1:3]), 0)
+  pred_mm = tf.keras.applications.imagenet_utils.decode_predictions(mm(imm).numpy())[0]
+  pred_ss = tf.keras.applications.imagenet_utils.decode_predictions(ss(imm).numpy())[0]
+  print(f"{pred_mm = }, {pred_ss = }")
+
+  mm.save(weight_name + ".h5")
+  ```
 ***
 
 # Resnest

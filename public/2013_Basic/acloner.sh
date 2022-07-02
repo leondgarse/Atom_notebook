@@ -171,7 +171,8 @@ if [ $WORK_MODE != "BACKUP" ]; then
     fi
 
     # rsync, need an exclude file list
-    generate_exclude_list_base
+    # generate_exclude_list_base
+    generate_exclude_list_addition
     # exit
     rsync -av --exclude-from=$EXCLUDE_FILE $SOURCE_SYSTEM_PATH/ $DIST_ROOT_MOUNT_POINT
     # rsync -av \

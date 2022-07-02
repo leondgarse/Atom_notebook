@@ -509,5 +509,6 @@ pp["axes"] = axes
 axes, _ = plot.hist_plot_split(hist_path + "TT_r50_max_pool_E_prelu_dr04_lr_01_wd5e4lr_adaface_emb512_sgdw_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="SGDW 5e-6", **pp)
 # axes, _ = plot.hist_plot_split(hist_path + "TT_r50_max_pool_E_prelu_dr04_lr_01_wd5e2lr_adaface_emb512_sgdw_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="SGDW 5e-4", **pp)
 
-axes, _ = plot.hist_plot_split(hist_path + "TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="r100, SGD l2 5e-4", names=names, **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="r100, SGD l2 5e-4", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_glint360k_64_only_margin_SG_scale_true_bias_false_random_100_partial4_hist.json", fig_label="r100, 360K, SGD l2 5e-4", **pp)
 ```
