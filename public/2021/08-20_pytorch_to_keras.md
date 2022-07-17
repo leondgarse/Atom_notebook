@@ -682,6 +682,126 @@
 
   mm.save(weight_name + ".h5")
   ```
+## EdgeNeXt
+- **PositionalEncodingFourier**
+  ```py
+  """ Tensorflow """
+  input_shape, scale, filters, temperature = (2, 4, 5, 3), 2 * np.pi, 32, 1e4
+  _, height, width, channels = input_shape
+  # hh, ww = tf.meshgrid(range(height), range(width))  # tf.meshgrid is same with np.meshgrid 'xy' mode, while torch.meshgrid 'ij' mode
+  hh, ww = tf.range(height, dtype='float32'), tf.range(width, dtype='float32')
+  hh = (hh + 1) / (tf.cast(height, "float32") + 1e-6)* scale
+  ww = (ww + 1) / (tf.cast(width, "float32") + 1e-6) * scale
+
+  dim_t = temperature ** (2 * (tf.range(filters, dtype='float32') // 2) / filters)
+  pos_hh, pos_ww = tf.expand_dims(hh, -1) / dim_t, tf.expand_dims(ww, -1) / dim_t
+  pos_hh = tf.stack([tf.sin(pos_hh[:, 0::2]), tf.cos(pos_hh[:, 1::2])], axis=-1)
+  pos_ww = tf.stack([tf.sin(pos_ww[:, 0::2]), tf.cos(pos_ww[:, 1::2])], axis=-1)
+  pos_hh = tf.repeat(tf.reshape(pos_hh, [height, 1, -1]), width, axis=1)
+  pos_ww = tf.repeat(tf.reshape(pos_ww, [1, width, -1]), height, axis=0)
+  positional_embedding = tf.concat([pos_hh, pos_ww], axis=-1)
+
+  """ PyTorch """
+  input_shape, scale, filters, temperature = (2, 4, 5, 3), 2 * np.pi, 32, 1e4
+  B, H, W, channels = input_shape
+  mask = torch.zeros(B, H, W).bool()
+  not_mask = ~mask
+  y_embed = not_mask.cumsum(1, dtype=torch.float32)
+  x_embed = not_mask.cumsum(2, dtype=torch.float32)
+  eps = 1e-6
+  y_embed = y_embed / (y_embed[:, -1:, :] + eps) * scale
+  x_embed = x_embed / (x_embed[:, :, -1:] + eps) * scale
+
+  dim_t = torch.arange(filters, dtype=torch.float32, device=mask.device)
+  dim_t = temperature ** (2 * (dim_t // 2) / filters)
+
+  pos_x = x_embed[:, :, :, None] / dim_t
+  pos_y = y_embed[:, :, :, None] / dim_t
+  pos_x = torch.stack((pos_x[:, :, :, 0::2].sin(), pos_x[:, :, :, 1::2].cos()), dim=4).flatten(3)
+  pos_y = torch.stack((pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), dim=4).flatten(3)
+  pos = torch.cat((pos_y, pos_x), dim=3)
+
+  print(f"{np.allclose(positional_embedding, pos[0]) = }")
+  # np.allclose(positional_embedding, pos[0]) = True
+  ```
+  **timm models**
+  ```py
+  import pathlib
+  pathlib.PosixPath = pathlib.WindowsPath  # Window error NotImplementedError: cannot instantiate 'PosixPath' on your system
+
+  sys.path.append('../pytorch-image-models/')
+  resolution = 256
+
+  import timm
+  tt = timm.models.edgenext_xx_small(pretrained=True)
+  _ = tt.eval()
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.edgenext import edgenext
+  mm = edgenext.EdgeNeXt_XX_Small(input_shape=(resolution, resolution, 3), pretrained=None, classifier_activation=None)
+
+  unstack_weights = ['gamma', 'gamma_xca']
+  tail_align_dict = [
+    {"conv_gamma": -4, "stda_xca_gamma": "stda_spx_1_dw_conv", "stda_ir_gamma": "stda_spx_1_dw_conv", "stda_xca_temperature/no_weight_decay": -1},
+    {"stda_xca_gamma": -1},  # Move stda_xca_gamma beyond stda_ir_gamma
+  ]
+  tail_split_position = [2, 2]
+  additional_transfer = {edgenext.PositionalEncodingFourier: lambda ww: [ww[0][:, :, 0, 0].T, ww[1]]}
+
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=tt,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      additional_transfer=additional_transfer,
+      save_name=mm.name + "_{}_0.h5".format(resolution),
+      do_convert=True,
+  )
+  ```
+  **Orignal EdgeNeXt models**
+  ```py
+  import pathlib
+  pathlib.PosixPath = pathlib.WindowsPath  # Window error NotImplementedError: cannot instantiate 'PosixPath' on your system
+
+  sys.path.append('../EdgeNeXt/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import model
+  tt = model.edgenext_small(classifier_dropout=0)
+  _ = tt.eval()
+  ss = torch.load('edgenext_small_usi.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['state_dict'])
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.edgenext import edgenext
+  resolution = 256
+  mm = edgenext.EdgeNeXt_Small(input_shape=(resolution, resolution, 3), pretrained=None, classifier_activation=None)
+
+  unstack_weights = ['gamma', 'gamma_xca']
+  tail_align_dict = [
+    {"conv_gamma": -4, "stda_xca_gamma": "stda_spx_1_dw_conv", "stda_ir_gamma": "stda_spx_1_dw_conv", "stda_xca_temperature/no_weight_decay": -1},
+    {"stda_xca_gamma": -1},  # Move stda_xca_gamma beyond stda_ir_gamma
+  ]
+  tail_split_position = [2, 2]
+  full_name_align_dict = {"stack2_downsample_ln": 2, "stack2_downsample_conv": 3, "stack3_downsample_ln": 4, "stack3_downsample_conv": 5, "stack4_downsample_ln": 6, "stack4_downsample_conv": 7}
+
+  additional_transfer = {edgenext.PositionalEncodingFourier: lambda ww: [ww[0][:, :, 0, 0].T, ww[1]]}
+
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=tt,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      full_name_align_dict=full_name_align_dict,
+      additional_transfer=additional_transfer,
+      save_name=mm.name + "_{}_usi.h5".format(resolution),
+      do_convert=True,
+  )
+  ```
 ***
 
 # Resnest

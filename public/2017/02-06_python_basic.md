@@ -146,7 +146,20 @@
     :set ff=unix # 设置为unix格式
     :wq
     ```
-
+  - Q: Windows 安装 anaconda 启动 ipython 报错
+    ```md
+    ImportError: DLL load failed while importing _sqlite3: 找不到指定的模块
+    ```
+    A: 首先安装 `pip install pysqlite3`，然后从 [SQLite Download Page](https://www.sqlite.org/download.html) 下载 `sqlite-dll-win64-x64-3390000.zip`，解压到 `{Anaconda 安装目录}/DLLS`
+  - Q: `import numpy as np` 报错
+    ```md
+    Original error was: DLL load failed while importing _multiarray_umath: 找不到指定的模块。
+    ```
+    A: 添加环境变量
+    ```
+    export PATH="/d/ProgramData/Anaconda3:/d/ProgramData/Anaconda3/Scripts:/d/ProgramData/Anaconda3/Library/bin:$PATH"  # Window anaconda
+    export PYTHONPATH="$PYTHONPATH:/d/ProgramData/Anaconda3/Lib:/d/ProgramData/Anaconda3/Library"  
+    ```
 ***
 
 # Python2 to Python3

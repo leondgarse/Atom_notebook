@@ -142,6 +142,24 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_si
   }
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=1, base_size=8)
   ```
+## Distill
+  ```sh
+  CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py --teacher_model efficientnet.EfficientNetV2B3 --teacher_model_input_shape 300 -b 256 -s _teacher_EfficientNetV2B3_300
+  # 5005/5005 [==============================] - 41581s 8s/step - loss: 0.0056 - predictions_loss: 0.0037 - distill_loss: 0.0019 - predictions_acc: 0.6487 - val_loss: 0.0016 - val_predictions_loss: 0.0016 - val_distill_loss: 0.0000e+00 - val_predictions_acc: 0.7743
+  ```
+  ```py
+  import kecam
+  mm = kecam.aotnet.AotNet50(input_shape=(224, 224, 3))
+  mm.load_weights('checkpoints/aotnet.AotNet50_160_LAMB_imagenet2012_batchsize_256_randaug_6_mixup_0.1_cutmix_1.0_RRC_0.08_lr512_0.008_wd_0.02_teacher_EfficientNetV2B3_300_epoch_104_val_predictions_acc_0.7755.h5')
+  mm.save("bb.h5")
+  ```
+  ```sh
+  CUDA_VISIBLE_DEVICES='0' ./eval_script.py -m bb.h5 -i 224
+  # >>>> Accuracy top1: 0.7934 top5: 0.94518
+
+  # latest
+  # >>>> Accuracy top1: 0.7922 top5: 0.9445
+  ```
 ## CoAtNet
   | Model       | stem                      | res_MBConv block      | res_mhsa block        | res_ffn block                 |
   | ----------- | ------------------------- | --------------------- | --------------------- | ----------------------------- |

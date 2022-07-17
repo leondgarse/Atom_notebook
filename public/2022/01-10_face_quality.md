@@ -496,6 +496,14 @@ tt.train(sch, 0)
 exit()
 ```
 # AdaFace
+```sh
+scp tdtest@172.168.11.83:workspace/Keras_insightface/TT_r50_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json
+TT_r50_max_pool_E_prelu_dr04_lr_01_wd5e4lr_adaface_emb512_sgdw_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json
+TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json
+TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_glint360k_64_only_margin_SG_scale_true_bias_false_random_100_partial4_hist.json
+TT_effv2s_dr02_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json
+TT_effv2m_dr03_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs256_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json
+```
 ```py
 hist_path = "checkpoints/"
 pp = {}
@@ -511,4 +519,29 @@ axes, _ = plot.hist_plot_split(hist_path + "TT_r50_max_pool_E_prelu_dr04_lr_01_w
 
 axes, _ = plot.hist_plot_split(hist_path + "TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="r100, SGD l2 5e-4", **pp)
 axes, _ = plot.hist_plot_split(hist_path + "TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_glint360k_64_only_margin_SG_scale_true_bias_false_random_100_partial4_hist.json", fig_label="r100, 360K, SGD l2 5e-4", **pp)
+
+axes, _ = plot.hist_plot_split(hist_path + "TT_effv2s_dr02_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="effv2s, SGD l2 5e-4", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TT_effv2m_dr03_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs256_ms1m_64_only_margin_SG_scale_true_bias_false_random_100_hist.json", fig_label="effv2m, SGD l2 5e-4", **pp)
+
+plt.savefig("adaface.png")
 ```
+|             |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+| ----------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+| r50 IJBB    | 0.393379 |  0.91334 | 0.955501 | 0.970204 | 0.978773 | 0.986465 | 0.993366 |
+| r50 IJBC    | 0.888633 | 0.952702 | 0.969269 | 0.979496 | 0.985734 | 0.991052 | 0.995485 |
+| r100 IJBB   | 0.392697 | 0.928724 | 0.961636 | 0.971373 | 0.980136 | 0.986855 |  0.99346 |
+| r100 IJBC   | 0.902439 | 0.958634 | 0.972849 | 0.980672 | 0.986808 | 0.991359 |  0.99559 |
+| Effv2S IJBB |   0.4111 |  0.92074 | 0.956086 |  0.97001 | 0.980039 | 0.987439 | 0.993528 |
+| Effv2S IJBC | 0.885258 | 0.954799 | 0.969832 | 0.980263 | 0.986706 | 0.991614 | 0.995472 |
+
+| model  | lfw      | cfp_fp   | agedb_30 | IJBB@1e-4 | IJBC@1e-4 |
+| ------ | -------- | -------- | -------- | --------- | --------- |
+| r50    | 0.998667 | 0.989143 | 0.9845   | 0.955501  | 0.969269  |
+| r100   | 0.998667 | 0.992286 | 0.984333 | 0.961636  | 0.972849  |
+| Effv2S | 0.998500 | 0.990143 | 0.984167 | 0.956086  | 0.969832  |
+
+PyTorch 训练 26 epochs 的结果：
+| Arch | Dataset   | Method  | IJBB TAR@FAR=0.01% | IJBC TAR@FAR=0.01% |
+| ---- | --------- | ------- | ------------------ | ------------------ |
+| R50  | WebFace4M | AdaFace | 95.44              | 96.98              |
+| R50  | MS1MV2    | AdaFace | 94.82              | 96.27              |
