@@ -683,7 +683,7 @@
   mm.save(weight_name + ".h5")
   ```
 ## EdgeNeXt
-- **PositionalEncodingFourier**
+  - **PositionalEncodingFourier**
   ```py
   """ Tensorflow """
   input_shape, scale, filters, temperature = (2, 4, 5, 3), 2 * np.pi, 32, 1e4
@@ -802,6 +802,71 @@
       do_convert=True,
   )
   ```
+## GCViT
+- Move torch model `to_q_global` first in `GCViTLayer`. Move `norm1` first in `ReduceSize`.
+```py
+sys.path.append('../GCVit/')
+sys.path.append('../pytorch-image-models/')
+import torch
+from models import gc_vit
+tt = gc_vit.gc_vit_tiny()
+_ = tt.eval()
+ss = torch.load('gcvit_tiny_best.pth.tar', map_location=torch.device('cpu'))
+tt.load_state_dict(ss['state_dict'])
+
+from models import gc_vit
+from keras_cv_attention_models import download_and_load
+from keras_cv_attention_models.gcvit import gcvit
+mm = gcvit.GCViT_Tiny(classifier_activation=None)
+
+unstack_weights = ['relative_position_bias_table']
+skip_weights = ["relative_position_index"]
+tail_align_dict =  [
+  {
+    "stack1": {
+      "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -1,
+      "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -2,
+      "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -3,
+      "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -5,
+      "q_global_down8_extract_se_1_dense": -7, "q_global_down8_extract_se_2_dense": -7,
+      "q_global_down8_extract_conv": -8,
+    },
+    "stack2": {
+      "q_global_down2_extract_dw_conv": -2,
+      "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -3,
+      "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -5,
+      "q_global_down4_extract_se_1_dense": -7, "q_global_down4_extract_se_2_dense": -7,
+      "q_global_down4_extract_conv": -8,
+    },
+    "stack3": {
+      "q_global_down1_extract_dw_conv": -6,
+      "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+      "q_global_down1_extract_conv": -8,
+    },
+    "stack4": {
+      "q_global_down1_extract_dw_conv": -6,
+      "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+      "q_global_down1_extract_conv": -8,
+    },
+  },
+  {
+    "window_mhsa_pos_emb": -1
+  },
+]
+tail_split_position = [1, 2]
+additional_transfer = {gcvit.MultiHeadRelativePositionalEmbedding: lambda ww: [ww[0].T]}
+download_and_load.keras_reload_from_torch_model(
+    tt,
+    mm,
+    unstack_weights=unstack_weights,
+    skip_weights=skip_weights,
+    tail_align_dict=tail_align_dict,
+    tail_split_position=tail_split_position,
+    additional_transfer=additional_transfer,
+    do_convert=True,
+)
+
+```
 ***
 
 # Resnest
