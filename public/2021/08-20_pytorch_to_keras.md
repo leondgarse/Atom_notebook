@@ -803,70 +803,216 @@
   )
   ```
 ## GCViT
-- Move torch model `to_q_global` first in `GCViTLayer`. Move `norm1` first in `ReduceSize`.
-```py
-sys.path.append('../GCVit/')
-sys.path.append('../pytorch-image-models/')
-import torch
-from models import gc_vit
-tt = gc_vit.gc_vit_tiny()
-_ = tt.eval()
-ss = torch.load('gcvit_tiny_best.pth.tar', map_location=torch.device('cpu'))
-tt.load_state_dict(ss['state_dict'])
+  - Move torch model `to_q_global` first in `GCViTLayer`. Move `norm1` first in `ReduceSize`.
+  ```py
+  sys.path.append('../GCVit/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import gc_vit
+  tt = gc_vit.gc_vit_tiny()
+  _ = tt.eval()
+  ss = torch.load('gcvit_tiny_best.pth.tar', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['state_dict'])
 
-from models import gc_vit
-from keras_cv_attention_models import download_and_load
-from keras_cv_attention_models.gcvit import gcvit
-mm = gcvit.GCViT_Tiny(classifier_activation=None)
+  from models import gc_vit
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.gcvit import gcvit
+  mm = gcvit.GCViT_Tiny(classifier_activation=None, pretrained=None)
 
-unstack_weights = ['relative_position_bias_table']
-skip_weights = ["relative_position_index"]
-tail_align_dict =  [
-  {
-    "stack1": {
-      "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -1,
-      "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -2,
-      "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -3,
-      "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -5,
-      "q_global_down8_extract_se_1_dense": -7, "q_global_down8_extract_se_2_dense": -7,
-      "q_global_down8_extract_conv": -8,
+  unstack_weights = ['relative_position_bias_table', 'gamma1', 'gamma2']
+  skip_weights = ["relative_position_index"]
+  tail_align_dict =  [
+    {
+      "stack1": {
+        "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -1,
+        "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -2,
+        "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -3,
+        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -5,
+        "q_global_down8_extract_se_1_dense": -7, "q_global_down8_extract_se_2_dense": -7,
+        "q_global_down8_extract_conv": -8,
+      },
+      "stack2": {
+        "q_global_down2_extract_dw_conv": -2,
+        "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -3,
+        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -5,
+        "q_global_down4_extract_se_1_dense": -7, "q_global_down4_extract_se_2_dense": -7,
+        "q_global_down4_extract_conv": -8,
+      },
+      "stack3": {
+        "q_global_down1_extract_dw_conv": -6,
+        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+        "q_global_down1_extract_conv": -8,
+      },
+      "stack4": {
+        "q_global_down1_extract_dw_conv": -6,
+        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+        "q_global_down1_extract_conv": -8,
+      },
     },
-    "stack2": {
-      "q_global_down2_extract_dw_conv": -2,
-      "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -3,
-      "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -5,
-      "q_global_down4_extract_se_1_dense": -7, "q_global_down4_extract_se_2_dense": -7,
-      "q_global_down4_extract_conv": -8,
+    {
+      "window_mhsa_pos_emb": -1
     },
-    "stack3": {
-      "q_global_down1_extract_dw_conv": -6,
-      "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
-      "q_global_down1_extract_conv": -8,
-    },
-    "stack4": {
-      "q_global_down1_extract_dw_conv": -6,
-      "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
-      "q_global_down1_extract_conv": -8,
-    },
-  },
-  {
-    "window_mhsa_pos_emb": -1
-  },
-]
-tail_split_position = [1, 2]
-additional_transfer = {gcvit.MultiHeadRelativePositionalEmbedding: lambda ww: [ww[0].T]}
-download_and_load.keras_reload_from_torch_model(
-    tt,
-    mm,
-    unstack_weights=unstack_weights,
-    skip_weights=skip_weights,
-    tail_align_dict=tail_align_dict,
-    tail_split_position=tail_split_position,
-    additional_transfer=additional_transfer,
-    do_convert=True,
-)
+  ]
+  tail_split_position = [1, 2]
+  additional_transfer = {gcvit.MultiHeadRelativePositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      additional_transfer=additional_transfer,
+      do_convert=True,
+  )
+  ```
+  **Small / Base with gamma**
+  ```py
+  sys.path.append('../GCVit/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import gc_vit
+  tt = gc_vit.gc_vit_small()
+  _ = tt.eval()
+  ss = torch.load('gcvit_small_best.pth.tar', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['state_dict'])
 
-```
+  from models import gc_vit
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.gcvit import gcvit
+  mm = gcvit.GCViT_Small(classifier_activation=None, pretrained=None)
+
+  unstack_weights = ['relative_position_bias_table', 'gamma1', 'gamma2']
+  skip_weights = ["relative_position_index"]
+  tail_align_dict =  [
+    {
+      "stack1": {
+        "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -2,
+        "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -3,
+        "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -4,
+        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -7,
+        "q_global_down8_extract_se_1_dense": -9, "q_global_down8_extract_se_2_dense": -9,
+        "q_global_down8_extract_conv": -10,
+      },
+      "stack2": {
+        "q_global_down2_extract_dw_conv": -3,
+        "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -4,
+        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -7,
+        "q_global_down4_extract_se_1_dense": -9, "q_global_down4_extract_se_2_dense": -9,
+        "q_global_down4_extract_conv": -10,
+      },
+      "stack3": {
+        "q_global_down1_extract_dw_conv": -7,
+        "q_global_down1_extract_se_1_dense": -9, "q_global_down1_extract_se_2_dense": -10,
+        "q_global_down1_extract_conv": -10,
+      },
+      "stack4": {
+        "q_global_down1_extract_dw_conv": -7,
+        "q_global_down1_extract_se_1_dense": -9, "q_global_down1_extract_se_2_dense": -10,
+        "q_global_down1_extract_conv": -10,
+      },
+    },
+    {
+      "1_gamma": -4,
+      "2_gamma": -7,
+      "window_mhsa_pos_emb": -1
+    },
+  ]
+  tail_split_position = [1, 2]
+  additional_transfer = {gcvit.MultiHeadRelativePositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      tail_align_dict=tail_align_dict,
+      tail_split_position=tail_split_position,
+      additional_transfer=additional_transfer,
+      do_convert=True,
+  )
+  ```
+  **Dense qkv / kv -> Conv**
+  ```py
+  from keras_cv_attention_models.gcvit import gcvit
+  mm = gcvit.GCViT_Base(classifier_activation=None, pretrained=None)
+  pp = mm.name + "_imagenet.h5"
+  mm.load_weights(pp, by_name=True)
+  bb = keras.models.load_model(pp)
+
+  for ii in mm.layers:
+      if "_qkv" in ii.name or "_kv" in ii.name:
+          source_name = ii.name.replace('_conv', '')
+          source_wights = bb.get_layer(source_name).get_weights()
+          print(ii.name, source_name)
+          mm.get_layer(ii.name).set_weights([source_wights[0][None, None, :, :], source_wights[1]])
+  print(f"{np.allclose(bb(tf.ones([1, 224, 224, 3])), mm(tf.ones([1, 224, 224, 3]))) = }")
+
+  mm.save("{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
+  ```
+## EfficientFormer
+  ```py
+  import itertools
+  height, width = 7, 4
+  points = list(itertools.product(range(height), range(width)))
+  N = len(points)
+  attention_offsets = {}
+  idxs = []
+  for p1 in points:
+      for p2 in points:
+          offset = (abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
+          if offset not in attention_offsets:
+              attention_offsets[offset] = len(attention_offsets)
+          idxs.append(attention_offsets[offset])
+  ```
+  ```py
+  sys.path.append('../EfficientFormer/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import efficientformer as torch_efficientformer
+  tt = torch_efficientformer.efficientformer_l1(pretrained=True)
+  _ = tt.eval()
+  ss = torch.load('efficientformer_l1_1000d.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models.efficientformer import efficientformer
+  from keras_cv_attention_models import attention_layers
+  mm = efficientformer.EfficientFormerL1()
+
+  from keras_cv_attention_models import download_and_load
+  unstack_weights = ['layer_scale_1', 'layer_scale_2']
+  skip_weights = ['num_batches_tracked', 'attention_bias_idxs']
+  tail_align_dict = {"mlp_gamma": -4, "mlp_2_conv": -1}
+  # full_name_align_dict = {"stack4_block4_attn_gamma": -4, "stack4_block4_mlp_gamma": -7, "stack4_block4_attn_pos": -1}
+  attn_range = range(*({"l1": (4, 5), "l3": (3, 7), "l7": (0, 9)}[mm.name[-2:]]))
+  full_name_align_dict = {"stack4_block{}_{}".format(bb, kk): vv for bb in attn_range for kk, vv in {"attn_gamma": -4, "mlp_gamma": -7, "attn_pos": -1}.items()}
+  additional_transfer = {attention_layers.MultiHeadPositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      additional_transfer=additional_transfer,
+      save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+      do_convert=True,
+  )
+  np.allclose(tt(torch.ones([1, 3, 224, 224])).detach().numpy(), tf.reduce_sum(mm(tf.ones([1, 224, 224, 3])), axis=0) / 2, atol=1e-4)
+  ```
+## MobileViT_V2
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  # tt = timm.models.mobilevitv2_100(pretrained=True)
+  tt = timm.models.mobilevitv2_150_384_in22ft1k(pretrained=True)
+  _ = tt.eval()
+
+  input_shape = [384, 384, 3]
+  from keras_cv_attention_models import mobilevit
+  mm = mobilevit.MobileViT_V2_150(input_shape=input_shape, pretrained=None, classifier_activation=None)
+  from keras_cv_attention_models import download_and_load
+  download_and_load.keras_reload_from_torch_model(tt, mm, input_shape, do_convert=True, save_name="{}_{}_imagenet22k.h5".format(mm.name, mm.input_shape[1]))
+  ```
 ***
 
 # Resnest

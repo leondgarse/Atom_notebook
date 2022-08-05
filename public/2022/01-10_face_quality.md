@@ -545,3 +545,41 @@ PyTorch 训练 26 epochs 的结果：
 | ---- | --------- | ------- | ------------------ | ------------------ |
 | R50  | WebFace4M | AdaFace | 95.44              | 96.98              |
 | R50  | MS1MV2    | AdaFace | 94.82              | 96.27              |
+
+```py
+!waitGPU 0
+import losses, train, models
+import tensorflow_addons as tfa
+keras.mixed_precision.set_global_policy("mixed_float16")
+
+data_basic_path = '/datasets/celeb_deepglint'
+data_path = data_basic_path + '_112x112_folders'
+eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
+
+# from keras_cv_attention_models import efficientnet
+# basic_model = efficientnet.EfficientNetV2S(input_shape=(112, 112, 3), num_classes=0, drop_connect_rate=0.2, pretrained="imagenet", first_strides=1)
+basic_model = models.buildin_models('r100', dropout=0.4, emb_shape=512, output_layer='E', bn_momentum=0.9, bn_epsilon=1e-5, scale=True, use_bias=False, activation='prelu', use_max_pool=True)
+basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
+
+tt = train.Train(data_path, eval_paths=eval_paths,
+    save_path='TT_r100_max_pool_E_prelu_dr04_lr_01_l2_5e4_adaface_emb512_sgd_m09_bs512_glint360k_64_only_margin_SG_scale_true_bias_false_random_100_partial4.h5',
+    basic_model=basic_model, model=None, lr_base=0.1, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-6, lr_warmup_steps=3,
+    batch_size=512, random_status=100, eval_freq=4000, output_weight_decay=1, partial_fc_split=4)
+
+# optimizer = tfa.optimizers.AdamW(learning_rate=1e-2, weight_decay=5e-4, exclude_from_weight_decay=["/gamma", "/beta"])
+# optimizer = tfa.optimizers.SGDW(learning_rate=1e-2, weight_decay=5e-4, momentum=0.9, exclude_from_weight_decay=["/gamma", "/beta"])
+optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
+# optimizer = tfa.optimizers.AdamW(learning_rate=1e-2, weight_decay=1e-2)
+sch = [
+    # {"loss": losses.AdaFaceLoss(scale=16), "epoch": 4, "optimizer": optimizer},
+    # {"loss": losses.AdaFaceLoss(scale=32), "epoch": 3},
+    {"loss": losses.AdaFaceLoss(scale=64), "epoch": 53, "optimizer": optimizer},
+]
+tt.train(sch, 0)
+exit()
+```
+r100 + Glint360k + adaface 0.998500 | 0.993000 | 0.986000
+|           |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |     AUC |
+| --------- | --------:| --------:| --------:| --------:| --------:| --------:| -------:|
+| r100 IJBB | 0.471081 | 0.937975 | 0.962415 | 0.972055 | 0.981013 | 0.988121 | 0.99398 |
+| r100 IJBC | 0.886435 | 0.962724 | 0.974843 | 0.981643 | 0.987063 | 0.992279 | 0.99595 |

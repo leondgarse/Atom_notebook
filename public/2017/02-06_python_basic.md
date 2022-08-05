@@ -2285,6 +2285,22 @@
 
     deactivate
     ```
+  - 指定用户目录下的 python 版本
+    ```sh
+    # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
+    wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
+    tar zxvf Python-3.10.1.tgz
+    cd Python-3.10.15
+    ./configure --prefix=$HOME/local_bin/python-3.10.5
+    make
+    make install
+
+    # 可以添加到环境变量
+    # export PATH=$HOME/local_bin/python-3.10.5/bin:$PATH
+
+    # Virtualenv 指定 python 版本
+    virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
+    ```
 ***
 
 # Python 38

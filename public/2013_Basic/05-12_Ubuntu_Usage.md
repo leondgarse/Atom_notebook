@@ -1464,16 +1464,16 @@
   - 配置文件 [Github alanbobs999/TopFreeProxies](https://github.com/alanbobs999/TopFreeProxies)
     ```sh
     clash # Run to download ~/.config/clash/Country.mmdb
-    
+
     # curl https://sspool.herokuapp.com/clash/config > ~/.config/clash/config.yaml
     curl https://raw.githubusercontent.com/alanbobs999/TopFreeProxies/master/Eternity.yml > ~/.config/clash/config.yaml
-    
+
     clash
     ```
   - 配置界面 使用 https 访问 [clash settings](https://clash.razord.top/#/settings)
   - supervisor
     ```sh
-    $ cat /etc/supervisor/conf.d/clash.conf 
+    $ cat /etc/supervisor/conf.d/clash.conf
     [program:clash]
     command=/home/leondgarse/local_bin/clash-linux-amd64 -d /home/leondgarse/.config/clash/
     autorestart = true
@@ -1647,6 +1647,12 @@
   - [Disable "Mouse battery low" spam notification on Ubuntu](https://wrgms.com/disable-mouse-battery-low-spam-notification/)
   ```sh
   wget -O - https://gist.githubusercontent.com/guiambros/166039459a8579638b57f7d135505ab1/raw/733b8dd3ac3280bb76f48ba3dc04655df6d69025/silent-mouse.sh | bash
+  ```
+## ulimit 打开文件数量
+  ```sh
+  $ vi /etc/security/limits.conf
+  * soft nofile 10240
+  * hard nofile 10240
   ```
 ***
 
