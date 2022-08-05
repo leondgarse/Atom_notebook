@@ -1654,6 +1654,16 @@
   * soft nofile 10240
   * hard nofile 10240
   ```
+## 修改 ls 时权限777的文件夹背景颜色
+  ```sh
+  $ dircolors --print-database > ~/.dircolors
+  $ vi ~/.dircolors
+  DIR 01;34 # directory
+  ...
+  - OTHER_WRITABLE 34;42 # dir that is other-writable (o+w) and not sticky
+  + OTHER_WRITABLE 01;34 # dir that is other-writable (o+w) and not sticky
+  ```
+  bash 中会自动读取该文件 `test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"`
 ***
 
 # 软件
