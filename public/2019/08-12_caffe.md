@@ -1,4 +1,21 @@
 # ___2019 - 08 - 12 Caffe___
+  <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+  - [___2019 - 08 - 12 Caffe___](#2019-08-12-caffe)
+  - [Install python caffe](#install-python-caffe)
+  	- [links](#links)
+  	- [git clone](#git-clone)
+  	- [apt and pip install](#apt-and-pip-install)
+  	- [Makefile.config](#makefileconfig)
+  	- [Makefile](#makefile)
+  	- [Protobuf](#protobuf)
+  	- [libboost_python](#libboostpython)
+  	- [make](#make)
+  	- [Python test](#python-test)
+  - [Q / A](#q-a)
+  - [Docker](#docker)
+
+  <!-- /TOC -->
 ***
 
 # Install python caffe
@@ -158,7 +175,17 @@
   make pytest  # --> python/caffe/_caffe.so
   export PYTHONPATH=$PYTHONPATH:$HOME/workspace/caffe/python
   ```
-## Q / A
+## Python test
+  ```py
+  import sys
+  sys.path.append("/opt/caffe/python")
+  import caffe
+  caffe.__version__
+  # 1.0.0
+  ```
+***
+
+# Q / A
   - **Q: libboost import error: undefined symbol**
     ```py
     import caffe
@@ -274,7 +301,9 @@
     ```sh
     CPLUS_INCLUDE_PATH="$HOME/local_bin/python-3.9.13/include/python3.9/" ./b2 install
     ```
-## Docker
+***
+
+# Docker
   - [BVLC/caffe/docker](https://github.com/BVLC/caffe/tree/master/docker)
   ```sh
   docker run --rm -u $(id -u):$(id -g) -v $(pwd):$(pwd) -w $(pwd) bvlc/caffe:cpu caffe train --solver=example_solver.prototxt
