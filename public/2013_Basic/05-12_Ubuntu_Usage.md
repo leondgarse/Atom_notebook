@@ -346,6 +346,16 @@
 
     There is one inotify watch per folder, so too many folders being watched is the problem. Since the error message is talking about a user limit, this probably can be tweaked somewhere.
     ```
+  - Q: tar 解压时报错 `/usr/bin/gzip: 1: ELF: not found`
+    ```sh
+    /usr/bin/gzip: 1: ELF: not found
+    /usr/bin/gzip: 3: : not found
+    /usr/bin/gzip: 4: Syntax error: "(" unexpected
+    ```
+    A: 修改 gzip
+    ```sh
+    echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))
+    ```
 ## 环境变量
   - 修改：sudo vi /etc/environment添加，或者vi ~/.bashrc添加
     ```c

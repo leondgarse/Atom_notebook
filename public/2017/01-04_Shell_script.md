@@ -515,6 +515,18 @@
       COUNT=$(($COUNT - 1))
     done
     ```
+    **扫描开通 22 端口的 ip 地址**
+    ```shell
+    SUB=1
+    while [ $SUB -lt 255 ]; do
+      CUR_IP="192.168.16.$SUB"
+      echo "CUR_IP=$CUR_IP" && nc -w 2 -vz $CUR_IP 22 > /dev/null
+      if [ $? -eq 0 ]; then
+        echo $CUR_IP >> valid_ip.foo
+      fi
+      SUB=$(($SUB + 1))
+    done
+    ```
   - **until**
     ```shell
     # basic construct

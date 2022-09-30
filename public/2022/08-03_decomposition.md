@@ -148,3 +148,37 @@
   print((in_channel * hidden_channel + 3 * 3 * hidden_channel * hidden_channel + hidden_channel * out_channel) / (3 * 3 * in_channel * out_channel))
   # 0.20833333333333334
   ```
+  **显存占用**
+  ```py
+  xx = tf.random.uniform([1000, 32, 32, 3])
+  yy = tf.one_hot(tf.random.uniform([1000,], minval=0, maxval=9, dtype=tf.int32), 10)
+
+  mm = keras.models.Sequential([
+      keras.layers.Input([32, 32, 3]),
+      keras.layers.Dense(768),
+      keras.layers.Dense(3024),
+      keras.layers.Dense(768),
+      keras.layers.Dense(3024),
+      keras.layers.Dense(768),
+      keras.layers.GlobalAveragePooling2D(),
+      keras.layers.Dense(10),
+  ])
+
+  # mm = keras.models.Sequential([
+  #     keras.layers.Input([32, 32, 3]),
+  #     keras.layers.Dense(768),
+  #     keras.layers.Dense(160),
+  #     keras.layers.Dense(3024),
+  #     keras.layers.Dense(160),
+  #     keras.layers.Dense(768),
+  #     keras.layers.Dense(160),
+  #     keras.layers.Dense(3024),
+  #     keras.layers.Dense(160),
+  #     keras.layers.Dense(768),
+  #     keras.layers.GlobalAveragePooling2D(),
+  #     keras.layers.Dense(10),
+  # ])
+
+  mm.compile(optimizer='adam', loss=keras.losses.categorical_crossentropy)
+  mm.fit(xx, yy, epochs=5, batch_size=256)
+  ```

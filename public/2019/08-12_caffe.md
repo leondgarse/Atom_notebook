@@ -10,6 +10,20 @@
   $ cd caffe/
   $ git pull --depth=100000
   ```
+## apt and pip install
+  ```sh
+  sudo apt install \
+          gcc-8 g++-8 libboost-all-dev \
+          libgflags-dev libgoogle-glog-dev libleveldb-dev liblmdb-dev libopencv-dev \
+          libsnappy-dev libhdf5-serial-dev libopenblas-dev libatlas-base-dev
+
+  # sudo apt install protobuf-c-compiler protobuf-compiler libprotobuf-dev
+  ```
+  ```sh
+  pip install opencv six numpy scikit-image pydot
+
+  pip install ipython pysqlite3
+  ```
 ## Makefile.config
   ```sh
   $ cp Makefile.config.example Makefile.config
@@ -120,14 +134,21 @@
     sudo ldconfig
     pkg-config --cflags --libs protobuf
     ```
-## apt install
+## libboost_python
+  - When build caffe with different python version from system, may meet error `Segmentation failt (core dump)` when `import caffe`. Need to build `libboost_python` from source with the new python version.
+  - [Boost C++ librarie.](https://www.boost.org)
   ```sh
-  sudo apt install \
-          gcc-8 g++-8 libboost-all-dev \
-          libgflags-dev libgoogle-glog-dev libleveldb-dev liblmdb-dev libopencv-dev \
-          libsnappy-dev libhdf5-serial-dev libopenblas-dev libatlas-base-dev
+  wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+  mv boost_1_80_0.tar.gz /opt
+  cd /opt
+  tar xvf boost_1_80_0.tar.gz
+  cd boost_1_80_0
+  ./booststrap.sh --prefix=/opt/boost/ --with-python=$(which python) --with-libraries=python inlcude="$HOME/local_bin/python-3.9.13/include/python3.9/"
+  CPLUS_INCLUDE_PATH="$HOME/local_bin/python-3.9.13/include/python3.9/" ./b2 install
 
-  # sudo apt install protobuf-c-compiler protobuf-compiler libprotobuf-dev
+  # Check /opt/boost/lib/ contains libboost_python39.so
+
+  export LD_LIBRARY_PATH="/opt/boost/lib/:$LD_LIBRARY_PATH"
   ```
 ## make
   ```sh
@@ -240,6 +261,19 @@
     .build_release/lib/libcaffe.so: undefined reference to google::protobuf::RepeatedPtrField
     ```
     A: [Protobuf](#protobuf)
+  - **Q: Couldn't build proto file into descriptor pool: duplicate file name**
+    ```sh
+    pip install --no-binary protobuf
+    ```
+  - **Q: Error while building libboost_python `pyconfig.h: No such file or directory`** [Cannot build boost python library (fatal error: pyconfig.h: No such file or directory)](https://stackoverflow.com/questions/57244655/cannot-build-boost-python-library-fatal-error-pyconfig-h-no-such-file-or-dire)
+    ```sh
+    ./boost/python/detail/wrap_python.hpp:57:11: fatal error: pyconfig.h: No such file or directory
+     # include <pyconfig.h>
+    ```
+    A: export `CPLUS_INCLUDE_PATH` inluding python source include
+    ```sh
+    CPLUS_INCLUDE_PATH="$HOME/local_bin/python-3.9.13/include/python3.9/" ./b2 install
+    ```
 ## Docker
   - [BVLC/caffe/docker](https://github.com/BVLC/caffe/tree/master/docker)
   ```sh

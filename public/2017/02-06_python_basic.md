@@ -27,6 +27,7 @@
   	- [docstrings 文档字符串](#docstrings-文档字符串)
   	- [在函数中接收元组和列表](#在函数中接收元组和列表)
   	- [在函数中接收字典参数](#在函数中接收字典参数)
+  	- [位置参数与关键字参数截断](#位置参数与关键字参数截断)
   	- [函数使用元组与字典返回多个参数](#函数使用元组与字典返回多个参数)
   	- [传递函数](#传递函数)
   	- [内嵌函数](#内嵌函数)
@@ -443,6 +444,15 @@
     else:
       print('The for loop is over')
     ```
+    **单行操作** 此时循环内变量外部不可见
+    ```py
+    aa = [ii + 3 for ii in [1, 3, 4, 5]]
+    print(aa)
+    # [4, 6, 7, 8]
+
+    print(ii)
+    # NameError: name 'ii' is not defined
+    ```
   - break / continue：
     ```python
     如果从 for 或 while 循环中终止，任何对应的循环 else 块将不执行
@@ -596,6 +606,28 @@
     ('Wangdachui', 'Niuyun', 'Linling')
     {'a1': 1, 'a2': 2, 'a3': 3}
     ```
+## 位置参数与关键字参数截断
+  - `/` 指定在此之前的参数只接受位置参数
+  - `*` 指定在此之后的参数只接受关键字参数
+  - 在 `/` 与 `*` 之间的参数不受影响
+  ```py
+  def func(name="foo", **kwargs):
+      print(name, kwargs)
+  func(name='world')
+  # world {}
+  func('hello', name='world')
+  # TypeError: func() got multiple values for argument 'name'
+
+  """ / 截断位置参数 """
+  def func(name="foo", /, **kwargs):
+      print(name, kwargs)
+  func('hello', name='world')
+  # hello {'name': 'world'}
+  ```
+  **sorted 函数定义**：
+  ```py
+  sorted(iterable, /, *, key=None, reverse=False)
+  ```
 ## 函数使用元组与字典返回多个参数
   - 返回元组
     ```python
@@ -1658,8 +1690,10 @@
     __del__(self) 恰好在对象要被删除之前调用
     __str__(self) 在我们对对象使用print语句或是使用str()的时候调用
     __lt__(self,other) 当使用 小于 运算符(<)的时候调用。类似地,对于所有的运算符 (+,>等等)都有特殊的方法
+    __eq__(self, other) 当使用 相等 运算符(==)的时候调用，如果其中一个是子类，默认使用子类的 __eq__ 方法
     __getitem__(self,key) 使用x[key]索引操作符的时候调用
     __len__(self) 对序列对象使用内建的len()函数的时候调用
+    __slots__ 定义类只能包含指定的属性
     ```
   - Python的访问控制符：
     ```python
@@ -1669,7 +1703,7 @@
     这样就有一个惯例，如果某个变量只想在类或对象中使用，就应该以单下划线前缀，而其他的名称都将作为公共的，可以被其他类/对象使用 (与双下划线前缀不同)
             在属性名前使用一个单下划线字符,防止模块的属性用“from mymodule import *”来加载
     ```
-  - 定义示例
+  - **定义示例**
     ```python
     class Person:
       '''Represents a person.'''
@@ -1699,6 +1733,27 @@
           print('I am the only person here.')
         else:
           print('We have %d persons here.' % Person.population)
+    ```
+  - **__slots__ 定义类只能包含指定的属性**
+    ```py
+    class Foo:
+        __slots__ = ("aa", "bb")
+    foo = Foo()
+    foo.__dict__ # AttributeError: 'Foo' object has no attribute '__dict__'
+    foo.aa = 1
+    foo.cc = 2  # AttributeError: 'Foo' object has no attribute 'cc'
+    ```
+  - **type 定义类** 使用 `type(classname, superclasses, attributedict)` 方式定义类
+    ```py
+    AA = type("Foo", (object,), {"aa": 11})
+
+    print(AA.__name__)  # Foo
+    aa = AA()
+    print(aa.aa)  # 11
+
+    # 等价于
+    class Foo(object):
+        aa = 11
     ```
 ## 继承
   - 基本类的名称作为一个元组跟在定义类时的类名称之后
@@ -1779,6 +1834,53 @@
           self.aa = aa
       def __call__(self):
           return self.sqrt(self.aa)
+  ```
+## 前置双下划线避免子类重写
+  ```py
+  class Foo:
+      def __init__(self):
+          self.aa = "foo"
+          self._aa = "foo"
+          self._aa_ = "foo"
+          self.__aa = "foo"
+          self.__aa__ = "foo"
+
+  class Goo:
+      def __init__(self):
+          super().__init__()
+          self.aa = "goo"
+          self._aa = "goo"
+          self._aa_ = "goo"
+          self.__aa = "goo"
+          self.__aa__ = "goo"
+
+  foo = Foo()
+  print(hasattr(foo, '__aa'))
+  # False
+  print(hasattr(foo, '_Foo__aa'))
+  # true
+
+  goo = Goo()
+  print(hasattr(goo, '__aa'))
+  # False
+  print(hasattr(goo, '_Foo__aa'))
+  # False
+  print(hasattr(goo, '_Goo__aa'))
+  # true
+  ```
+  **前置双下划线的方法**
+  ```py
+  class AA:
+      def __check(self):
+          print("AA")
+      def show(self):
+          self.__check()
+
+  class BB(AA):
+      def __check(self):
+          print("BB")
+
+  BB().show()  # AA
   ```
 ***
 
@@ -2199,6 +2301,13 @@
     print(list(foo(3, 4)))
     # [4, 5, 6, 7]
     ```
+  - **next** 第二个参数为迭代结束时返回的默认值
+    ```py
+    aa = (ii for ii in range(2))
+    for ii in range(4):
+        print(next(aa, -1))
+    # 0 1 -1 -1
+    ```
   - 列表生成器使用 `()`，返回的是一个 generator
     ```py
     g = (x * x for x in range(10))
@@ -2217,11 +2326,19 @@
     ```
   - **Iterator 迭代器** 表示的是一个数据流，Iterator 对象可以被 `next()` 函数调用并不断返回下一个数据，直到没有数据时抛出 `StopIteration` 异常
     - 生成器 generator 都是 Iterator 对象，但 list / dict / str 是 Iterable，不是 Iterator
-    - **iter()** 把 list / dict / str 等 Iterable 变成 Iterator
+    - **iter(iterable)** 把 list / dict / str 等 Iterable 变成 Iterator
     ```py
     print(isinstance([], Iterator)) # False
     print(isinstance((ii for ii in range(10)), Iterator)) # True
     print(isinstance(iter([]), Iterator)) # True
+    ```
+    - **iter(callable, sentinel)** 的另一种使用方式是调用一个函数，直到得到目标值 sentinel
+    ```py
+    aa = iter([1, 3, 4, 5, 2, 5, 6])
+    def foo():
+        return next(aa)
+    list(iter(foo, 2))
+    # [1, 3, 4, 5]
     ```
   - for 循环本质上就是通过不断调用 `next()` 函数实现的
     ```py
@@ -2301,6 +2418,9 @@
     # Virtualenv 指定 python 版本
     virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
     ```
+  - **configure** 参数
+    - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
+    - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`
 ***
 
 # Python 38

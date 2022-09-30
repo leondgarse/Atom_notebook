@@ -404,6 +404,13 @@
     | NOTSET | DEBUG | INFO | WARN | ERROR | CRITICAL | FATAL |
     | ------ | ----- | ---- | ---- | ----- | -------- | ----- |
     | 0      | 10    | 20   | 30   | 40    | 50       | 50    |
+
+    **设置 log 级别**
+    ```py
+    import logging
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    ```
   - **使用 logger**
     ```python
     import logging
@@ -1294,6 +1301,33 @@
     # math.perm(10, 3) = 720
     print(f'{math.comb(10, 3) = }') # 组合
     # math.comb(10, 3) = 120
+    ```
+***
+
+# functools
+  - **reduce** `function` 参数指定的函数接受两个参数，reduce 首先操作列表中的前两个数据，随后使用得到的结果与后面的数迭代计算
+    ```py
+    from functools import reduce
+    print(reduce(lambda xx, yy: xx * yy, [1, 2, 3, 4, 5]))  # 1 * 2 * 3 * 4 * 5
+    # 120
+    print(reduce(lambda xx, yy: xx - yy, [1, 2, 3, 4, 5]))  # 1 - 2 - 3 - 4 - 5
+    # -13
+    ```
+  - partial 为函数指定默认值，返回一个新的函数
+    ```py
+    from functools import partial
+
+    def foo(aa, bb):
+        return aa + bb
+    goo = partial(foo, bb=3)
+    print(goo(2))
+    # 5
+
+    def foo(*args):
+        return sum(args)
+    goo = partial(foo, 3, 4, 5)
+    print(goo(2))
+    # 14
     ```
 ***
 

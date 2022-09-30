@@ -802,8 +802,75 @@
       do_convert=True,
   )
   ```
+## EfficientFormer
+  ```py
+  import itertools
+  height, width = 7, 4
+  points = list(itertools.product(range(height), range(width)))
+  N = len(points)
+  attention_offsets = {}
+  idxs = []
+  for p1 in points:
+      for p2 in points:
+          offset = (abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
+          if offset not in attention_offsets:
+              attention_offsets[offset] = len(attention_offsets)
+          idxs.append(attention_offsets[offset])
+  ```
+  ```py
+  sys.path.append('../EfficientFormer/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import efficientformer as torch_efficientformer
+  tt = torch_efficientformer.efficientformer_l1(pretrained=True)
+  _ = tt.eval()
+  ss = torch.load('efficientformer_l1_1000d.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models.efficientformer import efficientformer
+  from keras_cv_attention_models import attention_layers
+  mm = efficientformer.EfficientFormerL1()
+
+  from keras_cv_attention_models import download_and_load
+  unstack_weights = ['layer_scale_1', 'layer_scale_2']
+  skip_weights = ['num_batches_tracked', 'attention_bias_idxs']
+  tail_align_dict = {"mlp_gamma": -4, "mlp_2_conv": -1}
+  # full_name_align_dict = {"stack4_block4_attn_gamma": -4, "stack4_block4_mlp_gamma": -7, "stack4_block4_attn_pos": -1}
+  attn_range = range(*({"l1": (4, 5), "l3": (3, 7), "l7": (0, 9)}[mm.name[-2:]]))
+  full_name_align_dict = {"stack4_block{}_{}".format(bb, kk): vv for bb in attn_range for kk, vv in {"attn_gamma": -4, "mlp_gamma": -7, "attn_pos": -1}.items()}
+  additional_transfer = {attention_layers.MultiHeadPositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      additional_transfer=additional_transfer,
+      save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+      do_convert=True,
+  )
+
+  # For Large model
+  np.allclose(tt(torch.ones([1, 3, 224, 224])).detach().numpy(), mm(tf.ones([1, 224, 224, 3])), atol=5e-2)
+  ```
+## MobileViT_V2
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  # tt = timm.models.mobilevitv2_100(pretrained=True)
+  tt = timm.models.mobilevitv2_150_384_in22ft1k(pretrained=True)
+  _ = tt.eval()
+
+  input_shape = [384, 384, 3]
+  from keras_cv_attention_models import mobilevit
+  mm = mobilevit.MobileViT_V2_150(input_shape=input_shape, pretrained=None, classifier_activation=None)
+  from keras_cv_attention_models import download_and_load
+  download_and_load.keras_reload_from_torch_model(tt, mm, input_shape, do_convert=True, save_name="{}_{}_imagenet22k.h5".format(mm.name, mm.input_shape[1]))
+  ```
 ## GCViT
   - Move torch model `to_q_global` first in `GCViTLayer`. Move `norm1` first in `ReduceSize`.
+  - Change `mhsa_with_multi_head_relative_position_embedding` in `coatnet.py`, qkv and kv `Conv2D` -> `Dense`
   ```py
   sys.path.append('../GCVit/')
   sys.path.append('../pytorch-image-models/')
@@ -811,7 +878,7 @@
   from models import gc_vit
   tt = gc_vit.gc_vit_tiny()
   _ = tt.eval()
-  ss = torch.load('gcvit_tiny_best.pth.tar', map_location=torch.device('cpu'))
+  ss = torch.load('gcvit_tiny_best_1k.pth.tar', map_location=torch.device('cpu'))
   tt.load_state_dict(ss['state_dict'])
 
   from models import gc_vit
@@ -874,7 +941,7 @@
   from models import gc_vit
   tt = gc_vit.gc_vit_small()
   _ = tt.eval()
-  ss = torch.load('gcvit_small_best.pth.tar', map_location=torch.device('cpu'))
+  ss = torch.load('gcvit_small_best_1k.pth.tar', map_location=torch.device('cpu'))
   tt.load_state_dict(ss['state_dict'])
 
   from models import gc_vit
@@ -933,10 +1000,12 @@
   ```
   **Dense qkv / kv -> Conv**
   ```py
+  import tensorflow as tf
+  from tensorflow import keras
   from keras_cv_attention_models.gcvit import gcvit
-  mm = gcvit.GCViT_Base(classifier_activation=None, pretrained=None)
+  mm = gcvit.GCViT_Small(classifier_activation=None, pretrained=None)
   pp = mm.name + "_imagenet.h5"
-  mm.load_weights(pp, by_name=True)
+  mm.load_weights(pp, by_name=True, skip_mismatch=True)
   bb = keras.models.load_model(pp)
 
   for ii in mm.layers:
@@ -949,69 +1018,119 @@
 
   mm.save("{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
-## EfficientFormer
   ```py
-  import itertools
-  height, width = 7, 4
-  points = list(itertools.product(range(height), range(width)))
-  N = len(points)
-  attention_offsets = {}
-  idxs = []
-  for p1 in points:
-      for p2 in points:
-          offset = (abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
-          if offset not in attention_offsets:
-              attention_offsets[offset] = len(attention_offsets)
-          idxs.append(attention_offsets[offset])
-  ```
-  ```py
-  sys.path.append('../EfficientFormer/')
+  sys.path.append('../GCVit/')
   sys.path.append('../pytorch-image-models/')
   import torch
-  from models import efficientformer as torch_efficientformer
-  tt = torch_efficientformer.efficientformer_l1(pretrained=True)
+  from models import gc_vit
+  tt = gc_vit.gc_vit_tiny()
   _ = tt.eval()
-  ss = torch.load('efficientformer_l1_1000d.pth', map_location=torch.device('cpu'))
-  tt.load_state_dict(ss['model'])
-
-  from keras_cv_attention_models.efficientformer import efficientformer
-  from keras_cv_attention_models import attention_layers
-  mm = efficientformer.EfficientFormerL1()
+  ss = torch.load('gcvit_tiny_best_1k.pth.tar', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['state_dict'])
 
   from keras_cv_attention_models import download_and_load
-  unstack_weights = ['layer_scale_1', 'layer_scale_2']
-  skip_weights = ['num_batches_tracked', 'attention_bias_idxs']
-  tail_align_dict = {"mlp_gamma": -4, "mlp_2_conv": -1}
-  # full_name_align_dict = {"stack4_block4_attn_gamma": -4, "stack4_block4_mlp_gamma": -7, "stack4_block4_attn_pos": -1}
-  attn_range = range(*({"l1": (4, 5), "l3": (3, 7), "l7": (0, 9)}[mm.name[-2:]]))
-  full_name_align_dict = {"stack4_block{}_{}".format(bb, kk): vv for bb in attn_range for kk, vv in {"attn_gamma": -4, "mlp_gamma": -7, "attn_pos": -1}.items()}
-  additional_transfer = {attention_layers.MultiHeadPositionalEmbedding: lambda ww: [ww[0].T]}
+  from keras_cv_attention_models.gcvit import gcvit
+  mm = gcvit.GCViT_Tiny(classifier_activation=None, pretrained=None)
+  ```
+## HorNet
+  - **fft ifft**
+  ```py
+  height, width = 13, 14
+  aa = np.random.uniform(size=[1, height, width, 2])
+  ortho_norm = float(tf.sqrt(float(height * width)))
+
+  """ np.fft.rfft2(aa, axes=[1, 2]) ==> tf.transpose(tf.signal.rfft2d(tf.transpose(aa, [0, 3, 1, 2])), [0, 2, 3, 1]) """
+  print(np.allclose(np.fft.rfft2(aa, axes=[1, 2]), tf.transpose(tf.signal.rfft2d(tf.transpose(aa, [0, 3, 1, 2])), [0, 2, 3, 1])))
+  # True
+
+  """ norm='ortho' ==> divide `np.sqrt(height * width)` """
+  print(np.allclose(np.fft.rfft2(aa, axes=[1, 2], norm='ortho'), np.fft.rfft2(aa, axes=[1, 2]) / ortho_norm))
+  # True
+  print(np.allclose(np.fft.rfft2(aa, axes=[1, 2], norm='ortho'), np.fft.rfft2(aa / ortho_norm, axes=[1, 2])))
+  # True
+  print(np.allclose(np.fft.rfft2(aa, axes=[1, 2], norm='ortho'), tf.transpose(tf.signal.rfft2d(tf.transpose(aa, [0, 3, 1, 2])), [0, 2, 3, 1]) / ortho_norm))
+  # True
+
+  """ np.fft.irfft2(bb, s=[13, 14], axes=(1, 2)) ==> tf.transpose(tf.signal.irfft2d(tf.transpose(bb, [0, 3, 1, 2]), fft_length=[13, 14]), [0, 2, 3, 1]) """
+  np_rfft = np.fft.rfft2(aa, axes=[1, 2], norm='ortho')
+  print(np.allclose(np.fft.irfft2(np_rfft, s=[13, 14], axes=(1, 2)), tf.transpose(tf.signal.irfft2d(tf.transpose(np_rfft, [0, 3, 1, 2]), fft_length=[13, 14]), [0, 2, 3, 1])))
+  # True
+
+  """ norm='ortho' ==> multiply `np.sqrt(height * width)` """
+  print(np.allclose(np.fft.irfft2(np_rfft, s=[13, 14], axes=(1, 2), norm='ortho'), np.fft.irfft2(np_rfft, s=[13, 14], axes=(1, 2)) * ortho_norm))
+  # True
+  print(np.allclose(np.fft.irfft2(np_rfft, s=[13, 14], axes=(1, 2), norm='ortho'), np.fft.irfft2(np_rfft * ortho_norm, s=[13, 14], axes=(1, 2))))
+  # True
+  np_out = np.fft.irfft2(np_rfft, s=[13, 14], axes=(1, 2), norm='ortho')
+  tf_out = tf.transpose(tf.signal.irfft2d(tf.transpose(np_rfft, [0, 3, 1, 2]), fft_length=[13, 14]), [0, 2, 3, 1]) * ortho_norm
+  print(np.allclose(np_out, tf_out))
+  # True
+  ```
+  - Move torch model `proj_out` last in `gnconv`.
+  - Move torch model `pre_norm` first in `GlobalLocalFilter`.
+  ```py
+  sys.path.append('../HorNet/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  import hornet as torch_hornet
+  tt = torch_hornet.hornet_tiny_7x7(pretrained=True, num_classes=1000)  # num_classes=10459 for large
+  ss = torch.load('hornet_tiny_7x7.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
+  _ = tt.eval()
+
+  from keras_cv_attention_models.hornet import hornet
+  from keras_cv_attention_models import download_and_load
+  mm = hornet.HorNetTiny(pretrained=None, classifier_activation=None, num_classes=1000)  # num_classes=10459 for Large
+
+  unstack_weights = ['gamma1', 'gamma2']
+  tail_align_dict = {"1_gamma": "attn_ln", "2_gamma": "gnconv_pre_conv", "gnconv_gf_complex_dense": -1}
+  full_name_align_dict = {"stack2_ln": 2, "stack2_conv": 3, "stack3_ln": 4, "stack3_conv": 5, "stack4_ln": 6, "stack4_conv": 7}
+  download_and_load.keras_reload_from_torch_model(tt, mm, unstack_weights=unstack_weights, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, do_convert=True)
+  ```
+  ```py
+  sys.path.append('../HorNet/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  import hornet as torch_hornet
+  tt = torch_hornet.hornet_tiny_gf(pretrained=True, num_classes=1000)  # num_classes=10459 for large
+  ss = torch.load('hornet_tiny_gf.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
+  _ = tt.eval()
+
+  from keras_cv_attention_models.hornet import hornet
+  from keras_cv_attention_models import download_and_load
+  mm = hornet.HorNetTinyGF(pretrained=None, classifier_activation=None, num_classes=1000)  # num_classes=10459 for Large
+
+  unstack_weights = ['gamma1', 'gamma2']
+  tail_align_dict = {"1_gamma": "attn_ln", "2_gamma": "gnconv_pre_conv", "gnconv_gf_complex_dense": -1}
+  full_name_align_dict = {"stack2_ln": 2, "stack2_conv": 3, "stack3_ln": 4, "stack3_conv": 5, "stack4_ln": 6, "stack4_conv": 7}
+  # Torch (240, 14, 8, 2) -> TF (2, 14, 8, 240)
+  additional_transfer = {hornet.ComplexDense: lambda ww: [ww[0].transpose([3, 1, 2, 0])]}
   download_and_load.keras_reload_from_torch_model(
       tt,
       mm,
       unstack_weights=unstack_weights,
-      skip_weights=skip_weights,
       tail_align_dict=tail_align_dict,
       full_name_align_dict=full_name_align_dict,
       additional_transfer=additional_transfer,
-      save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
       do_convert=True,
   )
-  np.allclose(tt(torch.ones([1, 3, 224, 224])).detach().numpy(), tf.reduce_sum(mm(tf.ones([1, 224, 224, 3])), axis=0) / 2, atol=1e-4)
-  ```
-## MobileViT_V2
-  ```py
-  sys.path.append('../pytorch-image-models/')
-  import timm
-  # tt = timm.models.mobilevitv2_100(pretrained=True)
-  tt = timm.models.mobilevitv2_150_384_in22ft1k(pretrained=True)
-  _ = tt.eval()
 
-  input_shape = [384, 384, 3]
-  from keras_cv_attention_models import mobilevit
-  mm = mobilevit.MobileViT_V2_150(input_shape=input_shape, pretrained=None, classifier_activation=None)
-  from keras_cv_attention_models import download_and_load
-  download_and_load.keras_reload_from_torch_model(tt, mm, input_shape, do_convert=True, save_name="{}_{}_imagenet22k.h5".format(mm.name, mm.input_shape[1]))
+  print(np.allclose(tt(torch.ones([1, 3, 224, 224])).detach(), mm(tf.ones([1, 224, 224, 3])), atol=5e-2))
+  ```
+  **Resave**
+  ```py
+  import tensorflow as tf
+  from tensorflow import keras
+  from keras_cv_attention_models.hornet import hornet
+  mm = hornet.HorNetTiny(classifier_activation=None, pretrained=None, num_classes=1000)
+  pp = mm.name + "_imagenet.h5"
+  mm.load_weights(pp)
+  bb = keras.models.load_model(pp)
+  all_close = np.allclose(bb(tf.ones([1, 224, 224, 3])), mm(tf.ones([1, 224, 224, 3])))
+  print(f"{all_close = }")
+  if all_close:
+      mm.save("{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
 ***
 
@@ -4739,3 +4858,70 @@
   plt.tight_layout()
   ```
   ![](images/adaface_margin.png)
+## PocketNet
+  ```py
+  import torch
+  import backbones.genotypes as gt
+  from backbones.augment_cnn import AugmentCNN
+  from config.config_example import config as cfg
+  from config.config_PocketNetS128 import config as cfg
+  from config.config_PocketNetS256 import config as cfg
+  from config.config_PocketNetM128 import config as cfg
+  from config.config_PocketNetM256 import config as cfg
+
+  genotype = gt.from_str(cfg.genotypes["softmax_casia"])
+  backbone_student = AugmentCNN(C=cfg.channel, n_layers=cfg.n_layers, genotype=genotype, stem_multiplier=4, emb=cfg.embedding_size).to("cpu")
+  model_name = cfg.output.split('/')[-1]
+  ss = torch.load(model_name + '-MultiStep-KD_11372backbone.pth', map_location=torch.device('cpu'))
+  backbone_student.load_state_dict(ss)
+  _ = backbone_student.eval()
+
+  input_names = ["input0"]
+  torch.onnx.export(
+      backbone_student,
+      args=torch.randn(10, 3, 112, 112),
+      input_names=input_names,
+      dynamic_axes={input_names[0]: {0: "batch_size"}},
+      f=model_name + '.onnx',
+      verbose=False,
+      keep_initializers_as_inputs=True,
+      training=torch.onnx.TrainingMode.PRESERVE,
+      do_constant_folding=False,
+      opset_version=13,
+  )
+  print(f"{model_name = }")
+  ```
+  ```py
+  import onnx
+  from onnx2keras import onnx_to_keras
+  model_name = '../PocketNet/PocketNetS-128.onnx'
+  onnx_model = onnx.load(model_name)
+  k_model = onnx_to_keras(onnx_model, [onnx_model.graph.input[0].name], change_ordering=True)
+
+  k_model.save(os.path.splitext(os.path.basename(model_name))[0] + ".h5")
+  ```
+  ```py
+  for ii in glob('../PocketNet/PocketNetM-256-MultiStep-KD/*.pth'):
+      ss = torch.load(ii, map_location=torch.device('cpu'))
+      backbone_student.load_state_dict(ss)
+      _ = backbone_student.eval()
+
+      input_names = ["input0"]
+      torch.onnx.export(
+          backbone_student,
+          args=torch.randn(10, 3, 112, 112),
+          input_names=input_names,
+          dynamic_axes={input_names[0]: {0: "batch_size"}},
+          f=model_name + '.onnx',
+          verbose=False,
+          keep_initializers_as_inputs=True,
+          training=torch.onnx.TrainingMode.PRESERVE,
+          do_constant_folding=False,
+          opset_version=13,
+      )
+      print(f"{model_name = }, {ii = }")
+
+      mm = teacher_model_interf_wrapper('../PocketNet/PocketNetM-256.onnx')
+      evals.eval_callback(lambda imm: mm(imm * 128 + 127.5), "/datasets/ms1m-retinaface-t1/agedb_30.bin").on_epoch_end()
+  ```
+***
