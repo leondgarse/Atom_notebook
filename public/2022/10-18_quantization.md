@@ -62,18 +62,19 @@ def preprocess_func(images_folder, height, width, size_limit=0):
 
 
 class MobilenetDataReader(CalibrationDataReader):
-    def __init__(self, calibration_image_folder):
+    def __init__(self, calibration_image_folder, input_name="input"):
         self.image_folder = calibration_image_folder
         self.preprocess_flag = True
         self.enum_data_dicts = []
         self.datasize = 0
+        self.input_name = input_name
 
     def get_next(self):
         if self.preprocess_flag:
             self.preprocess_flag = False
             nhwc_data_list = preprocess_func(self.image_folder, image_height, image_width, size_limit=0)
             self.datasize = len(nhwc_data_list)
-            self.enum_data_dicts = iter([{'input': nhwc_data} for nhwc_data in nhwc_data_list])
+            self.enum_data_dicts = iter([{self.input_name: nhwc_data} for nhwc_data in nhwc_data_list])
         return next(self.enum_data_dicts, None)
 
 
