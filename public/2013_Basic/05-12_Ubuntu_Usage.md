@@ -290,6 +290,11 @@
     chroot /media/cdrom0 ls /home
     chroot /media/cdrom0 update-grub
     ```
+## history
+  - 清空 history
+    ```sh
+    echo "" > ~/.bash_history && history -c
+    ```
 ***
 
 # 配置

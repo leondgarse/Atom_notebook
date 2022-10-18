@@ -2418,6 +2418,8 @@
     # Virtualenv 指定 python 版本
     virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
     ```
+  - 报错 `No module named '_bz2'`，需要先安装 `apt install libbz2-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_bz2.xxx.so`
+  - 报错 `No module named '_ssl'`，需要先安装 `apt install libssl-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
   - **configure** 参数
     - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
     - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`
