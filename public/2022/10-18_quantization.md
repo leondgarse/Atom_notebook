@@ -1,5 +1,3 @@
-In [maxvit.py class Attention #L216-L238](https://github.com/google-research/maxvit/blob/main/maxvit/models/maxvit.py#L216-L238) implementation, we have `self.relative_bias = self.add_weight(...)` added as weight first, then rearranged `self.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(...)` in `build`, not in `call`. I'm not sure about this, but in my understanding, the second rearranged `self.reindexed_bias` is a copy of the first initialized weights, and thus the original weights will not get updated during training. I think the `self.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(...)` operation should be moved into `def call` block, like into [maxvit.py#L258](https://github.com/google-research/maxvit/blob/df590d74b615d2f1a8e52f95490168254aae6443/maxvit/models/maxvit.py#L258).
-
 ```py
 from keras_cv_attention_models.imagenet import data
 test_dataset = data.init_dataset('imagenet2012', batch_size=128, rescale_mode='raw')[1]
