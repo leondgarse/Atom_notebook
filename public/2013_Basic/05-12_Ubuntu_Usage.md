@@ -502,6 +502,19 @@
       Host your-host
         HostkeyAlgorithms +ssh-dss
       ```
+  - Q: timed out waiting for input: auto-logout
+    ```sh
+    $ vi /etc/ssh/sshd_config
+    ClientAliveInterval 60  # 启用客户端活动检查，每60秒检查一次, 默认是0, 不发送
+    ClientAliveCountMax 3  # 3次不活动断开连接，正常情况下, 客户端不会不响应
+
+    $ service sshd reload  # 重新启动SSH服务
+
+    $ echo $TMOUT  # 查看当前用户的超时时间，空或者 0 表示不超时
+    $ vi /etc/profile
+    export TMOUT=0
+    $ source /etc/profile
+    ```
 ## samba 配置
   - **samba 安装**
     ```shell

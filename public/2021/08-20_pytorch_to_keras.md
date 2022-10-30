@@ -1134,48 +1134,39 @@
   ```
 ## MaxViT
 ```py
-import tensorflow.compat.v1 as tf
+sys.path.append('../maxvit/')
+
 import maxvit.models.hparams as hparams
 import maxvit.models.maxvit as layers
-
-
-def get_ema_vars():
-  """Get all exponential moving average (ema) variables."""
-  ema_vars = tf.trainable_variables() + tf.get_collection('moving_vars')
-  for v in tf.global_variables():
-    # We maintain batch norm moving mean and variance as well.
-    if 'moving_mean' in v.name or 'moving_variance' in v.name:
-      ema_vars.append(v)
-  return list(set(ema_vars))
+import maxvit.models.maxvit_keras as layers
+from maxvit.models.eval_ckpt import get_ema_vars
 
 ckpt_dir = 'gs://gresearch/maxvit/ckpts/maxvittiny/i1k/224'
-export_ckpt = './maxvittiny/foo'
 MODEL_NAME = "MaxViTTiny"
 output_type = 'logits'
 
-with tf.Graph().as_default(), tf.Session() as sess:
+with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
   config = hparams.lookup(MODEL_NAME)
   model = layers.MaxViT(config.model)
   _ = model(tf.ones([1, 224, 224, 3]), training=False)
   output = model.endpoints[output_type]
   # print(model.get_weights()[0])
 
-  sess.run(tf.global_variables_initializer())
-  checkpoint = tf.train.latest_checkpoint(ckpt_dir)
-  ema = tf.train.ExponentialMovingAverage(decay=0.0)
+  sess.run(tf.compat.v1.global_variables_initializer())
+  ema = tf.compat.v1.train.ExponentialMovingAverage(decay=0.0)
   ema_vars = get_ema_vars()
   var_dict = ema.variables_to_restore(ema_vars)
   ema_assign_op = ema.apply(ema_vars)
 
-  tf.train.get_or_create_global_step()
-  sess.run(tf.global_variables_initializer())
-  saver = tf.train.Saver(var_dict, max_to_keep=1)
-  saver.restore(sess, checkpoint)
+  tf.compat.v1.train.get_or_create_global_step()
+  sess.run(tf.compat.v1.global_variables_initializer())
+  saver = tf.compat.v1.train.Saver(var_dict, max_to_keep=1)
+  if ckpt_dir is not None:
+    checkpoint = tf.compat.v1.train.latest_checkpoint(ckpt_dir)
+    saver.restore(sess, checkpoint)
 
   if ema_assign_op is not None:
     sess.run(ema_assign_op)
-  saver = tf.train.Saver(max_to_keep=1, save_relative_paths=True)
-  saver.save(sess, export_ckpt)
 
   inputs = tf.keras.layers.Input([224, 224, 3])
   mm = tf.keras.models.Model(inputs, model.call(inputs, training=False))
@@ -1184,16 +1175,10 @@ with tf.Graph().as_default(), tf.Session() as sess:
   # print(model.get_weights()[0])
 ```
 ```py
-from maxvit.models import attention_utils as attn_utils
-for ii in model._blocks:
-    for jj in ii:
-        jj._block_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
-        jj._grid_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
-```
-```py
 sys.path.append('../maxvit/')
 import maxvit.models.hparams as hparams
-import maxvit.models.maxvit as layers
+import maxvit.models.maxvit_keras as layers
+
 MODEL_NAME = "MaxViTTiny"
 config = hparams.lookup(MODEL_NAME)
 model = layers.MaxViT(config.model)
@@ -1201,7 +1186,61 @@ inputs = keras.layers.Input([224, 224, 3])
 model.build(inputs.shape)
 mm = keras.models.Model(inputs, model.call(inputs, training=False))
 # mm.summary(expand_nested=True)
-mm.load_weights('maxvittiny.h5')
+mm.save("aa.h5")
+```
+```py
+from maxvit.models import attention_utils as attn_utils
+for ii in model._blocks:
+    for jj in ii:
+        jj._block_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
+        jj._grid_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
+
+from maxvit.models import attention_utils as attn_utils
+for ii in model._blocks:
+    for jj in ii:
+        jj._block_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
+        jj._grid_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
+```
+```py
+from keras_cv_attention_models.attention_layers import BiasPositionalEmbedding
+
+aa = []
+for ii in model._blocks:
+    for jj in ii:
+        aa.append(jj._block_attention.reindexed_bias.numpy())
+        aa.append(jj._grid_attention.reindexed_bias.numpy())
+
+dd = [ii.name for ii in tt.layers if isinstance(ii, maxvit.MultiHeadRelativePositionalEmbedding)]
+ee = dict(zip(dd, aa))
+
+def replace_pos_emb_to_bias(layer):
+    if isinstance(layer, maxvit.MultiHeadRelativePositionalEmbedding):
+        ww = ee[layer.name]
+        cc = BiasPositionalEmbedding(axis=[1, 2, 3])
+        cc.build(layer.input_shape)
+        cc.set_weights([ww])
+        return cc
+    return layer
+
+ss = keras.models.clone_model(tt, clone_function=replace_pos_emb_to_bias)
+ss.summary()
+```
+```py
+from keras_cv_attention_models import maxvit
+mm = maxvit.MaxViT_Small()
+sys.path.append('../maxvit/')
+import maxvit.models.hparams as hparams
+import maxvit.models.maxvit as layers
+
+model_scale = "Base"
+MODEL_NAME = "MaxViT" + model_scale
+config = hparams.lookup(MODEL_NAME)
+model = layers.MaxViT(config.model)
+inputs = keras.layers.Input([224, 224, 3])
+model.build(inputs.shape)
+mm = keras.models.Model(inputs, model.call(inputs, training=False))
+# mm.summary(expand_nested=True)
+mm.load_weights(MODEL_NAME + '_i1k_224.h5')
 
 from skimage.data import chelsea
 imm = tf.image.resize(chelsea(), [224, 224])
@@ -1212,24 +1251,27 @@ print(keras.applications.imagenet_utils.decode_predictions(mm(imm).numpy()))
 from keras_cv_attention_models.maxvit import maxvit
 from keras_cv_attention_models import download_and_load
 
-tt = maxvit.MaxViT_T(classifier_activation=None)
+tt = getattr(maxvit, "MaxViT_" + model_scale)(classifier_activation=None, pretrained=None)
 aa = {ii.name: ii.numpy() for ii in mm.weights}
 cc = download_and_load.state_dict_stack_by_layer(aa, unstack_weights=['pos_emb'])
 
 for target_layer in tt.layers:
-    if target_layer.name in cc:
-        weight_name = target_layer.name.split('/')[-1]
-        source_weights = cc[target_layer.name]
-        if weight_name in ['query', 'key', 'value']:
-            ww = source_weights[0].reshape([source_weights[0].shape[0], -1])
-            bb = source_weights[1].reshape([-1])
-            source_weights = [ww, bb]
-        elif weight_name == 'output':
-            ww = source_weights[0].reshape([-1, source_weights[0].shape[-1]])
-            source_weights = [ww, source_weights[1]]
-        elif weight_name == 'pos_emb':
-            source_weights = [source_weights[0].reshape([source_weights[0].shape[0], -1])]
-        target_layer.set_weights(source_weights)
+    if len(target_layer.weights) == 0:
+        continue
+    weight_name = target_layer.name.split('/')[-1]
+    source_weights = cc[target_layer.name]
+    print(f"{target_layer.name = }: ", [ii.shape for ii in source_weights], "->", [ii.shape for ii in target_layer.get_weights()])
+    if weight_name in ['query', 'key', 'value']:
+        ww = source_weights[0].reshape([source_weights[0].shape[0], -1])
+        bb = source_weights[1].reshape([-1])
+        source_weights = [ww, bb]
+    elif weight_name == 'output':
+        ww = source_weights[0].reshape([-1, source_weights[0].shape[-1]])
+        source_weights = [ww, source_weights[1]]
+    elif weight_name == 'pos_emb':
+        source_weights = source_weights[0].reshape([source_weights[0].shape[0], -1])
+        source_weights = [source_weights[:, ::-1]]
+    target_layer.set_weights(source_weights)
 
 tt.save("{}_{}_imagenet.h5".format(tt.name, tt.input_shape[1]))
 ```
@@ -1237,7 +1279,7 @@ Concat dense query / key / value -> conv2d qkv
 ```py
 from keras_cv_attention_models.maxvit import maxvit
 
-mm = maxvit.MaxViT_T(classifier_activation=None)
+mm = maxvit.MaxViT_Tiny(classifier_activation=None, pretrained=None)
 save_name = "{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1])
 mm.load_weights(save_name, by_name=True)
 dd = keras.models.load_model(save_name)

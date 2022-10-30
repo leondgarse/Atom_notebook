@@ -1592,120 +1592,140 @@
       loss = lbox + lobj + lcls
       return loss * bs, torch.cat((lbox, lobj, lcls, loss)).detach()
   ```
+## YOLOR LR
+```py
+lrf = 0.2
+lf = lambda x: ((1 + math.cos(x * math.pi / 100)) / 2) * (1 - lrf) + lrf
+```
 ***
 
 # YOLOXTiny training logs
-```py
-from keras_cv_attention_models.imagenet import eval_func
-hhs = {
-    "YOLOXTiny, bs 64, basic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02_hist.json",
-    "randaug_after_mosaic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
-    "randaug_after_mosaic, randaug_scale_03": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_hist.json",
-    "randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_random_hsv_hist.json",
-    # "randaug_after_mosaic, randaug_scale_03, effd_anchors": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_effd_anchors_hist.json",
-    "416, randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
-    "416, randaug_after_mosaic, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale_hist.json",
-}
+  ```py
+  from keras_cv_attention_models.imagenet import eval_func
+  hhs = {
+      "YOLOXTiny, bs 64, basic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02_hist.json",
+      "randaug_after_mosaic": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
+      "randaug_after_mosaic, randaug_scale_03": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_hist.json",
+      "randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_random_hsv_hist.json",
+      # "randaug_after_mosaic, randaug_scale_03, effd_anchors": "checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_after_mosac_randaug_scale_03_effd_anchors_hist.json",
+      "416, randaug_after_mosaic, randaug_scale_03, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_hist.json",
+      "416, randaug_after_mosaic, random_hsv": "checkpoints/YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosac_random_hsv_no_randaug_scale_hist.json",
+  }
 
-fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
-```
-- **Test**
-```py
-from keras_cv_attention_models import efficientdet, efficientnet, yolox
+  fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
+  ```
+  - **Test**
+  ```py
+  from keras_cv_attention_models import efficientdet, efficientnet, yolox
 
-model = yolox.YOLOXTiny(pretrained='checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02.h5', input_shape=(256, 256, 3), rescale_mode='torch')
+  model = yolox.YOLOXTiny(pretrained='checkpoints/YOLOXTiny_256_adamw_coco_2017_batchsize_64_randaug_6_mosaic_0.5_RRC_1.0_lr512_0.008_wd_0.02.h5', input_shape=(256, 256, 3), rescale_mode='torch')
 
-# Run prediction
-from keras_cv_attention_models import test_images
-imm = test_images.dog_cat()
-bboxs, lables, confidences = model.decode_predictions(model(model.preprocess_input(imm)))[0]
+  # Run prediction
+  from keras_cv_attention_models import test_images
+  imm = test_images.dog_cat()
+  bboxs, lables, confidences = model.decode_predictions(model(model.preprocess_input(imm)))[0]
 
-# Show result
-from keras_cv_attention_models.coco import data
-data.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
-```
-```py
-import kecam
-mm = kecam.yolox.YOLOXTiny(anchors_mode="yolor", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
+  # Show result
+  from keras_cv_attention_models.coco import data
+  data.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
+  ```py
+  import kecam
+  mm = kecam.yolox.YOLOXTiny(anchors_mode="yolor", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
 
-imm = kecam.test_images.dog_cat()
-bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.05)[0]
-kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
-```
-```py
-import kecam
-mm = kecam.yolox.YOLOXTiny(input_shape=(256, 256, 3), anchors_mode="efficientdet", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
+  imm = kecam.test_images.dog_cat()
+  bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.05)[0]
+  kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
+  ```py
+  import kecam
+  mm = kecam.yolox.YOLOXTiny(input_shape=(256, 256, 3), anchors_mode="efficientdet", pretrained='checkpoints/test_latest.h5', rescale_mode='torch')
 
-imm = kecam.test_images.dog_cat()
-bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.001)[0]
-kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
-```
-| optimizer | color                 | scale | positional   | rescale_mode | best           | latest |
-| --------- | --------------------- | ----- | ------------ | ------------ | -------------- | ------ |
-| adamw     | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.234 | 0.219  |
-| sgdw      | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.217 | 0.218  |
-| adamw     | random_hsv            | 0.3   | rtsx         | torch        | Epoch 48 0.242 | 0.230  |
-| lamb      | random_hsv            | 0.3   | rtsx         | torch        | Epoch 49 0.210 | 0.206  |
-| adamw     | randaug               | 0.3   | rtsx         | torch        | Epoch 50 0.236 | 0.231  |
-| adamw     | random_hsv            | 0.5   | rtsx         | torch        | Epoch 49 0.242 | 0.243  |
-| adamw     | randaug               | 0.5   | rtsx         | torch        | Epoch 53 0.234 | 0.234  |
-| adamw     | random_hsv            | 0.5   | tx           | torch        | Epoch 55 0.246 | 0.246  |
-| adamw     | random_hsv            | 0.5   | rtsx, mag 10 | torch        | Epoch 48 0.231 | 0.229  |
-| adamw     | random_hsv            | 0.8   | rtsx         | torch        | Epoch 55 0.241 | 0.241  |
-| adamw     | autoaug               | 0.5   | rtsx         | torch        | Epoch 53 0.232 | 0.228  |
-| adamw     | random_hsv            | 0.5   | rtsx         | tf           | Epoch 51 0.244 | 0.239  |
-| adamw     | random_hsv            | 0.5   | rts          | tf           | Epoch 46 0.235 | 0.235  |
-| adamw     | random_hsv            | 0.8   | rts          | tf           | Epoch 49 0.242 | 0.237  |
-| adamw     | random_hsv            | 0.8   | t            | tf           | Epoch 55 0.241 | 0.241  |
-| adamw     | random_hsv            | 0.8   | tx           | tf           | Epoch 54 0.243 | 0.245  |
-| adamw     | random_hsv            | 0.8   | tx           | torch        | Epoch 45 0.241 | 0.232  |
-| adamw     | random_hsv            | 0.5   | tx           | tf           | Epoch 54 0.249 | 0.244  |
-| adamw     | random_hsv            | 0.5   | txr          | tf           | Epoch 45 0.244 | 0.242  |
-| adamw     | random_hsv + contrast | 0.5   | tx           | tf           | Epoch 52 0.247 | 0.241  |
-| adamw     | random_hsv            | 0.5   | txs          | tf           | Epoch 54 0.246 | 0.244  |
-| adamw     | random_hsv            | 0.5   | tx           | raw01        | Epoch 52 0.247 | 0.243  |
+  imm = kecam.test_images.dog_cat()
+  bboxs, lables, confidences = mm.decode_predictions(mm(mm.preprocess_input(imm)), score_threshold=0.001)[0]
+  kecam.coco.show_image_with_bboxes(imm, bboxs, lables, confidences, num_classes=80)
+  ```
+  | optimizer | color                 | scale | positional   | rescale_mode | best           | latest |
+  | --------- | --------------------- | ----- | ------------ | ------------ | -------------- | ------ |
+  | adamw     | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.234 | 0.219  |
+  | sgdw      | random_hsv            | 0     | rtsx         | torch        | Epoch 52 0.217 | 0.218  |
+  | adamw     | random_hsv            | 0.3   | rtsx         | torch        | Epoch 48 0.242 | 0.230  |
+  | lamb      | random_hsv            | 0.3   | rtsx         | torch        | Epoch 49 0.210 | 0.206  |
+  | adamw     | randaug               | 0.3   | rtsx         | torch        | Epoch 50 0.236 | 0.231  |
+  | adamw     | random_hsv            | 0.5   | rtsx         | torch        | Epoch 49 0.242 | 0.243  |
+  | adamw     | randaug               | 0.5   | rtsx         | torch        | Epoch 53 0.234 | 0.234  |
+  | adamw     | random_hsv            | 0.5   | tx           | torch        | Epoch 55 0.246 | 0.246  |
+  | adamw     | random_hsv            | 0.5   | rtsx, mag 10 | torch        | Epoch 48 0.231 | 0.229  |
+  | adamw     | random_hsv            | 0.8   | rtsx         | torch        | Epoch 55 0.241 | 0.241  |
+  | adamw     | autoaug               | 0.5   | rtsx         | torch        | Epoch 53 0.232 | 0.228  |
+  | adamw     | random_hsv            | 0.5   | rtsx         | tf           | Epoch 51 0.244 | 0.239  |
+  | adamw     | random_hsv            | 0.5   | rts          | tf           | Epoch 46 0.235 | 0.235  |
+  | adamw     | random_hsv            | 0.8   | rts          | tf           | Epoch 49 0.242 | 0.237  |
+  | adamw     | random_hsv            | 0.8   | t            | tf           | Epoch 55 0.241 | 0.241  |
+  | adamw     | random_hsv            | 0.8   | tx           | tf           | Epoch 54 0.243 | 0.245  |
+  | adamw     | random_hsv            | 0.8   | tx           | torch        | Epoch 45 0.241 | 0.232  |
+  | adamw     | random_hsv            | 0.5   | tx           | tf           | Epoch 54 0.249 | 0.244  |
+  | adamw     | random_hsv            | 0.5   | txr          | tf           | Epoch 45 0.244 | 0.242  |
+  | adamw     | random_hsv + contrast | 0.5   | tx           | tf           | Epoch 52 0.247 | 0.241  |
+  | adamw     | random_hsv            | 0.5   | txs          | tf           | Epoch 54 0.246 | 0.244  |
+  | adamw     | random_hsv            | 0.5   | tx           | raw01        | Epoch 52 0.247 | 0.243  |
 
-```py
-# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, epoch 48
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.254
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.082
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.253
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.381
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.241
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.397
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.422
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.164
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.649
+  ```py
+  # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic, random_hsv, scale 03, epoch 48
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.254
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.082
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.253
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.381
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.241
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.397
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.422
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.164
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.649
 
-# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05, epoch 49
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.394
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.255
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.083
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.256
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.374
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.236
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.392
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.417
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.466
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.638
+  # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05, epoch 49
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.242
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.394
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.255
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.083
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.256
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.374
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.236
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.392
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.417
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.466
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.638
 
-# YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05_no_rotate_shear, epoch_55
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.246
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.260
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.087
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.260
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.385
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.246
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.402
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.429
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.160
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.477
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.655
-```
+  # YOLOXTiny_416_adamw_coco_2017_batchsize_64_randaug_after_mosaic_random_hsv_scale_05_no_rotate_shear, epoch_55
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.246
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.393
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.260
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.087
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.260
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.385
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.246
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.402
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.429
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.160
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.477
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.655
+  ```
 ***
+
+# TOLOR_CSP training logs
+## PyTorch yolor_csp
+```py
+{
+  'lr0': 0.01, 'lrf': 0.2, 'momentum': 0.937, 'weight_decay': 0.0005, 'warmup_epochs': 3.0, 'warmup_momentum': 0.8, 'warmup_bias_lr': 0.1,
+  'box': 0.05, 'cls': 0.3, 'cls_pw': 1.0, 'obj': 0.7, 'obj_pw': 1.0, 'iou_t': 0.2, 'anchor_t': 4.0, 'fl_gamma': 0.0, 'hsv_h':0.015, 'hsv_s': 0.7, 'hsv_v': 0.4,
+  'degrees': 0.0, 'translate': 0.1, 'scale': 0.9, 'shear': 0.0, 'perspective': 0.0, 'flipud': 0.0, 'fliplr': 0.5, 'mosaic': 1.0, 'mixup': 0.0
+}
+```
+```sh
+TF_XLA_FLAGS='--tf_xla_auto_jit=2' CUDA_VISIBLE_DEVICES='1' ./coco_train_script.py --det_header yolor.YOLOR_CSP -i 640 \
+--optimizer sgdw --lr_base_512 0.1 --lr_min 0.002 --weight_decay 0.0005 --momentum 0.937 \
+--positional_augment_methods t --magnitude 10 --mosaic_mix_prob 1.0 --rescale_mode raw01 --freeze_backbone_epochs 0 -b 48
+```
