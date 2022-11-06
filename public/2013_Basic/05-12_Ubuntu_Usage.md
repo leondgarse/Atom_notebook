@@ -2210,6 +2210,13 @@
     md5sum -c goo
     sha256sum -c goo
     ```
+## 网易云音乐 20.04 上打不开
+- 报错 `/lib/x86_64-linux-gnu/libgio-2.0.so.0: undefined symbol: g_module_open_full`，修改执行路径为 `/lib/x86_64-linux-gnu`
+  ```sh
+  $ vi /opt/netease/netease-cloud-music/netease-cloud-music.bash
+  - exec "${HERE}"/netease-cloud-music $@
+  + cd /lib/x86_64-linux-gnu/ && exec "${HERE}"/netease-cloud-music $@
+  ```
 ***
 
 # 系统备份恢复
