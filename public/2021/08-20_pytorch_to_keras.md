@@ -1,5 +1,11 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
+# basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
+# basic_model = models.replace_ReLU_with_PReLU(basic_model)
+
+# optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
+optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
+
 
 # TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -1133,186 +1139,186 @@
       mm.save("{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
 ## MaxViT
-```py
-sys.path.append('../maxvit/')
+  - **Official TF1 model**
+  ```py
+  sys.path.append('../maxvit/')
 
-import maxvit.models.hparams as hparams
-import maxvit.models.maxvit as layers
-import maxvit.models.maxvit_keras as layers
-from maxvit.models.eval_ckpt import get_ema_vars
+  import maxvit.models.hparams as hparams
+  import maxvit.models.maxvit as layers
+  import maxvit.models.maxvit_keras as layers
+  from maxvit.models.eval_ckpt import get_ema_vars
 
-ckpt_dir = 'gs://gresearch/maxvit/ckpts/maxvittiny/i1k/224'
-MODEL_NAME = "MaxViTTiny"
-output_type = 'logits'
+  ckpt_dir = 'gs://gresearch/maxvit/ckpts/maxvittiny/i1k/224'
+  MODEL_NAME = "MaxViTTiny"
+  output_type = 'logits'
 
-with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
+  with tf.compat.v1.Graph().as_default(), tf.compat.v1.Session() as sess:
+    config = hparams.lookup(MODEL_NAME)
+    model = layers.MaxViT(config.model)
+    _ = model(tf.ones([1, 224, 224, 3]), training=False)
+    output = model.endpoints[output_type]
+    # print(model.get_weights()[0])
+
+    sess.run(tf.compat.v1.global_variables_initializer())
+    ema = tf.compat.v1.train.ExponentialMovingAverage(decay=0.0)
+    ema_vars = get_ema_vars()
+    var_dict = ema.variables_to_restore(ema_vars)
+    ema_assign_op = ema.apply(ema_vars)
+
+    tf.compat.v1.train.get_or_create_global_step()
+    sess.run(tf.compat.v1.global_variables_initializer())
+    saver = tf.compat.v1.train.Saver(var_dict, max_to_keep=1)
+    if ckpt_dir is not None:
+      checkpoint = tf.compat.v1.train.latest_checkpoint(ckpt_dir)
+      saver.restore(sess, checkpoint)
+
+    if ema_assign_op is not None:
+      sess.run(ema_assign_op)
+
+    inputs = tf.keras.layers.Input([224, 224, 3])
+    mm = tf.keras.models.Model(inputs, model.call(inputs, training=False))
+    mm.save_weights('aa.h5')
+
+    # print(model.get_weights()[0])
+  ```
+  - **Using `maxvit_keras` Saving pure keras model for structure**
+  ```py
+  sys.path.append('../maxvit/')
+  import maxvit.models.hparams as hparams
+  import maxvit.models.maxvit_keras as layers
+
+  MODEL_NAME = "MaxViTTiny"
   config = hparams.lookup(MODEL_NAME)
   model = layers.MaxViT(config.model)
-  _ = model(tf.ones([1, 224, 224, 3]), training=False)
-  output = model.endpoints[output_type]
-  # print(model.get_weights()[0])
+  inputs = keras.layers.Input([224, 224, 3])
+  model.build(inputs.shape)
+  mm = keras.models.Model(inputs, model.call(inputs, training=False))
+  # mm.summary(expand_nested=True)
+  mm.save("aa.h5")
+  ```
+  - **Official TF1 model reolad pos_emb**
+  ```py
+  from maxvit.models import attention_utils as attn_utils
+  for ii in model._blocks:
+      for jj in ii:
+          jj._block_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
+          jj._grid_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
+  ```
+  - **Convert weights** Change `mhsa_with_multi_head_relative_position_embedding` in `coatnet.py`, `Conv2D` qkv -> `Dense` query / key / value
+  ```py
+  sys.path.append('../maxvit/')
+  """ Register MaxViTXLarge """
+  import copy
+  from maxvit.models.hp import vision, vision_i1k
+  from maxvit.models.hparams_registry import register
 
-  sess.run(tf.compat.v1.global_variables_initializer())
-  ema = tf.compat.v1.train.ExponentialMovingAverage(decay=0.0)
-  ema_vars = get_ema_vars()
-  var_dict = ema.variables_to_restore(ema_vars)
-  ema_assign_op = ema.apply(ema_vars)
+  @register
+  class MaxViTXLarge(vision_i1k.MaxViTI1KBase):
+      cfg = copy.deepcopy(vision_i1k.MaxViTI1KBase.cfg)
+      cfg.model.update(vision.maxvit_xl)
+      cfg.model.survival_prob = 0.4
 
-  tf.compat.v1.train.get_or_create_global_step()
-  sess.run(tf.compat.v1.global_variables_initializer())
-  saver = tf.compat.v1.train.Saver(var_dict, max_to_keep=1)
-  if ckpt_dir is not None:
-    checkpoint = tf.compat.v1.train.latest_checkpoint(ckpt_dir)
-    saver.restore(sess, checkpoint)
+  """ Define keras model from official and reload saved h5 model weights """
+  import maxvit.models.hparams as hparams
+  import maxvit.models.maxvit as layers
 
-  if ema_assign_op is not None:
-    sess.run(ema_assign_op)
+  input_shape = 384
+  model_scale = "Tiny"
+  MODEL_NAME = "MaxViT" + model_scale
+  config = hparams.lookup(MODEL_NAME)
+  config.model.window_size = input_shape // 32
+  config.model.grid_size = input_shape // 32
+  config.model.scale_ratio = None if input_shape == 224 else '{}/224'.format(input_shape)
 
-  inputs = tf.keras.layers.Input([224, 224, 3])
-  mm = tf.keras.models.Model(inputs, model.call(inputs, training=False))
-  mm.save_weights('aa.h5')
+  model = layers.MaxViT(config.model)
+  inputs = keras.layers.Input([input_shape, input_shape, 3])
+  model.build(inputs.shape)
+  mm = keras.models.Model(inputs, model.call(inputs, training=False))
+  # mm.summary(expand_nested=True)
+  mm.load_weights(MODEL_NAME + '_i1k_{}.h5'.format(input_shape))
 
-  # print(model.get_weights()[0])
-```
-```py
-sys.path.append('../maxvit/')
-import maxvit.models.hparams as hparams
-import maxvit.models.maxvit_keras as layers
+  """ Run prediction """
+  from skimage.data import chelsea
+  imm = tf.image.resize(chelsea(), [input_shape, input_shape])
+  imm = keras.applications.imagenet_utils.preprocess_input(tf.expand_dims(imm, 0), mode='torch')
+  print(keras.applications.imagenet_utils.decode_predictions(mm(imm).numpy()))
 
-MODEL_NAME = "MaxViTTiny"
-config = hparams.lookup(MODEL_NAME)
-model = layers.MaxViT(config.model)
-inputs = keras.layers.Input([224, 224, 3])
-model.build(inputs.shape)
-mm = keras.models.Model(inputs, model.call(inputs, training=False))
-# mm.summary(expand_nested=True)
-mm.save("aa.h5")
-```
-```py
-from maxvit.models import attention_utils as attn_utils
-for ii in model._blocks:
-    for jj in ii:
-        jj._block_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
-        jj._grid_attention.reindexed_bias = tf.transpose(attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1), [0, 2, 1])
+  """ Define kecam model and load weights from official one by matched names """
+  from keras_cv_attention_models.maxvit import maxvit
+  from keras_cv_attention_models import download_and_load
 
-from maxvit.models import attention_utils as attn_utils
-for ii in model._blocks:
-    for jj in ii:
-        jj._block_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
-        jj._grid_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
-```
-```py
-from keras_cv_attention_models.attention_layers import BiasPositionalEmbedding
+  tt = getattr(maxvit, "MaxViT_" + model_scale)(input_shape=(input_shape, input_shape, 3), classifier_activation=None, pretrained=None)
+  aa = {ii.name: ii.numpy() for ii in mm.weights}
+  cc = download_and_load.state_dict_stack_by_layer(aa, unstack_weights=['pos_emb'])
 
-aa = []
-for ii in model._blocks:
-    for jj in ii:
-        aa.append(jj._block_attention.reindexed_bias.numpy())
-        aa.append(jj._grid_attention.reindexed_bias.numpy())
+  for target_layer in tt.layers:
+      if len(target_layer.weights) == 0:
+          continue
+      weight_name = target_layer.name.split('/')[-1]
+      source_weights = cc[target_layer.name]
+      print(f"{target_layer.name = }: ", [ii.shape for ii in source_weights], "->", [ii.shape for ii in target_layer.get_weights()])
+      if weight_name in ['query', 'key', 'value']:
+          ww = source_weights[0].reshape([source_weights[0].shape[0], -1])
+          bb = source_weights[1].reshape([-1])
+          source_weights = [ww, bb]
+      elif weight_name == 'output':
+          ww = source_weights[0].reshape([-1, source_weights[0].shape[-1]])
+          source_weights = [ww, source_weights[1]]
+      elif weight_name == 'pos_emb':
+          source_shape = source_weights[0].shape
+          target_shape = target_layer.weights[0].shape
+          if source_shape[1] * source_shape[2] != target_shape[1]:
+                hh = ww = int(tf.math.sqrt(float(target_shape[1])))
+                print("  pos_emb resize: {} -> {}".format(source_shape[1:], (hh, ww)))
+                source_weights[0] = tf.image.resize(tf.expand_dims(source_weights[0], -1), [hh, ww])[..., 0].numpy()
+          source_weights = source_weights[0].reshape([source_weights[0].shape[0], -1])
+          source_weights = [source_weights[:, ::-1]]  # different order between kecam and official
+      target_layer.set_weights(source_weights)
 
-dd = [ii.name for ii in tt.layers if isinstance(ii, maxvit.MultiHeadRelativePositionalEmbedding)]
-ee = dict(zip(dd, aa))
+  tt.save("{}_{}_imagenet.h5".format(tt.name, tt.input_shape[1]))
+  ```
+  Concat dense query / key / value -> conv2d qkv
+  ```py
+  from keras_cv_attention_models.maxvit import maxvit
 
-def replace_pos_emb_to_bias(layer):
-    if isinstance(layer, maxvit.MultiHeadRelativePositionalEmbedding):
-        ww = ee[layer.name]
-        cc = BiasPositionalEmbedding(axis=[1, 2, 3])
-        cc.build(layer.input_shape)
-        cc.set_weights([ww])
-        return cc
-    return layer
+  mm = maxvit.MaxViT_Tiny(classifier_activation=None, pretrained=None)
+  save_name = "{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1])
+  mm.load_weights(save_name, by_name=True)
+  dd = keras.models.load_model(save_name)
 
-ss = keras.models.clone_model(tt, clone_function=replace_pos_emb_to_bias)
-ss.summary()
-```
-```py
-from keras_cv_attention_models import maxvit
-mm = maxvit.MaxViT_Small()
-sys.path.append('../maxvit/')
-import maxvit.models.hparams as hparams
-import maxvit.models.maxvit as layers
+  for ii in mm.layers:
+      if ii.name.endswith("/qkv_conv"):
+          prefix = ii.name.replace("qkv_conv", "")
+          query = dd.get_layer(prefix + "query").get_weights()
+          key = dd.get_layer(prefix + "key").get_weights()
+          value = dd.get_layer(prefix + "value").get_weights()
+          qkv_weights = np.concatenate([query[0], key[0], value[0]], axis=-1)[None, None]
+          qkv_bias = np.concatenate([query[1], key[1], value[1]], axis=-1)
+          print(f">>>> {ii.name = }, {qkv_weights.shape = }, {qkv_bias.shape = }")
+          ii.set_weights([qkv_weights, qkv_bias])
 
-model_scale = "Base"
-MODEL_NAME = "MaxViT" + model_scale
-config = hparams.lookup(MODEL_NAME)
-model = layers.MaxViT(config.model)
-inputs = keras.layers.Input([224, 224, 3])
-model.build(inputs.shape)
-mm = keras.models.Model(inputs, model.call(inputs, training=False))
-# mm.summary(expand_nested=True)
-mm.load_weights(MODEL_NAME + '_i1k_224.h5')
-
-from skimage.data import chelsea
-imm = tf.image.resize(chelsea(), [224, 224])
-imm = keras.applications.imagenet_utils.preprocess_input(tf.expand_dims(imm, 0), mode='torch')
-print(keras.applications.imagenet_utils.decode_predictions(mm(imm).numpy()))
-
-
-from keras_cv_attention_models.maxvit import maxvit
-from keras_cv_attention_models import download_and_load
-
-tt = getattr(maxvit, "MaxViT_" + model_scale)(classifier_activation=None, pretrained=None)
-aa = {ii.name: ii.numpy() for ii in mm.weights}
-cc = download_and_load.state_dict_stack_by_layer(aa, unstack_weights=['pos_emb'])
-
-for target_layer in tt.layers:
-    if len(target_layer.weights) == 0:
-        continue
-    weight_name = target_layer.name.split('/')[-1]
-    source_weights = cc[target_layer.name]
-    print(f"{target_layer.name = }: ", [ii.shape for ii in source_weights], "->", [ii.shape for ii in target_layer.get_weights()])
-    if weight_name in ['query', 'key', 'value']:
-        ww = source_weights[0].reshape([source_weights[0].shape[0], -1])
-        bb = source_weights[1].reshape([-1])
-        source_weights = [ww, bb]
-    elif weight_name == 'output':
-        ww = source_weights[0].reshape([-1, source_weights[0].shape[-1]])
-        source_weights = [ww, source_weights[1]]
-    elif weight_name == 'pos_emb':
-        source_weights = source_weights[0].reshape([source_weights[0].shape[0], -1])
-        source_weights = [source_weights[:, ::-1]]
-    target_layer.set_weights(source_weights)
-
-tt.save("{}_{}_imagenet.h5".format(tt.name, tt.input_shape[1]))
-```
-Concat dense query / key / value -> conv2d qkv
-```py
-from keras_cv_attention_models.maxvit import maxvit
-
-mm = maxvit.MaxViT_Tiny(classifier_activation=None, pretrained=None)
-save_name = "{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1])
-mm.load_weights(save_name, by_name=True)
-dd = keras.models.load_model(save_name)
-
-for ii in mm.layers:
-    if ii.name.endswith("/qkv_conv"):
-        prefix = ii.name.replace("qkv_conv", "")
-        query = dd.get_layer(prefix + "query").get_weights()
-        key = dd.get_layer(prefix + "key").get_weights()
-        value = dd.get_layer(prefix + "value").get_weights()
-        qkv_weights = np.concatenate([query[0], key[0], value[0]], axis=-1)[None, None]
-        qkv_bias = np.concatenate([query[1], key[1], value[1]], axis=-1)
-        print(f">>>> {ii.name = }, {qkv_weights.shape = }, {qkv_bias.shape = }")
-        ii.set_weights([qkv_weights, qkv_bias])
-
-inputs = tf.random.uniform([1, *mm.input_shape[1:]])
-all_close = np.allclose(mm(inputs), dd(inputs), atol=1e-6)
-print(f">>>> {all_close = }")
-if all_close:
-    mm.save(save_name)
-```
-```py
-def reindex_2d_einsum_lookup(relative_position_tensor, height, width, max_relative_height=None, max_relative_width=None, h_axis=1):
-    height_lookup = generate_lookup_tensor(height, max_relative_position=max_relative_height, dtype=relative_position_tensor.dtype)
-    width_lookup = generate_lookup_tensor(width, max_relative_position=max_relative_width, dtype=relative_position_tensor.dtype)
-
-    reindexed_tensor = tf.einsum('nhw,ixh->nixw', relative_position_tensor, height_lookup, name='height_lookup')
-    reindexed_tensor = tf.einsum('nixw,jyw->nijxy', reindexed_tensor, width_lookup, name='width_lookup')
-
-    ret_shape = [relative_position_tensor.shape[0], height * width, height * width]
-    reindexed_tensor = tf.reshape(reindexed_tensor, ret_shape)
-    return reindexed_tensor
-```
+  inputs = tf.random.uniform([1, *mm.input_shape[1:]])
+  all_close = np.allclose(mm(inputs), dd(inputs), atol=1e-6)
+  print(f">>>> {all_close = }")
+  if all_close:
+      mm.save(save_name)
+  ```
+| Model       | resolution | central_crop | resize method | antialias | Acc         |
+| ----------- | ---------- | ------------ | ------------- | --------- | ----------- |
+| MaxViT_Tiny | 224        | 0.95         | bicubic       | True      | 0.83412     |
+| MaxViT_Tiny | 224        | 0.95         | bicubic       | False     | 0.83532     |
+| MaxViT_Tiny | 224        | 0.875        | bicubic       | False     | 0.83532     |
+| MaxViT_Tiny | 224        | 0.95         | bilinear      | True      | **0.83644** |
+| MaxViT_Tiny | 224        | 0.95         | bilinear      | False     | 0.83644     |
+| MaxViT_Tiny | 224        | 0.875        | bilinear      | False     | 0.83524     |
+| MaxViT_Tiny | 224 -> 384 | 0.95         | bilinear      | True      | 0.82992     |
+|             |            |              |               |           |             |
+| MaxViT_Tiny | 384        | 0.95         | bicubic       | True      | 0.83706     |
+| MaxViT_Tiny | 384        | 0.95         | bilinear      | True      | **0.83738** |
+| MaxViT_Tiny | 384        | 0.95         | bilinear      | False     | 0.8373      |
+| MaxViT_Tiny | 384        | 0.95         | bicubic       | False     | 0.83478     |
+| MaxViT_Tiny | 384        | 0.923        | bilinear      | False     | 0.83592     |
+| MaxViT_Tiny | 384        | 0.8333       | bicubic       | True      | 0.8276      |
 ***
 
 # Resnest

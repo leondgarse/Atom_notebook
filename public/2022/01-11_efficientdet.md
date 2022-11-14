@@ -891,67 +891,67 @@
   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.566
   ```
 ## automl main results
-```sh
-CUDA_VISIBLE_DEVICES='-1' python tf2/eval.py --model_name=efficientdet-d0 --model_dir=efficientdet-d0 --val_file_pattern=tfrecord/val* --val_json_file=annotations/instances_val2017.json --hparams "mean_rgb=0.0,stddev_rgb=1.0,scale_range=True"
-```
-```py
-""" D0 AdvProp """
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.350
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.534
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.373
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.142
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.409
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.542
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.296
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.461
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.487
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.709
+  ```sh
+  CUDA_VISIBLE_DEVICES='-1' python tf2/eval.py --model_name=efficientdet-d0 --model_dir=efficientdet-d0 --val_file_pattern=tfrecord/val* --val_json_file=annotations/instances_val2017.json --hparams "mean_rgb=0.0,stddev_rgb=1.0,scale_range=True"
+  ```
+  ```py
+  """ D0 AdvProp """
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.350
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.534
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.373
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.142
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.409
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.542
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.296
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.461
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.487
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.709
 
-""" D1 AdvProp """
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.408
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.599
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.440
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.214
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.591
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.328
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.520
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.551
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.326
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.624
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.748
-```
-```py
-""" D0 AdvProp, model.load_weights """
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.297
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.473
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.316
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.109
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.347
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.474
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.267
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.420
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.442
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.172
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.523
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.667
+  """ D1 AdvProp """
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.408
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.599
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.440
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.214
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.463
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.591
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.328
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.520
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.551
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.326
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.624
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.748
+  ```
+  ```py
+  """ D0 AdvProp, model.load_weights """
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.297
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.473
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.316
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.109
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.347
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.474
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.267
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.420
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.442
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.172
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.523
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.667
 
-""" D0 AdvProp, util_keras.restore_ckpt """
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.350
-Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.534
-Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.373
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.142
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.409
-Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.542
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.296
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.461
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.487
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
-Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
-Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.709
-```
+  """ D0 AdvProp, util_keras.restore_ckpt """
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.350
+  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.534
+  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.373
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.142
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.409
+  Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.542
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.296
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.461
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.487
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
+  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.709
+  ```
 ## automl main log
   ```sh
   !python main.py --mode=eval --model_name=efficientdet-d0 --model_dir=efficientdet-d0 --val_file_pattern=tfrecord/val* --val_json_file=annotations/instances_val2017.json
@@ -1056,8 +1056,8 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.709
 ***
 
 # EfficientDet lite
-```py
-from keras_cv_attention_models.efficientdet import convert_efficientdet as efficientdet
-backbone = efficientdet.EfficientNetV1B0(input_shape=(320, 320, 3), output_conv_filter=0, se_ratios=[0] * 10, is_fused=False, num_classes=0, activation="relu6", pretrained=None)
-bb = efficientdet.EfficientDetD0(backbone=backbone, activation="relu6", anchor_scale=3, use_weighted_sum=False, pretrained=None)
-```
+  ```py
+  from keras_cv_attention_models.efficientdet import convert_efficientdet as efficientdet
+  backbone = efficientdet.EfficientNetV1B0(input_shape=(320, 320, 3), output_conv_filter=0, se_ratios=[0] * 10, is_fused=False, num_classes=0, activation="relu6", pretrained=None)
+  bb = efficientdet.EfficientDetD0(backbone=backbone, activation="relu6", anchor_scale=3, use_weighted_sum=False, pretrained=None)
+  ```

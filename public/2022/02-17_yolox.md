@@ -1,4 +1,5 @@
 # ___YOLOX___
+
 ***
 # YOLOX
 ## PyTorch YOLOX
@@ -763,6 +764,7 @@
       "stack4_spp_short_conv": "stack4_spp_pre_1_conv", "stack4_spp_short_bn": "stack4_spp_pre_1_bn", "stack4_spp_output_bn": -1,
       "stack5_spp_short_conv": "stack5_spp_pre_1_conv", "stack5_spp_short_bn": "stack5_spp_pre_1_bn", "stack5_spp_output_bn": -1,
       # "pafpn_p4p5_up_conv": -2, "pafpn_p4p5_up_bn": -2, "pafpn_p4p5_output_bn": -1, "pafpn_p3p4p5_up_conv": -2, "pafpn_p3p4p5_up_bn": -2,
+      # "pafpn_p4p5_output_bn": -1,  # For loading self trained model
       "pafpn_p5p6_output_bn": -1, "pafpn_p4p5p6_output_bn": -1
   }
 
