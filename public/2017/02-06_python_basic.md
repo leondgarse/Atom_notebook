@@ -2404,11 +2404,13 @@
     ```
   - 指定用户目录下的 python 版本
     ```sh
+    sudo apt install libbz2-dev libssl-dev liblzma-dev
+
     # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
     wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
     tar zxvf Python-3.10.1.tgz
     cd Python-3.10.15
-    ./configure --prefix=$HOME/local_bin/python-3.10.5
+    ./configure --prefix=$HOME/local_bin/python-3.10.5 --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
     make
     make install
 
@@ -2420,6 +2422,7 @@
     ```
   - 报错 `No module named '_bz2'`，需要先安装 `apt install libbz2-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_bz2.xxx.so`
   - 报错 `No module named '_ssl'`，需要先安装 `apt install libssl-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
+  - 报错 `No module named '_lzma'`，需要先安装 `apt install liblzma-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
   - **configure** 参数
     - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
     - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`

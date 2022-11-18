@@ -1,11 +1,5 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
-# basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
-# basic_model = models.replace_ReLU_with_PReLU(basic_model)
-
-# optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
-optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
-
 
 # TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -1204,10 +1198,9 @@ optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
           jj._block_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._block_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
           jj._grid_attention.reindexed_bias = attn_utils.reindex_2d_einsum_lookup(jj._grid_attention.__relative_bias__, 7, 7, 6, 6, h_axis=1)
   ```
-  - **Convert weights** Change `mhsa_with_multi_head_relative_position_embedding` in `coatnet.py`, `Conv2D` qkv -> `Dense` query / key / value
+  - **Register MaxViTXLarge**
   ```py
   sys.path.append('../maxvit/')
-  """ Register MaxViTXLarge """
   import copy
   from maxvit.models.hp import vision, vision_i1k
   from maxvit.models.hparams_registry import register
@@ -1217,6 +1210,10 @@ optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
       cfg = copy.deepcopy(vision_i1k.MaxViTI1KBase.cfg)
       cfg.model.update(vision.maxvit_xl)
       cfg.model.survival_prob = 0.4
+  ```
+  - **Convert weights** Change `mhsa_with_multi_head_relative_position_embedding` in `coatnet.py`, `Conv2D` qkv -> `Dense` query / key / value
+  ```py
+  sys.path.append('../maxvit/')
 
   """ Define keras model from official and reload saved h5 model weights """
   import maxvit.models.hparams as hparams
@@ -1275,7 +1272,9 @@ optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
           source_weights = [source_weights[:, ::-1]]  # different order between kecam and official
       target_layer.set_weights(source_weights)
 
-  tt.save("{}_{}_imagenet.h5".format(tt.name, tt.input_shape[1]))
+  save_name = "{}_{}_imagenet.h5".format(tt.name, tt.input_shape[1])
+  print(f">>>> {save_name = }")
+  tt.save(save_name)
   ```
   Concat dense query / key / value -> conv2d qkv
   ```py
@@ -1303,22 +1302,76 @@ optimizer = tfa.optimizers.AdamW(learning_rate=0.001, weight_decay=5e-5)
   if all_close:
       mm.save(save_name)
   ```
-| Model       | resolution | central_crop | resize method | antialias | Acc         |
-| ----------- | ---------- | ------------ | ------------- | --------- | ----------- |
-| MaxViT_Tiny | 224        | 0.95         | bicubic       | True      | 0.83412     |
-| MaxViT_Tiny | 224        | 0.95         | bicubic       | False     | 0.83532     |
-| MaxViT_Tiny | 224        | 0.875        | bicubic       | False     | 0.83532     |
-| MaxViT_Tiny | 224        | 0.95         | bilinear      | True      | **0.83644** |
-| MaxViT_Tiny | 224        | 0.95         | bilinear      | False     | 0.83644     |
-| MaxViT_Tiny | 224        | 0.875        | bilinear      | False     | 0.83524     |
-| MaxViT_Tiny | 224 -> 384 | 0.95         | bilinear      | True      | 0.82992     |
-|             |            |              |               |           |             |
-| MaxViT_Tiny | 384        | 0.95         | bicubic       | True      | 0.83706     |
-| MaxViT_Tiny | 384        | 0.95         | bilinear      | True      | **0.83738** |
-| MaxViT_Tiny | 384        | 0.95         | bilinear      | False     | 0.8373      |
-| MaxViT_Tiny | 384        | 0.95         | bicubic       | False     | 0.83478     |
-| MaxViT_Tiny | 384        | 0.923        | bilinear      | False     | 0.83592     |
-| MaxViT_Tiny | 384        | 0.8333       | bicubic       | True      | 0.8276      |
+  | Model       | resolution | central_crop | resize method | antialias | Acc         |
+  | ----------- | ---------- | ------------ | ------------- | --------- | ----------- |
+  | MaxViT_Tiny | 224        | 0.95         | bicubic       | True      | 0.83412     |
+  | MaxViT_Tiny | 224        | 0.95         | bicubic       | False     | 0.83532     |
+  | MaxViT_Tiny | 224        | 0.875        | bicubic       | False     | 0.83532     |
+  | MaxViT_Tiny | 224        | 0.95         | bilinear      | True      | **0.83644** |
+  | MaxViT_Tiny | 224        | 0.95         | bilinear      | False     | 0.83644     |
+  | MaxViT_Tiny | 224        | 0.875        | bilinear      | False     | 0.83524     |
+  | MaxViT_Tiny | 224        | 0.875        | bilinear      | True      | 0.83362     |
+  | MaxViT_Tiny | 224        | 0.99         | bilinear      | True      | 0.83282     |
+  | MaxViT_Tiny | 224        | 0            | bilinear      | False     | 0.83116     |
+  |             |            |              |               |           |             |
+  | MaxViT_Tiny | 384        | 0.95         | bicubic       | True      | 0.83706     |
+  | MaxViT_Tiny | 384        | 0.95         | bilinear      | True      | 0.83738     |
+  | MaxViT_Tiny | 384        | 0.95         | bilinear      | False     | 0.8373      |
+  | MaxViT_Tiny | 384        | 0.95         | bicubic       | False     | 0.83478     |
+  | MaxViT_Tiny | 384        | 0.923        | bilinear      | False     | 0.83592     |
+  | MaxViT_Tiny | 384        | 0.8333       | bicubic       | True      | 0.8276      |
+  | MaxViT_Tiny | 384        | 0.8333       | bicubic       | True      | 0.8276      |
+  | MaxViT_Tiny | 384        | 0            | bilinear      | True      | 0.8422      |
+  | MaxViT_Tiny | 384        | 0            | bilinear      | False     | **0.84304** |
+  | MaxViT_Tiny | 384        | 0            | bicubic       | False     | 0.84182     |
+  | MaxViT_Tiny | 384        | 0            | bicubic       | True      | 0.8418      |
+  |             |            |              |               |           |             |
+  | MaxViT_Tiny | 512        | 0.95         | bilinear      | True      | 0.84222     |
+  | MaxViT_Tiny | 512        | 0            | bilinear      | True      | 0.84486     |
+  | MaxViT_Tiny | 512        | 1            | bilinear      | True      | 0.84486     |
+  | MaxViT_Tiny | 512        | 0            | bilinear      | False     | 0.8487      |
+  | MaxViT_Tiny | 512        | 0            | bicubic       | False     | **0.84902** |
+  | MaxViT_Tiny | 512        | 0            | bicubic       | True      | 0.84894     |
+## GhostNetV2
+  ```py
+  import mindspore as ms
+
+  tt = ghostnetv2_1x()
+  _ = ms.load_checkpoint('ghostnetv2_1x.ckpt', tt)
+  tt(ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')))
+
+  ms.train.export(tt, ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')), file_name='aa', file_format='ONNX')
+
+  from skimage.data import chelsea
+  imm = tf.image.resize(chelsea(), [224, 224])
+  imm = keras.applications.imagenet_utils.preprocess_input(tf.expand_dims(imm, 0), mode='torch')
+  print(keras.applications.imagenet_utils.decode_predictions(tt(ms.Tensor(imm.numpy().transpose([0, 3, 1, 2]))).asnumpy()))
+  ```
+  ```py
+  import mindspore as ms
+  aa = ms.load_checkpoint('ghostnetv2_1x.ckpt')
+  tt = {kk: vv.asnumpy() for kk, vv in aa.items()}
+
+  from keras_cv_attention_models.ghostnetv2 import ghostnetv2
+  from keras_cv_attention_models import download_and_load
+  mm = ghostnetv2.GhostNetV2_1(pretrained=None, classifier_activation=None)
+
+  ghost_1_align = {"ghost_1_prim_conv": -2, "ghost_1_prim_bn": -3, "ghost_1_cheap_dw_conv": -5, "ghost_1_cheap_bn": -6}
+  ghost_2_align = {"ghost_2_cheap_dw_conv": -2, "ghost_2_cheap_bn": -3}
+  ghost_12_align = ghost_1_align.copy()
+  ghost_12_align.update(ghost_2_align)
+
+  tail_align_dict = {
+    "stack2": ghost_2_align, "stack3": ghost_1_align, "stack4": ghost_12_align, "stack5": ghost_1_align, "stack6": ghost_12_align,
+    "stack7": ghost_1_align, "stack8": ghost_1_align, "stack9": ghost_1_align, "stack10": ghost_12_align, "stack11": ghost_1_align,
+    "stack12": ghost_12_align, "stack13": ghost_1_align, "stack14": ghost_1_align, "stack15": ghost_1_align, "stack16": ghost_1_align,
+  }
+
+  # mindspore batchnorm weights order is ['moving_mean', 'moving_variance', 'gamma', 'beta']
+  additional_transfer = {keras.layers.BatchNormalization: lambda ww: [ww[2], ww[3], ww[0], ww[1]]}
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, tail_split_position=1, additional_transfer=additional_transfer, do_convert=True)
+  ```
 ***
 
 # Resnest

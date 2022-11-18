@@ -1598,6 +1598,7 @@
     ```sh
     alias Tmux="tmux attach || if [[ -e $HOME/.tmux/resurrect/last ]]; then tmux new-session -d; tmux run-shell $HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh; tmux attach; else tmux; fi"
     ```
+  - **断开其他连接** `Ctrl + s` + `D`，选择并关闭
 ## 特殊符号
   - [Unicode Character Table](https://unicode-table.com)
   - **制表符**
@@ -2211,12 +2212,12 @@
     sha256sum -c goo
     ```
 ## 网易云音乐 20.04 上打不开
-- 报错 `/lib/x86_64-linux-gnu/libgio-2.0.so.0: undefined symbol: g_module_open_full`，修改执行路径为 `/lib/x86_64-linux-gnu`
-  ```sh
-  $ vi /opt/netease/netease-cloud-music/netease-cloud-music.bash
-  - exec "${HERE}"/netease-cloud-music $@
-  + cd /lib/x86_64-linux-gnu/ && exec "${HERE}"/netease-cloud-music $@
-  ```
+  - 报错 `/lib/x86_64-linux-gnu/libgio-2.0.so.0: undefined symbol: g_module_open_full`，修改执行路径为 `/lib/x86_64-linux-gnu`
+    ```sh
+    $ vi /opt/netease/netease-cloud-music/netease-cloud-music.bash
+    - exec "${HERE}"/netease-cloud-music $@
+    + cd /lib/x86_64-linux-gnu/ && exec "${HERE}"/netease-cloud-music $@
+    ```
 ***
 
 # 系统备份恢复
