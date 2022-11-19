@@ -1226,6 +1226,7 @@
   config.model.window_size = input_shape // 32
   config.model.grid_size = input_shape // 32
   config.model.scale_ratio = None if input_shape == 224 else '{}/224'.format(input_shape)
+  config.model.num_classes = 1000
 
   model = layers.MaxViT(config.model)
   inputs = keras.layers.Input([input_shape, input_shape, 3])
@@ -1280,7 +1281,8 @@
   ```py
   from keras_cv_attention_models.maxvit import maxvit
 
-  mm = maxvit.MaxViT_Tiny(classifier_activation=None, pretrained=None)
+  input_shape = 384
+  mm = maxvit.MaxViT_Tiny(input_shape=(input_shape, input_shape, 3), classifier_activation=None, pretrained=None)
   save_name = "{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1])
   mm.load_weights(save_name, by_name=True)
   dd = keras.models.load_model(save_name)
@@ -1301,6 +1303,12 @@
   print(f">>>> {all_close = }")
   if all_close:
       mm.save(save_name)
+
+  """ Run prediction """
+  from skimage.data import chelsea
+  # mm.preprocess_input.rescale_mode = "raw01"  # For imagenet21k
+  preds = mm(mm.preprocess_input(chelsea()))
+  print(mm.decode_predictions(preds.numpy()))
   ```
   | Model       | resolution | central_crop | resize method | antialias | Acc         |
   | ----------- | ---------- | ------------ | ------------- | --------- | ----------- |
@@ -1333,6 +1341,7 @@
   | MaxViT_Tiny | 512        | 0            | bicubic       | False     | **0.84902** |
   | MaxViT_Tiny | 512        | 0            | bicubic       | True      | 0.84894     |
 ## GhostNetV2
+  - **GhostNet V2**
   ```py
   import mindspore as ms
 
@@ -1371,6 +1380,28 @@
   additional_transfer = {keras.layers.BatchNormalization: lambda ww: [ww[2], ww[3], ww[0], ww[1]]}
 
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, tail_split_position=1, additional_transfer=additional_transfer, do_convert=True)
+  ```
+  - **GhostNet V1**
+  ```py
+  sys.path.append('../Efficient-AI-Backbones/')
+  import torch
+  from ghostnet_pytorch.ghostnet import ghostnet
+  tt = ghostnet()
+  _ = tt.eval()
+  weight = torch.load('ghostnet_1x.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(weight)
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.ghostnetv2 import ghostnetv2
+  mm = ghostnetv2.GhostNet_1X(pretrained=None, classifier_activation=None)
+
+  full_name_align_dict = {
+    "stack2_ghost_2_cheap_dw_conv": -2, "stack2_ghost_2_cheap_bn": -3, "stack4_ghost_2_cheap_dw_conv": -2, "stack4_ghost_2_cheap_bn": -3,
+    "stack6_ghost_2_cheap_dw_conv": -2, "stack6_ghost_2_cheap_bn": -3, "stack10_ghost_2_cheap_dw_conv": -2, "stack10_ghost_2_cheap_bn": -3,
+    "stack12_ghost_2_cheap_dw_conv": -2, "stack12_ghost_2_cheap_bn": -3,
+  }
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
 ***
 
