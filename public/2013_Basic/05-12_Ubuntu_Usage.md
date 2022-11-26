@@ -1693,6 +1693,12 @@
   + OTHER_WRITABLE 01;34 # dir that is other-writable (o+w) and not sticky
   ```
   bash 中会自动读取该文件 `test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"`
+## 自动补全忽略大小写
+  ```sh
+  vi /etc/inputrc
+  set completion-ignore-case off  # turn off
+  set completion-ignore-case on  # turn on
+  ```
 ***
 
 # 软件

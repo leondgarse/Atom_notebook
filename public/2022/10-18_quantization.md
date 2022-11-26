@@ -1,5 +1,5 @@
 ```py
-CUDA_VISIBLE_DEVICES='0' TF_XLA_FLAGS='--tf_xla_auto_jit=2' ./train_script.py --seed 0 -m coatnet.CoAtNet0 --batch_size 128 -i 224 --lr_decay_steps 300 --magnitude 15 --additional_model_kwargs'{"drop_connect_rate": 0.3}' -s CoAtNet0_224_decay_300  --restore_path checkpoints/CoAtNet1_224_latest.h5 -I 57
+CUDA_VISIBLE_DEVICES='0' TF_XLA_FLAGS='--tf_xla_auto_jit=2' ./train_script.py --seed 0 -m coatnet.CoAtNet0 --batch_size 128 -i 224 --lr_decay_steps 300 --magnitude 15 --additional_model_kwargs'{"drop_connect_rate": 0.3}' -s CoAtNet1_224  --restore_path checkpoints/CoAtNet1_224_latest.h5 -I 57
 
 CUDA_VISIBLE_DEVICES='1' TF_XLA_FLAGS="--tf_xla_auto_jit=2" ./train_script.py --seed 0 -b 128 -i 160 --label_smoothing 0.1 --bce_threshold 1 --lr_base_512 0.000375 --weight_decay 0.05 --magnitude 15 --mixup_alpha 0.8 --cutmix_alpha 0 -r checkpoints/maxvit.MaxViT_Tiny_160_adamw_imagenet2012_batchsize_128_randaug_15_mixup_0.8_cutmix_0.0_RRC_0.08_lr512_0.000375_wd_0.05_latest.h5 -I 50
 ```

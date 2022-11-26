@@ -1,6 +1,6 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
-
+F
 # TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -1390,6 +1390,24 @@
   _ = tt.eval()
   weight = torch.load('ghostnet_1x.pth', map_location=torch.device('cpu'))
   tt.load_state_dict(weight)
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.ghostnetv2 import ghostnetv2
+  mm = ghostnetv2.GhostNet_1X(pretrained=None, classifier_activation=None)
+
+  full_name_align_dict = {
+    "stack2_ghost_2_cheap_dw_conv": -2, "stack2_ghost_2_cheap_bn": -3, "stack4_ghost_2_cheap_dw_conv": -2, "stack4_ghost_2_cheap_bn": -3,
+    "stack6_ghost_2_cheap_dw_conv": -2, "stack6_ghost_2_cheap_bn": -3, "stack10_ghost_2_cheap_dw_conv": -2, "stack10_ghost_2_cheap_bn": -3,
+    "stack12_ghost_2_cheap_dw_conv": -2, "stack12_ghost_2_cheap_bn": -3,
+  }
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, full_name_align_dict=full_name_align_dict, do_convert=True)
+  ```
+  - **GhostNet V1 mindspore**
+  ```py
+  import mindspore as ms
+  aa = ms.load_checkpoint('ghostnet_ascend_v190_imagenet2012_research_cv_top1acc74.19_top5acc91.78.ckpt')
+  tt = {kk: vv.asnumpy() for kk, vv in aa.items() if not kk.startswith('moments.') and not kk in ['global_step', 'momentum', 'learning_rate']}
 
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.ghostnetv2 import ghostnetv2
