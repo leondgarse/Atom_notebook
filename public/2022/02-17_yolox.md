@@ -1595,10 +1595,10 @@
       return loss * bs, torch.cat((lbox, lobj, lcls, loss)).detach()
   ```
 ## YOLOR LR
-```py
-lrf = 0.2
-lf = lambda x: ((1 + math.cos(x * math.pi / 100)) / 2) * (1 - lrf) + lrf
-```
+  ```py
+  lrf = 0.2
+  lf = lambda x: ((1 + math.cos(x * math.pi / 100)) / 2) * (1 - lrf) + lrf
+  ```
 ***
 
 # YOLOXTiny training logs
