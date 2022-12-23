@@ -521,7 +521,7 @@ F
   additional_transfer = {"predictions": lambda ww: [ww[0].T, ww[1]]} # prediction dense layer don't need to transpose
   download_and_load.keras_reload_from_torch_model(aa, mm, do_convert=True, additional_transfer=additional_transfer)
   ```
-## RexNeXt
+## ResNeXt
   ```py
   sys.path.append('../pytorch-image-models/')
   import timm

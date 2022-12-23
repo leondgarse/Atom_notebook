@@ -751,7 +751,7 @@
   ```py
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.yolor import yolor
-  mm = yolor.YOLOR()
+  mm = yolor.YOLOR_CSP()
 
   tail_split_position = [1, 2] # 1 for backbone, 2 for pafpn
   tail_align_dict = [
@@ -1719,15 +1719,170 @@
 
 # TOLOR_CSP training logs
 ## PyTorch yolor_csp
+  ```py
+  {
+    'lr0': 0.01, 'lrf': 0.2, 'momentum': 0.937, 'weight_decay': 0.0005, 'warmup_epochs': 3.0, 'warmup_momentum': 0.8, 'warmup_bias_lr': 0.1,
+    'box': 0.05, 'cls': 0.3, 'cls_pw': 1.0, 'obj': 0.7, 'obj_pw': 1.0, 'iou_t': 0.2, 'anchor_t': 4.0, 'fl_gamma': 0.0, 'hsv_h':0.015, 'hsv_s': 0.7, 'hsv_v': 0.4,
+    'degrees': 0.0, 'translate': 0.1, 'scale': 0.9, 'shear': 0.0, 'perspective': 0.0, 'flipud': 0.0, 'fliplr': 0.5, 'mosaic': 1.0, 'mixup': 0.0
+  }
+  ```
+  ```sh
+  TF_XLA_FLAGS='--tf_xla_auto_jit=2' CUDA_VISIBLE_DEVICES='1' ./coco_train_script.py --det_header yolor.YOLOR_CSP -i 640 \
+  --optimizer sgdw --lr_base_512 0.1 --lr_min 0.002 --weight_decay 0.0005 --momentum 0.937 \
+  --positional_augment_methods t --magnitude 10 --mosaic_mix_prob 1.0 --rescale_mode raw01 --freeze_backbone_epochs 0 -b 48
+  ```
+  ```sh
+  python train.py --batch-size 12 --img 320 320 --data coco.yaml --cfg cfg/yolor_csp.cfg --weights '' --device 0 --name yolor_csp_320 --hyp hyp.scratch.640.yaml --epochs 50
+
+  python train.py --batch-size 12 --img 512 512 --data coco.yaml --cfg cfg/yolor_csp.cfg --weights '' --device 0 --name yolor_csp_512 --hyp hyp.scratch.640.yaml --epochs 50
+  ```
+  ```sh
+  TF_XLA_FLAGS='--tf_xla_auto_jit=2' CUDA_VISIBLE_DEVICES='0' ./coco_train_script.py --det_header yolor.YOLOR_CSP -i 320 --optimizer sgd --lr_base_512 0.4367 --lr_min 0.02 --weight_decay 0.0005 --positional_augment_methods 't' --magnitude 10 --mosaic_mix_prob 1.0 --rescale_mode raw01 --freeze_backbone_epochs 0 -b 12 --lr_decay_steps 50 --momentum 0.937 --eval_start_epoch 5
+  ```
+  ```sh
+  TF_XLA_FLAGS='--tf_xla_auto_jit=2' CUDA_VISIBLE_DEVICES='0' ./coco_train_script.py --det_header yolor.YOLOR_CSP -i 320 --optimizer sgd --lr_base_512 0.4367 --lr_min 0.02 --weight_decay 0.0005 --mosaic_mix_prob 1.0 --rescale_mode raw01 --freeze_backbone_epochs 0 -b 12 --lr_decay_steps 50 --momentum 0.937 --eval_start_epoch 5 --data_name ../coco
+  ```
+## YOLOR datasets
+  ```py
+  import yaml
+  from easydict import EasyDict
+  from utils.datasets import create_dataloader
+
+  hyp = yaml.load(open('data/hyp.scratch.640.yaml'), Loader=yaml.FullLoader)
+  opt = EasyDict()
+  opt.single_cls = False
+  dataloader = create_dataloader(path="../coco/train2017.txt", imgsz=640, batch_size=16, stride=64, opt=opt, hyp=hyp, augment=True)[0]
+  for imgs, targets, paths, _ in dataloader:
+      break
+
+  import torch
+  from models import models as torch_yolor
+  from utils.loss import compute_loss
+
+  tt = torch_yolor.Darknet('cfg/yolor_csp.cfg', [640, 640])
+  weights = torch.load("yolor_csp_star.pt", map_location=torch.device('cpu'))['model']
+  tt.load_state_dict(weights)
+
+  _ = tt.eval()
+  tt.training = True  # Don't concat!
+  tt.module_list[175].training = True  # YOLOLayer Don't concat!
+  tt.module_list[181].training = True  # YOLOLayer Don't concat!
+  tt.module_list[187].training = True  # YOLOLayer Don't concat!
+
+  tt.hyp = hyp
+  tt.nc = 80
+  tt.gr = 1.0
+  imgs = imgs.float() / 255.0
+  pred = tt(imgs)  # forward
+  torch_loss, torch_loss_items = compute_loss(pred, targets, tt)  # loss scaled by batch_size, torch_loss_items [lbox, lobj, lcls, loss]
+  ```
+  ```py
+  from utils.loss import build_targets
+  tcls, tbox, indices, anchors = build_targets(pred, targets, tt)  # targets
+  print(f"{tcls[0].shape = }, {tbox[0].shape = }, {indices[0][0].shape = }, {anchors[0].shape = }")
+
+  from utils.general import bbox_iou
+  # def bbox_iou(box1, box2, x1y1x2y2=True, GIoU=False, DIoU=False, CIoU=False, EIoU=False, ECIoU=False, eps=1e-9)
+
+  true_top_left, pred_top_left = np.random.uniform(size=[4, 2]), np.random.uniform(size=[4, 2])
+  true_hw, pred_hw = np.random.uniform(size=[4, 2]), np.random.uniform(size=[4, 2])
+  true_hw = np.minimum(true_hw, 1 - true_top_left)
+  pred_hw = np.minimum(pred_hw, 1 - pred_top_left)
+  true_bottom_right, pred_bottom_right = true_top_left + true_hw, pred_top_left + pred_hw
+
+  box1 = np.concatenate([true_top_left, true_bottom_right], axis=-1)
+  box2 = np.concatenate([pred_top_left, pred_bottom_right], axis=-1)
+  torch_ciou = bbox_iou(torch.from_numpy(box1.T), torch.from_numpy(box2), CIoU=True)
+
+  from keras_cv_attention_models import coco
+  kecam_ciou = coco.losses.__bbox_iou__(true_top_left, true_bottom_right, true_hw, pred_top_left, pred_bottom_right, pred_hw, use_ciou=True)
+  print(f"{np.allclose(torch_ciou, kecam_ciou) = }")
+  # np.allclose(torch_ciou, kecam_ciou) = True
+  ```
+  ```py
+  sys.path.append('../keras_cv_attention_models/')
+
+  from keras_cv_attention_models.coco.torch_yolo_dataset import parse_targets_to_bboxes_labels
+  from keras_cv_attention_models.coco import anchors_func, data
+  from keras_cv_attention_models import coco, yolor
+
+  input_shape = (640, 640, 3)
+  anchor_pyramid_levels = [3, 5]
+  num_classes = 80
+  batch_size = 16
+
+  bboxes, labels = parse_targets_to_bboxes_labels(targets.numpy(), batch_size)
+  anchor_ratios, feature_sizes = anchors_func.get_yolor_anchors(input_shape[:2], anchor_pyramid_levels, is_for_training=True)
+  total_anchors = tf.cast(anchor_ratios.shape[1] * tf.reduce_sum(feature_sizes[:, 0] * feature_sizes[:, 1]), tf.int32)
+  empty_label = tf.zeros([total_anchors, 4 + num_classes + 1])  # All 0
+  bboxes_labels = data.__yolor_bboxes_labels_batch_func__(bboxes, labels, anchor_ratios, feature_sizes, empty_label, num_classes)
+
+  images = imgs.numpy().transpose([0, 2, 3, 1])
+  mm = yolor.YOLOR_CSP(input_shape=input_shape)
+  preds = mm(images)
+  loss = coco.losses.YOLORLossWithBbox(mm.input_shape[1:-1])
+  print(f"\n{loss(bboxes_labels, preds) = }")
+
+  class_loss_weight, bbox_loss_weight, object_loss_weight = 0.3, 0.05, 0.7
+  ```
+  ```py
+  images, bboxes_labels = train_dataset[0].as_numpy_iterator().next()
+  dd = []
+  for id, ii in enumerate(bboxes_labels):
+      ii = ii[ii[:, -1] == 1]
+      idexes, labels, bboxes = [[id]] * ii.shape[0], np.argmax(ii[:, 4:], axis=-1)[:, None], ii[:, :4]
+      hhww = bboxes[:, 2:] - bboxes[:, :2]
+      cxcy = bboxes[:, :2] + hhww / 2
+      cc = np.hstack([idexes, labels, cxcy, hhww])
+      dd.append(cc)
+  targets = np.vstack(dd)
+  ```
+## Torch yolor
 ```py
-{
-  'lr0': 0.01, 'lrf': 0.2, 'momentum': 0.937, 'weight_decay': 0.0005, 'warmup_epochs': 3.0, 'warmup_momentum': 0.8, 'warmup_bias_lr': 0.1,
-  'box': 0.05, 'cls': 0.3, 'cls_pw': 1.0, 'obj': 0.7, 'obj_pw': 1.0, 'iou_t': 0.2, 'anchor_t': 4.0, 'fl_gamma': 0.0, 'hsv_h':0.015, 'hsv_s': 0.7, 'hsv_v': 0.4,
-  'degrees': 0.0, 'translate': 0.1, 'scale': 0.9, 'shear': 0.0, 'perspective': 0.0, 'flipud': 0.0, 'fliplr': 0.5, 'mosaic': 1.0, 'mixup': 0.0
-}
-```
-```sh
-TF_XLA_FLAGS='--tf_xla_auto_jit=2' CUDA_VISIBLE_DEVICES='1' ./coco_train_script.py --det_header yolor.YOLOR_CSP -i 640 \
---optimizer sgdw --lr_base_512 0.1 --lr_min 0.002 --weight_decay 0.0005 --momentum 0.937 \
---positional_augment_methods t --magnitude 10 --mosaic_mix_prob 1.0 --rescale_mode raw01 --freeze_backbone_epochs 0 -b 48
+import yaml
+from easydict import EasyDict
+from utils.datasets import create_dataloader
+
+image_shape = (512, 512, 3)
+hyp = yaml.load(open('data/hyp.scratch.640.yaml'), Loader=yaml.FullLoader)
+opt = EasyDict()
+opt.single_cls = False
+dataloader = create_dataloader(path="../coco/train2017.txt", imgsz=image_shape[0], batch_size=16, stride=64, opt=opt, hyp=hyp, augment=True)[0]
+for imgs, targets, paths, _ in dataloader:
+    break
+
+import torch
+from models import models as torch_yolor
+from utils.loss import compute_loss
+
+tt = torch_yolor.Darknet('cfg/yolor_csp.cfg', image_shape[:2])
+weights = torch.load("yolor_csp_star.pt", map_location=torch.device('cpu'))['model']
+tt.load_state_dict(weights)
+
+_ = tt.eval()
+tt.training = True  # Don't concat!
+tt.module_list[175].training = True  # YOLOLayer Don't concat!
+tt.module_list[181].training = True  # YOLOLayer Don't concat!
+tt.module_list[187].training = True  # YOLOLayer Don't concat!
+
+tt.hyp = hyp
+tt.nc = 80
+tt.gr = 1.0
+imgs = imgs.float() / 255.0
+pred = tt(imgs)  # forward
+torch_loss, torch_loss_items = compute_loss(pred, targets, tt)  # loss scaled by batch_size, torch_loss_items [lbox, lobj, lcls, loss]
+
+from utils.loss import build_targets
+tcls, tbox, indices, anch = build_targets(pred, targets, tt)
+
+rr = []
+for ii in range(3):
+    b, a, gj, gi = indices[ii]
+    tcls_one_hot = torch.zeros([tcls[ii].shape[0], 80])
+    tcls_one_hot[range(tcls[ii].shape[0]), tcls[ii]] = 1
+    marks = torch.ones([tcls[ii].shape[0], 1])
+    bbox = tbox[ii][:, [1, 0, 3, 2]]
+    pp[ii][b, a, gj, gi] = torch.concat([bbox, tcls_one_hot, marks], axis=-1)
+    rr.append(pp[ii].permute(0, 2, 3, 1, 4).reshape([16, -1, 85]).detach().numpy())
+rr[ii][rr[ii].sum(-1) != 0]
 ```

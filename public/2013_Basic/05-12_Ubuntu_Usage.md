@@ -2184,6 +2184,7 @@
   - [Github ntop/n2n](https://github.com/ntop/n2n)
   - [N2N 中心节点](http://www.supernode.ml/)
   ```sh
+  $ wget https://github.com/ntop/n2n/releases/download/3.0/n2n_3.0.0-1038_amd64.deb
   $ sudo dpkg -i n2n_3.0.0-1038_amd64.deb
   $ sudo edge -a 172.3.0.101 -c n2n -k test -Efr -l n2n.lucktu.com:10090
   ```
