@@ -1443,6 +1443,67 @@
 
   download_and_load.keras_reload_from_torch_model(tt, mm, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
+## EfficientFormerV2
+  ```py
+  sys.path.append('../EfficientFormer/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import efficientformer_v2 as torch_efficientformer
+  tt = torch_efficientformer.efficientformerv2_s0(pretrained=True)
+  _ = tt.eval()
+  # ss = torch.load('efficientformer_l1_1000d.pth', map_location=torch.device('cpu'))
+  # tt.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models.efficientformer import efficientformer_v2
+  from keras_cv_attention_models import attention_layers
+  mm = efficientformer_v2.EfficientFormerV2S0(pretrained=None, classifier_activation=None)
+
+  from keras_cv_attention_models import download_and_load
+  unstack_weights = ['layer_scale_1', 'layer_scale_2']
+  skip_weights = ['num_batches_tracked', 'attention_bias_idxs']
+  tail_align_dict = {
+    "mlp_gamma": -6, "mlp_mid_dw_conv": -1, "mlp_mid_bn": -1, "mlp_2_conv": -3, "attn_query_bn": -1,
+    "attn_value_conv": -1, "attn_value_bn": -1
+  }
+  # full_name_align_dict = {"stack4_block4_attn_gamma": -4, "stack4_block4_mlp_gamma": -7, "stack4_block4_attn_pos": -1}
+  # attn_range = range(*({"l1": (4, 5), "l3": (3, 7), "l7": (0, 9)}[mm.name[-2:]]))
+  # full_name_align_dict = {"stack4_block{}_{}".format(bb, kk): vv for bb in attn_range for kk, vv in {"attn_gamma": -4, "mlp_gamma": -7, "attn_pos": -1}.items()}
+
+
+  full_name_align_dict = {
+      "stack4_downsample_attn_query_bn": -1, "stack4_downsample_attn_pos_emb": -7, "stack4_downsample_attn_output_bn": -1,
+      "stack4_downsample_attn_value_conv": "stack4_downsample_attn_value_conv",  # Keep original position
+      "stack4_downsample_attn_value_bn": "stack4_downsample_attn_value_bn",  # Keep original position
+  }
+  stack3_attn = {"attn_pos_emb": -6, "attn_gamma": -15, "mlp_gamma": -21, "attn_value_local_dw_conv": -2, "attn_value_local_bn": -2}
+  stack4_attn = {"attn_query_bn": -1, "attn_pos_emb": -4, "attn_value_local_dw_conv": -2, "attn_value_local_bn": -2, "attn_gamma": -13, "mlp_gamma": -19}
+
+  stack3_attn_blocks = range(*({"s0": (5, 7), "s1": (8, 10), "s2": (9, 13), "_l": (10, 16)}[mm.name[-2:]]))
+  stack4_attn_blocks = range(*({"s0": (3, 5), "s1": (5, 7), "s2": (5, 9), "_l": (5, 11)}[mm.name[-2:]]))
+  for id in stack3_attn_blocks:
+      full_name_align_dict.update({"stack3_block{}_".format(id) + kk: vv for kk, vv in stack3_attn.items()})
+  for id in stack4_attn_blocks:
+      full_name_align_dict.update({"stack4_block{}_".format(id) + kk: vv for kk, vv in stack4_attn.items()})
+
+  additional_transfer = {
+    attention_layers.MultiHeadPositionalEmbedding: lambda ww: [ww[0].T],
+    attention_layers.ChannelAffine: lambda ww: [np.squeeze(ww[0])],
+  }
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      additional_transfer=additional_transfer,
+      save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+      do_convert=True,
+  )
+
+  # For Large model
+  np.allclose(tt(torch.ones([1, 3, 224, 224])).detach().numpy(), mm(tf.ones([1, 224, 224, 3])), atol=5e-2)
+  ```
 ***
 
 # Resnest

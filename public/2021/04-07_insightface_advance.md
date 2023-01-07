@@ -197,54 +197,9 @@
   axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_strides_1_prelu_25_GDC_arc_emb512_dr0_sgd_l2_5e4_bs1024_ms1m_bnm09_bne1e5_cos16_batch_fixed_float16_hist.json", **pp, names=names, fig_label="PReLU, float16, strides 1")
   pp["axes"] = axes
 
+  axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_s1_swish_GDC_lr01_bs512_test_hist.json", **pp, fig_label="swish, strides 1, lr 0.1, batch_size 512")
   axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_s1_hard_swish_GDC_lr003125_bs160_test_hist.json", **pp, fig_label="hard_swish, strides 1, lr 0.03125, batch_size 160")
   axes, _ = plot.hist_plot_split(hist_path + "TT_ghostnet_s1_swish_GDC_lr003125_bs160_test_hist.json", **pp, fig_label="swish, strides 1, lr 0.03125, batch_size 160")
-  ```
-  ```py
-  import losses, train, models
-  data_basic_path = '/datasets/ms1m-retinaface-t1'
-  data_path = data_basic_path + '_112x112_folders'
-  eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
-
-  # basic_model = models.buildin_models("ghostnet", dropout=0, emb_shape=512, output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5, strides=1)
-  # basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
-  # basic_model = models.replace_ReLU_with_PReLU(basic_model, target_activation="swish")
-  basic_model = None
-
-  tt = train.Train(data_path, eval_paths=eval_paths,
-      save_path='TT_ghostnet_s1_swish_GDC_lr003125_bs160_test_E50_arc.h5',
-      basic_model=basic_model, model="checkpoints/TT_ghostnet_s1_swish_GDC_lr003125_bs160_test.h5",
-      lr_base=0.025 * 160 / 512, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-5,
-      batch_size=160, random_status=0, eval_freq=1, output_weight_decay=1)
-
-  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
-  sch = [
-      # {"loss": losses.ArcfaceLoss(scale=32), "epoch": 1, "optimizer": optimizer},
-      {"loss": losses.ArcfaceLoss(scale=64), "epoch": 16, "optimizer": optimizer},
-  ]
-  tt.train(sch, 0)
-  ```
-  ```py
-  import losses, train, models
-  data_basic_path = '/datasets/ms1m-retinaface-t1'
-  data_path = data_basic_path + '_112x112_folders'
-  eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
-
-  basic_model = models.buildin_models("ghostnet", dropout=0, emb_shape=512, output_layer='GDC', bn_momentum=0.9, bn_epsilon=1e-5, strides=1)
-  basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
-  basic_model = models.replace_ReLU_with_PReLU(basic_model, target_activation="swish")
-
-  tt = train.Train(data_path, eval_paths=eval_paths,
-      save_path='TT_ghostnet_s1_swish_GDC_lr01_bs512_test.h5', basic_model=basic_model, model=None,
-      lr_base=0.1, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-5,
-      batch_size=512, random_status=0, eval_freq=1, output_weight_decay=1)
-
-  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
-  sch = [
-      {"loss": losses.ArcfaceLoss(scale=32), "epoch": 1, "optimizer": optimizer},
-      {"loss": losses.ArcfaceLoss(scale=64), "epoch": 49},
-  ]
-  tt.train(sch, 0)
   ```
   ```py
   from plot import choose_accuracy
@@ -283,6 +238,8 @@
   | - E17                  | 1       | swish      | 160 | 0.0078125 | latest | 0.997500 | 0.981429 | 0.978167 | 0.93739  | 0.953163 |
   | ghostnet_130, se hard  | 1       | hard_swish | 160 | 0.03125   | latest | 0.997667 | 0.979714 | 0.977667 | 0.933106 | 0.950759 |
   | - E17                  | 1       | hard_swish | 160 | 0.0078125 | 16     | 0.997500 | 0.978571 | 0.978833 | 0.935248 | 0.95168  |
+  | ghostnet_130, se swish | 1       | swish      | 512 | 0.1       | latest | 0.998000 | 0.981286 | 0.978000 | 0.936319 | 0.952549 |
+  | - E17                  | 1       | swish      | 512 | 0.025     | latest | 0.998000 | 0.979857 | 0.977333 | 0.936709 | 0.953163 |
 
   |                                                                                                     |      lfw |   cfp_fp | agedb_30 | epoch |
   |:--------------------------------------------------------------------------------------------------- | --------:| --------:| --------:| -----:|
