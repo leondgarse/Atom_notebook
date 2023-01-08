@@ -1450,9 +1450,9 @@
   import torch
   from models import efficientformer_v2 as torch_efficientformer
   tt = torch_efficientformer.efficientformerv2_s0(pretrained=True)
+  ss = torch.load('eformer_s0_450.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
   _ = tt.eval()
-  # ss = torch.load('efficientformer_l1_1000d.pth', map_location=torch.device('cpu'))
-  # tt.load_state_dict(ss['model'])
 
   from keras_cv_attention_models.efficientformer import efficientformer_v2
   from keras_cv_attention_models import attention_layers
@@ -1501,8 +1501,72 @@
       do_convert=True,
   )
 
-  # For Large model
-  np.allclose(tt(torch.ones([1, 3, 224, 224])).detach().numpy(), mm(tf.ones([1, 224, 224, 3])), atol=5e-2)
+  from keras_cv_attention_models import test_images
+  img = test_images.cat()
+  input_shape = mm.input_shape[1:-1]
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, input_shape), mode="torch").numpy()
+  torch_out = tt(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype("float32")))
+  pred = mm(img[None])
+  keras_out = (pred[0] + pred[1]) / 2
+  np.allclose(torch_out.detach().numpy(), keras_out, atol=1e-3)
+  ```
+## ConvNeXtV2
+  ```py
+  # Set using float16 for Huge model
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../ConvNeXt-V2/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import convnextv2 as torch_convnext
+  torch_model = torch_convnext.convnextv2_atto()
+  _ = torch_model.eval()
+  ss = torch.load('convnextv2_atto_1k_224_ema.pt', map_location=torch.device('cpu'))
+  torch_model.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models.convnext import convnext
+  mm = convnext.ConvNeXtV2Atto(classifier_activation=None, pretrained=None)
+  full_name_align_dict = {
+      "stack2_downsample_ln": 2,
+      "stack2_downsample_conv": 3,
+      "stack3_downsample_ln": 4,
+      "stack3_downsample_conv": 5,
+      "stack4_downsample_ln": 6,
+      "stack4_downsample_conv": 7,
+  }
+  tail_align_dict = {"gamma": -4}
+
+  from keras_cv_attention_models import attention_layers, download_and_load
+  additional_transfer = {attention_layers.ChannelAffine: lambda ww: [np.squeeze(ii) for ii in ww]}
+  download_and_load.keras_reload_from_torch_model(torch_model, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, additional_transfer=additional_transfer, do_convert=True)
+  ```
+  ```py
+  sys.path.append('../ConvNeXt-V2/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import convnextv2 as torch_convnext
+  torch_model = torch_convnext.convnextv2_atto()
+  _ = torch_model.eval()
+  ss = torch.load('convnextv2_atto_1k_224_ema.pt', map_location=torch.device('cpu'))
+  torch_model.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models.convnext import convnext
+  mm = convnext.ConvNeXtV2Atto(classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import test_images
+  img = test_images.cat()
+  input_shape = mm.input_shape[1:-1]
+  img = keras.applications.imagenet_utils.preprocess_input(tf.image.resize(img, input_shape), mode="torch").numpy()
+
+  out = torch_model(torch.from_numpy(np.expand_dims(img.transpose(2, 0, 1), 0).astype("float32")))
+  out = out.detach().cpu().numpy()
+  # out = tf.nn.softmax(out).numpy()  # If classifier activation is not softmax
+  torch_out = keras.applications.imagenet_utils.decode_predictions(out)
+
+  pred = mm(tf.expand_dims(img, 0)).numpy()
+  # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
+  print(">>>> Keras model prediction:", keras.applications.imagenet_utils.decode_predictions(pred)[0])
   ```
 ***
 
