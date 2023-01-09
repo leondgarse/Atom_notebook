@@ -89,7 +89,7 @@
   ```py
   #  Semi-Weakly Supervised ResNe*t models from https://github.com/facebookresearch/semi-supervised-ImageNet1K-models
   #  Please note the CC-BY-NC 4.0 license on theses weights, non-commercial use only.
-  dd = pd.read_csv('/home/leondgarse/workspace/samba/pytorch-image-models/results/results-imagenet.csv')
+  dd = pd.read_csv('/home/leondgarse/workspace/pytorch-image-models/results/results-imagenet.csv')
   dd[['swsl_resnext' in ii for ii in dd.model.values]]
   dd[['resnext101' in ii for ii in dd.model.values]]
   ```
@@ -211,20 +211,24 @@
   keras_reload_stacked_state_dict(mm, stacked_state_dict, layer_names_matched_torch, additional_transfer, save_name=mm.name + "_imagenet.h5")
   ```
   ```py
-  from keras_cv_attention_models.download_and_load import keras_reload_from_torch
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  # torch_model = timm.models.beit_large_patch16_224(pretrained=True)
+  torch_model = timm.models.beitv2_base_patch16_224(pretrained=True)
+
+  from keras_cv_attention_models.beit import beit
+  resolution = 224
+  mm = beit.BeitBasePatch16(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load, attention_layers
 
   skip_weights = ["relative_position_index"]
-  unstack_weights = ["cls_token", "gamma_1", "gamma_2", "relative_position_bias_table", "q_bias", "v_bias"]
+  unstack_weights = ["cls_token", "gamma_1", "gamma_2", "relative_position_bias_table", "q_bias", "v_bias", "pos_embed"]
   tail_align_dict = {"attn_gamma": -6, "mlp_gamma": -9, "attn_query_bias": -1, "attn_value_bias": -1, "attn_pos_emb": -1}
   full_name_align_dict = {"cls_token": -1}
-
-  import timm
-  from keras_cv_attention_models.beit import beit
-
-  resolution = 224
-  mm = beit.BeitLargePatch16(input_shape=(resolution, resolution, 3), classifier_activation=None)
-  keras_reload_from_torch(
-      torch_model=timm.models.beit_large_patch16_224(pretrained=True),
+  additional_transfer = {attention_layers.MultiHeadRelativePositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=torch_model,
       keras_model=mm,
       input_shape=(resolution, resolution),
       skip_weights=skip_weights,
@@ -232,9 +236,40 @@
       tail_align_dict=tail_align_dict,
       full_name_align_dict=full_name_align_dict,
       tail_split_position=1,
-      additional_transfer={},
+      additional_transfer=additional_transfer,
       save_name=mm.name + "_{}.h5".format(resolution),
       do_convert=True,
+  )
+  ```
+  **EvaGiantPatch14**
+  ```py
+  # Set using float16 for Huge model
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.eva_giant_patch14_224(pretrained=False)
+
+  from keras_cv_attention_models.beit import beit
+  resolution = 224
+  mm = beit.EvaGiantPatch14(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load, attention_layers
+  unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
+  tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
+  full_name_align_dict = {"cls_token": -1, "positional_embedding": -1}
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=torch_model,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      tail_split_position=1,
+      save_name=mm.name + "_{}.h5".format(resolution),
+      do_convert=True,
+      do_predict=False,
   )
   ```
 ## resnet regnety regnetz
