@@ -1,7 +1,6 @@
 # ___2021 - 08 - 20 PyTorch to Keras___
 ***
 
-
 # TOC
   <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -237,7 +236,7 @@
       full_name_align_dict=full_name_align_dict,
       tail_split_position=1,
       additional_transfer=additional_transfer,
-      save_name=mm.name + "_{}.h5".format(resolution),
+      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
       do_convert=True,
   )
   ```
@@ -249,7 +248,10 @@
 
   sys.path.append('../pytorch-image-models/')
   import timm
-  torch_model = timm.models.eva_giant_patch14_224(pretrained=False)
+  # torch_model = timm.models.eva_large_patch14_196(pretrained=True)
+  torch_model = timm.models.flexivit_small(pretrained=True)
+  torch_model = timm.models.eva_giant_patch14_224(pretrained=True)
+  _ = torch_model.eval()
 
   from keras_cv_attention_models.beit import beit
   resolution = 224
@@ -258,7 +260,7 @@
   from keras_cv_attention_models import download_and_load, attention_layers
   unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
   tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
-  full_name_align_dict = {"cls_token": -1, "positional_embedding": -1}
+  full_name_align_dict = {"cls_token": -2 if "flexivit" in mm.name else -1, "positional_embedding": -1}
   download_and_load.keras_reload_from_torch_model(
       torch_model=torch_model,
       keras_model=mm,
@@ -267,9 +269,9 @@
       tail_align_dict=tail_align_dict,
       full_name_align_dict=full_name_align_dict,
       tail_split_position=1,
-      save_name=mm.name + "_{}.h5".format(resolution),
+      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
       do_convert=True,
-      do_predict=False,
+      do_predict=False if "eva_giant" in mm.name else True,
   )
   ```
 ## resnet regnety regnetz
@@ -570,10 +572,11 @@
   ```py
   aa = np.load('PPLCNet_x1_5_pretrained.pdparams', allow_pickle=True)
   aa = {kk: aa[kk] for kk in aa.keys() if kk != "StructuredToParameterName@@"}
+  # aa['last_conv.bias'] = np.zeros(aa['last_conv.weight'].shape[0])  # If feature_conv not has bias
 
   from keras_cv_attention_models.mobilenetv3_family import lcnet
   from keras_cv_attention_models import download_and_load
-  mm = lcnet.LCNet150()
+  mm = lcnet.LCNet150(pretrained=None, classifier_activation=None)
 
   additional_transfer = {"predictions": lambda ww: [ww[0].T, ww[1]]} # prediction dense layer don't need to transpose
   download_and_load.keras_reload_from_torch_model(aa, mm, do_convert=True, additional_transfer=additional_transfer)
@@ -1478,6 +1481,53 @@
 
   download_and_load.keras_reload_from_torch_model(tt, mm, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
+  - **GhostNet V1 from PaddlePaddle**
+  ```py
+  aa = np.load('GhostNet_x1_3_ssld_pretrained.pdparams', allow_pickle=True)
+  aa = {kk: aa[kk] for kk in aa.keys() if kk != "StructuredToParameterName@@"}
+
+  # Fuse feature layer conv bn from paddlepaddle model
+  conv_weight = aa['fc_0._conv.weight']
+  bn_weight, bn_bias = aa.pop('fc_0._batch_norm.weight'), aa.pop('fc_0._batch_norm.bias')
+  bn_mean, bn_variance = aa.pop('fc_0._batch_norm._mean'), aa.pop('fc_0._batch_norm._variance')
+  batch_std = np.sqrt(bn_variance + 1e-5)
+  ww = conv_weight * bn_weight[:, None, None, None] / batch_std[:, None, None, None]
+  bias = bn_weight * (-1 * bn_mean) / batch_std + bn_bias
+  aa['fc_0._conv.weight'], aa['fc_0._conv.bias'] = ww, bias
+
+  # se module dense -> conv weights
+  aa = {kk: vv.T[:, :, None, None] if kk.endswith('se_block.squeeze.weight') or kk.endswith('se_block.excitation.weight') else vv for kk, vv in aa.items()}
+
+  from keras_cv_attention_models.ghostnet import ghostnet
+  from keras_cv_attention_models import download_and_load
+  mm = ghostnet.GhostNet_130(pretrained=None, classifier_activation=None)
+
+  full_name_align_dict = {
+    "stack2_ghost_2_cheap_dw_conv": -2, "stack2_ghost_2_cheap_bn": -3, "stack4_ghost_2_cheap_dw_conv": -2, "stack4_ghost_2_cheap_bn": -3,
+    "stack6_ghost_2_cheap_dw_conv": -2, "stack6_ghost_2_cheap_bn": -3, "stack10_ghost_2_cheap_dw_conv": -2, "stack10_ghost_2_cheap_bn": -3,
+    "stack12_ghost_2_cheap_dw_conv": -2, "stack12_ghost_2_cheap_bn": -3,
+  }
+
+  from keras_cv_attention_models.attention_layers import make_divisible
+  def expand_divisible(weight, axis=0):
+      shoud_pad = make_divisible(weight.shape[axis]) - weight.shape[axis]
+      pad = [[0, 0] for ii in range(len(weight.shape))]
+      pad[axis][1] = shoud_pad
+      return np.pad(weight, pad)
+
+  additional_transfer = {
+      keras.layers.Dense: lambda ww: [ww[0].T, *ww[1:]], # dense layer don't need to transpose
+      "_se_1_conv": lambda ww: [expand_divisible(ww[0], axis=-1), expand_divisible(ww[1], axis=0)],
+      "_se_2_conv": lambda ww: [expand_divisible(ww[0], axis=2) * 6, ww[1] * 6 - 3],  # clip(0, 1) -> hard_sigmoid_torch
+  }
+  download_and_load.keras_reload_from_torch_model(
+      aa,
+      mm,
+      full_name_align_dict=full_name_align_dict,
+      additional_transfer=additional_transfer,
+      do_convert=True,
+  )
+  ```
 ## EfficientFormerV2
   ```py
   sys.path.append('../EfficientFormer/')
@@ -1602,6 +1652,332 @@
   pred = mm(tf.expand_dims(img, 0)).numpy()
   # pred = tf.nn.softmax(pred).numpy()  # If classifier activation is not softmax
   print(">>>> Keras model prediction:", keras.applications.imagenet_utils.decode_predictions(pred)[0])
+  ```
+## FlexiViT
+  ```py
+  def resample_stem_patch_conv_0(source_weights, target_shape):
+      # From FlexiViT https://github.com/google-research/big_vision/blob/main/big_vision/models/proj/flexi/vit.py#L30
+      # Paper [PDF 2212.08013 FlexiViT: One Model for All Patch Sizes](https://arxiv.org/pdf/2212.08013.pdf)
+      import numpy as np
+
+      # assume it's channel_last format, source_weights shape `[patch_size, patch_size, in_channel, out_channel]`
+      source_weights = np.array(source_weights)
+      source_shape, target_shape = source_weights.shape[:2], target_shape[:2]
+
+      # get_resize_mat(old_shape, target_shape)
+      # NOTE: we are using tf.image.resize here to match the resize operations in
+      # the data preprocessing pipeline.
+      mat = []
+      for idx in range(source_shape[0] * source_shape[1]):
+          basis_vec = np.zeros(source_shape)
+          basis_vec[np.unravel_index(idx, source_shape)] = 1.
+          vec = tf.image.resize(np.expand_dims(basis_vec, -1), target_shape, method="bilinear").numpy().reshape(-1)
+          mat.append(vec)
+      resize_mat_pinv = np.linalg.pinv(np.stack(mat))
+
+      # v_resample_kernel = jax.vmap(jax.vmap(lambda kernel: (resize_mat_pinv @ kernel.reshape(-1)).reshape(new_hw), 2, 2), 3, 3)
+      # cc = v_resample_kernel(old)
+      # As it's only one weight, just using two loop here, instead of `jax.vmap`
+      target_weights = np.stack([[(resize_mat_pinv @ jj.reshape(-1)).reshape(target_shape) for jj in ii] for ii in source_weights.transpose([3, 2, 0, 1])])
+      target_weights = target_weights.transpose([2, 3, 1, 0])
+      return target_weights
+  ```
+## PVT
+  ```py
+  sys.path.append('../PVT-2')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from classification import pvt_v2
+  tt = pvt_v2.pvt_v2_b0()
+  ss = torch.load('pvt_v2_b0.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models.pvt import pvt
+  mm = pvt.PVT_V2B0(classifier_activation=None, pretrained=None)
+
+  tail_align_dict = {"attn_key_value": -2, "attn_query": -3, "attn_out": -2}
+  if "linear" not in mm.name:
+    tail_align_dict["stack4"] = {"attn_query": -1}
+
+  from keras_cv_attention_models import download_and_load
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
+  ```
+## IFormer
+  ```py
+  sys.path.append('../iFormer')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from models import inception_transformer
+  tt = inception_transformer.iformer_small(pretrained=True)
+  # ss = torch.load('pvt_v2_b0.pth', map_location=torch.device('cpu'))
+  # tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models.iformer import iformer
+  from keras_cv_attention_models import download_and_load, attention_layers
+  input_resolution = 384
+  mm = iformer.IFormerSmall(input_shape=(input_resolution, input_resolution, 3), classifier_activation=None, pretrained=None)
+
+  unstack_weights = ['pos_embed1', 'pos_embed2', 'pos_embed3', 'pos_embed4', 'layer_scale_1', 'layer_scale_2']
+  tail_align_dict = {
+      "attn_high_conv_branch_conv": -1, "attn_high_conv_branch_dw_conv": -1, "attn_high_pool_branch_conv": -1,
+      "attn_gamma": -7, "mlp_gamma": -10,
+  }
+  full_name_align_dict = {"stack1_positional_embedding": 0, "stack2_positional_embedding": 1, "stack3_positional_embedding": 2, "stack4_positional_embedding": 3}
+
+  additional_transfer = {attention_layers.PositionalEmbedding: lambda ww: [tf.image.resize(ww[0], [ww[0].shape[1] * input_resolution // 224, ww[0].shape[2] * input_resolution // 224], method="bilinear")]}
+
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      unstack_weights=unstack_weights,
+      additional_transfer=None if input_resolution == 224 else additional_transfer,
+      do_convert=True,
+  )
+  ```
+## GPViT
+  ```py
+  import torch
+  ss = torch.load('gpvit_l4_in1k_300e.pth', map_location=torch.device('cpu'))
+
+  from keras_cv_attention_models.gpvit import gpvit
+  from keras_cv_attention_models import download_and_load, attention_layers
+
+  mm = gpvit.GPViT_L4(pretrained=None, classifier_activation=None)
+  foo = [
+    "positional_embedding",
+    "stem_conv",
+    "stem_bn",
+    "stem_1_conv",
+    "stem_1_bn",
+    "stem_2_conv",
+    "stem_2_bn",
+    "stem_patch_conv",
+    "block1_attn_qkv",
+    "block1_attn_ln",
+    "block1_attn_attn_out",
+    "block1_attn_left_lepe_dw_conv",
+    "block1_attn_right_lepe_dw_conv",
+    "block1_mlp_Dense_0",
+    "block1_mlp_Dense_1",
+    "block1_mlp_ln",
+    "block1_output_dw_conv",
+    "block2_light_attn_query",
+    "block2_light_attn_query_ln",
+    "block2_light_attn_key_value_ln",
+    "block2_light_attn_key",
+    "block2_token_mixing/Dense_0",
+    "block2_token_mixing/Dense_1",
+    "block2_channel_mixing/Dense_0",
+    "block2_channel_mixing/Dense_1",
+    "block2_LayerNorm_0",
+    "block2_LayerNorm_1",
+    "block2_full_attn_query_ln",
+    "block2_full_attn_key_value_ln",
+    "block2_full_attn_query",
+    "block2_full_attn_key",
+    "block2_full_attn_value",
+    "block2_full_attn_out",
+    "block2_mlp_Dense_0",
+    "block2_mlp_Dense_1",
+    "block2_mlp_ln",
+    "block2_full_attn_attn_out",
+    "block2_dw_conv",
+    "block2_output_bn",
+    "block3_attn_qkv",
+    "block3_attn_ln",
+    "block3_attn_attn_out",
+    "block3_attn_left_lepe_dw_conv",
+    "block3_attn_right_lepe_dw_conv",
+    "block3_mlp_Dense_0",
+    "block3_mlp_Dense_1",
+    "block3_mlp_ln",
+    "block3_output_dw_conv",
+    "block4_attn_qkv",
+    "block4_attn_ln",
+    "block4_attn_attn_out",
+    "block4_attn_left_lepe_dw_conv",
+    "block4_attn_right_lepe_dw_conv",
+    "block4_mlp_Dense_0",
+    "block4_mlp_Dense_1",
+    "block4_mlp_ln",
+    "block4_output_dw_conv",
+    "block5_light_attn_query",
+    "block5_light_attn_query_ln",
+    "block5_light_attn_key_value_ln",
+    "block5_light_attn_key",
+    "block5_token_mixing/Dense_0",
+    "block5_token_mixing/Dense_1",
+    "block5_channel_mixing/Dense_0",
+    "block5_channel_mixing/Dense_1",
+    "block5_LayerNorm_0",
+    "block5_LayerNorm_1",
+    "block5_full_attn_query_ln",
+    "block5_full_attn_key_value_ln",
+    "block5_full_attn_query",
+    "block5_full_attn_key",
+    "block5_full_attn_value",
+    "block5_full_attn_out",
+    "block5_mlp_Dense_0",
+    "block5_mlp_Dense_1",
+    "block5_mlp_ln",
+    "block5_full_attn_attn_out",
+    "block5_dw_conv",
+    "block5_output_bn",
+    "block6_attn_qkv",
+    "block6_attn_ln",
+    "block6_attn_attn_out",
+    "block6_attn_left_lepe_dw_conv",
+    "block6_attn_right_lepe_dw_conv",
+    "block6_mlp_Dense_0",
+    "block6_mlp_Dense_1",
+    "block6_mlp_ln",
+    "block6_output_dw_conv",
+    "block7_attn_qkv",
+    "block7_attn_ln",
+    "block7_attn_attn_out",
+    "block7_attn_left_lepe_dw_conv",
+    "block7_attn_right_lepe_dw_conv",
+    "block7_mlp_Dense_0",
+    "block7_mlp_Dense_1",
+    "block7_mlp_ln",
+    "block7_output_dw_conv",
+    "block8_light_attn_query",
+    "block8_light_attn_query_ln",
+    "block8_light_attn_key_value_ln",
+    "block8_light_attn_key",
+    "block8_token_mixing/Dense_0",
+    "block8_token_mixing/Dense_1",
+    "block8_channel_mixing/Dense_0",
+    "block8_channel_mixing/Dense_1",
+    "block8_LayerNorm_0",
+    "block8_LayerNorm_1",
+    "block8_full_attn_query_ln",
+    "block8_full_attn_key_value_ln",
+    "block8_full_attn_query",
+    "block8_full_attn_key",
+    "block8_full_attn_value",
+    "block8_full_attn_out",
+    "block8_mlp_Dense_0",
+    "block8_mlp_Dense_1",
+    "block8_mlp_ln",
+    "block8_full_attn_attn_out",
+    "block8_dw_conv",
+    "block8_output_bn",
+    "block9_attn_qkv",
+    "block9_attn_ln",
+    "block9_attn_attn_out",
+    "block9_attn_left_lepe_dw_conv",
+    "block9_attn_right_lepe_dw_conv",
+    "block9_mlp_Dense_0",
+    "block9_mlp_Dense_1",
+    "block9_mlp_ln",
+    "block9_output_dw_conv",
+    "block10_attn_qkv",
+    "block10_attn_ln",
+    "block10_attn_attn_out",
+    "block10_attn_left_lepe_dw_conv",
+    "block10_attn_right_lepe_dw_conv",
+    "block10_mlp_Dense_0",
+    "block10_mlp_Dense_1",
+    "block10_mlp_ln",
+    "block10_output_dw_conv",
+    "block11_light_attn_query",
+    "block11_light_attn_query_ln",
+    "block11_light_attn_key_value_ln",
+    "block11_light_attn_key",
+    "block11_token_mixing/Dense_0",
+    "block11_token_mixing/Dense_1",
+    "block11_channel_mixing/Dense_0",
+    "block11_channel_mixing/Dense_1",
+    "block11_LayerNorm_0",
+    "block11_LayerNorm_1",
+    "block11_full_attn_query_ln",
+    "block11_full_attn_key_value_ln",
+    "block11_full_attn_query",
+    "block11_full_attn_key",
+    "block11_full_attn_value",
+    "block11_full_attn_out",
+    "block11_mlp_Dense_0",
+    "block11_mlp_Dense_1",
+    "block11_mlp_ln",
+    "block11_full_attn_attn_out",
+    "block11_dw_conv",
+    "block11_output_bn",
+    "block12_attn_qkv",
+    "block12_attn_ln",
+    "block12_attn_attn_out",
+    "block12_attn_left_lepe_dw_conv",
+    "block12_attn_right_lepe_dw_conv",
+    "block12_mlp_Dense_0",
+    "block12_mlp_Dense_1",
+    "block12_mlp_ln",
+    "block12_output_dw_conv",
+    "pre_out_ln",
+    # "neck_query",
+    # "neck_query_ln",
+    # "neck_key",
+    "predictions",
+  ]
+  additional_transfer = {attention_layers.PositionalEmbedding: lambda ww: [ww[0].reshape([1, 28, 28, -1])]}
+  download_and_load.keras_reload_from_torch_model(ss['state_dict'], mm, additional_transfer=additional_transfer, specific_match_func=lambda xx: foo)
+  ```
+## CAFormer
+  ```py
+  sys.path.append('../metaformer')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  import metaformer_baselines
+  tt = metaformer_baselines.caformer_s18(pretrained=True)
+  # ss = torch.load('pvt_v2_b0.pth', map_location=torch.device('cpu'))
+  # tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models.caformer import caformer
+  from keras_cv_attention_models import download_and_load, attention_layers
+  input_resolution = 224
+  mm = caformer.CAFormerS18(input_shape=(input_resolution, input_resolution, 3), classifier_activation=None, pretrained=None)
+
+  caformer_tail_align_dict = {"stack3": {"mhsa_output": -1, "mlp_Dense_1": -1}, "stack4": {"mhsa_output": -1, "mlp_Dense_1": -1}}
+  convformer_tail_align_dict = {"stack3": {"mlp_sep_2_dense": -1, "mlp_Dense_1": -1}, "stack4": {"mlp_sep_2_dense": -1, "mlp_Dense_1": -1}}
+  full_name_align_dict = {
+    "stack2_downsample_ln": 2, "stack2_downsample_conv": 3, "stack3_downsample_ln": 4, "stack3_downsample_conv": 5,
+    "stack4_downsample_ln": 6, "stack4_downsample_conv": 7,
+  }
+
+  additional_transfer = {attention_layers.ZeroInitGain: lambda ww: [ww[0][0], ww[1][0]]}
+  download_and_load.keras_reload_from_torch_model(
+    tt,
+    mm,
+    tail_align_dict=caformer_tail_align_dict if mm.name.startswith("caformer") else convformer_tail_align_dict,
+    full_name_align_dict=full_name_align_dict,
+    additional_transfer=additional_transfer,
+    save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+    do_convert=True,
+  )
+  ```
+## TinyViT
+  ```py
+  tt = "tiny_vit_5m_22kto1k_distill.pth"
+
+  from keras_cv_attention_models.tinyvit import tinyvit
+  from keras_cv_attention_models import download_and_load, attention_layers
+  input_resolution = 224
+  mm = tinyvit.TinyViT_5M(input_shape=(input_resolution, input_resolution, 3), classifier_activation=None, pretrained=None)
+
+  tail_align_dict = {"attn_attn_pos": -2, "mlp_ln": -2, "mlp_Dense_0": -2, "mlp_Dense_1": -2}
+  additional_transfer = {attention_layers.MultiHeadPositionalEmbedding: lambda ww: [ww[0].T]}
+  download_and_load.keras_reload_from_torch_model(
+    tt,
+    mm,
+    tail_align_dict=tail_align_dict,
+    additional_transfer=additional_transfer,
+    save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+    do_convert=True,
+  )
   ```
 ***
 
