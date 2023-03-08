@@ -742,6 +742,51 @@
 
   mm.save(weight_name + ".h5")
   ```
+  **Replace Dense with Conv2D back**
+  ```py
+  from keras_cv_attention_models.cmt import cmt
+  mm = cmt.CMTTiny()
+  weight_name = mm.name + "_{}_imagenet".format(mm.input_shape[1])
+  dd = keras.models.load_model(os.path.join(os.path.expanduser("~/.keras/models/"), weight_name + '.h5'))
+
+  num_heads = [1, 2, 4, 8]
+  for ii in mm.layers:
+      target_name = ii.name
+      if target_name.endswith('_light_mhsa_query_conv'):
+          source_name = target_name.replace("_conv", "")
+          print(f"{target_name = }, {source_name = }")
+          source_weights = dd.get_layer(source_name).get_weights()
+          print("  Before:", [ii.shape for ii in source_weights])
+          source_weights[0] = source_weights[0][None, None]
+          print("  After:", [ii.shape for ii in source_weights])
+          ii.set_weights(source_weights)
+      elif target_name.endswith('_light_mhsa_key_value_conv'):
+          source_name = target_name.replace("_conv", "")
+          num_head = num_heads[int(target_name.split("stack")[1][0]) - 1]
+          print(f"{target_name = }, {source_name = }, {num_head = }")
+          source_weights = dd.get_layer(source_name).get_weights()
+          print("  Before:", [ii.shape for ii in source_weights])
+
+          ww = source_weights[0]
+          ww = ww.reshape([ww.shape[0], -1, num_head, 2]).transpose([0, 3, 2, 1]).reshape(ww.shape[0], -1)
+          source_weights[0] = ww[None, None]
+          if len(source_weights) > 1:
+              bb = source_weights[1]
+              source_weights[1] = bb.reshape([-1, num_head, 2]).transpose([2, 1, 0]).reshape(-1)
+          print("  After:", [ii.shape for ii in source_weights])
+          ii.set_weights(source_weights)
+
+  from skimage.data import chelsea
+  print(mm.decode_predictions(mm(mm.preprocess_input(chelsea())))[0])
+
+  pred_mm = mm(mm.preprocess_input(chelsea()))
+  pred_dd = dd(mm.preprocess_input(chelsea()))
+  all_close = np.allclose(pred_mm, pred_dd, atol=1e-6)
+  print(f"{all_close = }")
+  if all_close:
+      mm.save(weight_name + ".h5")
+
+  ```
 ## EdgeNeXt
   - **PositionalEncodingFourier**
   ```py
@@ -1979,6 +2024,31 @@
     do_convert=True,
   )
   ```
+## MogaNet
+  ```py
+  tt = "moganet_xtiny_sz224_8xbs128_ep300.pth.tar"
+
+  from keras_cv_attention_models.moganet import moganet
+  from keras_cv_attention_models import download_and_load, attention_layers
+  input_resolution = 224
+  mm = moganet.MogaNetXtiny(input_shape=(input_resolution, input_resolution, 3), classifier_activation=None, pretrained=None)
+
+  unstack_weights = ["layer_scale_1", "layer_scale_2"]
+  tail_align_dict = {
+    "attn_gate_conv": -4, "attn_value_first_dw_conv": -1, "attn_value_second_dw_conv": -1, "attn_value_third_dw_conv": -1,
+    "attn_value_out_conv": -1, "attn_gamma": -9, "mlp_gamma": -15, "attn_gate_value_conv": -1, "mlp_3_conv": -2
+  }
+  additional_transfer = {attention_layers.ChannelAffine: lambda ww: [np.squeeze(ww[0])]}
+  download_and_load.keras_reload_from_torch_model(
+    tt,
+    mm,
+    unstack_weights=unstack_weights,
+    tail_align_dict=tail_align_dict,
+    additional_transfer=additional_transfer,
+    # save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]),
+    do_convert=True,
+  )
+  ```
 ***
 
 # Resnest
@@ -2740,6 +2810,26 @@
     fig.tight_layout()
     ```
     ![](images/unfold_and_extract_patches.png)
+
+    ```py
+    import torch
+    from torch import nn
+
+    image = np.zeros([256, 256, 3])
+    image[:, :, 1] += 128 # G
+    image[:, :, 2] += 256 # B
+
+    aa = np.expand_dims(image.astype("float32"), 0)
+    tf_out = tf.image.extract_patches(aa, sizes=[1, 3, 3, 1], strides=[1, 2, 2, 1], rates=[1, 1, 1, 1], padding='VALID')
+
+    kernel_size = 3
+    cc = nn.Unfold(kernel_size=kernel_size, padding=0, stride=2)(torch.from_numpy(aa).permute(0, 3, 1, 2))
+    patch_shape = list(torch.functional.F.conv2d(torch.zeros([0, 3, 256, 256]), torch.zeros([3, 3, 3, 3]), stride=2).shape[2:])
+    cc = cc.reshape([-1, aa.shape[-1], kernel_size * kernel_size, cc.shape[-1]]).permute([0, 3, 2, 1])
+    torch_out = cc.reshape([-1, *patch_shape, kernel_size * kernel_size * aa.shape[-1]])
+    print(f"{np.allclose(tf_out, torch_out.detach()) = }")
+    # np.allclose(tf_out, torch_out.detach()) = True
+    ```
   - **TF extract patches by reshape and concatenate**
     ```py
     kernel_size, strides = 3, 2
@@ -4738,6 +4828,33 @@
   aa = bb.get_layer('aggregate').get_weights()
   mm.get_layer('aggregate').set_weights([aa[0][0], aa[1]])
   np.allclose(bb(tf.ones([1, 224, 224, 3])), mm(tf.ones([1, 224, 224, 3])))
+  ```
+  **cpr / crpe -> depthwise_conv2d**
+  ```py
+  from keras_cv_attention_models import coat
+  from keras_cv_attention_models.download_and_load import read_h5_weights
+  mm = coat.CoaTLiteMini()
+  ww = read_h5_weights('/home/leondgarse/.keras/models/coat_lite_mini_imagenet.h5')
+
+  for ii in mm.layers:
+      if ii.name.startswith('cpe'):
+          print(ii.name, [jj.shape for jj in ii.get_weights()])
+          ss = ww.get('cpe_' + ii.name[3])
+          print("  source:", [jj.shape for jj in ss])
+          ii.set_weights(ss)
+
+  for ii in mm.layers:
+      if ii.name.startswith('crpe'):
+          print(ii.name, [jj.shape for jj in ii.get_weights()])
+          ss = ww.get('crpe_' + ii.name[4])
+          # print("  source:", [jj.shape for jj in ss])
+          id = int(ii.name[-1]) - 1
+          print("  source:", [jj.shape for jj in ss[id * 2: id * 2 + 2]])
+          ii.set_weights(ss[id * 2: id * 2 + 2])
+          # ii.set_weights(ss)
+
+  from skimage.data import chelsea
+  mm.decode_predictions(mm(mm.preprocess_input(chelsea())))
   ```
 ## ResNetQ
   ```py

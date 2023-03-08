@@ -1694,6 +1694,7 @@
     __getitem__(self,key) 使用x[key]索引操作符的时候调用
     __len__(self) 对序列对象使用内建的len()函数的时候调用
     __slots__ 定义类只能包含指定的属性
+    __add__(self, val2) 重载 + 运算
     ```
   - Python的访问控制符：
     ```python
@@ -1706,34 +1707,58 @@
   - **定义示例**
     ```python
     class Person:
-      '''Represents a person.'''
-      population = 0
-      def __init__(self, name):
-        '''Initializes the person's data.'''
-        self.name = name
-        print('(Initializing %s)' % self.name)
-        # When this person is created, he/she
-        # adds to the population
-        Person.population += 1
-      def __del__(self):
-        '''I am dying.'''
-        print('%s says bye.' % self.name)
-        Person.population -= 1
-        if Person.population == 0:
-          print('I am the last one.')
-        else:
-          print('There are still %d people left.' % Person.population)
-      def sayHi(self):
-        '''Greeting by the person.
-        Really, that's all it does.'''
-        print('Hi, my name is %s.' % self.name)
-      def howMany(self):
-        '''Prints the current population.'''
-        if Person.population == 1:
-          print('I am the only person here.')
-        else:
-          print('We have %d persons here.' % Person.population)
+        '''Represents a person.'''
+        population = 0
+        def __init__(self, name):
+            '''Initializes the person's data.'''
+            self.name = name
+            print('(Initializing %s)' % self.name)
+            # When this person is created, he/she
+            # adds to the population
+            Person.population += 1
+        def __del__(self):
+            '''I am dying.'''
+            print('%s says bye.' % self.name)
+            Person.population -= 1
+            if Person.population == 0:
+                print('I am the last one.')
+            else:
+                print('There are still %d people left.' % Person.population)
+        def sayHi(self):
+            '''Greeting by the person.
+            Really, that's all it does.'''
+            print('Hi, my name is %s.' % self.name)
+        def howMany(self):
+            '''Prints the current population.'''
+            if Person.population == 1:
+                print('I am the only person here.')
+            else:
+                print('We have %d persons here.' % Person.population)
     ```
+  - **__getitem__** 用于重载索引或切片
+    ```py
+    class Foo:
+        def __init__(self, value="hello world"):
+            self.value = value
+
+        def __getitem__(self, expr):
+            print(expr)
+            if isinstance(expr, tuple):
+                return [vv[cur_expr] for vv, cur_expr in zip(self.value.split(" "), expr)]
+            if isinstance(expr, slice):
+                return self.value[expr]
+            else:
+                return self.value[-expr]
+
+    aa = Foo()
+    print(aa[1])  # 1 'd'
+    print(aa[:3])  # slice(None, 3, None) 'hel'
+    print(aa[:, :2])  # (slice(None, None, None), slice(None, 2, None)) ['hello', 'wo']
+
+    bb = slice(1, 3, 2)  #
+    print(bb.start, bb.stop, bb.step)  # 1 3 2
+    ```
+    **slice** 有两种初始化形式 `slice(stop)` `slice(start, stop[, step])`
   - **__slots__ 定义类只能包含指定的属性**
     ```py
     class Foo:
