@@ -2067,6 +2067,42 @@
   tail_align_dict = {'mlp_1_conv': -1, 'mlp_bn': -1, 'mlp_2_conv': -1}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
   ```
+## YOLOV8
+```py
+sys.path.append('../ultralytics/')
+import torch
+# from ultralytics import YOLO
+# model = YOLO('yolov8n.pt')  # load an official model
+tt = torch.load('yolov8n.pt')
+ss = tt['model'].state_dict()
+
+from keras_cv_attention_models.yolov8 import yolov8
+mm = yolov8.YOLOV8_N(pretrained=None)
+
+headers = [
+    'head_1_left_1_conv', 'head_1_left_1_bn', 'head_1_left_2_conv', 'head_1_left_2_bn', 'head_1_left_3_conv',
+    'head_2_left_1_conv', 'head_2_left_1_bn', 'head_2_left_2_conv', 'head_2_left_2_bn', 'head_2_left_3_conv',
+    'head_3_left_1_conv', 'head_3_left_1_bn', 'head_3_left_2_conv', 'head_3_left_2_bn', 'head_3_left_3_conv',
+    'head_1_right_1_conv', 'head_1_right_1_bn', 'head_1_right_2_conv', 'head_1_right_2_bn', 'head_1_right_3_conv',
+    'head_2_right_1_conv', 'head_2_right_1_bn', 'head_2_right_2_conv', 'head_2_right_2_bn', 'head_2_right_3_conv',
+    'head_3_right_1_conv', 'head_3_right_1_bn', 'head_3_right_2_conv', 'head_3_right_2_bn', 'head_3_right_3_conv',
+]
+specific_match_func = lambda tt: tt[:- len(headers)] + headers
+
+tail_align_dict = {"output_conv": "pre_0_1_conv", "output_bn": "pre_0_1_bn"}
+
+import kecam
+# ss = {}
+kecam.download_and_load.keras_reload_from_torch_model(
+    ss,
+    mm,
+    tail_align_dict=tail_align_dict,
+    specific_match_func=specific_match_func,
+    save_name=mm.name + "_coco.h5",
+    do_predict=False,
+    do_convert=True,
+)
+```
 ***
 
 # Resnest
