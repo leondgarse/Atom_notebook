@@ -2049,6 +2049,24 @@
     do_convert=True,
   )
   ```
+## FasterNet
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../FasterNet/')
+  import torch
+  from models import fasternet as fasternet_torch
+  tt = fasternet_torch.FasterNet()
+  ss = torch.load('fasternet_t2-epoch.289-val_acc1.78.8860.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models.fasternet import fasternet
+  mm = fasternet.FasterNetT2(classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load
+  tail_align_dict = {'mlp_1_conv': -1, 'mlp_bn': -1, 'mlp_2_conv': -1}
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
+  ```
 ***
 
 # Resnest

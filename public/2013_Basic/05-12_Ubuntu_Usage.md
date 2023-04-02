@@ -1489,7 +1489,7 @@
   - [Github Dreamacro/clash](https://github.com/Dreamacro/clash)
     - 安装 github 开源版本 `go install github.com/Dreamacro/clash@latest`
     - 或下载预编译的 premium 版本 [Github Dreamacro/clash premium](https://github.com/Dreamacro/clash/releases/tag/premium)
-  - 配置文件 [Github alanbobs999/TopFreeProxies](https://github.com/alanbobs999/TopFreeProxies)
+  - 配置文件 [Github alanbobs999/TopFreeProxies](https://github.com/alanbobs999/TopFreeProxies) or [Github aiboboxx/clashfree](https://github.com/aiboboxx/clashfree)
     ```sh
     clash # Run to download ~/.config/clash/Country.mmdb
 
