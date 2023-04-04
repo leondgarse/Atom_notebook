@@ -121,6 +121,7 @@
 - [2023](./2023)
   - [01-19_keras_for_torch.md](./2023/01-19_keras_for_torch.md)
   - [02-27_gpt.md](./2023/02-27_gpt.md)
+  - [04-03_yolov8.md](./2023/04-03_yolov8.md)
 - [Dainty_factory](./Dainty_factory)
   - [Dainty_factory.md](./Dainty_factory/Dainty_factory.md)
   - [images](./Dainty_factory/images)
