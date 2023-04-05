@@ -274,6 +274,55 @@
       do_predict=False if "eva_giant" in mm.name else True,
   )
   ```
+  **Eva02**
+  ```py
+  # Set using float16 for Huge model
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../pytorch-image-models/')
+  import timm
+
+  cfg = timm.get_pretrained_cfg('eva02_large_patch14_448')
+  cfg.hf_hub_id = 'Yuxin-CV/EVA-02'
+  cfg.hf_hub_filename = 'eva02/cls/in21k_to_in1k/eva02_L_pt_m38m_medft_in21k_ft_in1k_p14.pt'
+  tt = timm.models.eva02_large_patch14_448(pretrained=True, pretrained_cfg=cfg)
+
+  # torch_model = timm.models.eva_large_patch14_196(pretrained=True)
+  torch_model = timm.models.flexivit_small(pretrained=True)
+  torch_model = timm.models.eva_giant_patch14_224(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.beit import beit
+  resolution = 224
+  mm = beit.EvaGiantPatch14(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load, attention_layers
+  unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
+  tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
+  full_name_align_dict = {"cls_token": -2 if "flexivit" in mm.name else -1, "positional_embedding": -1}
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=torch_model,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      tail_split_position=1,
+      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
+      do_convert=True,
+      do_predict=False if "eva_giant" in mm.name else True,
+  )
+  ```
+eva02_large_patch14_448.mim_m38m_ft_in22k_in1k	90.054	99.042	305.08	448
+eva02_large_patch14_448.mim_in22k_ft_in22k_in1k	89.946	99.01	305.08	448
+eva02_large_patch14_448.mim_in22k_ft_in1k	89.626	98.954	305.08	448
+eva02_large_patch14_448.mim_m38m_ft_in1k	89.57	98.918	305.08	448
+
+eva02_base_patch14_448.mim_in22k_ft_in22k_in1k	88.692	98.722	87.12	448
+eva02_small_patch14_336.mim_in22k_ft_in1k	85.74	97.614	22.13	336
+eva02_tiny_patch14_336.mim_in22k_ft_in1k	80.658	95.524	5.76	336
+
 ## resnet regnety regnetz
   ```py
   sys.path.append('../pytorch-image-models/')
@@ -2065,6 +2114,24 @@
 
   from keras_cv_attention_models import download_and_load
   tail_align_dict = {'mlp_1_conv': -1, 'mlp_bn': -1, 'mlp_2_conv': -1}
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
+  ```
+## InceptionNeXt
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../inceptionnext/')
+  import torch
+  from models import inceptionnext as inceptionnext_torch
+  tt = inceptionnext_torch.inceptionnext_tiny(pretrained=True)
+  # ss = torch.load('fasternet_t2-epoch.289-val_acc1.78.8860.pth', map_location=torch.device('cpu'))
+  # tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models.inceptionnext import inceptionnext
+  mm = inceptionnext.InceptionNeXtTiny(classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load
+  tail_align_dict = {'output_gamma': -6}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
   ```
 ***
