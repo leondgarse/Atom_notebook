@@ -118,6 +118,13 @@
   ```
 # Downloader
   ```py
+  import urllib.request
+
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('User-agent', 'Firefox/61.0')]
+  urllib.request.install_opener(opener)
+  ```
+  ```py
   import os
   import requests
   from tqdm import tqdm
