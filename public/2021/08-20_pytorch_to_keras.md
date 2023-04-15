@@ -399,6 +399,21 @@ eva02_tiny_patch14_336.mim_in22k_ft_in1k	80.658	95.524	5.76	336
 
   download_and_load.keras_reload_from_torch_model(torch_model, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, do_convert=True)
   ```
+  **convnext_xxlarge**
+  ```py
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  tt = timm.models.convnext_xxlarge(pretrained=True)
+
+  from keras_cv_attention_models import download_and_load, convnext
+  mm = convnext.ConvNeXtXXlarge(classifier_activation=None, pretrained=None)
+  tail_align_dict = {"gamma": -4}
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
+  ```
 ## Uniformer
   ```py
   from token_labeling.tlt.models import uniformer as torch_uniformer
