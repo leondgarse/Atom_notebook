@@ -240,89 +240,6 @@
       do_convert=True,
   )
   ```
-  **EvaGiantPatch14**
-  ```py
-  # Set using float16 for Huge model
-  policy = keras.mixed_precision.Policy("float16")
-  keras.mixed_precision.set_global_policy(policy)
-
-  sys.path.append('../pytorch-image-models/')
-  import timm
-  # torch_model = timm.models.eva_large_patch14_196(pretrained=True)
-  torch_model = timm.models.flexivit_small(pretrained=True)
-  torch_model = timm.models.eva_giant_patch14_224(pretrained=True)
-  _ = torch_model.eval()
-
-  from keras_cv_attention_models.beit import beit
-  resolution = 224
-  mm = beit.EvaGiantPatch14(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
-
-  from keras_cv_attention_models import download_and_load, attention_layers
-  unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
-  tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
-  full_name_align_dict = {"cls_token": -2 if "flexivit" in mm.name else -1, "positional_embedding": -1}
-  download_and_load.keras_reload_from_torch_model(
-      torch_model=torch_model,
-      keras_model=mm,
-      input_shape=(resolution, resolution),
-      unstack_weights=unstack_weights,
-      tail_align_dict=tail_align_dict,
-      full_name_align_dict=full_name_align_dict,
-      tail_split_position=1,
-      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
-      do_convert=True,
-      do_predict=False if "eva_giant" in mm.name else True,
-  )
-  ```
-  **Eva02**
-  ```py
-  # Set using float16 for Huge model
-  policy = keras.mixed_precision.Policy("float16")
-  keras.mixed_precision.set_global_policy(policy)
-
-  sys.path.append('../pytorch-image-models/')
-  import timm
-
-  cfg = timm.get_pretrained_cfg('eva02_large_patch14_448')
-  cfg.hf_hub_id = 'Yuxin-CV/EVA-02'
-  cfg.hf_hub_filename = 'eva02/cls/in21k_to_in1k/eva02_L_pt_m38m_medft_in21k_ft_in1k_p14.pt'
-  tt = timm.models.eva02_large_patch14_448(pretrained=True, pretrained_cfg=cfg)
-
-  # torch_model = timm.models.eva_large_patch14_196(pretrained=True)
-  torch_model = timm.models.flexivit_small(pretrained=True)
-  torch_model = timm.models.eva_giant_patch14_224(pretrained=True)
-  _ = torch_model.eval()
-
-  from keras_cv_attention_models.beit import beit
-  resolution = 224
-  mm = beit.EvaGiantPatch14(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
-
-  from keras_cv_attention_models import download_and_load, attention_layers
-  unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
-  tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
-  full_name_align_dict = {"cls_token": -2 if "flexivit" in mm.name else -1, "positional_embedding": -1}
-  download_and_load.keras_reload_from_torch_model(
-      torch_model=torch_model,
-      keras_model=mm,
-      input_shape=(resolution, resolution),
-      unstack_weights=unstack_weights,
-      tail_align_dict=tail_align_dict,
-      full_name_align_dict=full_name_align_dict,
-      tail_split_position=1,
-      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
-      do_convert=True,
-      do_predict=False if "eva_giant" in mm.name else True,
-  )
-  ```
-eva02_large_patch14_448.mim_m38m_ft_in22k_in1k	90.054	99.042	305.08	448
-eva02_large_patch14_448.mim_in22k_ft_in22k_in1k	89.946	99.01	305.08	448
-eva02_large_patch14_448.mim_in22k_ft_in1k	89.626	98.954	305.08	448
-eva02_large_patch14_448.mim_m38m_ft_in1k	89.57	98.918	305.08	448
-
-eva02_base_patch14_448.mim_in22k_ft_in22k_in1k	88.692	98.722	87.12	448
-eva02_small_patch14_336.mim_in22k_ft_in1k	85.74	97.614	22.13	336
-eva02_tiny_patch14_336.mim_in22k_ft_in1k	80.658	95.524	5.76	336
-
 ## resnet regnety regnetz
   ```py
   sys.path.append('../pytorch-image-models/')
@@ -2148,6 +2065,155 @@ eva02_tiny_patch14_336.mim_in22k_ft_in1k	80.658	95.524	5.76	336
   from keras_cv_attention_models import download_and_load
   tail_align_dict = {'output_gamma': -6}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, do_convert=True)
+  ```
+## EVA
+  ```py
+  # Set using float16 for Huge model
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  # torch_model = timm.models.eva_large_patch14_196(pretrained=True)
+  torch_model = timm.models.flexivit_small(pretrained=True)
+  torch_model = timm.models.eva_giant_patch14_224(pretrained=True)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.beit import beit
+  resolution = 224
+  mm = beit.EvaGiantPatch14(input_shape=(resolution, resolution, 3), classifier_activation=None, pretrained=None)
+
+  from keras_cv_attention_models import download_and_load, attention_layers
+  unstack_weights = ["cls_token", "q_bias", "v_bias", "pos_embed"]
+  tail_align_dict = {"attn_query_bias": -1, "attn_value_bias": -1}
+  full_name_align_dict = {"cls_token": -2 if "flexivit" in mm.name else -1, "positional_embedding": -1}
+  download_and_load.keras_reload_from_torch_model(
+      torch_model=torch_model,
+      keras_model=mm,
+      input_shape=(resolution, resolution),
+      unstack_weights=unstack_weights,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      tail_split_position=1,
+      save_name=mm.name + "_{}_imagenet21k-ft1k.h5".format(resolution),
+      do_convert=True,
+      do_predict=False if "eva_giant" in mm.name else True,
+  )
+  ```
+## EVA02
+  ```py
+  # Set using float16 for Huge model
+  policy = keras.mixed_precision.Policy("float16")
+  keras.mixed_precision.set_global_policy(policy)
+
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  torch_model = timm.models.eva02_base_patch14_336(pretrained=True)
+  # cfg = timm.get_pretrained_cfg('eva02_large_patch14_448')
+  # cfg.hf_hub_id = 'Yuxin-CV/EVA-02'
+  # cfg.hf_hub_filename = 'eva02/cls/in21k_to_in1k/eva02_L_pt_m38m_medft_in21k_ft_in1k_p14.pt'
+  # torch_model = timm.models.eva02_large_patch14_448(pretrained=True, pretrained_cfg=cfg)
+  _ = torch_model.eval()
+
+  from keras_cv_attention_models.beit import eva02
+  mm = eva02.Eva02BasePatch14(classifier_activation=None, pretrained=None)
+  eva02.keras_model_load_weights_from_pytorch_model(mm, torch_model)
+  ```
+  **Base / Large reload fused weights**
+  ```py
+  from keras_cv_attention_models.beit import eva02
+  from keras_cv_attention_models import test_images
+
+  mm = eva02.Eva02BasePatch14(pretrained='eva02_base_patch14_448.h5', classifier_activation=None)
+  ss = mm.name + "_{}.h5".format(mm.input_shape[1])
+  bb = keras.models.load_model(ss)
+
+  for ii in mm.layers:
+      if ii.name.endswith('_query_bias'):
+          source_layer = bb.get_layer(ii.name[:-len('_value_bias')] + "_query")
+          print("{} <- {}".format(ii.name, source_layer.name))
+          ii.set_weights([source_layer.get_weights()[1]])
+      if ii.name.endswith('_value_bias'):
+          source_layer = bb.get_layer(ii.name[:-len('_value_bias')] + "_value")
+          print("{} <- {}".format(ii.name, source_layer.name))
+          ii.set_weights([source_layer.get_weights()[1]])
+      if ii.name.endswith('_qkv'):
+          query_layer = bb.get_layer(ii.name[:-len('_qkv')] + "_query")
+          key_layer = bb.get_layer(ii.name[:-len('_qkv')] + "_key")
+          value_layer = bb.get_layer(ii.name[:-len('_qkv')] + "_value")
+          print("{} <- {}".format(ii.name, [query_layer.name, key_layer.name, value_layer.name]))
+          ww = np.concatenate([query_layer.get_weights()[0], key_layer.get_weights()[0], value_layer.get_weights()[0]], axis=-1)
+          ii.set_weights([ww])
+      if ii.name.endswith('_dense_gate'):
+          dense_layer = bb.get_layer(ii.name[:-len('_dense_gate')] + "_dense_1")
+          gate_layer = bb.get_layer(ii.name[:-len('_dense_gate')] + "_dense_gate")
+          print("{} <- {}".format(ii.name, [gate_layer.name, dense_layer.name]))
+          ww = np.concatenate([gate_layer.get_weights()[0], dense_layer.get_weights()[0]], axis=-1)
+          bias = np.concatenate([gate_layer.get_weights()[1], dense_layer.get_weights()[1]], axis=-1)
+          ii.set_weights([ww, bias])
+
+  out = mm.decode_predictions(mm(mm.preprocess_input(test_images.cat())))[0]
+  if out[0][1] == 'Egyptian_cat':
+      print("Saving to:", ss)
+      mm.save(ss)
+  ```
+  **EVA02 PositionalEncodingFourierRot**
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from timm.layers import RotaryEmbeddingCat, apply_rot_embed_cat
+
+  input_shape = [1, 3, 256, 64]
+  inputs = np.arange(np.prod(input_shape)).reshape(input_shape).astype("float32") / np.prod(input_shape)
+
+  embed_dim, num_heads, grid_size, ref_feat_shape = 192, 3, (16, 16), (16, 16)
+  rope = RotaryEmbeddingCat(embed_dim // num_heads, in_pixels=False, feat_shape=grid_size, ref_feat_shape=ref_feat_shape)
+  rot_pos_embed = rope.get_embed()
+  torch_out = apply_rot_embed_cat(torch.from_numpy(inputs), rot_pos_embed)
+
+  from keras_cv_attention_models.beit.beit import PositionalEncodingFourierRot
+  aa = PositionalEncodingFourierRot(with_cls_token=False)
+  tf_out = aa(inputs)
+
+  print(f"{np.allclose(torch_out.detach(), tf_out, atol=1e-6) = }")
+  # np.allclose(torch_out.detach(), tf_out, atol=1e-6) = True
+
+  bb = PositionalEncodingFourierRot(with_cls_token=False, num_heads=3)
+  tf_multi_heads_out = bb(inputs.transpose([0, 2, 1, 3]).reshape([1, 256, -1]))
+  tf_multi_heads_out = tf_multi_heads_out.numpy().reshape([1, 256, 3, -1]).transpose([0, 2, 1, 3])
+  print(f"{np.allclose(tf_multi_heads_out, tf_out, atol=1e-6) = }")
+  # np.allclose(tf_multi_heads_out, tf_out, atol=1e-6) = True
+  ```
+## DINOV2
+  ```py
+  sys.path.append('../dinov2/')
+  import hubconf
+  ss = hubconf.dinov2_vits14_lc(layers=1)
+
+  from keras_cv_attention_models.beit import dinov2
+  mm = dinov2.DINOV2_ViT_Small14(classifier_activation=None, pretrained=None)
+  dinov2.keras_model_load_weights_from_pytorch_model(mm, ss)
+  ```
+  ```py
+  from keras_cv_attention_models import download_and_load
+  unstack_weights = ['cls_token', 'pos_embed', 'mask_token']
+  skip_weights = ['mask_token']
+  full_name_align_dict = {"cls_token": -1, "positional_embedding": -1}
+
+  download_and_load.keras_reload_from_torch_model(
+      ss,
+      mm,
+      unstack_weights=unstack_weights,
+      skip_weights=skip_weights,
+      full_name_align_dict=full_name_align_dict,
+      do_predict=True,
+      do_convert=True,
+  )
+  ```
+  Set gzip compression by `vi {python package path}/site-packages/keras/saving/legacy/hdf5_format.py +722`
+  ```py
+  - param_dset = f.create_dataset(name, val.shape, dtype=val.dtype)
+  + param_dset = f.create_dataset(name, val.shape, dtype=val.dtype, compression='gzip')
   ```
 ***
 

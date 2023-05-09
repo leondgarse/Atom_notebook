@@ -1838,51 +1838,51 @@
   targets = np.vstack(dd)
   ```
 ## Torch yolor
-```py
-import yaml
-from easydict import EasyDict
-from utils.datasets import create_dataloader
+  ```py
+  import yaml
+  from easydict import EasyDict
+  from utils.datasets import create_dataloader
 
-image_shape = (512, 512, 3)
-hyp = yaml.load(open('data/hyp.scratch.640.yaml'), Loader=yaml.FullLoader)
-opt = EasyDict()
-opt.single_cls = False
-dataloader = create_dataloader(path="../coco/train2017.txt", imgsz=image_shape[0], batch_size=16, stride=64, opt=opt, hyp=hyp, augment=True)[0]
-for imgs, targets, paths, _ in dataloader:
-    break
+  image_shape = (512, 512, 3)
+  hyp = yaml.load(open('data/hyp.scratch.640.yaml'), Loader=yaml.FullLoader)
+  opt = EasyDict()
+  opt.single_cls = False
+  dataloader = create_dataloader(path="../coco/train2017.txt", imgsz=image_shape[0], batch_size=16, stride=64, opt=opt, hyp=hyp, augment=True)[0]
+  for imgs, targets, paths, _ in dataloader:
+      break
 
-import torch
-from models import models as torch_yolor
-from utils.loss import compute_loss
+  import torch
+  from models import models as torch_yolor
+  from utils.loss import compute_loss
 
-tt = torch_yolor.Darknet('cfg/yolor_csp.cfg', image_shape[:2])
-weights = torch.load("yolor_csp_star.pt", map_location=torch.device('cpu'))['model']
-tt.load_state_dict(weights)
+  tt = torch_yolor.Darknet('cfg/yolor_csp.cfg', image_shape[:2])
+  weights = torch.load("yolor_csp_star.pt", map_location=torch.device('cpu'))['model']
+  tt.load_state_dict(weights)
 
-_ = tt.eval()
-tt.training = True  # Don't concat!
-tt.module_list[175].training = True  # YOLOLayer Don't concat!
-tt.module_list[181].training = True  # YOLOLayer Don't concat!
-tt.module_list[187].training = True  # YOLOLayer Don't concat!
+  _ = tt.eval()
+  tt.training = True  # Don't concat!
+  tt.module_list[175].training = True  # YOLOLayer Don't concat!
+  tt.module_list[181].training = True  # YOLOLayer Don't concat!
+  tt.module_list[187].training = True  # YOLOLayer Don't concat!
 
-tt.hyp = hyp
-tt.nc = 80
-tt.gr = 1.0
-imgs = imgs.float() / 255.0
-pred = tt(imgs)  # forward
-torch_loss, torch_loss_items = compute_loss(pred, targets, tt)  # loss scaled by batch_size, torch_loss_items [lbox, lobj, lcls, loss]
+  tt.hyp = hyp
+  tt.nc = 80
+  tt.gr = 1.0
+  imgs = imgs.float() / 255.0
+  pred = tt(imgs)  # forward
+  torch_loss, torch_loss_items = compute_loss(pred, targets, tt)  # loss scaled by batch_size, torch_loss_items [lbox, lobj, lcls, loss]
 
-from utils.loss import build_targets
-tcls, tbox, indices, anch = build_targets(pred, targets, tt)
+  from utils.loss import build_targets
+  tcls, tbox, indices, anch = build_targets(pred, targets, tt)
 
-rr = []
-for ii in range(3):
-    b, a, gj, gi = indices[ii]
-    tcls_one_hot = torch.zeros([tcls[ii].shape[0], 80])
-    tcls_one_hot[range(tcls[ii].shape[0]), tcls[ii]] = 1
-    marks = torch.ones([tcls[ii].shape[0], 1])
-    bbox = tbox[ii][:, [1, 0, 3, 2]]
-    pp[ii][b, a, gj, gi] = torch.concat([bbox, tcls_one_hot, marks], axis=-1)
-    rr.append(pp[ii].permute(0, 2, 3, 1, 4).reshape([16, -1, 85]).detach().numpy())
-rr[ii][rr[ii].sum(-1) != 0]
-```
+  rr = []
+  for ii in range(3):
+      b, a, gj, gi = indices[ii]
+      tcls_one_hot = torch.zeros([tcls[ii].shape[0], 80])
+      tcls_one_hot[range(tcls[ii].shape[0]), tcls[ii]] = 1
+      marks = torch.ones([tcls[ii].shape[0], 1])
+      bbox = tbox[ii][:, [1, 0, 3, 2]]
+      pp[ii][b, a, gj, gi] = torch.concat([bbox, tcls_one_hot, marks], axis=-1)
+      rr.append(pp[ii].permute(0, 2, 3, 1, 4).reshape([16, -1, 85]).detach().numpy())
+  rr[ii][rr[ii].sum(-1) != 0]
+  ```

@@ -19,6 +19,13 @@
 ***
 
 # Install python caffe
+## Ubuntu 20.04
+  ```sh
+  sudo apt install caffe-cpu
+  cd /usr/lib/python3/dist-packages/caffe/
+  ln -s _caffe.cpython-36m-x86_64-linux-gnu.so _caffe.cpython-37m-x86_64-linux-gnu.so
+  cd -
+  ```
 ## links
   - [Caffe Installation](http://caffe.berkeleyvision.org/installation.html)
 ## git clone

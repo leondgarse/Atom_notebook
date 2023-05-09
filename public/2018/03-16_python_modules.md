@@ -1375,6 +1375,21 @@
     - 任意类型 `Any`
 ***
 
+# TQDM
+  - [Github tqdm/tqdm](https://github.com/tqdm/tqdm)
+  ```py
+  import time
+
+  bar_format = "{n_fmt}/{total_fmt} [{bar:30}] - ETA: {elapsed}<{remaining} {rate_fmt}{postfix}{desc}"
+  process_bar = tqdm(range(30), bar_format=bar_format, ascii=".>>=")
+  for ii in process_bar:
+      time.sleep(0.1)
+      # process_bar.set_description(" - loss: %.4f" %(0.1))
+      process_bar.desc = " - loss: %.4f" %(0.1)
+      process_bar.refresh()
+  ```
+***
+
 # Python and cpp
 ## Cython and pypy
   - **Install**
