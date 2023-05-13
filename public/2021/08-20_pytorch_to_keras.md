@@ -2215,6 +2215,111 @@
   - param_dset = f.create_dataset(name, val.shape, dtype=val.dtype)
   + param_dset = f.create_dataset(name, val.shape, dtype=val.dtype, compression='gzip')
   ```
+## DiNAT
+  - **natten2dqkrpb and natten2dav**
+  ```py
+  hh, ww, num_heads, key_dim, kernel_size, dilation_rate = 56, 56, 2, 16, 7, 4
+  query_raw = np.random.uniform(0, 0.3, size=[1, num_heads, hh, ww, key_dim]).astype("float32")
+  key_raw = np.random.uniform(0, 0.3, size=[1, num_heads, hh, ww, key_dim]).astype("float32")
+  value_raw = np.random.uniform(size=[1, num_heads, hh, ww, key_dim]).astype("float32")
+  # pos_emb_raw = np.random.uniform(size=[num_heads, 2 * kernel_size - 1, 2 * kernel_size - 1]).astype("float32")
+  # query_raw = np.ones([1, num_heads, hh, ww, key_dim]).astype("float32")
+  # key_raw = np.ones([1, num_heads, hh, ww, key_dim]).astype("float32")
+  # pos_emb_raw = np.zeros([num_heads, 2 * kernel_size - 1, 2 * kernel_size - 1]).astype("float32")
+  pos_emb_raw = np.arange(num_heads * (2 * kernel_size - 1) * (2 * kernel_size - 1)).astype("float32")
+  pos_emb_raw = pos_emb_raw.reshape([num_heads, 2 * kernel_size - 1, 2 * kernel_size - 1])
+
+  """ Torch """
+  import torch
+  import natten
+  qq, kk, vv = torch.from_numpy(query_raw), torch.from_numpy(key_raw), torch.from_numpy(value_raw)
+  rpb = torch.from_numpy(pos_emb_raw)
+  torch_attn = natten.functional.natten2dqkrpb(qq, kk, rpb, kernel_size, dilation_rate)
+  torch_out = natten.functional.natten2dav(torch_attn.softmax(dim=-1), vv, kernel_size, dilation_rate)
+
+  """ TF -> natten2dqkrpb """
+  from kecam.backend import functional, layers
+  from kecam.nat.nat import CompatibleExtractPatches, MultiHeadRelativePositionalKernelBias, replicate_padding
+
+  qk_scale = 1.0 / (float(key_dim) ** 0.5)
+  # query, key = tf.ones([1, hh * ww, num_heads, 1, key_dim]), tf.ones([1, hh, ww, num_heads * key_dim])
+  query = tf.reshape(tf.transpose(query_raw, [0, 2, 3, 1, 4]), [1, hh * ww, num_heads, 1, key_dim])
+  key = tf.reshape(tf.transpose(key_raw, [0, 2, 3, 1, 4]), [1, hh, ww, num_heads * key_dim])
+  value = tf.reshape(tf.transpose(value_raw, [0, 2, 3, 1, 4]), [1, hh, ww, num_heads * key_dim])
+  key_value = tf.concat([key, value], axis=-1)
+  key_value = CompatibleExtractPatches(sizes=kernel_size, strides=1, rates=dilation_rate, padding="VALID", compressed=False)(key_value)
+
+  key_value = replicate_padding(key_value, kernel_size=kernel_size, dilation_rate=dilation_rate)
+  print(f"After pad {key_value.shape = }")
+
+  key_value = functional.reshape(key_value, [-1, kernel_size * kernel_size, key_value.shape[-1]])
+  key, value = functional.split(key_value, 2, axis=-1)  # [batch * block_height * block_width, K * K, key_dim]
+
+  key = functional.transpose(functional.reshape(key, [-1, key.shape[1], num_heads, key_dim]), [0, 2, 3, 1])
+  key = functional.reshape(key, [-1, hh * ww, num_heads, key_dim, kernel_size * kernel_size])
+
+  attention_scores = (query @ key)
+  pos_emb = MultiHeadRelativePositionalKernelBias(input_height=hh, dilation_rate=dilation_rate)
+  pos_emb(tf.ones_like(attention_scores))
+  # pos_emb.build([None, *attention_scores.shape[1:]])
+  pos_emb.set_weights([pos_emb_raw.reshape([num_heads, -1])])
+  attention_scores = pos_emb(attention_scores)
+
+  aa = tf.reshape(tf.transpose(attention_scores, [0, 2, 1, 3, 4]), [1, num_heads, hh, ww, kernel_size * kernel_size])
+  print(f"{np.allclose(aa, torch_attn.detach(), atol=1e-6) = }")
+  # np.allclose(aa, torch_attn.detach(), atol=1e-6) = True
+
+  """ TF -> natten2dav """
+  value = functional.transpose(functional.reshape(value, [-1, value.shape[1], num_heads, key_dim]), [0, 2, 1, 3])
+  value = functional.reshape(value, [-1, hh * ww, num_heads, kernel_size * kernel_size, key_dim])
+  attention_scores = functional.softmax(attention_scores, axis=-1)
+  attention_output = attention_scores @ value
+
+  bb = tf.reshape(tf.transpose(attention_output, [0, 2, 1, 3, 4]), [1, num_heads, hh, ww, key_dim])
+  print(f"{np.allclose(bb, torch_out.detach(), atol=1e-5) = }")
+  # np.allclose(bb, torch_out.detach(), atol=1e-5) = True
+  ```
+  **NeighborhoodAttention2D**
+  ```py
+  import torch
+  import natten
+
+  ii = np.random.uniform(size=[1, 56, 56, 48]).astype('float32')
+  aa = natten.NeighborhoodAttention2D(ii.shape[-1], num_heads=4, kernel_size=7, dilation=4)
+  _ = aa.eval()
+  torch_out = aa(torch.from_numpy(ii))
+
+  from keras_cv_attention_models.nat.nat import neighborhood_attention
+  inputs = keras.layers.Input(ii.shape[1:])
+  nn = neighborhood_attention(inputs, kernel_size=7, num_heads=4, dilation_rate=4)
+  mm = keras.models.Model(inputs, nn)
+  mm(tf.ones_like(ii)).shape
+  mm.set_weights([
+      aa.qkv.weight.detach().numpy().T, aa.qkv.bias.detach().numpy(),
+      aa.rpb.detach().numpy().reshape([3, -1]),
+      aa.proj.weight.detach().numpy().T, aa.proj.bias.detach().numpy(),
+  ])
+  tf_out = mm(ii)
+  np.allclose(torch_out.detach(), tf_out, atol=1e-6)
+  ```
+  - **Convert**
+  ```py
+  sys.path.append('../Neighborhood-Attention-Transformer/classification/')
+  sys.path.append('../pytorch-image-models/')  # Needs timm
+  import dinat as torch_dinat
+  tt = torch_dinat.dinat_mini(pretrained=True)
+  _ = tt.eval()
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.nat import nat
+
+  mm = nat.DiNAT_Mini(classifier_activation=None, pretrained=None)
+  tail_align_dict = {"attn_pos": -1, "1_gamma": -4, "2_gamma": -7}
+  unstack_weights = ["gamma1", "gamma2"]
+
+  additional_transfer = {nat.MultiHeadRelativePositionalKernelBias: lambda ww: [np.reshape(ww[0], [ww[0].shape[0], -1])]}
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, unstack_weights=unstack_weights, do_convert=True)
+  ```
 ***
 
 # Resnest
