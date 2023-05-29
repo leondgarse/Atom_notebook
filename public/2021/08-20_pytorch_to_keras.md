@@ -2320,6 +2320,91 @@
   additional_transfer = {nat.MultiHeadRelativePositionalKernelBias: lambda ww: [np.reshape(ww[0], [ww[0].shape[0], -1])]}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, unstack_weights=unstack_weights, do_convert=True)
   ```
+## EfficientViT
+  - **Convert**
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../Cream/EfficientViT/classification')
+  from model.build import EfficientViT_M0
+  tt = EfficientViT_M0(pretrained='efficientvit_m0')
+  _ = tt.eval()
+
+  ss = {}
+  for kk, vv in tt.state_dict().items():
+      if kk.endswith('.mixer.m.attn.attention_biases'):
+          cur, ww = '.'.join(kk.split('.')[:-1]), kk.split('.')[-1]
+          ss.update({cur + '.{}.'.format(id) + ww: vv[id] for id in range(vv.shape[0])})
+      else:
+          ss[kk] = vv
+
+  from keras_cv_attention_models import download_and_load
+  # download_and_load.try_save_pth_and_onnx(tt)
+
+  from keras_cv_attention_models.efficientvit import efficientvit
+  mm = efficientvit.EfficientViT_M0()
+  skip_weights = ['num_batches_tracked', 'attention_bias_idxs']
+  tail_split_position = 3
+  tail_align_dict = {"1_attn_pos": -4, "2_qkv_conv": -2, "2_qkv_bn": -2, "2_attn_pos": -8, "3_qkv_conv": -4, "3_qkv_bn": -4, "3_attn_pos": -12, "4_qkv_conv": -6, "4_qkv_bn": -6, "4_attn_pos": -16}
+  download_and_load.keras_reload_from_torch_model(ss, mm, skip_weights=skip_weights, tail_split_position=tail_split_position, tail_align_dict=tail_align_dict)
+  ```
+## VanallaNet
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../VanillaNet/')
+
+  id = "7"
+
+  import torch
+  from models import vanillanet as torch_vanillanet
+  tt = getattr(torch_vanillanet, "vanillanet_{}".format(id))()
+  _ = tt.eval()
+  ss = torch.load('vanillanet_{}.pth'.format(id), map_location='cpu')
+  tt.load_state_dict(ss['model_ema'])
+
+  # from keras_cv_attention_models import download_and_load, test_images, common_layers
+  # download_and_load.try_save_pth_and_onnx(tt)
+
+  # imm = common_layers.PreprocessInput()(test_images.cat())
+  from keras_cv_attention_models.vanillanet import vanillanet
+  from keras_cv_attention_models import download_and_load
+  mm = getattr(vanillanet, "VanillaNet{}".format(id))(classifier_activation=None, pretrained=None)
+  download_and_load.keras_reload_from_torch_model(tt, mm)
+  ```
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../VanillaNet/')
+
+  id = "6"
+
+  import torch
+  from models import vanillanet as torch_vanillanet
+  tt = getattr(torch_vanillanet, "vanillanet_{}".format(id))()
+  _ = tt.eval()
+  ss = torch.load('vanillanet_{}.pth'.format(id), map_location='cpu')
+  tt.load_state_dict(ss['model_ema'])
+  tt.switch_to_deploy()
+
+  # from keras_cv_attention_models import download_and_load, test_images, common_layers
+  # download_and_load.try_save_pth_and_onnx(tt)
+
+  # imm = common_layers.PreprocessInput()(test_images.cat())
+  from keras_cv_attention_models.vanillanet import vanillanet
+  from keras_cv_attention_models import download_and_load
+  tail_align_dict = {"dw_conv": -1}
+  specific_match_func = lambda ww: ww[2:-1] + ww[:2] + ww[-1:]
+  mm = getattr(vanillanet, "VanillaNet{}".format(id))(classifier_activation=None, pretrained=None, deploy=True)
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, specific_match_func=specific_match_func)
+  ```
+  ```py
+  from keras_cv_attention_models import vanillanet, test_images
+  mm = vanillanet.VanillaNet5(pretrained=None, deploy=True)
+  mm.load_weights(os.path.join('/home/leondgarse/.keras/models/', mm.name + "_imagenet.h5"))
+  pred = mm.decode_predictions(mm(mm.preprocess_input(test_images.cat())))[0][0][1]
+  print(f"{pred = }")
+  if pred == 'Egyptian_cat':
+      print("Save to:", mm.name + "_imagenet.h5")
+      mm.save(mm.name + "_imagenet.h5")
+  ```
 ***
 
 # Resnest

@@ -2,6 +2,7 @@
   - [Github miemie2013/Keras-YOLOv4](https://github.com/miemie2013/Keras-YOLOv4)
   - [Github Visual-Behavior/detr-tensorflow](https://github.com/Visual-Behavior/detr-tensorflow/pull/25/files)
   - [Github lucidrains/deformable-attention](https://github.com/lucidrains/deformable-attention)
+  - [Github RuaHU/keras_DCNv2](https://github.com/RuaHU/keras_DCNv2)
   - `pip install MultiScaleDeformableAttention`
 ***
 
@@ -582,7 +583,7 @@
 
           # calculate grid + offsets
 
-          grid =create_grid_like(offsets)
+          grid = create_grid_like(offsets)
           vgrid = grid + offsets
 
           vgrid_scaled = normalize_grid(vgrid)
@@ -685,40 +686,231 @@
 
       return output.transpose([0, 2, 1])
   ```
-***
-## Grid sample
+## DCNv2
+- [Github RuaHU/keras_DCNv2](https://github.com/RuaHU/keras_DCNv2)
 ```py
-def bilinear_sampler(image, coords):
-    ''' Value sampler using tf.gather_nd
-    Args:
-      image: tensor with shape (bs, h, w, c)
-      coords: coordinates tensor with shape (bs, ... , 2), xy-indexing between 0, 1
+import tensorflow as tf
+from tensorflow.keras import layers
+class DCNv2(layers.Layer):
+    def __init__(self, filters,
+                 kernel_size,
+                 #stride,
+                 #padding,
+                 #dilation = 1,
+                 #deformable_groups = 1,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 **kwargs):
+        #deformable_groups unsupported
+        #dilation unsupported
+        #stride unsupported
+        #assert stride == 1
+        #assert dilation == 1
+        #assert deformable_groups == 1
+        self.filters = filters
+        self.kernel_size = (kernel_size, kernel_size)
+        self.stride = (1, 1, 1, 1)
+        #self.padding = padding
+        self.dilation = (1, 1)
+        self.deformable_groups = 1
+        self.use_bias = use_bias
+        self.kernel_initializer=kernel_initializer
+        self.bias_initializer=bias_initializer
+        self.kernel_regularizer=kernel_regularizer
+        self.bias_regularizer=bias_regularizer
+        super(DCNv2, self).__init__(**kwargs)
 
-    Returns:
-      sampled tensor with shape (bs, ... , c)
-    '''
+    def build(self, input_shape):
+        self.kernel = self.add_weight(
+            name = 'kernel',
+            shape = self.kernel_size + (int(input_shape[-1]), self.filters),
+            initializer = self.kernel_initializer,
+            regularizer = self.kernel_regularizer,
+            trainable = True,
+            dtype = 'float32',
+            )
 
-    #Correspond to padding="zeros" (optimistic : discard only out of bound bilinear coefficient, not the full value)
+        if self.use_bias:
+            self.bias = self.add_weight(
+                name = 'bias',
+                shape = (self.filters,),
+                initializer=self.bias_initializer,
+                regularizer=self.bias_regularizer,
+                trainable=True,
+                dtype='float32',
+                )
 
-    with tf.name_scope("bilinear_sampler"):
-      _, h, w, _ = tf.unstack(tf.shape(image))
+        #[kh, kw, ic, 3 * groups * kh, kw]--->3 * groups * kh * kw = oc [output channels]
+        self.offset_kernel = self.add_weight(
+            name = 'offset_kernel',
+            shape = self.kernel_size + (input_shape[-1], 3 * self.deformable_groups * self.kernel_size[0] * self.kernel_size[1]),
+            initializer = 'zeros',
+            trainable = True,
+            dtype = 'float32')
+
+        self.offset_bias = self.add_weight(
+            name = 'offset_bias',
+            shape = (3 * self.kernel_size[0] * self.kernel_size[1] * self.deformable_groups,),
+            initializer='zeros',
+            trainable = True,
+            dtype = 'float32',
+            )
+        self.ks = self.kernel_size[0] * self.kernel_size[1]
+        self.ph, self.pw = (self.kernel_size[0] - 1) // 2, (self.kernel_size[1] - 1) // 2
+        self.phw = tf.constant([self.ph, self.pw], dtype = 'int32')
+        self.patch_yx = tf.stack(tf.meshgrid(tf.range(-self.phw[1], self.phw[1] + 1), tf.range(-self.phw[0], self.phw[0] + 1))[::-1], axis = -1)
+        self.patch_yx = tf.reshape(self.patch_yx, [-1, 2])
+        super(DCNv2, self).build(input_shape)
 
 
+    def call(self, x):
+        #x: [B, H, W, C]
+        #offset: [B, H, W, ic] convx [kh, kw, ic, 3 * groups * kh * kw] ---> [B, H, W, 3 * groups * kh * kw]
+        offset = tf.nn.conv2d(x, self.offset_kernel, strides = self.stride, padding = 'SAME')
+        offset += self.offset_bias
+        ih, iw, ic = x.shape[1:]
+        bs = tf.shape(x)[0]
+        #[B, H, W, 18], [B, H, W, 9]
+        oyox, mask = offset[..., :2*self.ks], offset[..., 2*self.ks:]
+        mask = tf.nn.sigmoid(mask)
+        #[H, W, 2]
+        grid_yx = tf.stack(tf.meshgrid(tf.range(iw), tf.range(ih))[::-1], axis = -1)
+        #[1, H, W, 9, 2]
+        grid_yx = tf.reshape(grid_yx, [1, ih, iw, 1, 2]) + self.phw + self.patch_yx
+        #[B, H, W, 9, 2]
+        grid_yx = tf.cast(grid_yx, 'float32') + tf.reshape(oyox, [bs, ih, iw, -1, 2])
+        grid_iy0ix0 = tf.floor(grid_yx)
+        grid_iy1ix1 = tf.clip_by_value(grid_iy0ix0 + 1, 0, tf.constant([ih+1, iw+1], dtype = 'float32'))
+        #[B, H, W, 9, 1] * 2
+        grid_iy1, grid_ix1 = tf.split(grid_iy1ix1, 2, axis = 4)
+        grid_iy0ix0 = tf.clip_by_value(grid_iy0ix0, 0, tf.constant([ih+1, iw+1], dtype = 'float32'))
+        grid_iy0, grid_ix0 = tf.split(grid_iy0ix0, 2, axis = 4)
+        grid_yx = tf.clip_by_value(grid_yx, 0, tf.constant([ih+1, iw+1], dtype = 'float32'))
+        #[B, H, W, 9, 4, 1]
+        batch_index = tf.tile(tf.reshape(tf.range(bs), [bs, 1, 1, 1, 1, 1]), [1, ih, iw, self.ks, 4, 1])
+        #[B, H, W, 9, 4, 2]
+        grid = tf.reshape(tf.concat([grid_iy1ix1, grid_iy1, grid_ix0, grid_iy0, grid_ix1, grid_iy0ix0], axis = -1), [bs, ih, iw, self.ks, 4, 2])
+        #[B, H, W, 9, 4, 3]
+        grid = tf.concat([batch_index, tf.cast(grid, 'int32')], axis = -1)
+        #[B, H, W, 9, 2, 2]
+        delta = tf.reshape(tf.concat([grid_yx - grid_iy0ix0, grid_iy1ix1 - grid_yx], axis = -1), [bs, ih, iw, self.ks, 2, 2])
+        #[B, H, W, 9, 2, 1] * [B, H, W, 9, 1, 2] = [B, H, W, 9, 2, 2]
+        w = tf.expand_dims(delta[..., 0], axis = -1) * tf.expand_dims(delta[..., 1], axis = -2)
+        #[B, H+2, W+2, C]
+        x = tf.pad(x, [[0, 0], [int(self.ph), int(self.ph)], [int(self.pw), int(self.pw)], [0, 0]])
+        #[B, H, W, 9, 4, C]
+        map_sample = tf.gather_nd(x, grid)
+        #([B, H, W, 9, 4, 1] * [B, H, W, 9, 4, C]).SUM(-2) * [B, H, W, 9, 1] = [B, H, W, 9, C]
+        map_bilinear = tf.reduce_sum(tf.reshape(w, [bs, ih, iw, self.ks, 4, 1]) * map_sample, axis = -2) * tf.expand_dims(mask, axis = -1)
+        #[B, H, W, 9*C]
+        map_all = tf.reshape(map_bilinear, [bs, ih, iw, -1])
+        #[B, H, W, OC]
+        output = tf.nn.conv2d(map_all, tf.reshape(self.kernel, [1, 1, -1, self.filters]), strides = self.stride, padding = 'SAME')
+        if self.use_bias:
+            output += self.bias
+        return output
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[:-1] + (self.filters,)
+```
+```py
+from tensorflow.keras import layers
+
+class GridSamplerBilinear(layers.Layer):
+    def __init__(self, deformable_groups=1, **kwargs):
+        self.deformable_groups = deformable_groups
+        super().__init__(**kwargs)
+
+    def build(self, input_shape):
+        print(input_shape)
+        input_height, input_width = input_shape[1], input_shape[2]
+        kernel_blocks = input_shape[-1] // 3 // self.deformable_groups
+        kernel_size = int(float(kernel_blocks) ** 0.5)
+
+        patch_height = patch_width = (kernel_size - 1) // 2
+        patch_hw = tf.constant([patch_height, patch_width], dtype = 'int32')
+        patch_yx = tf.stack(tf.meshgrid(tf.range(-patch_width, patch_width + 1), tf.range(-patch_height, patch_height + 1))[::-1], axis=-1)
+        patch_yx = tf.reshape(patch_yx, [-1, 2])
+
+        #[H, W, 2]
+        grid_yx = tf.stack(tf.meshgrid(tf.range(input_height), tf.range(input_width))[::-1], axis=-1)
+        #[1, H, W, 9, 2]
+        grid_yx = tf.reshape(grid_yx, [1, input_height, input_width, 1, 2]) + patch_hw + patch_yx
+        grid_yx = tf.cast(grid_yx, 'float32')
+
+        self.kernel_blocks, self.input_height, self.input_width, self.grid_yx = kernel_blocks, input_height, input_width, grid_yx
+        self.patch_height, self.patch_width = patch_height, patch_width
+
+    def call(self, offset, inputs):
+        #[B, H, W, 18], [B, H, W, 9]
+        bs = tf.shape(offset)[0]
+        oyox, mask = tf.split(offset, [2 * self.kernel_blocks, self.kernel_blocks], axis=-1)
+        mask = tf.nn.sigmoid(mask)
+
+        cur_grid_yx = tf.reshape(oyox, [-1, self.input_height, self.input_width, self.kernel_blocks, 2]) + self.grid_yx
+        grid_iy0ix0 = tf.floor(cur_grid_yx)
+        grid_iy1ix1 = tf.clip_by_value(grid_iy0ix0 + 1, 0, tf.constant([self.input_height+1, self.input_width+1], dtype='float32'))
+        grid_iy1, grid_ix1 = tf.split(grid_iy1ix1, 2, axis=-1)
+
+        grid_iy0ix0 = tf.clip_by_value(grid_iy0ix0, 0, tf.constant([self.input_height+1, self.input_width+1], dtype = 'float32'))
+        grid_iy0, grid_ix0 = tf.split(grid_iy0ix0, 2, axis=-1)
+        cur_grid_yx = tf.clip_by_value(self.grid_yx, 0, tf.constant([self.input_height+1, self.input_width+1], dtype = 'float32'))
+
+        #[B, H, W, 9, 4, 1]
+        batch_index = tf.tile(tf.reshape(tf.range(bs), [bs, 1, 1, 1, 1, 1]), [1, self.input_height, self.input_width, self.kernel_blocks, 4, 1])
+        #[B, H, W, 9, 4, 2]
+        grid = tf.reshape(tf.concat([grid_iy1ix1, grid_iy1, grid_ix0, grid_iy0, grid_ix1, grid_iy0ix0], axis=-1), [-1, self.input_height, self.input_width, self.kernel_blocks, 4, 2])
+        #[B, H, W, 9, 4, 3]
+        grid = tf.concat([batch_index, tf.cast(grid, 'int32')], axis=-1)
+        #[B, H, W, 9, 2, 2]
+        delta = tf.reshape(tf.concat([cur_grid_yx - grid_iy0ix0, grid_iy1ix1 - cur_grid_yx], axis=-1), [-1, self.input_height, self.input_width, self.kernel_blocks, 2, 2])
+        #[B, H, W, 9, 2, 1] * [B, H, W, 9, 1, 2] = [B, H, W, 9, 2, 2]
+        ww = tf.expand_dims(delta[..., 0], axis=-1) * tf.expand_dims(delta[..., 1], axis=-2)
+        #[B, H+2, W+2, C]
+        inputs = tf.pad(inputs, [[0, 0], [int(self.patch_height), int(self.patch_height)], [int(self.patch_width), int(self.patch_width)], [0, 0]])
+        #[B, H, W, 9, 4, C]
+        map_sample = tf.gather_nd(inputs, grid)
+        #([B, H, W, 9, 4, 1] * [B, H, W, 9, 4, C]).SUM(-2) * [B, H, W, 9, 1] = [B, H, W, 9, C]
+        map_bilinear = tf.reduce_sum(tf.reshape(ww, [-1, self.input_height, self.input_width, self.kernel_blocks, 4, 1]) * map_sample, axis=-2) * tf.expand_dims(mask, axis=-1)
+        #[B, H, W, 9*C]
+        map_all = tf.reshape(map_bilinear, [-1, self.input_height, self.input_width, self.kernel_blocks * mask.shape[-1]])
+        return map_all
+```
+***
+
+## Grid sample
+  ```py
+  def within_bounds(x, lower, upper):
+      lower_tensor = tf.greater_equal(x, lower)
+      upper_tensor = tf.less_equal(x, upper)
+      return tf.logical_and(lower_tensor, upper_tensor)
+
+  def bilinear_sampler(image, coords):
+      ''' Value sampler using tf.gather_nd
+      Args:
+        image: tensor with shape (bs, h, w, c)
+        coords: coordinates tensor with shape (bs, ... , 2), xy-indexing between 0, 1
+
+      Returns:
+        sampled tensor with shape (bs, ... , c)
+      '''
+
+      #Correspond to padding="zeros" (optimistic : discard only out of bound bilinear coefficient, not the full value)
+      _, hh, ww, _ = tf.unstack(tf.shape(image))
+      ww_float, hh_float = tf.cast(ww, tf.float32) - 1, tf.cast(hh, tf.float32) - 1
       gx, gy = tf.unstack(coords, axis=-1)
+      gx, gy = (gx+1.0)/2.0  * ww_float, (gy+1.0)/2.0  * hh_float  # rescale x and y to [0, W-1/H-1]
 
-      # rescale x and y to [0, W-1/H-1]
-      gx = (gx+1.0)/2.0  * tf.cast(w-1, tf.float32)
-      gy = (gy+1.0)/2.0  * tf.cast(h-1, tf.float32)
+      gx0, gy0 = tf.floor(gx), tf.floor(gy)
+      gx1, gy1 = gx0 + 1.0, gy0 + 1.0
 
-      gx0 = tf.floor(gx)
-      gx1 = gx0 + 1.0
-      gy0 = tf.floor(gy)
-      gy1 = gy0 + 1.0
-
-      mx0 = within_bounds(gx0, 0, tf.cast(w, tf.float32)-1)
-      mx1 = within_bounds(gx1, 0, tf.cast(w, tf.float32)-1)
-      my0 = within_bounds(gy0, 0, tf.cast(h, tf.float32)-1)
-      my1 = within_bounds(gy1, 0, tf.cast(h, tf.float32)-1)
+      mx0 = within_bounds(gx0, 0, ww_float)
+      mx1 = within_bounds(gx1, 0, ww_float)
+      my0 = within_bounds(gy0, 0, hh_float)
+      my1 = within_bounds(gy1, 0, hh_float)
 
       c00 = tf.expand_dims((gy1 - gy)*(gx1 - gx), axis=-1)
       c01 = tf.expand_dims((gy1 - gy)*(gx - gx0), axis=-1)
@@ -726,10 +918,10 @@ def bilinear_sampler(image, coords):
       c11 = tf.expand_dims((gy - gy0)*(gx - gx0), axis=-1)
 
       #clip for CPU (out_of_bound-error), optionnal on GPU (as corresponding m.. while be zeroed)
-      gx0 = tf.clip_by_value(gx0, 0, tf.cast(w, tf.float32)-1)
-      gx1 = tf.clip_by_value(gx1, 0, tf.cast(w, tf.float32)-1)
-      gy0 = tf.clip_by_value(gy0, 0, tf.cast(h, tf.float32)-1)
-      gy1 = tf.clip_by_value(gy1, 0, tf.cast(h, tf.float32)-1)
+      gx0 = tf.clip_by_value(gx0, 0, ww_float)
+      gx1 = tf.clip_by_value(gx1, 0, ww_float)
+      gy0 = tf.clip_by_value(gy0, 0, hh_float)
+      gy1 = tf.clip_by_value(gy1, 0, hh_float)
 
       g00 = tf.stack([gy0, gx0], axis=-1)
       g01 = tf.stack([gy0, gx1], axis=-1)
@@ -746,10 +938,43 @@ def bilinear_sampler(image, coords):
       x10 = tf.gather_nd(image, tf.cast(g10, dtype=tf.int32), batch_dims=1)
       x11 = tf.gather_nd(image, tf.cast(g11, dtype=tf.int32), batch_dims=1)
 
-      output = c00 * x00 * m00 \
-             + c01 * x01 * m01 \
-             + c10 * x10 * m10 \
-             + c11 * x11 * m11
-
+      output = c00 * x00 * m00 + c01 * x01 * m01 + c10 * x10 * m10 + c11 * x11 * m11
       return output
-```
+
+  import torch
+  import torch.nn.functional as F
+  import numpy as np
+
+  test_size = 100
+  grid_sampling_size, grid_size, batch_size = test_size, test_size, test_size
+  feature_len = 1
+
+  values = np.random.rand(batch_size, grid_size, grid_size, feature_len).astype(np.float32)
+  t_values = np.transpose(values, (0, 3, 1, 2) )
+  coords = np.random.rand(batch_size, grid_sampling_size, grid_sampling_size, 2) * 2 - 1
+  coords = (coords * 1.1).astype(np.float32)
+
+  torch_result = F.grid_sample(torch.from_numpy(t_values), torch.from_numpy(coords), mode='bilinear', padding_mode='zeros', align_corners=True)
+  tf_result = bilinear_sampler(values, coords)
+  print(f"{np.allclose(torch_result.permute([0, 2, 3, 1]).detach(), tf_result) = }")
+  ```
+  ```py
+  _, hh, ww, _ = tf.unstack(tf.shape(image))
+  ww_float, hh_float = tf.cast(ww, tf.float32) - 1, tf.cast(hh, tf.float32) - 1
+  gx, gy = tf.unstack(coords, axis=-1)
+  gx, gy = (gx+1.0)/2.0  * ww_float, (gy+1.0)/2.0  * hh_float  # rescale x and y to [0, W-1/H-1]
+
+  gx0, gy0 = tf.floor(gx), tf.floor(gy)
+  gx1, gy1 = gx0 + 1.0, gy0 + 1.0
+
+  mx0 = within_bounds(gx0, 0, ww_float)
+  c00 = tf.expand_dims((gy1 - gy)*(gx1 - gx), axis=-1)
+  gx0 = tf.clip_by_value(gx0, 0, ww_float)
+  gy0 = tf.clip_by_value(gy0, 0, hh_float)
+
+  g00 = tf.stack([gy0, gx0], axis=-1)
+  m00 = tf.cast(tf.expand_dims(tf.logical_and(my0, mx0), axis=-1), tf.float32)
+  x00 = tf.gather_nd(image, tf.cast(g00, dtype=tf.int32), batch_dims=1)
+
+  output = c00 * x00 * m00 + c01 * x01 * m01 + c10 * x10 * m10 + c11 * x11 * m11
+  ```

@@ -214,89 +214,108 @@
 ***
 
 # Train
+  ```py
+  import os
+  os.environ['KECAM_BACKEND'] = 'torch'
+
+  import torch
+  from kecam import fasternet
+  mm = fasternet.FasterNetT2(input_shape=(32, 32, 3), num_classes=10, pretrained=None)
+  _ = mm.train()
+
+  def fake_data_gen(input_shape=(3, 32, 32), num_classes=10, batch_size=16):
+      while True:
+          yield torch.randn([batch_size, *input_shape]), torch.randint(0, num_classes, [batch_size])
+
+  input_shape, num_classes = mm.input_shape[1:], mm.output_shape[-1]
+  optimizer = torch.optim.SGD(mm.parameters(), lr=0.1)
+  dd = fake_data_gen(input_shape=input_shape, num_classes=num_classes)
+
+  for ii in range(100):
+      xx, yy = next(dd)
+      out = mm(xx)
+      yy_one_hot = torch.functional.F.one_hot(yy, num_classes=num_classes).float()
+      loss = torch.functional.F.cross_entropy(out, yy_one_hot)
+      loss.backward()
+      optimizer.step()
+      print(">>>> loss: {:.4f}".format(loss.item()))
+  ```
+  ```py
+  import os
+  os.environ['KECAM_BACKEND'] = 'torch'
+
+  from keras_cv_attention_models.imagenet import data
+  input_shape = (32, 32, 3)
+  batch_size = 16
+  train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
+      'cifar10', input_shape=input_shape, batch_size=batch_size,
+  )
+
+  import torch
+  from kecam import mobilenetv3
+  mm = mobilenetv3.MobileNetV3Large100(input_shape=input_shape, num_classes=num_classes, classifier_activation=None, pretrained=None)
+  _ = mm.train()
+  optimizer = torch.optim.AdamW(mm.parameters())
+
+  for epoch in range(10):
+      data_gen = train_dataset.as_numpy_iterator()
+      for batch, (xx, yy) in enumerate(data_gen):
+          xx = torch.from_numpy(xx).permute(0, 3, 1, 2)
+          yy = torch.from_numpy(yy)
+          out = mm(xx)
+          loss = torch.functional.F.cross_entropy(out, yy)
+          optimizer.zero_grad()
+          loss.backward()
+          optimizer.step()
+          print(">>>> Epoch {}, batch: {}, loss: {:.4f}".format(epoch, batch, loss.item()))
+  ```
+  ```py
+  import os
+  os.environ['KECAM_BACKEND'] = 'torch'
+
+  from keras_cv_attention_models.imagenet import data
+  input_shape = (32, 32, 3)
+  batch_size = 16
+  train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
+      'cifar10', input_shape=input_shape, batch_size=batch_size,
+  )
+
+  import torch
+  from kecam import mobilenetv3
+  mm = mobilenetv3.MobileNetV3Large100(input_shape=input_shape, num_classes=num_classes, classifier_activation=None, pretrained=None)
+  optimizer = torch.optim.AdamW(mm.parameters())
+  mm.compile(optimizer="AdamW")
+  mm.fit(train_dataset, epochs=10)
+
+
+  for epoch in range(10):
+      data_gen = train_dataset.as_numpy_iterator()
+      for batch, (xx, yy) in enumerate(data_gen):
+          xx = torch.from_numpy(xx).permute(0, 3, 1, 2)
+          yy = torch.from_numpy(yy)
+          out = mm(xx)
+          loss = torch.functional.F.cross_entropy(out, yy)
+          optimizer.zero_grad()
+          loss.backward()
+          optimizer.step()
+          print(">>>> Epoch {}, batch: {}, loss: {:.4f}".format(epoch, batch, loss.item()))
+  ```
+***
+
+# Readme
 ```py
-import os
-os.environ['KECAM_BACKEND'] = 'torch'
+with open("README.md") as ff:
+    aa = ff.readlines()
 
-import torch
-from kecam import fasternet
-mm = fasternet.FasterNetT2(input_shape=(32, 32, 3), num_classes=10, pretrained=None)
-_ = mm.train()
-
-def fake_data_gen(input_shape=(3, 32, 32), num_classes=10, batch_size=16):
-    while True:
-        yield torch.randn([batch_size, *input_shape]), torch.randint(0, num_classes, [batch_size])
-
-input_shape, num_classes = mm.input_shape[1:], mm.output_shape[-1]
-optimizer = torch.optim.SGD(mm.parameters(), lr=0.1)
-dd = fake_data_gen(input_shape=input_shape, num_classes=num_classes)
-
-for ii in range(100):
-    xx, yy = next(dd)
-    out = mm(xx)
-    yy_one_hot = torch.functional.F.one_hot(yy, num_classes=num_classes).float()
-    loss = torch.functional.F.cross_entropy(out, yy_one_hot)
-    loss.backward()
-    optimizer.step()
-    print(">>>> loss: {:.4f}".format(loss.item()))
-```
-```py
-import os
-os.environ['KECAM_BACKEND'] = 'torch'
-
-from keras_cv_attention_models.imagenet import data
-input_shape = (32, 32, 3)
-batch_size = 16
-train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
-    'cifar10', input_shape=input_shape, batch_size=batch_size,
-)
-
-import torch
-from kecam import mobilenetv3
-mm = mobilenetv3.MobileNetV3Large100(input_shape=input_shape, num_classes=num_classes, classifier_activation=None, pretrained=None)
-_ = mm.train()
-optimizer = torch.optim.AdamW(mm.parameters())
-
-for epoch in range(10):
-    data_gen = train_dataset.as_numpy_iterator()
-    for batch, (xx, yy) in enumerate(data_gen):
-        xx = torch.from_numpy(xx).permute(0, 3, 1, 2)
-        yy = torch.from_numpy(yy)
-        out = mm(xx)
-        loss = torch.functional.F.cross_entropy(out, yy)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(">>>> Epoch {}, batch: {}, loss: {:.4f}".format(epoch, batch, loss.item()))
-```
-```py
-import os
-os.environ['KECAM_BACKEND'] = 'torch'
-
-from keras_cv_attention_models.imagenet import data
-input_shape = (32, 32, 3)
-batch_size = 16
-train_dataset, test_dataset, total_images, num_classes, steps_per_epoch = data.init_dataset(
-    'cifar10', input_shape=input_shape, batch_size=batch_size,
-)
-
-import torch
-from kecam import mobilenetv3
-mm = mobilenetv3.MobileNetV3Large100(input_shape=input_shape, num_classes=num_classes, classifier_activation=None, pretrained=None)
-optimizer = torch.optim.AdamW(mm.parameters())
-mm.compile(optimizer="AdamW")
-mm.fit(train_dataset, epochs=10)
-
-
-for epoch in range(10):
-    data_gen = train_dataset.as_numpy_iterator()
-    for batch, (xx, yy) in enumerate(data_gen):
-        xx = torch.from_numpy(xx).permute(0, 3, 1, 2)
-        yy = torch.from_numpy(yy)
-        out = mm(xx)
-        loss = torch.functional.F.cross_entropy(out, yy)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(">>>> Epoch {}, batch: {}, loss: {:.4f}".format(epoch, batch, loss.item()))
+tt = []
+for line in aa:
+    if "](" in line and "|"  in line:
+        ss = line.split(" | ")
+        orign_len = len(ss[1])
+        model_name = ss[1].strip()
+        prefix, model_name = ("- ", model_name[2:]) if model_name.startswith("- ") else ("", model_name)
+        surfix = " " * (orign_len - len(prefix) - len(model_name))
+        model_url = prefix + "[" + model_name + "](" + ss[-1].split('](')[-1][:-3].strip() + surfix
+        line = " | ".join([ss[0], model_url, *ss[2:-1]]) + " |\n"
+    tt.append(line)
 ```

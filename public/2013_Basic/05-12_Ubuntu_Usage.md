@@ -1699,6 +1699,8 @@
   set completion-ignore-case off  # turn off
   set completion-ignore-case on  # turn on
   ```
+## wsl
+  - 虚拟盘位置 `/mnt/c/Users/Administrator/AppData/Local/Packages/CanonicalGroupLimited.Ubuntu22.04LTS_79rhkp1fndgsc/LocalState/ext4.vhdx`
 ***
 
 # 软件

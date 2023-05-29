@@ -1125,6 +1125,67 @@
   # pp["epochs"] = [1, 3, 13, 33]
   axes, _ = plot.hist_plot_split(hist_path + "TT_effv2_s_strides1_pw512_F_bias_false_dr02_drc02_lr_5e3_wd5e3_arc_emb512_lamb_exclude_bn_bs512_ms1m_cos16_epoch_float16_hist.json", fig_label="F, lr_5e3_wd5e3, cos16_epoch", init_epoch=3, **pp)
   ```
+## MobileFaceNet
+```py
+hist_path = "checkpoints/"
+pp = {}
+pp["customs"] = plot.EVALS_NAME[:3] + ['lr']
+pp["epochs"] = [5, 5, 7, 33]
+pp["skip_epochs"] = 3
+names = ["ArcFace Scale %d, learning rate %g" %(ss, lr) for ss, lr in zip([16, 32, 64, 64], [0.1, 0.1, 0.1, 0.05])]
+axes, _ = plot.hist_plot_split(hist_path + "se_mobilefacenet_GDC_arc_emb256_dr0_sgd_bs512_ms1m_randaug_cutout_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="GDC, rand 100, bs512", names=names, **pp)
+pp["axes"] = axes
+axes, _ = plot.hist_plot_split(hist_path + "se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_randaug_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="pointwise, GDC, rand 100, bs512", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_rand_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="pointwise, GDC, rand 0, bs512", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TF11_se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_randaug_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="TF11, pointwise, GDC, rand 100, bs512", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TF11_se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_rand_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="TF11, pointwise, GDC, rand 0, bs512", **pp)
+
+axes, _ = plot.hist_plot_split(hist_path + "TF11_se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_randaug_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5, dropout 0.2, drop_connect 0.2, bs512", **pp)
+axes, _ = plot.hist_plot_split(hist_path + "TF11_se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_rand_0_bnm09_bne1e4_cos16_batch_float16_hist.json", fig_label="ebv2_s, 21K, GDC, wd5e5, dropout 0.2, drop_connect 0.2, bs512", **pp)
+```
+### SE_MobileFaceNet using SGD + L2 regularizer + cosine lr decay training on MS1MV3 dataset
+- **Training script**
+  ```py
+  import losses, train, models
+  import tensorflow_addons as tfa
+  keras.mixed_precision.set_global_policy("mixed_float16")
+
+  data_basic_path = '/datasets/ms1m-retinaface-t1'
+  data_path = data_basic_path + '_112x112_folders'
+  eval_paths = [os.path.join(data_basic_path, ii) for ii in ['lfw.bin', 'cfp_fp.bin', 'agedb_30.bin']]
+
+  basic_model = models.buildin_models(
+      'se_mobilefacenet', dropout=0, emb_shape=256, output_layer='GDC', bn_epsilon=1e-4, bn_momentum=0.9,
+      scale=True, use_bias=False, add_pointwise_conv=True, pointwise_conv_act='prelu'
+  )
+  basic_model = models.add_l2_regularizer_2_model(basic_model, weight_decay=5e-4, apply_to_batch_normal=False)
+
+  tt = train.Train(data_path, eval_paths=eval_paths,
+      save_path='se_mobilefacenet_pointwise_GDC_arc_emb256_dr0_sgd_bs512_ms1m_rand_0_bnm09_bne1e4_cos16_batch_float16.h5',
+      basic_model=basic_model, model=None, lr_base=0.1, lr_decay=0.5, lr_decay_steps=16, lr_min=1e-4,
+      batch_size=512, random_status=0, output_weight_decay=1)
+
+  optimizer = keras.optimizers.SGD(learning_rate=0.1, momentum=0.9)
+  sch = [
+      {"loss": losses.ArcfaceLoss(scale=16), "epoch": 5, "optimizer": optimizer},
+      {"loss": losses.ArcfaceLoss(scale=32), "epoch": 5},
+      {"loss": losses.ArcfaceLoss(scale=64), "epoch": 40},
+  ]
+  tt.train(sch, 0)
+  ```
+- **Plot and result**
+  ![se_mobile_facenet](https://github.com/leondgarse/Keras_insightface/assets/5744524/2ae6b76a-b7c5-4170-8521-e47de1aaff4d)
+
+  | model            | lfw     | cfp_fp   | agedb_30 | IJBB@1e-4 | IJBC@1e-4 |
+  | ---------------- | ------- | -------- | -------- | --------- | --------- |
+  | SE_MobileFaceNet | 0.99717 | 0.971803 | 0.969333 | 0.921811  | 0.940891  |
+
+  | SE_MobileFaceNet |    1e-06 |    1e-05 |   0.0001 |    0.001 |     0.01 |      0.1 |      AUC |
+  |:---------------- | --------:| --------:| --------:| --------:| --------:| --------:| --------:|
+  | IJBB             | 0.358715 | 0.868939 | 0.921811 | 0.949854 | 0.969133 | 0.985102 | 0.993065 |
+  | IJBC             | 0.863271 | 0.909904 | 0.940891 | 0.962264 | 0.976274 | 0.988649 | 0.994375 |
+
+
 ***
 
 # EuclideanDense
