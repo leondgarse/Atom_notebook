@@ -2320,7 +2320,7 @@
   additional_transfer = {nat.MultiHeadRelativePositionalKernelBias: lambda ww: [np.reshape(ww[0], [ww[0].shape[0], -1])]}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer, unstack_weights=unstack_weights, do_convert=True)
   ```
-## EfficientViT
+## EfficientViT_M
   - **Convert**
   ```py
   sys.path.append('../pytorch-image-models/')
@@ -2346,6 +2346,24 @@
   tail_split_position = 3
   tail_align_dict = {"1_attn_pos": -4, "2_qkv_conv": -2, "2_qkv_bn": -2, "2_attn_pos": -8, "3_qkv_conv": -4, "3_qkv_bn": -4, "3_attn_pos": -12, "4_qkv_conv": -6, "4_qkv_bn": -6, "4_attn_pos": -16}
   download_and_load.keras_reload_from_torch_model(ss, mm, skip_weights=skip_weights, tail_split_position=tail_split_position, tail_align_dict=tail_align_dict)
+  ```
+## EfficientViT_B
+  ```py
+  sys.path.append('../efficientvit/')
+  import torch
+  from models.efficientvit import cls as torch_efficientvit
+
+  id, input_shape = 1, 224
+  tt = getattr(torch_efficientvit, "efficientvit_cls_b{}".format(id))()
+  ss = torch.load('b{}-r{}.pt'.format(id, input_shape), map_location='cpu')
+  tt.load_state_dict(ss['state_dict'])
+  _ = tt.eval()
+
+  from keras_cv_attention_models.efficientvit import efficientvit_b
+  from keras_cv_attention_models import download_and_load
+
+  mm = getattr(efficientvit_b, "EfficientViT_B{}".format(id))(input_shape=(input_shape, input_shape, 3), classifier_activation=None)
+  download_and_load.keras_reload_from_torch_model(tt, mm, save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
 ## VanallaNet
   ```py
@@ -2404,6 +2422,69 @@
   if pred == 'Egyptian_cat':
       print("Save to:", mm.name + "_imagenet.h5")
       mm.save(mm.name + "_imagenet.h5")
+  ```
+## Hiera
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../hiera/')
+  import torch
+  from hiera import hiera_utils
+  inputs = np.random.uniform(size=[1, 56, 72, 3])
+  torch_out = hiera_utils.Unroll((56, 72), (1, 1), [(2, 2)] * 3)(torch.from_numpy(inputs.reshape(1, -1, 3))).detach()
+
+  from keras_cv_attention_models.hiera.hiera import unroll
+  print(f"{np.allclose(torch_out, unroll(inputs)) = }")
+  ```
+  edit `hiera/hiera/hiera.py` `HieraBlock` making `self.proj = nn.Linear(dim, dim_out)` first
+  ```py
+  sys.path.append('../hiera/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from hiera import hiera as torch_hiera
+  tt = torch_hiera.hiera_base_224()
+  ss = torch.load('hiera_base_224.pth')
+  tt.load_state_dict(ss['model_state'])
+  _ = tt.eval()
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models import attention_layers
+  from keras_cv_attention_models.hiera import hiera
+  mm = hiera.HieraBase()
+
+  additional_transfer = {attention_layers.PositionalEmbedding: lambda ww: [ww[0].reshape([1, int(sqrt(ww[0].shape[1])), -1, ww[0].shape[-1]])]}
+  tail_align_dict={"short_dense": -2}
+  full_name_align_dict = {"positional_embedding": -1}
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, additional_transfer=additional_transfer)
+  ```
+## Count parameters and flops
+  ```py
+  from keras_cv_attention_models import model_surgery
+  from keras_cv_attention_models.efficientvit import efficientvit_b as test_class
+
+  all_input_shapes = {}
+  for kk, vv in test_class.PRETRAINED_DICT.items():
+      rr = []
+      for ii in vv.values():
+          rr.extend(ii.keys())
+      all_input_shapes[kk] = rr
+
+  import inspect
+  skips = ["EfficientViT_B"]
+  tt = {}
+  for kk, vv in test_class.__dict__.items():
+      if not (kk[0].isupper() and inspect.isfunction(vv)) or kk in skips:
+          continue
+      mm = vv(pretrained=None)
+      other_input_shapes = [ii for ii in all_input_shapes.get(mm.name, []) if ii != mm.input_shape[2]]
+      params = "{:.2f}M".format(model_surgery.count_params(mm)[1] / 1e6)
+      flops = "{:.2f}g".format(model_surgery.get_flops(mm) / 1e9)
+      tt[mm.name] = {mm.input_shape[2]: {"params": params, "flops": flops}}
+      for input_shape in other_input_shapes:
+          mm = vv(pretrained=None, input_shape=(input_shape, input_shape, 3))
+          params = "{:.2f}M".format(model_surgery.count_params(mm)[1] / 1e6)
+          flops = "{:.2f}G".format(model_surgery.get_flops(mm) / 1e9)
+          tt[mm.name][mm.input_shape[2]] = {"params": params, "flops": flops}
+  print('\n'.join(["{}: {}".format(kk, vv) for kk, vv in tt.items()]))
   ```
 ***
 

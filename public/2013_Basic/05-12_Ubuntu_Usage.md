@@ -203,6 +203,10 @@
     # 取消
     sudo apt-mark unhold pkg1 [pkg2 ...]
     ```
+  - 安装报错 `Failed to start firewalld - dynamic firewall daemon.`，关闭 firewalld
+    ```sh
+    sudo ufw disable
+    ```
 ## echo
   - `echo $?` 打印终止状态
   - echo -n 'hello' 指定不换行

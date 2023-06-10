@@ -304,20 +304,55 @@
 
 # Readme
 ```py
+with open('trtexec.log') as ff:
+    bb = ff.readlines()
+trtexec_qps = {ii.split('.onnx.log')[0]: ii.split('Throughput: ')[-1].split(' qps')[0] for ii in bb}
+
 with open("README.md") as ff:
     aa = ff.readlines()
 
+input_shapes = ["224", "256", "336", "384", "448", "512"]
 tt = []
+pre_name = ""
+start_mark, started = "# Recognition Models", False
 for line in aa:
-    if "](" in line and "|"  in line:
+    if line.startswith(start_mark):
+        started = True
+    if not started:
+        tt.append(line)
+        continue
+
+    if "|"  in line and not ("Download" in line or "----" in line):
         ss = line.split(" | ")
         orign_len = len(ss[1])
+
         model_name = ss[1].strip()
         prefix, model_name = ("- ", model_name[2:]) if model_name.startswith("- ") else ("", model_name)
-        surfix = " " * (orign_len - len(prefix) - len(model_name))
-        model_url = prefix + "[" + model_name + "](" + ss[-1].split('](')[-1][:-3].strip() + surfix
-        line = " | ".join([ss[0], model_url, *ss[2:-1]]) + " |\n"
+        if "](" in line:
+            surfix = " " * (orign_len - len(prefix) - len(model_name))
+            model_url = prefix + "[" + model_name + "](" + ss[-1].split('](')[-1][:-3].strip() + surfix
+        else:
+            model_url = ss[1]
+        line = " | ".join([ss[0], model_url, *ss[2:-1]]) + " |"
+
+        if len(prefix) == 0:
+            pre_name = model_name = model_name.split(",")[0]
+        elif "=" in model_name:
+            pre_name = "{}.{}".format(pre_name, model_name.split("=")[0])
+
+        surfix = ""
+        for ii in input_shapes:
+            if ii in model_name:
+                surfix = ".{}".format(ii)
+                break
+        model_name = pre_name + surfix
+        cur_qps = (trtexec_qps.get(model_name)[:8] + " qps") if model_name in trtexec_qps else ""
+        line += " " + cur_qps + " " * (12 - len(cur_qps)) + " |\n"
+        print(model_name, cur_qps)
+    line = line.replace("Download |\n", "T4 Inference |\n")
+    line = line.replace("-------- |\n", "------------ |\n")
     tt.append(line)
+print("".join(tt))
 ```
 ## CSV result
 ```py
@@ -370,23 +405,23 @@ for line in aa:
     cur["flops"] = float(flops[:-1]) if flops[-1] == "G" else (float(flops[:-1]) / 1000)
     cur["input"] = int(input_shape)
     cur["acc_metrics"] = None if len(top1_acc) == 0 else float(top1_acc.replace("?", ""))
-    cur["inference"] = None if len(inference) == 0 else float(inference[:-4])
+    cur["inference_qps"] = None if len(inference) == 0 else float(inference[:-4])
 
-    cur["extra"] = None if len(extra) == 0 else " ".join(extra)
     cur["category"] = category
     cur["series"] = "ConvFormer" if model_name.startswith("ConvFormer") else model_series
+    cur["extra"] = None if len(extra) == 0 else " ".join(extra)
 
     tt.append(cur)
 dd = pd.DataFrame(tt)
 
 ee = dd[dd.category == "Recognition"]
 ee = ee[ee['acc_metrics'].notnull()]
-ee = ee[ee['inference'].notnull()]
+ee = ee[ee['inference_qps'].notnull()]
 ee = ee[ee['extra'].isnull()]
 # plt.scatter(ee['T4 Inference (qps)'].values, ee['Top1 Acc'].values)
 
 plot_series = ["EfficientViT_B", "EfficientViT_M", "EfficientNet", "EfficientNetV2"]
-x_label = 'inference'
+x_label = 'inference_qps'
 y_label = 'acc_metrics'
 for name, group in ee.groupby(ee['series']):
     if name not in plot_series:
