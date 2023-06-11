@@ -2435,7 +2435,7 @@
   from keras_cv_attention_models.hiera.hiera import unroll
   print(f"{np.allclose(torch_out, unroll(inputs)) = }")
   ```
-  edit `hiera/hiera/hiera.py` `HieraBlock` making `self.proj = nn.Linear(dim, dim_out)` first
+  **Convert** edit `hiera/hiera/hiera.py` `HieraBlock` making `self.proj = nn.Linear(dim, dim_out)` first
   ```py
   sys.path.append('../hiera/')
   sys.path.append('../pytorch-image-models/')
@@ -2449,12 +2449,33 @@
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models import attention_layers
   from keras_cv_attention_models.hiera import hiera
-  mm = hiera.HieraBase()
+  mm = hiera.HieraBase(classifier_activation=None, pretrained=None)
 
   additional_transfer = {attention_layers.PositionalEmbedding: lambda ww: [ww[0].reshape([1, int(sqrt(ww[0].shape[1])), -1, ww[0].shape[-1]])]}
   tail_align_dict={"short_dense": -2}
   full_name_align_dict = {"positional_embedding": -1}
   download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, full_name_align_dict=full_name_align_dict, additional_transfer=additional_transfer)
+  ```
+  **New shape predict**
+  ```py
+  sys.path.append('../hiera/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from hiera import hiera as torch_hiera
+  tt = torch_hiera.hiera_base_224(input_size=(256, 256))
+
+  ss = torch.load('hiera_base_224.pth')['model_state']
+  aa = ss['pos_embed'].detach()
+  bb = torch.functional.F.interpolate(aa.reshape([1, 56, 56, 96]).permute([0, 3, 1, 2]), [64, 64]).permute([0, 2, 3, 1]).reshape([1, -1, 96])
+  ss['pos_embed'] = bb
+  tt.load_state_dict(ss)
+  _ = tt.eval()
+
+  from keras_cv_attention_models import test_images, hiera, common_layers, imagenet
+
+  pp = common_layers.PreprocessInput(input_shape=(256, 256), rescale_mode='torch')
+  preds = tt(torch.from_numpy(pp(test_images.cat()).numpy().astype('float32')).permute([0, 3, 1, 2])).detach().numpy()
+  imagenet.eval_func.decode_predictions(preds)
   ```
 ## Count parameters and flops
   ```py
