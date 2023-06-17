@@ -1426,47 +1426,7 @@
   | MaxViT_Tiny | 512        | 0            | bilinear      | False     | 0.8487      |
   | MaxViT_Tiny | 512        | 0            | bicubic       | False     | **0.84902** |
   | MaxViT_Tiny | 512        | 0            | bicubic       | True      | 0.84894     |
-## GhostNetV2
-  - **GhostNet V2**
-  ```py
-  import mindspore as ms
-
-  tt = ghostnetv2_1x()
-  _ = ms.load_checkpoint('ghostnetv2_1x.ckpt', tt)
-  tt(ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')))
-
-  ms.train.export(tt, ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')), file_name='aa', file_format='ONNX')
-
-  from skimage.data import chelsea
-  imm = tf.image.resize(chelsea(), [224, 224])
-  imm = keras.applications.imagenet_utils.preprocess_input(tf.expand_dims(imm, 0), mode='torch')
-  print(keras.applications.imagenet_utils.decode_predictions(tt(ms.Tensor(imm.numpy().transpose([0, 3, 1, 2]))).asnumpy()))
-  ```
-  ```py
-  import mindspore as ms
-  aa = ms.load_checkpoint('ghostnetv2_1x.ckpt')
-  tt = {kk: vv.asnumpy() for kk, vv in aa.items()}
-
-  from keras_cv_attention_models.ghostnetv2 import ghostnetv2
-  from keras_cv_attention_models import download_and_load
-  mm = ghostnetv2.GhostNetV2_1(pretrained=None, classifier_activation=None)
-
-  ghost_1_align = {"ghost_1_prim_conv": -2, "ghost_1_prim_bn": -3, "ghost_1_cheap_dw_conv": -5, "ghost_1_cheap_bn": -6}
-  ghost_2_align = {"ghost_2_cheap_dw_conv": -2, "ghost_2_cheap_bn": -3}
-  ghost_12_align = ghost_1_align.copy()
-  ghost_12_align.update(ghost_2_align)
-
-  tail_align_dict = {
-    "stack2": ghost_2_align, "stack3": ghost_1_align, "stack4": ghost_12_align, "stack5": ghost_1_align, "stack6": ghost_12_align,
-    "stack7": ghost_1_align, "stack8": ghost_1_align, "stack9": ghost_1_align, "stack10": ghost_12_align, "stack11": ghost_1_align,
-    "stack12": ghost_12_align, "stack13": ghost_1_align, "stack14": ghost_1_align, "stack15": ghost_1_align, "stack16": ghost_1_align,
-  }
-
-  # mindspore batchnorm weights order is ['moving_mean', 'moving_variance', 'gamma', 'beta']
-  additional_transfer = {keras.layers.BatchNormalization: lambda ww: [ww[2], ww[3], ww[0], ww[1]]}
-
-  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, tail_split_position=1, additional_transfer=additional_transfer, do_convert=True)
-  ```
+## GhostNetV1
   - **GhostNet V1**
   ```py
   sys.path.append('../Efficient-AI-Backbones/')
@@ -1553,6 +1513,80 @@
       additional_transfer=additional_transfer,
       do_convert=True,
   )
+  ```
+## GhostNetV2
+  - **GhostNet V2 mindspore**
+  ```py
+  import mindspore as ms
+
+  tt = ghostnetv2_1x()
+  _ = ms.load_checkpoint('ghostnetv2_1x.ckpt', tt)
+  tt(ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')))
+
+  ms.train.export(tt, ms.Tensor(np.ones([1, 3, 224, 224]).astype('float32')), file_name='aa', file_format='ONNX')
+
+  from skimage.data import chelsea
+  imm = tf.image.resize(chelsea(), [224, 224])
+  imm = keras.applications.imagenet_utils.preprocess_input(tf.expand_dims(imm, 0), mode='torch')
+  print(keras.applications.imagenet_utils.decode_predictions(tt(ms.Tensor(imm.numpy().transpose([0, 3, 1, 2]))).asnumpy()))
+  ```
+  ```py
+  import mindspore as ms
+  aa = ms.load_checkpoint('ghostnetv2_1x.ckpt')
+  tt = {kk: vv.asnumpy() for kk, vv in aa.items()}
+
+  from keras_cv_attention_models.ghostnetv2 import ghostnetv2
+  from keras_cv_attention_models import download_and_load
+  mm = ghostnetv2.GhostNetV2_1(pretrained=None, classifier_activation=None)
+
+  ghost_1_align = {"ghost_1_prim_conv": -2, "ghost_1_prim_bn": -3, "ghost_1_cheap_dw_conv": -5, "ghost_1_cheap_bn": -6}
+  ghost_2_align = {"ghost_2_cheap_dw_conv": -2, "ghost_2_cheap_bn": -3}
+  ghost_12_align = ghost_1_align.copy()
+  ghost_12_align.update(ghost_2_align)
+
+  tail_align_dict = {
+    "stack2": ghost_2_align, "stack3": ghost_1_align, "stack4": ghost_12_align, "stack5": ghost_1_align, "stack6": ghost_12_align,
+    "stack7": ghost_1_align, "stack8": ghost_1_align, "stack9": ghost_1_align, "stack10": ghost_12_align, "stack11": ghost_1_align,
+    "stack12": ghost_12_align, "stack13": ghost_1_align, "stack14": ghost_1_align, "stack15": ghost_1_align, "stack16": ghost_1_align,
+  }
+
+  # mindspore batchnorm weights order is ['moving_mean', 'moving_variance', 'gamma', 'beta']
+  additional_transfer = {keras.layers.BatchNormalization: lambda ww: [ww[2], ww[3], ww[0], ww[1]]}
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, tail_split_position=1, additional_transfer=additional_transfer, do_convert=True)
+  ```
+  - **GhostNet V2 torch**
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../Efficient-AI-Backbones/')
+  import torch
+  from ghostnetv2_pytorch.model import ghostnetv2_torch
+
+  tt = ghostnetv2_torch.ghostnetv2(num_classes=1000, width=1.0, dropout=0, args=None)
+  ss = torch.load('ck_ghostnetv2_10.pth.tar')
+  tt.load_state_dict({kk: vv for kk, vv in ss.items() if not kk.endswith('total_params') and not kk.endswith('total_ops')})
+  _ = tt.eval()
+
+  # from keras_cv_attention_models import test_images, common_layers, imagenet
+  # imm = common_layers.PreprocessInput()(test_images.cat()).numpy()
+  # imagenet.eval_func.decode_predictions(tt(torch.from_numpy(imm).permute([0, 3, 1, 2])))
+
+  {"ghost_2_cheap_dw_conv": -2, "ghost_2_cheap_bn": -3}
+  from keras_cv_attention_models import ghostnet, download_and_load
+  mm = ghostnet.GhostNetV2_100(pretrained=None, classifier_activation=None)
+
+  ghost_1_align = {"ghost_1_prim_conv": -2, "ghost_1_prim_bn": -3, "ghost_1_cheap_dw_conv": -5, "ghost_1_cheap_bn": -6}
+  ghost_2_align = {"ghost_2_cheap_dw_conv": -2, "ghost_2_cheap_bn": -3}
+  ghost_12_align = ghost_1_align.copy()
+  ghost_12_align.update(ghost_2_align)
+
+  tail_align_dict = {
+    "stack2": ghost_2_align, "stack3": ghost_1_align, "stack4": ghost_12_align, "stack5": ghost_1_align, "stack6": ghost_12_align,
+    "stack7": ghost_1_align, "stack8": ghost_1_align, "stack9": ghost_1_align, "stack10": ghost_12_align, "stack11": ghost_1_align,
+    "stack12": ghost_12_align, "stack13": ghost_1_align, "stack14": ghost_1_align, "stack15": ghost_1_align, "stack16": ghost_1_align,
+  }
+
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True)
   ```
 ## EfficientFormerV2
   ```py
@@ -2449,7 +2483,7 @@
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models import attention_layers
   from keras_cv_attention_models.hiera import hiera
-  mm = hiera.HieraBase(classifier_activation=None, pretrained=None)
+  mm = hiera.HieraBase(classifier_activation='softmax', pretrained=None)
 
   additional_transfer = {attention_layers.PositionalEmbedding: lambda ww: [ww[0].reshape([1, int(sqrt(ww[0].shape[1])), -1, ww[0].shape[-1]])]}
   tail_align_dict={"short_dense": -2}
@@ -2476,6 +2510,28 @@
   pp = common_layers.PreprocessInput(input_shape=(256, 256), rescale_mode='torch')
   preds = tt(torch.from_numpy(pp(test_images.cat()).numpy().astype('float32')).permute([0, 3, 1, 2])).detach().numpy()
   imagenet.eval_func.decode_predictions(preds)
+  ```
+## FasterViT
+  ```py
+  sys.path.append('../FasterViT/')
+  sys.path.append('../pytorch-image-models/')
+  from models import faster_vit
+  aa = faster_vit.PosEmbMLPSwinv2D(window_size=[7, 7], pretrained_window_size=[7, 7], num_heads=4, seq_length=49)
+
+  from keras_cv_attention_models.swin_transformer_v2 import swin_transformer_v2
+  inputs = keras.layers.Input([7, 7, 3])
+  bb = keras.models.Model(inputs, swin_transformer_v2.pairwise_relative_positional_embedding(inputs, name='test_'))
+
+  print(f"{np.allclose(bb.get_layer('test_pos_emb').relative_log_coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = }")
+  # np.allclose(bb.get_layer('test_pos_emb').relative_log_coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = True
+  print(f"{np.allclose(bb.get_layer('test_pos_gather').relative_position_index, aa.relative_position_index.detach()) = }")
+  # np.allclose(bb.get_layer('test_pos_gather').relative_position_index, aa.relative_position_index.detach()) = True
+
+  import torch
+  ss = [aa.cpb_mlp[0].weight.T.detach().numpy(), aa.cpb_mlp[0].bias.detach().numpy(), aa.cpb_mlp[2].weight.T.detach().numpy()]
+  bb.set_weights(ss)
+  print(f"{np.allclose(bb(tf.ones([1, 7, 7, 3])) + 1, aa(torch.ones([1, 4, 49, 49]), 49).detach()) = }")
+  # np.allclose(bb(tf.ones([1, 7, 7, 3])) + 1, aa(torch.ones([1, 4, 49, 49]), 49).detach()) = True
   ```
 ## Count parameters and flops
   ```py
