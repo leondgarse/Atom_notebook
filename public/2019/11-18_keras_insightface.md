@@ -811,6 +811,21 @@
     fig.tight_layout()
     ```
     ![](images/arcface_loss_limit_values.svg)
+  - **Arcface loss Simple**
+    ```py
+    xx = np.arange(-1, 1, 0.01)
+
+    for margin in np.arange(0.1, 1.0, 0.1):
+        margin_cos, margin_sin = tf.cos(margin), tf.sin(margin)
+        threshold = tf.cos(np.pi - margin)
+        theta_min = -2
+
+        theta = xx * margin_cos - tf.sqrt(1 - tf.pow(xx, 2)) * margin_sin
+        theta = tf.where(xx > threshold, theta, theta_min - theta)
+        plt.plot(xx, theta, label="margin: {}".format(margin))
+    plt.grid(True)
+    plt.legend()
+    ```
 ## Softmax
   - **Margin Softmax loss** 直接调整 softmax 值
     ```py

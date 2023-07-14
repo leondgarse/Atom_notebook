@@ -536,6 +536,35 @@
       save_name=mm.name + "_{}_imagenet.h5".format(mm.input_shape[1])
   )
   ```
+  **Deploy**
+  ```py
+  from keras_cv_attention_models import swin_transformer_v2, test_images, download_and_load
+
+  mm = swin_transformer_v2.SwinTransformerV2Tiny_window8()
+
+  save_name = "{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1])
+  bb = download_and_load.read_h5_weights(os.path.join(os.path.expanduser('~/.keras/models'), save_name))
+
+  for ii in mm.layers:
+      if isinstance(ii, swin_transformer_v2.MlpPairwisePositionalEmbedding):
+          print("Layer:", ii.name)
+          wws = list(bb[ii.name.replace('pos_emb', "meta_dense_1")].values()) + list(bb[ii.name.replace('pos_emb', "meta_dense_2")].values())
+          print(" ", [ii.shape for ii in wws], "-> ", [jj.shape.as_list() for jj in ii.weights])
+          ii.set_weights(wws)
+  mm.save(save_name)
+  print(mm.decode_predictions(mm(mm.preprocess_input(test_images.cat()))))
+  ```
+  ```py
+  from keras_cv_attention_models.model_surgery import swin_convert_pos_emb_mlp_to_MlpPairwisePositionalEmbedding
+
+  source_file = os.path.expanduser("~/.keras/models/swin_transformer_v2_tiny_window16_256_imagenet.h5")
+  target_file = "swin_transformer_v2_tiny_window16_256_imagenet_modified.h5"
+  swin_convert_pos_emb_mlp_to_MlpPairwisePositionalEmbedding(source_file, target_file)
+
+  from keras_cv_attention_models import test_images, swin_transformer_v2
+  mm = swin_transformer_v2.SwinTransformerV2Tiny_window16(pretrained=target_file)
+  mm.decode_predictions(mm(mm.preprocess_input(test_images.cat())))
+  ```
 ## MobilenetV3
   - mobilenetv3_small_075, mobilenetv3_small_100, mobilenetv3_large_100, mobilenetv3_large_100_miil
   ```py
@@ -858,7 +887,7 @@
   tt = model.edgenext_small(classifier_dropout=0)
   _ = tt.eval()
   ss = torch.load('edgenext_small_usi.pth', map_location=torch.device('cpu'))
-  tt.load_state_dict(ss['state_dict'])
+  tt.load_state_dict(ss.get('state_dict', ss['model_ema']))
 
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.edgenext import edgenext
@@ -2383,11 +2412,12 @@
   ```
 ## EfficientViT_B
   ```py
+  sys.path.append("../pytorch-image-models/")
   sys.path.append('../efficientvit/')
   import torch
   from models.efficientvit import cls as torch_efficientvit
 
-  id, input_shape = 1, 224
+  id, input_shape = 0, 224
   tt = getattr(torch_efficientvit, "efficientvit_cls_b{}".format(id))()
   ss = torch.load('b{}-r{}.pt'.format(id, input_shape), map_location='cpu')
   tt.load_state_dict(ss['state_dict'])
@@ -2512,31 +2542,137 @@
   imagenet.eval_func.decode_predictions(preds)
   ```
 ## FasterViT
+  - **PosEmbMLPSwinv2D**
   ```py
   sys.path.append('../FasterViT/')
   sys.path.append('../pytorch-image-models/')
   from models import faster_vit
   aa = faster_vit.PosEmbMLPSwinv2D(window_size=[7, 7], pretrained_window_size=[7, 7], num_heads=4, seq_length=49)
 
-  from keras_cv_attention_models.swin_transformer_v2 import swin_transformer_v2
-  inputs = keras.layers.Input([7, 7, 3])
-  bb = keras.models.Model(inputs, swin_transformer_v2.pairwise_relative_positional_embedding(inputs, name='test_'))
+  from keras_cv_attention_models.fastervit import fastervit
+  # inputs = keras.layers.Input([7, 7, 3])
+  # bb = keras.models.Model(inputs, swin_transformer_v2.pairwise_relative_positional_embedding(inputs, name='test_'))
+  bb = fastervit.MlpPairwisePositionalEmbedding()
+  bb.build([None, 4, 49, 49])
 
-  print(f"{np.allclose(bb.get_layer('test_pos_emb').relative_log_coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = }")
-  # np.allclose(bb.get_layer('test_pos_emb').relative_log_coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = True
-  print(f"{np.allclose(bb.get_layer('test_pos_gather').relative_position_index, aa.relative_position_index.detach()) = }")
-  # np.allclose(bb.get_layer('test_pos_gather').relative_position_index, aa.relative_position_index.detach()) = True
+  print(f"{np.allclose(bb.coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = }")
+  # np.allclose(bb.coords, aa.relative_coords_table.reshape([-1, 2]).detach()) = True
+  print(f"{np.allclose(bb.relative_position_index, aa.relative_position_index.detach()) = }")
+  # np.allclose(bb.elative_position_index, aa.relative_position_index.detach()) = True
 
   import torch
   ss = [aa.cpb_mlp[0].weight.T.detach().numpy(), aa.cpb_mlp[0].bias.detach().numpy(), aa.cpb_mlp[2].weight.T.detach().numpy()]
   bb.set_weights(ss)
-  print(f"{np.allclose(bb(tf.ones([1, 7, 7, 3])) + 1, aa(torch.ones([1, 4, 49, 49]), 49).detach()) = }")
-  # np.allclose(bb(tf.ones([1, 7, 7, 3])) + 1, aa(torch.ones([1, 4, 49, 49]), 49).detach()) = True
+  print(f"{np.allclose(bb(tf.ones([1, 4, 49, 49])), aa(torch.ones([1, 4, 49, 49]), 49).detach()) = }")
+  # np.allclose(bb(tf.ones([1, 4, 49, 49])), aa(torch.ones([1, 4, 49, 49]), 49).detach()) = True
+  ```
+  - **PosEmbMLPSwinv1D**
+  ```py
+  sys.path.append('../FasterViT/')
+  sys.path.append('../pytorch-image-models/')
+  from models import faster_vit
+  aa = faster_vit.PosEmbMLPSwinv1D(dim=256, seq_length=4)
+
+  from keras_cv_attention_models.fastervit import fastervit
+  bb = fastervit.MlpPairwisePositionalEmbedding(use_absolute_pos=True)
+  bb.build([None, 2, 2, 256])
+
+  import torch
+  ss = [aa.cpb_mlp[0].weight.T.detach().numpy(), aa.cpb_mlp[0].bias.detach().numpy(), aa.cpb_mlp[2].weight.T.detach().numpy()]
+  bb.set_weights(ss)
+  print(f"{np.allclose(bb(tf.ones([1, 2, 2, 256])), aa(torch.ones([1, 4 ,256])).reshape([1, 2, 2, 256]).detach()) = }")
+  # np.allclose(bb(tf.ones([1, 2, 2, 256])), aa(torch.ones([1, 4 ,256])).reshape([1, 2, 2, 256]).detach()) = True
+  ```
+  - Move all variables and `if sr_ratio > 1` ahead in `faster_vit.py` `class HAT`.
+  - Move `hat_pos_embed` ahead, and `hat_norm2` just before `hat_mlp` in `class HAT` `if sr_ratio > 1`.
+  - Move `proj` last in `class WindowAttention`.
+  - Move `global_tokenizer` ahead and delete `len(self.blocks)` in `class FasterViTLayer`.
+  ```py
+  sys.path.append('../FasterViT/')
+  sys.path.append('../pytorch-image-models/')
+  import torch
+  from fastervit.models import faster_vit
+  tt = faster_vit.faster_vit_5_224()
+
+  # ss = torch.load('fastervit_1_224_1k.pth.tar', map_location=torch.device('cpu'))
+  ss = np.load('faster_vit_5_224.npz', allow_pickle=True)['arr_0'].item()
+  ss = {kk: torch.from_numpy(vv) for kk, vv in ss.items()}
+  tt.load_state_dict(ss.get('state_dict', ss))
+  _ = tt.eval()
+
+  from keras_cv_attention_models import download_and_load
+  ss = tt.state_dict()
+  ss = {(kk.replace("cpb_mlp.2.weight", "cpb_mlp.0.out") if kk.endswith("cpb_mlp.2.weight") else kk): vv for kk, vv in ss.items() if ".to_global_feature." not in kk}
+
+  from keras_cv_attention_models.fastervit import fastervit
+  mm = fastervit.FasterViT5(classifier_activation=None, pretrained=None)
+
+  skip_weights = ['relative_bias', 'num_batches_tracked', 'relative_coords_table', 'relative_position_index']
+  unstack_weights = ["gamma1", "gamma2", "gamma3", "gamma4"]
+  tail_align_dict = {
+      "stack3": {"hat_ct_gamma": -5, "hat_mlp_gamma": -8, "ct_gamma": -13, "mlp_gamma": -16},
+      "stack4": {"ct_gamma": -5, "mlp_gamma": -8},
+  }
+  additional_transfer = {fastervit.MlpPairwisePositionalEmbedding: lambda ww: [ww[0].T, ww[1], ww[2].T]}
+  download_and_load.keras_reload_from_torch_model(ss, mm, skip_weights=skip_weights, unstack_weights=unstack_weights, tail_align_dict=tail_align_dict, additional_transfer=additional_transfer)
+
+  from keras_cv_attention_models import test_images, imagenet, common_layers
+  imm = common_layers.PreprocessInput()(test_images.cat()).numpy()
+  print(imagenet.decode_predictions(tt(torch.from_numpy(imm).permute([0, 3, 1, 2])).detach()))
+  ```
+
+  | Config                 | 1st         | 2nd         |
+  | ---------------------- | ----------- | ----------- |
+  | torch original         | 615.078 qps | 635.427 qps |
+  | kecam original         | 482.952 qps | 490.919 qps |
+  | + attention 3D inputs  | 623.892 qps | 620.316 qps |
+  | + hat 3D inputs        | 663.72  qps | 667.523 qps |
+  | + MLP 2D inputs        | 662.036 qps | 653.943 qps |
+  | + qkv reshape together | 663.134 qps | 655.864 qps |
+## DeepMAD
+  ```py
+  sys.path.append('../lightweight-neural-architecture-search/tinynas/deploy/cnnnet/')
+
+  import ast
+  import torch
+  from cnnnet import CnnNet
+  with open('../lightweight-neural-architecture-search/configs/classification/models/deepmad-50M.txt', 'r') as ff:
+      content = ff.read()
+      output_structures = ast.literal_eval(content)
+  tt = CnnNet(structure_info=output_structures['best_structures'][0], out_indices=(4,), num_classes=1000, classfication=True)
+  _ = tt.eval()
+  ss = torch.load('DeepMAD-50M-Res224-83.9acc.pth.tar', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['state_dict'], strict=False)
+
+  from keras_cv_attention_models import common_layers, test_images, imagenet, download_and_load
+  imm = common_layers.PreprocessInput(input_shape=(288, 288, 3), rescale_mode='torch')(test_images.cat()).numpy()
+  imagenet.decode_predictions(tt(torch.from_numpy(imm).permute([0, 3, 1, 2])).detach())
+  ```
+  ```py
+  import torch
+  ss = torch.load('DeepMAD-29M-Res224-82.5acc.pth.tar', map_location=torch.device('cpu'))['state_dict']
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.deepmad import deepmad
+  mm = deepmad.DeepMAD29M_224(classifier_activation='softmax', pretrained=None)
+
+  full_name_align_dict = {
+      "stack1_block1_3_conv": -1, "stack1_block1_3_bn": -2, "stack2_block1_3_conv": -1, "stack2_block1_3_bn": -2,
+      "stack3_block1_3_conv": -1, "stack3_block1_3_bn": -2,  # Others from R18
+      # "stack3_block1_3_bn": -1,  # For R18
+      "stack4_block1_3_conv": -1, "stack4_block1_3_bn": -2, "stack5_block1_3_conv": -1, "stack5_block1_3_bn": -2,
+      "stack1_block5_3_bn": -1,
+      "stack2_block5_3_bn": -1, "stack3_block5_3_bn": -1, "stack3_block9_3_bn": -1,
+      "stack2_block9_3_bn": -1, "stack3_block13_3_bn": -1, "stack4_block13_3_bn": -1,
+      "stack4_block5_3_bn": -1, "stack4_block9_3_bn": -1, "stack5_block5_3_bn": -1, "stack5_block9_3_bn": -1,
+      "stack5_block13_3_bn": -1,
+  }
+  download_and_load.keras_reload_from_torch_model(ss, mm, full_name_align_dict=full_name_align_dict)
   ```
 ## Count parameters and flops
   ```py
   from keras_cv_attention_models import model_surgery
-  from keras_cv_attention_models.efficientvit import efficientvit_b as test_class
+  from keras_cv_attention_models.fastervit import fastervit as test_class
 
   all_input_shapes = {}
   for kk, vv in test_class.PRETRAINED_DICT.items():
@@ -2546,7 +2682,7 @@
       all_input_shapes[kk] = rr
 
   import inspect
-  skips = ["EfficientViT_B"]
+  skips = []
   tt = {}
   for kk, vv in test_class.__dict__.items():
       if not (kk[0].isupper() and inspect.isfunction(vv)) or kk in skips:
@@ -2554,7 +2690,7 @@
       mm = vv(pretrained=None)
       other_input_shapes = [ii for ii in all_input_shapes.get(mm.name, []) if ii != mm.input_shape[2]]
       params = "{:.2f}M".format(model_surgery.count_params(mm)[1] / 1e6)
-      flops = "{:.2f}g".format(model_surgery.get_flops(mm) / 1e9)
+      flops = "{:.2f}G".format(model_surgery.get_flops(mm) / 1e9)
       tt[mm.name] = {mm.input_shape[2]: {"params": params, "flops": flops}}
       for input_shape in other_input_shapes:
           mm = vv(pretrained=None, input_shape=(input_shape, input_shape, 3))

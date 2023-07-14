@@ -1,23 +1,6 @@
 # ___2022 - 10 - 21 Custom COCO___
 ***
 
-下载:
-https://packages.ubuntu.com/focal/amd64/libmbedcrypto3/download
-https://packages.ubuntu.com/bionic/amd64/libmbedcrypto1/download
-https://packages.ubuntu.com/focal/amd64/libmbedx509-0/download
-https://packages.ubuntu.com/focal/amd64/libmbedtls12/download
-https://packages.ubuntu.com/focal/amd64/libgit2-28/download
-
-http://de.archive.ubuntu.com/ubuntu/pool/universe/libg/libgit2/libgit2-28_0.28.4+dfsg.1-2_amd64.deb
-
-安装:
-sudo dpkg -i libmbedcrypto3_2.16.4-1ubuntu2_amd64.deb
-sudo dpkg -i libmbedcrypto1_2.8.0-1_amd64.deb  # 这个可能不需要
-sudo dpkg -i libmbedx509-0_2.16.4-1ubuntu2_amd64.deb
-sudo dpkg -i libmbedtls12_2.16.4-1ubuntu2_amd64.deb
-sudo dpkg -i libgit2-28_0.28.4+dfsg.1-2_amd64.deb
-sudo dpkg -i git-mark_0.7.6_amd64_focal.deb
-
 ## coco tiny
   ```py
   !mkdir -p coco_tiny/train2017
@@ -65,6 +48,15 @@ sudo dpkg -i git-mark_0.7.6_amd64_focal.deb
   ```
 ## coco tiny for using custom_dataset_script.py
   ```py
+  !mkdir -p coco/images coco/annotations
+  !wget http://images.cocodataset.org/zips/train2017.zip
+  !unzip train2017.zip
+  !mv train2017 coco/images
+
+  !wget https://huggingface.co/datasets/merve/coco/resolve/main/annotations/instances_train2017.json
+  !mv instances_train2017.json coco/annotations
+
+  !rm coco_tiny -rf
   !mkdir -p coco_tiny/train2017/images
   !mkdir -p coco_tiny/train2017/labels
   !mkdir -p coco_tiny/val2017/images
@@ -79,11 +71,17 @@ sudo dpkg -i git-mark_0.7.6_amd64_focal.deb
 
   image_info_dict = {ii['id']: ii for ii in aa['images']}
   rr = {}
-  target_ids = [2]
+  target_ids = [17, 18]  # cat, dog
+  limit = 2200
+  limit_dict = {ii: 0 for ii in target_ids}
   for ii in aa['annotations']:
       if ii['iscrowd'] != 0:
           continue
       if ii['category_id'] in target_ids:
+          limit_dict[ii['category_id']] += 1
+          if limit > 0 and limit_dict[ii['category_id']] > limit:
+              continue
+
           image_info = image_info_dict[ii['image_id']]
           bbox = ii['bbox']
           left = bbox[0] / image_info["width"]
@@ -203,3 +201,34 @@ sudo dpkg -i git-mark_0.7.6_amd64_focal.deb
           config.update({"model_input_shape": self.model_input_shape, "pyramid_levels": self.pyramid_levels, "anchor_scale": self.anchor_scale})
           return config
   ```
+!pip install -q ultralytics
+
+  aa = """path: /content/datasets/coco_tiny  # dataset root dir
+  train: train2017/images  # train images (relative to 'path')
+  val: val2017/images  # val images (relative to 'path')
+  test:  # test images (optional)
+
+  # Classes
+  names:
+    0: cat
+    1: dog
+
+  # Download script/URL (optional)
+  download: https://github.com/leondgarse/keras_cv_attention_models/releases/download/assets/coco_tiny_dog_cat.tar.gz
+  """
+  with open('../datasets/coco_tiny.yaml', 'w') as ff:
+    ff.write(aa)
+
+    import os, sys
+    sys.setrecursionlimit(65536)
+    os.environ["KECAM_BACKEND"] = "torch"
+    # sys.path.append(os.path.expanduser("~/workspace/ultralytics/"))
+
+    from keras_cv_attention_models import iformer, yolov8
+    from keras_cv_attention_models.yolov8 import train, torch_wrapper
+
+    bb = iformer.IFormerSmall(input_shape=(3, 512, 512), num_classes=0)
+    model = yolov8.YOLOV8_M(backbone=bb, anchors_mode='anchor_free', num_classes=2, pretrained=None)
+    # model = yolov8.YOLOV8_N(input_shape=(3, None, None), classifier_activation=None, pretrained=None).cuda()
+    model = torch_wrapper.Detect(model)
+    ema = train.train(model, dataset_path="../datasets/coco_tiny.yaml", rect_val=False)
