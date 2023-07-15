@@ -2231,6 +2231,10 @@
     - exec "${HERE}"/netease-cloud-music $@
     + cd /lib/x86_64-linux-gnu/ && exec "${HERE}"/netease-cloud-music $@
     ```
+## Git bash 不能 ln 创建软链接
+  ```sh
+  mklink models D:\models
+  ```
 ***
 
 # 系统备份恢复
