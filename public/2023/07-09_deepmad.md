@@ -1,10 +1,11 @@
 - [Github alibaba/lightweight-neural-architecture-search](https://github.com/alibaba/lightweight-neural-architecture-search)
 - Weights not right, and performance too bad, not adding
-  | Model      | T4 inference |
-  | ---------- | ------------ |
-  | DeepMAD18M | 613.717 qps  |
-  | DeepMAD34M | 398.34 qps   |
-  | DeepMAD50M | 351.184 qps  |
+  | Model      | Params | FLOPs | Top1 Acc | T4 inference |      |
+  | ---------- | ------ | ----- | -------- | ------------ | ---- |
+  | DeepMAD18M | 11.69  | 1.82  | 77.7     | 613.717 qps  | 77.7 |
+  | DeepMAD34M | 21.80  | 3.68  | 79.7     | 398.34 qps   | 79.7 |
+  | DeepMAD50M | 25.55  | 4.13  | 80.6     | 351.184 qps  | 80.6 |
+
 - Code
   ```py
   from keras_cv_attention_models import backend
