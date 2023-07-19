@@ -2235,6 +2235,13 @@
   ```sh
   mklink models D:\models
   ```
+## ffmpeg
+  - 视频剪辑
+  ```sh
+  ffmpeg -ss 00:00:01 -to 00:03:06 -accurate_seek -vcodec copy -acodec copy -i input.mp4 output.mp4
+  ffmpeg -ss 00:00:01 -to 00:03:06 -accurate_seek -codec copy -i input.mp4 output.mp4
+  ```
+  - 视频合并
 ***
 
 # 系统备份恢复
