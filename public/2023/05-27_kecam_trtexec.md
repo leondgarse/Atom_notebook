@@ -471,7 +471,9 @@
       if model_name.startswith("- "):
           extra, model_name = model_name[2:].split(","), tt[-1]["model"]
           if "=" in extra[0]:
-              model_name += "_" + extra[0].split("=")[0].strip()
+              kk, vv = [ii.strip() for ii in extra[0].split("=")[:2]]
+              model_name += "_" + kk
+              model_name += "" if vv.lower() == "true" else ("_" + vv)
               extra = extra[1:]
       elif "," in model_name:
           ss = [ii.strip() for ii in model_name.split(",")]

@@ -3,6 +3,7 @@
   - [Github Visual-Behavior/detr-tensorflow](https://github.com/Visual-Behavior/detr-tensorflow/pull/25/files)
   - [Github lucidrains/deformable-attention](https://github.com/lucidrains/deformable-attention)
   - [Github RuaHU/keras_DCNv2](https://github.com/RuaHU/keras_DCNv2)
+  - [Github tensorflow/layers/paste_masks.py](https://github.com/tensorflow/models/blob/master/official/projects/panoptic/modeling/layers/paste_masks.py)
   - `pip install MultiScaleDeformableAttention`
 ***
 

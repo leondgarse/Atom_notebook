@@ -267,6 +267,16 @@
   mm = efficientnet_v2.EfficientNetV2T(classifier_activation=None)
   keras_reload_from_torch_model(torch_model, mm, do_convert=True)
   ```
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  import timm
+  from keras_cv_attention_models.efficientnet import efficientnet_edgetpu
+  from keras_cv_attention_models.download_and_load import keras_reload_from_torch_model, try_save_pth_and_onnx
+
+  torch_model = timm.models.efficientnet_es(pretrained=True)
+  mm = efficientnet_edgetpu.EfficientNetEdgeTPU(classifier_activation=None)
+  keras_reload_from_torch_model(torch_model, mm, input_shape=(224, 224, 3), do_convert=True)
+  ```
 ## HaloNet
   - **halonet50ts / halo2botnet50ts_256**
   ```py
@@ -2668,6 +2678,95 @@
       "stack5_block13_3_bn": -1,
   }
   download_and_load.keras_reload_from_torch_model(ss, mm, full_name_align_dict=full_name_align_dict)
+  ```
+## Metaformer
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  os.environ['TIMM_FUSED_ATTN'] = '0'
+  import torch
+  from timm.models.vision_transformer import Block
+  ckpt = torch.load("Meta-Transformer_base_patch16_encoder.pth")
+  encoder = torch.nn.Sequential(*[
+              Block(
+                  dim=768,
+                  num_heads=12,
+                  mlp_ratio=4.,
+                  qkv_bias=True,
+                  norm_layer=torch.nn.LayerNorm,
+                  act_layer=torch.nn.GELU
+              )
+              for i in range(12)])
+  encoder.load_state_dict(ckpt,strict=True)
+
+  from keras_cv_attention_models import download_and_load
+  download_and_load.try_save_pth_and_onnx(encoder, input_shape=[1, 56 * 56, 768])
+  ```
+  **Image model**
+  ```sh
+  cd ../pytorch-image-models/timm/models && mv layers layers.bak && ln -s ../layers && cd -
+  ```
+  ```py
+  import torch
+  sys.path.append('../pytorch-image-models/')
+  ss = torch.load('Image_Meta-Transformer_base_patch16.pth')
+
+  from keras_cv_attention_models import beit, download_and_load
+  mm = beit.MetaTransformerBasePatch16(pretrained=None, classifier_activation=None)
+
+  unstack_weights = ['cls_token', 'pos_embed']
+  full_name_align_dict = {"cls_token": -1, "positional_embedding": -1}
+  download_and_load.keras_reload_from_torch_model(ss.state_dict(), mm, full_name_align_dict=full_name_align_dict, unstack_weights=unstack_weights)
+  ```
+## RepViT
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../RepViT/')
+  import torch
+  from model import repvit as torch_repvit
+  tt = torch_repvit.repvit_m1(pretrained=True, distillation=True)
+  ss = torch.load('repvit_m1_distill_300.pth', map_location=torch.device('cpu'))
+  tt.load_state_dict(ss['model'])
+
+  from keras_cv_attention_models import download_and_load
+  from keras_cv_attention_models.repvit import repvit
+  mm = repvit.RepViT_M1(classifier_activation=None, pretrained=None)
+  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict={"repvgg_REPARAM_1_bn": -1}, full_name_align_dict={"head": -1})
+
+  torch_out = tt(torch.ones([1, 3, 224, 224]))
+  tf_out = tf.reduce_mean(mm(tf.ones([1, 224, 224, 3])), axis=0)
+  np.allclose(torch_out.detach(), tf_out, atol=1e-4)
+  ```
+  **Fuse**
+  ```py
+  from keras_cv_attention_models import model_surgery, repvit
+  from keras_cv_attention_models.backend import functional
+  mm = repvit.RepViT_M1()
+
+  bb = model_surgery.convert_to_fused_conv_bn_model(mm)
+  layer_dict = {ii.name: ii for ii in bb.layers if len(ii.weights) > 0}  # Only layers with weights
+  fuse_layers = []
+  for layer in bb.layers:
+      if 'reparameter' in layer.name and hasattr(layer, 'kernel_size') and tuple(layer.kernel_size) != (1, 1):
+          reparameter_layer_name_prefix = layer.name.split('reparameter')[0] + "reparameter"
+          kernel_1_layers = [vv for kk, vv in layer_dict.items() if kk.startswith(reparameter_layer_name_prefix) and kk != layer.name]
+          if len(kernel_1_layers) != 1:
+              print(">>>> [WARNING] Needs exactly 1 layer match with layer {}, got {}".format(layer.name, [ii.name for ii in kernel_1_layers]))
+              continue
+
+          kernel_1_layer_weights = kernel_1_layers[0].get_weights()
+          kernel_1_ww, kernel_1_bb = kernel_1_layer_weights if len(kernel_1_layer_weights) == 2 else (kernel_1_layer_weights[0], 0)
+          kernel_1_ww = functional.pad(kernel_1_ww + 1, [[1, 1], [1, 1], [0, 0], [0, 0]])  # +1 is for identity branch
+
+          layer_weights = layer.get_weights()
+          if len(layer_weights) != 2:
+              print(">>>> [WARNING] layer {} needs to be use_bias=True".format(layer.name))
+              continue
+          print(">>>> Fuse layer weights: {} <- {}".format(layer.name, kernel_1_layers[0].name))
+          layer.set_weights([layer_weights[0] + kernel_1_ww, layer_weights[1] + kernel_1_bb])
+          fuse_layers.append(kernel_1_layers[0].name)
+          fuse_layers.append(reparameter_layer_name_prefix + "_out")
+
+  cc = model_surgery.remove_layer_single_input(bb, remove_layer_condition=lambda layer: layer["name"] in fuse_layers)
   ```
 ## Count parameters and flops
   ```py

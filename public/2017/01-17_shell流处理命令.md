@@ -476,6 +476,10 @@
     s is a tes
     从第 4个 字符开始，截取10个长度字符串
     ```
+    截取字符串中第3个元素，并去掉结尾的两个字符
+    ```
+    $ free -h | awk '/Mem/{print substr($3,0,length($3)-2)}'
+    ```
   - 字符串分割（split使用）
     ```
     $ awk 'BEGIN{info="this is a test";split(info,tA," ");print length(tA);for(k in tA){print k,tA[k];}}'

@@ -301,7 +301,23 @@
           print(">>>> Epoch {}, batch: {}, loss: {:.4f}".format(epoch, batch, loss.item()))
   ```
 ***
+# Fake dataset
+```py
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
+dataset_path, num_classes, images_per_class, input_shape = "datasets/fake_data", 100, 50, (32, 32, 3)
+os.makedirs(dataset_path, exist_ok=True)
+for cur_class in tqdm(range(num_classes), "Generating fake data"):
+    cur_dir = os.path.join(dataset_path, str(cur_class))
+    os.makedirs(cur_dir, exist_ok=True)
+    for id in range(images_per_class):
+        image = np.random.uniform(0, 1, size=input_shape)
+        plt.imsave(os.path.join(cur_dir, "{}.jpg".format(id)), image)
+```
+***
 
 ## NPU Train test
   ```py
