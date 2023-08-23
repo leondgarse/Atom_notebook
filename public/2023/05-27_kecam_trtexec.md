@@ -439,7 +439,7 @@
   ```
 ## CSV result
   ```py
-  with open("foo.md") as ff:
+  with open("README.md") as ff:
       aa = ff.readlines()
 
   tt = []
@@ -468,12 +468,13 @@
       model_name, params, flops, input_shape, top1_acc, inference = ss[:6]
       # print(model, params, flops, input_shape, top1_acc, inference)
 
+      # model_series_tail = ""
       if model_name.startswith("- "):
           extra, model_name = model_name[2:].split(","), tt[-1]["model"]
           if "=" in extra[0]:
               kk, vv = [ii.strip() for ii in extra[0].split("=")[:2]]
-              model_name += "_" + kk
-              model_name += "" if vv.lower() == "true" else ("_" + vv)
+              model_name += "_" + kk + ("" if vv.lower() == "true" else ("_" + vv))
+              # model_series_tail = "_deploy" if kk == "deploy" else model_series_tail
               extra = extra[1:]
       elif "," in model_name:
           ss = [ii.strip() for ii in model_name.split(",")]

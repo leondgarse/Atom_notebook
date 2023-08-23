@@ -2768,6 +2768,67 @@
 
   cc = model_surgery.remove_layer_single_input(bb, remove_layer_condition=lambda layer: layer["name"] in fuse_layers)
   ```
+## FastViT
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../ml-fastvit/')
+
+  import torch
+  from models import fastvit_t8
+
+  tt = fastvit_t8()
+  ss = torch.load('fastvit_t8.pth.tar')
+  tt.load_state_dict(ss['state_dict'])
+  _ = tt.eval()
+
+  import kecam
+  image = kecam.common_layers.PreprocessInput()(kecam.test_images.cat())
+  preds = tt(torch.from_numpy(image.numpy()).permute([0, 3, 1, 2])).detach().numpy()
+  kecam.imagenet.eval_func.decode_predictions(preds)
+
+  kecam.download_and_load.try_save_pth_and_onnx(tt)
+  ```
+  ```py
+  sys.path.append('../pytorch-image-models/')
+  sys.path.append('../ml-fastvit/')
+
+  import torch
+  import models as torch_fastvit
+
+  model_type = 't8'
+
+  tt = getattr(torch_fastvit, f"fastvit_{model_type}")()
+  ss = torch.load(f'fastvit_{model_type}.pth.tar')
+  tt.load_state_dict(ss['state_dict'])
+  _ = tt.eval()
+
+  from keras_cv_attention_models.fastvit import fastvit
+  from keras_cv_attention_models import attention_layers, download_and_load
+
+  mm = getattr(fastvit, "FastViT_" + model_type.upper())(pretrained=None, classifier_activation=None)
+
+  tail_align_dict = {
+      "REPARAM_1_bn": -1, "REPARAM_0_bn": -2, "2_REPARAM_0_bn": -2,
+      "mixer_REPARAM_1_bn": -1, "mixer_REPARAM_0_bn": -4, "mixer_bn": -5, "1_gamma": -6, "2_gamma": -11,
+  }
+  if "a" in model_type:
+      tail_align_dict.update({"stack4": {"1_gamma": -3, "2_gamma": -7, "REPARAM_1_bn": -1, "2_REPARAM_0_bn": -2}})
+
+  full_name_align_dict = {
+      "stem_3_REPARAM_1_bn": "stem_3_REPARAM_1_bn",  # Keep position
+      "features_REPARAM_1_bn": -1, "features_se_1_conv": -4, "features_se_2_conv": -4
+  }
+  unstack_weights = ['layer_scale', 'layer_scale_1', 'layer_scale_2']
+  additional_transfer = {attention_layers.ChannelAffine: lambda ww: [np.squeeze(ww[0])]}
+  download_and_load.keras_reload_from_torch_model(
+      tt,
+      mm,
+      tail_align_dict=tail_align_dict,
+      full_name_align_dict=full_name_align_dict,
+      unstack_weights=unstack_weights,
+      additional_transfer=additional_transfer,
+  )
+  ```
 ## Count parameters and flops
   ```py
   from keras_cv_attention_models import model_surgery

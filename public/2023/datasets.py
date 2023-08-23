@@ -15,7 +15,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image, ExifTags
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 import pickle
@@ -102,61 +102,22 @@ def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=Fa
             rank=rank,
         )
 
-    batch_size = min(batch_size, len(dataset))
-    nw = min([os.cpu_count() // world_size, batch_size if batch_size > 1 else 0, workers])  # number of workers
     sampler = torch.utils.data.distributed.DistributedSampler(dataset) if rank != -1 else None
-    dataloader = InfiniteDataLoader(
-        dataset, batch_size=batch_size, num_workers=nw, sampler=sampler, pin_memory=True, collate_fn=LoadImagesAndLabels.collate_fn
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, num_workers=8, sampler=sampler, pin_memory=True, collate_fn=LoadImagesAndLabels.collate_fn
     )  # torch.utils.data.DataLoader()
     return dataloader, dataset
-
-
-class InfiniteDataLoader(torch.utils.data.dataloader.DataLoader):
-    """Dataloader that reuses workers
-
-    Uses same syntax as vanilla DataLoader
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        object.__setattr__(self, "batch_sampler", _RepeatSampler(self.batch_sampler))
-        self.iterator = super().__iter__()
-
-    def __len__(self):
-        return len(self.batch_sampler.sampler)
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield next(self.iterator)
-
-
-class _RepeatSampler(object):
-    """Sampler that repeats forever
-
-    Args:
-        sampler (Sampler)
-    """
-
-    def __init__(self, sampler):
-        self.sampler = sampler
-
-    def __iter__(self):
-        while True:
-            yield from iter(self.sampler)
 
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
     def __init__(
         self,
-        path,
+        data_path,
         img_size=640,
         batch_size=16,
         augment=False,
         hyp=None,
         rect=False,
-        image_weights=False,
-        cache_images=False,
-        single_cls=False,
         stride=32,
         pad=0.0,
         rank=-1,
@@ -164,9 +125,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         self.img_size = img_size
         self.augment = augment
         self.hyp = hyp
-        self.image_weights = image_weights
-        self.rect = False if image_weights else rect
-        self.mosaic = self.augment and not self.rect  # load 4 images at a time into a mosaic (only during training)
+        self.rect = False if augment else rect
         self.mosaic_border = [-img_size // 2, -img_size // 2]
         self.stride = stride
 
@@ -175,23 +134,19 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             sa, sb = os.sep + "images" + os.sep, os.sep + "labels" + os.sep  # /images/, /labels/ substrings
             return [x.replace(sa, sb, 1).replace(x.split(".")[-1], "txt") for x in img_paths]
 
-        try:
-            f = []  # image files
-            for p in path if isinstance(path, list) else [path]:
-                p = Path(p)  # os-agnostic
-                if p.is_dir():  # dir
-                    f += glob.glob(str(p / "**" / "*.*"), recursive=True)
-                elif p.is_file():  # file
-                    with open(p, "r") as t:
-                        t = t.read().splitlines()
-                        parent = str(p.parent) + os.sep
-                        f += [x.replace("./", parent) if x.startswith("./") else x for x in t]  # local to global path
-                else:
-                    raise Exception("%s does not exist" % p)
-            self.img_files = sorted([x.replace("/", os.sep) for x in f if x.split(".")[-1].lower() in img_formats])
-            assert self.img_files, "No images found"
-        except Exception as e:
-            raise Exception("Error loading data from %s: %s\nSee %s" % (path, e, help_url))
+        f = []  # image files
+        p = Path(p)  # os-agnostic
+        if p.is_dir():  # dir
+            f += glob.glob(str(p / "**" / "*.*"), recursive=True)
+        elif p.is_file():  # file
+            with open(p, "r") as t:
+                t = t.read().splitlines()
+                parent = str(p.parent) + os.sep
+                f += [x.replace("./", parent) if x.startswith("./") else x for x in t]  # local to global path
+        else:
+            raise Exception("%s does not exist" % p)
+        self.img_files = sorted([x.replace("/", os.sep) for x in f if x.split(".")[-1].lower() in img_formats])
+        assert self.img_files, "No images found"
 
         # Check cache
         self.label_files = img2label_paths(self.img_files)  # labels

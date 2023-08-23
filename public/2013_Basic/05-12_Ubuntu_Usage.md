@@ -519,6 +519,18 @@
     export TMOUT=0
     $ source /etc/profile
     ```
+  - Q: Error: could not get shadow information for xxx
+    ```sh
+    # 查看 selinux 状态
+    $ sestatus  -v
+
+    # 临时关闭 selinux
+    $ setenforce 0
+
+    # 永久关闭 selinux
+    $ vi /etc/selinux/config
+    SELINUX=disabled
+    ```
 ## samba 配置
   - **samba 安装**
     ```shell

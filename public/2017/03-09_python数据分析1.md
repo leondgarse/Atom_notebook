@@ -630,12 +630,24 @@
     ```python
     ## lines of code to run at IPython startup.
     c.InteractiveShellApp.exec_lines = [
+        'import os',
+        'import sys',
+        # 'import pathlib',
+        # 'pathlib.PosixPath = pathlib.WindowsPath',
         'import numpy as np',
         'import pandas as pd',
         'import matplotlib.pyplot as plt',
+        'plt.style.use("seaborn")',
+        'import seaborn as sns',
+        'sns.set(style="dark")',
+        'COLORS = sns.color_palette("deep", n_colors=10)',
         'import pylab as pl',
-
-        'from pandas import Series, DataFrame'
+        'import tensorflow as tf',
+        'from pandas import Series, DataFrame',
+        'from importlib import reload',
+        'from skimage.io import imread, imsave',
+        'gpus = tf.config.experimental.list_physical_devices("GPU"); [tf.config.experimental.set_memory_growth(gpu, True) for gpu in gpus]'
+        'from tensorflow import keras',
     ]
     ```
 ***
