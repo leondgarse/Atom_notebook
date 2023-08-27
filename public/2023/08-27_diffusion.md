@@ -1,0 +1,8 @@
+- [How does Stable Diffusion work?](https://stable-diffusion-art.com/how-stable-diffusion-work/)
+- [The Illustrated Stable Diffusion](https://jalammar.github.io/illustrated-stable-diffusion/)
+- [Github hojonathanho/diffusion](https://github.com/hojonathanho/diffusion)
+- [Github CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion)
+- [Github Stability-AI/stablediffusion](https://github.com/Stability-AI/stablediffusion)
+- [Github kakaobrain/karlo](https://github.com/kakaobrain/karlo)
+- [Github lucidrains/denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch)
+- [Github lucidrains/DALLE2-pytorch](https://github.com/lucidrains/DALLE2-pytorch)
