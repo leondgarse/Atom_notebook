@@ -979,3 +979,39 @@ class GridSamplerBilinear(layers.Layer):
 
   output = c00 * x00 * m00 + c01 * x01 * m01 + c10 * x10 * m10 + c11 * x11 * m11
   ```
+***
+
+## Torchvision
+```py
+import torch
+from torch import nn
+import torchvision
+
+
+class DeformConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=0):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+
+        self.weight = nn.Parameter(torch.empty(out_channels, in_channels, kernel_size, kernel_size))
+        self.bias = nn.Parameter(torch.empty(out_channels))
+
+        # offset conv
+        patch = 3 * kernel_size * kernel_size
+        self.conv_offset_mask = nn.Conv2d(in_channels, patch, kernel_size=kernel_size, stride=stride, padding=padding, bias=True)
+
+    def forward(self, inputs):
+        out = self.conv_offset_mask(inputs)
+        o1, o2, mask = torch.chunk(out, 3, dim=1)
+        offset = torch.cat([o1, o2], dim=1)
+        mask = torch.sigmoid(mask)
+
+        return torchvision.ops.deform_conv2d(inputs, offset, self.weight, self.bias, stride=self.stride, padding=self.padding, dilation=1, mask=mask)
+aa = DeformConv2d(3, 32)
+print(f"{aa(torch.ones([1, 3, 32, 32])).shape = }")
+# aa(torch.ones([1, 3, 32, 32])).shape = torch.Size([1, 32, 30, 30])
+```
