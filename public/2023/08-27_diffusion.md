@@ -8,6 +8,16 @@
 - [Github lucidrains/DALLE2-pytorch](https://github.com/lucidrains/DALLE2-pytorch)
 
 [Github kakaobrain/karlo/t2i.py](https://github.com/kakaobrain/karlo/karlo/sampler/t2i.py)
+```sh
+pip install omegaconf
+pip install git+https://github.com/openai/CLIP.git
+
+!wget 'https://arena.kakaocdn.net/brainrepo/models/karlo-public/v1.0.0.alpha/0b62380a75e56f073e2844ab5199153d/ViT-L-14_stats.th' && \
+wget 'https://arena.kakaocdn.net/brainrepo/models/karlo-public/v1.0.0.alpha/096db1af569b284eb76b3881534822d9/ViT-L-14.pt' && \
+wget 'https://arena.kakaocdn.net/brainrepo/models/karlo-public/v1.0.0.alpha/85626483eaca9f581e2a78d31ff905ca/prior-ckpt-step%3D01000000-of-01000000.ckpt' && \
+wget 'https://arena.kakaocdn.net/brainrepo/models/karlo-public/v1.0.0.alpha/efdf6206d8ed593961593dc029a8affa/decoder-ckpt-step%3D01000000-of-01000000.ckpt' && \
+wget 'https://arena.kakaocdn.net/brainrepo/models/karlo-public/v1.0.0.alpha/4226b831ae0279020d134281f3c31590/improved-sr-ckpt-step%3D1.2M.ckpt'
+```
 ```py
 import torch
 from karlo.sampler.t2i import T2ISampler
@@ -20,7 +30,24 @@ prompt = "a portrait of an old monk, highly detailed."
 with torch.no_grad():
     prompts_batch, prior_cf_scales_batch, decoder_cf_scales_batch, txt_feat, txt_feat_seq, tok, mask = model.preprocess(prompt, 1)
     img_feat = model._prior(txt_feat, txt_feat_seq, mask, prior_cf_scales_batch, timestep_respacing=model._prior_sm)
-img_feat
+
+    """ Generate 64x64px images """
+    images_64_outputs = self._decoder(
+        txt_feat, txt_feat_seq, tok, mask, img_feat, cf_guidance_scales=decoder_cf_scales_batch, timestep_respacing=self._decoder_sm,
+    )
+
+    images_64 = None
+    for k, out in enumerate(images_64_outputs):
+        images_64 = out
+    images_64 = torch.clamp(images_64, -1, 1)
+
+    """ Upsample 64x64 to 256x256 """
+    images_256 = TVF.resize(images_64, [256, 256], interpolation=InterpolationMode.BICUBIC, antialias=True)
+    images_256_outputs = self._sr_64_256(images_256, timestep_respacing=self._sr_sm)
+
+    for k, out in enumerate(images_256_outputs):
+        images_256 = out
+yield torch.clamp(images_256 * 0.5 + 0.5, 0.0, 1.0)
 
 ```
 ```py
