@@ -315,3 +315,173 @@
   image = Image.fromarray(image)
   image
   ```
+***
+
+# DDPM
+```py
+class DenoiseDiffusion:
+    def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
+        super().__init__()
+        self.eps_model = eps_model
+
+        # Create $\beta_1, \dots, \beta_T$ linearly increasing variance schedule
+        self.beta = torch.linspace(0.0001, 0.02, n_steps).to(device)
+
+        # $\alpha_t = 1 - \beta_t$
+        self.alpha = 1. - self.beta
+        # $\bar\alpha_t = \prod_{s=1}^t \alpha_s$
+        self.alpha_bar = torch.cumprod(self.alpha, dim=0)
+        # $T$
+        self.n_steps = n_steps
+        # $\sigma^2 = \beta$
+        self.sigma2 = self.beta
+
+    def q_xt_x0(self, x0: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        # [gather](utils.html) $\alpha_t$ and compute $\sqrt{\bar\alpha_t} x_0$
+        mean = gather(self.alpha_bar, t) ** 0.5 * x0
+        # $(1-\bar\alpha_t) \mathbf{I}$
+        var = 1 - gather(self.alpha_bar, t)
+        #
+        return mean, var
+
+    def q_sample(self, x0: torch.Tensor, t: torch.Tensor, eps: Optional[torch.Tensor] = None):
+        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+        if eps is None:
+            eps = torch.randn_like(x0)
+
+        # get $q(x_t|x_0)$
+        mean, var = self.q_xt_x0(x0, t)
+        # Sample from $q(x_t|x_0)$
+        return mean + (var ** 0.5) * eps
+
+    def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
+        # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
+        eps_theta = self.eps_model(xt, t)
+        # [gather](utils.html) $\bar\alpha_t$
+        alpha_bar = gather(self.alpha_bar, t)
+        # $\alpha_t$
+        alpha = gather(self.alpha, t)
+        # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
+        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+        # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
+        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+        # $\sigma^2$
+        var = gather(self.sigma2, t)
+
+        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+        eps = torch.randn(xt.shape, device=xt.device)
+        # Sample
+        return mean + (var ** .5) * eps
+
+    def loss(self, x0: torch.Tensor, noise: Optional[torch.Tensor] = None):
+        # Get batch size
+        batch_size = x0.shape[0]
+        # Get random $t$ for each sample in the batch
+        t = torch.randint(0, self.n_steps, (batch_size,), device=x0.device, dtype=torch.long)
+
+        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+        if noise is None:
+            noise = torch.randn_like(x0)
+
+        # Sample $x_t$ for $q(x_t|x_0)$
+        xt = self.q_sample(x0, t, eps=noise)
+        # Get $\textcolor{lightgreen}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)$
+        eps_theta = self.eps_model(xt, t)
+
+        # MSE loss
+        return F.mse_loss(noise, eps_theta)
+```
+```py
+def mnist(image_size=32):
+    transform = torchvision.transforms.Compose([torchvision.transforms.Resize(image_size), torchvision.transforms.ToTensor()])
+    return torchvision.datasets.MNIST("datasets", train=True, download=True, transform=transform)
+
+class Sampler:
+    def __init__(self, n_steps=50):
+        self.beta = torch.linspace(0.0001, 0.02, n_steps)
+        self.beta = self.beta[:, None, None, None]  # expand to calculation on batch dimension
+
+        self.alpha = 1. - self.beta
+        self.alpha_bar = torch.cumprod(self.alpha, dim=0)
+        self.n_steps = n_steps
+        self.sigma2 = self.beta
+
+    def q_sample(self, x0, timestep, noise=None):
+        noise = torch.randn_like(x0) if noise is None else noise
+        cur_alpha = self.alpha_bar[timestep]
+        # Sample from $q(x_t|x_0)$
+        return cur_alpha ** 0.5 * x0 + (1 - cur_alpha) ** 0.5 * noise
+
+    def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
+        # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
+        eps_theta = self.eps_model(xt, t)
+        # [gather](utils.html) $\bar\alpha_t$
+        alpha_bar = gather(self.alpha_bar, t)
+        # $\alpha_t$
+        alpha = gather(self.alpha, t)
+        # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
+        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+        # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
+        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+        # $\sigma^2$
+        var = gather(self.sigma2, t)
+
+        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+        eps = torch.randn(xt.shape, device=xt.device)
+        # Sample
+        return mean + (var ** .5) * eps
+
+self.eps_model = UNet(
+    image_channels=self.image_channels, n_channels=self.n_channels, ch_mults=self.channel_multipliers, is_attn=self.is_attention,
+).to(self.device)
+
+# Create [DDPM class](index.html)
+self.diffusion = DenoiseDiffusion(eps_model=self.eps_model, n_steps=self.n_steps, device=self.device)
+
+# Create dataloader
+self.data_loader = torch.utils.data.DataLoader(self.dataset, self.batch_size, shuffle=True, pin_memory=True)
+# Create optimizer
+self.optimizer = torch.optim.Adam(self.eps_model.parameters(), lr=self.learning_rate)
+
+class DenoiseDiffusionLoss:
+    def __init__(self, model, n_steps=1000):
+        self.sampler = Sampler(n_steps=n_steps)
+        self.model = model
+
+    def __call__(self, x0):
+        timestep = torch.randint(0, self.sampler.n_steps, (x0.shape[0]))
+        noise = torch.randn_like(x0)
+        xt = sampler.q_sample(x0, timestep, noise)
+        xt_noise = self.model(xt, timestep)
+        return torch.functional.F.mse_loss(noise, xt_noise)
+
+
+for _ in monit.loop(self.epochs):
+    # Train the model. Iterate through the dataset
+    for data in monit.iterate('Train', self.data_loader):
+        # Move data to device
+        data = data.to(self.device)
+
+        # Make the gradients zero
+        self.optimizer.zero_grad()
+        # Calculate loss
+        loss = self.diffusion.loss(data)
+        # Compute gradients
+        loss.backward()
+        # Take an optimization step
+        self.optimizer.step()
+
+    # Sample some images
+    with torch.no_grad():
+        # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
+        x = torch.randn([self.n_samples, self.image_channels, self.image_size, self.image_size], device=self.device)
+
+        # Remove noise for $T$ steps
+        for t_ in monit.iterate('Sample', self.n_steps):
+            # $t$
+            t = self.n_steps - t_ - 1
+            # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
+            x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
+```
