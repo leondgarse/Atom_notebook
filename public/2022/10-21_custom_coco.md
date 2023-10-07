@@ -201,34 +201,46 @@
           config.update({"model_input_shape": self.model_input_shape, "pyramid_levels": self.pyramid_levels, "anchor_scale": self.anchor_scale})
           return config
   ```
-!pip install -q ultralytics
+***
 
-  aa = """path: /content/datasets/coco_tiny  # dataset root dir
-  train: train2017/images  # train images (relative to 'path')
-  val: val2017/images  # val images (relative to 'path')
-  test:  # test images (optional)
+# To recognition
+```py
+import json
+with open('datasets/coco_dog_cat/detections.json') as ff:
+    aa = json.load(ff)
 
-  # Classes
-  names:
-    0: cat
-    1: dog
+# Filter too small ones
+area_filter = lambda xx: any([(ii[2] - ii[0]) * (ii[3] - ii[1]) > 0.1 for ii in xx['objects']['bbox']])
 
-  # Download script/URL (optional)
-  download: https://github.com/leondgarse/keras_cv_attention_models/releases/download/assets/coco_tiny_dog_cat.tar.gz
-  """
-  with open('../datasets/coco_tiny.yaml', 'w') as ff:
-    ff.write(aa)
+train, train_skipped = [], []
+for ii in aa['train']:
+    labels = list(set(ii['objects']['label']))
+    if len(labels) > 1 or not area_filter(ii):
+        train_skipped.append(ii)
+        continue
+    train.append({'image': ii['image'], 'label': labels[0]})
 
-    import os, sys
-    sys.setrecursionlimit(65536)
-    os.environ["KECAM_BACKEND"] = "torch"
-    # sys.path.append(os.path.expanduser("~/workspace/ultralytics/"))
+test, test_skipped = [], []
+for ii in aa['test']:
+    labels = list(set(ii['objects']['label']))
+    if len(labels) > 1 or not area_filter(ii):
+        test_skipped.append(ii)
+        continue
+    test.append({'image': ii['image'], 'label': labels[0]})
 
-    from keras_cv_attention_models import iformer, yolov8
-    from keras_cv_attention_models.yolov8 import train, torch_wrapper
+print(f"{len(train) = }, {len(test) = }, {len(train_skipped) = }, {len(test_skipped) = }")
+# len(train) = 8083, len(test) = 337, len(train_skipped) = 208, len(test_skipped) = 12
 
-    bb = iformer.IFormerSmall(input_shape=(3, 512, 512), num_classes=0)
-    model = yolov8.YOLOV8_M(backbone=bb, anchors_mode='anchor_free', num_classes=2, pretrained=None)
-    # model = yolov8.YOLOV8_N(input_shape=(3, None, None), classifier_activation=None, pretrained=None).cuda()
-    model = torch_wrapper.Detect(model)
-    ema = train.train(model, dataset_path="../datasets/coco_tiny.yaml", rect_val=False)
+bb = {
+  'info': {'num_classes': aa['info']['num_classes'], 'base_path': aa['info']['base_path']},
+  'indices_2_labels': aa['indices_2_labels'],
+  'train': train,
+  'test': test,
+}
+with open('datasets/coco_dog_cat/recognition.json', 'w') as ff:
+    json.dump(bb, ff, indent=2)
+
+from keras_cv_attention_models.imagenet import data
+tt = data.init_dataset('datasets/coco_dog_cat/recognition.json', batch_size=16)[0]
+_ = data.show_batch_sample(tt)
+```

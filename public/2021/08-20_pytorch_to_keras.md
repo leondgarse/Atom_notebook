@@ -2425,18 +2425,18 @@
   sys.path.append("../pytorch-image-models/")
   sys.path.append('../efficientvit/')
   import torch
-  from models.efficientvit import cls as torch_efficientvit
+  from efficientvit.models.efficientvit import cls as torch_efficientvit
 
-  id, input_shape = 0, 224
-  tt = getattr(torch_efficientvit, "efficientvit_cls_b{}".format(id))()
-  ss = torch.load('b{}-r{}.pt'.format(id, input_shape), map_location='cpu')
+  id, input_shape = "l1", 224
+  tt = getattr(torch_efficientvit, "efficientvit_cls_{}".format(id))()
+  ss = torch.load('{}-r{}.pt'.format(id, input_shape), map_location='cpu')
   tt.load_state_dict(ss['state_dict'])
   _ = tt.eval()
 
   from keras_cv_attention_models.efficientvit import efficientvit_b
   from keras_cv_attention_models import download_and_load
 
-  mm = getattr(efficientvit_b, "EfficientViT_B{}".format(id))(input_shape=(input_shape, input_shape, 3), classifier_activation=None)
+  mm = getattr(efficientvit_b, "EfficientViT_{}".format(id.upper()))(input_shape=(input_shape, input_shape, 3), classifier_activation=None)
   download_and_load.keras_reload_from_torch_model(tt, mm, save_name="{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
 ## VanallaNet
