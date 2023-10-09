@@ -49,12 +49,10 @@
       for k, out in enumerate(images_256_outputs):
           images_256 = out
   yield torch.clamp(images_256 * 0.5 + 0.5, 0.0, 1.0)
-
   ```
   ```py
   import os
   import torch
-  from PIL import Image
   from omegaconf import OmegaConf
   from torchvision.transforms import InterpolationMode
   from torchvision.transforms.functional import resize
@@ -125,11 +123,6 @@
   decoder = Text2ImProgressiveModel.load_from_checkpoint(config, tokenizer, os.path.join(root_dir, decoder_ckpt_path), strict=True)
   decoder.eval().to(device=device)
 
-  config = OmegaConf.load("configs/improved_sr_64_256_1.4B.yaml")
-  sr_64_256 = ImprovedSupRes64to256ProgressiveModel.load_from_checkpoint(config, os.path.join(root_dir, sr_256_ckpt_path), strict=True)
-  sr_64_256.eval().to(device=device)
-
-
   prompts_batch, prior_cf_scales_batch, decoder_cf_scales_batch, txt_feat, txt_feat_seq, tok, mask = preprocess(
       clip, tokenizer, prior.model.text_ctx, prior_cf_scale, decoder_cf_scale, prompt, bsz
   )
@@ -147,7 +140,26 @@
   images_64 = torch.clamp(images_64, -1, 1)
   images_256 = resize(images_64, [256, 256], interpolation=InterpolationMode.BICUBIC, antialias=True)
 
+  np.save('aa.npy', images_256.detach().cpu().numpy())
+  ```
+  ```py
   """ Upsample 64x64 to 256x256 """
+  import os
+  import torch
+  from PIL import Image
+  from omegaconf import OmegaConf
+  from karlo.models.sr_64_256 import ImprovedSupRes64to256ProgressiveModel
+
+  device = torch.device("cuda:0") if torch.cuda.is_available() and int(os.environ.get("CUDA_VISIBLE_DEVICES", "0")) > 0 else torch.device("cpu")
+  root_dir = "../karlo_ckpt"
+  sr_256_ckpt_path = "improved-sr-ckpt-step=1.2M.ckpt"
+  sr_sm = "7"
+
+  images_256 = torch.from_numpy(np.load('aa.npy')).to(device)
+  config = OmegaConf.load("configs/improved_sr_64_256_1.4B.yaml")
+  sr_64_256 = ImprovedSupRes64to256ProgressiveModel.load_from_checkpoint(config, os.path.join(root_dir, sr_256_ckpt_path), strict=True)
+  sr_64_256.eval().to(device=device)
+
   images_256_outputs = sr_64_256(images_256, timestep_respacing=sr_sm)
   for k, out in enumerate(images_256_outputs):
       images_256 = out
@@ -318,170 +330,309 @@
 ***
 
 # DDPM
-```py
-class DenoiseDiffusion:
-    def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
-        super().__init__()
-        self.eps_model = eps_model
+  ```py
+  class DenoiseDiffusion:
+      def __init__(self, eps_model: nn.Module, n_steps: int, device: torch.device):
+          super().__init__()
+          self.eps_model = eps_model
 
-        # Create $\beta_1, \dots, \beta_T$ linearly increasing variance schedule
-        self.beta = torch.linspace(0.0001, 0.02, n_steps).to(device)
+          # Create $\beta_1, \dots, \beta_T$ linearly increasing variance schedule
+          self.beta = torch.linspace(0.0001, 0.02, n_steps).to(device)
 
-        # $\alpha_t = 1 - \beta_t$
-        self.alpha = 1. - self.beta
-        # $\bar\alpha_t = \prod_{s=1}^t \alpha_s$
-        self.alpha_bar = torch.cumprod(self.alpha, dim=0)
-        # $T$
-        self.n_steps = n_steps
-        # $\sigma^2 = \beta$
-        self.sigma2 = self.beta
+          # $\alpha_t = 1 - \beta_t$
+          self.alpha = 1. - self.beta
+          # $\bar\alpha_t = \prod_{s=1}^t \alpha_s$
+          self.alpha_bar = torch.cumprod(self.alpha, dim=0)
+          # $T$
+          self.n_steps = n_steps
+          # $\sigma^2 = \beta$
+          self.sigma2 = self.beta
 
-    def q_xt_x0(self, x0: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        # [gather](utils.html) $\alpha_t$ and compute $\sqrt{\bar\alpha_t} x_0$
-        mean = gather(self.alpha_bar, t) ** 0.5 * x0
-        # $(1-\bar\alpha_t) \mathbf{I}$
-        var = 1 - gather(self.alpha_bar, t)
-        #
-        return mean, var
+      def q_xt_x0(self, x0: torch.Tensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+          # [gather](utils.html) $\alpha_t$ and compute $\sqrt{\bar\alpha_t} x_0$
+          mean = gather(self.alpha_bar, t) ** 0.5 * x0
+          # $(1-\bar\alpha_t) \mathbf{I}$
+          var = 1 - gather(self.alpha_bar, t)
+          #
+          return mean, var
 
-    def q_sample(self, x0: torch.Tensor, t: torch.Tensor, eps: Optional[torch.Tensor] = None):
-        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
-        if eps is None:
-            eps = torch.randn_like(x0)
+      def q_sample(self, x0: torch.Tensor, t: torch.Tensor, eps: Optional[torch.Tensor] = None):
+          # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+          if eps is None:
+              eps = torch.randn_like(x0)
 
-        # get $q(x_t|x_0)$
-        mean, var = self.q_xt_x0(x0, t)
-        # Sample from $q(x_t|x_0)$
-        return mean + (var ** 0.5) * eps
+          # get $q(x_t|x_0)$
+          mean, var = self.q_xt_x0(x0, t)
+          # Sample from $q(x_t|x_0)$
+          return mean + (var ** 0.5) * eps
 
-    def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
-        # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
-        eps_theta = self.eps_model(xt, t)
-        # [gather](utils.html) $\bar\alpha_t$
-        alpha_bar = gather(self.alpha_bar, t)
-        # $\alpha_t$
-        alpha = gather(self.alpha, t)
-        # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
-        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
-        # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
-        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
-        # $\sigma^2$
-        var = gather(self.sigma2, t)
+      def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
+          # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
+          eps_theta = self.eps_model(xt, t)
+          # [gather](utils.html) $\bar\alpha_t$
+          alpha_bar = gather(self.alpha_bar, t)
+          # $\alpha_t$
+          alpha = gather(self.alpha, t)
+          # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
+          eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+          # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+          #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
+          mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+          # $\sigma^2$
+          var = gather(self.sigma2, t)
 
-        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
-        eps = torch.randn(xt.shape, device=xt.device)
-        # Sample
-        return mean + (var ** .5) * eps
+          # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+          eps = torch.randn(xt.shape, device=xt.device)
+          # Sample
+          return mean + (var ** .5) * eps
 
-    def loss(self, x0: torch.Tensor, noise: Optional[torch.Tensor] = None):
-        # Get batch size
-        batch_size = x0.shape[0]
-        # Get random $t$ for each sample in the batch
-        t = torch.randint(0, self.n_steps, (batch_size,), device=x0.device, dtype=torch.long)
+      def loss(self, x0: torch.Tensor, noise: Optional[torch.Tensor] = None):
+          # Get batch size
+          batch_size = x0.shape[0]
+          # Get random $t$ for each sample in the batch
+          t = torch.randint(0, self.n_steps, (batch_size,), device=x0.device, dtype=torch.long)
 
-        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
-        if noise is None:
-            noise = torch.randn_like(x0)
+          # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+          if noise is None:
+              noise = torch.randn_like(x0)
 
-        # Sample $x_t$ for $q(x_t|x_0)$
-        xt = self.q_sample(x0, t, eps=noise)
-        # Get $\textcolor{lightgreen}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)$
-        eps_theta = self.eps_model(xt, t)
+          # Sample $x_t$ for $q(x_t|x_0)$
+          xt = self.q_sample(x0, t, eps=noise)
+          # Get $\textcolor{lightgreen}{\epsilon_\theta}(\sqrt{\bar\alpha_t} x_0 + \sqrt{1-\bar\alpha_t}\epsilon, t)$
+          eps_theta = self.eps_model(xt, t)
 
-        # MSE loss
-        return F.mse_loss(noise, eps_theta)
-```
-```py
-def mnist(image_size=32):
-    transform = torchvision.transforms.Compose([torchvision.transforms.Resize(image_size), torchvision.transforms.ToTensor()])
-    return torchvision.datasets.MNIST("datasets", train=True, download=True, transform=transform)
+          # MSE loss
+          return F.mse_loss(noise, eps_theta)
+  ```
+  ```py
+  def mnist(image_size=32):
+      transform = torchvision.transforms.Compose([torchvision.transforms.Resize(image_size), torchvision.transforms.ToTensor()])
+      return torchvision.datasets.MNIST("datasets", train=True, download=True, transform=transform)
 
-class Sampler:
-    def __init__(self, n_steps=50):
-        self.beta = torch.linspace(0.0001, 0.02, n_steps)
-        self.beta = self.beta[:, None, None, None]  # expand to calculation on batch dimension
+  class Sampler:
+      def __init__(self, n_steps=50):
+          self.beta = torch.linspace(0.0001, 0.02, n_steps)
+          self.beta = self.beta[:, None, None, None]  # expand to calculation on batch dimension
 
-        self.alpha = 1. - self.beta
-        self.alpha_bar = torch.cumprod(self.alpha, dim=0)
-        self.n_steps = n_steps
-        self.sigma2 = self.beta
+          self.alpha = 1. - self.beta
+          self.alpha_bar = torch.cumprod(self.alpha, dim=0)
+          self.n_steps = n_steps
+          self.sigma2 = self.beta
 
-    def q_sample(self, x0, timestep, noise=None):
-        noise = torch.randn_like(x0) if noise is None else noise
-        cur_alpha = self.alpha_bar[timestep]
-        # Sample from $q(x_t|x_0)$
-        return cur_alpha ** 0.5 * x0 + (1 - cur_alpha) ** 0.5 * noise
+      def q_sample(self, x0, timestep, noise=None):
+          noise = torch.randn_like(x0) if noise is None else noise
+          cur_alpha = self.alpha_bar[timestep]
+          # Sample from $q(x_t|x_0)$
+          return cur_alpha ** 0.5 * x0 + (1 - cur_alpha) ** 0.5 * noise
 
-    def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
-        # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
-        eps_theta = self.eps_model(xt, t)
-        # [gather](utils.html) $\bar\alpha_t$
-        alpha_bar = gather(self.alpha_bar, t)
-        # $\alpha_t$
-        alpha = gather(self.alpha, t)
-        # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
-        eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
-        # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
-        #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
-        mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
-        # $\sigma^2$
-        var = gather(self.sigma2, t)
+      def p_sample(self, xt: torch.Tensor, t: torch.Tensor):
+          # $\textcolor{lightgreen}{\epsilon_\theta}(x_t, t)$
+          eps_theta = self.eps_model(xt, t)
+          # [gather](utils.html) $\bar\alpha_t$
+          alpha_bar = gather(self.alpha_bar, t)
+          # $\alpha_t$
+          alpha = gather(self.alpha, t)
+          # $\frac{\beta}{\sqrt{1-\bar\alpha_t}}$
+          eps_coef = (1 - alpha) / (1 - alpha_bar) ** .5
+          # $$\frac{1}{\sqrt{\alpha_t}} \Big(x_t -
+          #      \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\textcolor{lightgreen}{\epsilon_\theta}(x_t, t) \Big)$$
+          mean = 1 / (alpha ** 0.5) * (xt - eps_coef * eps_theta)
+          # $\sigma^2$
+          var = gather(self.sigma2, t)
 
-        # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
-        eps = torch.randn(xt.shape, device=xt.device)
-        # Sample
-        return mean + (var ** .5) * eps
+          # $\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$
+          eps = torch.randn(xt.shape, device=xt.device)
+          # Sample
+          return mean + (var ** .5) * eps
 
-self.eps_model = UNet(
-    image_channels=self.image_channels, n_channels=self.n_channels, ch_mults=self.channel_multipliers, is_attn=self.is_attention,
-).to(self.device)
+  self.eps_model = UNet(
+      image_channels=self.image_channels, n_channels=self.n_channels, ch_mults=self.channel_multipliers, is_attn=self.is_attention,
+  ).to(self.device)
 
-# Create [DDPM class](index.html)
-self.diffusion = DenoiseDiffusion(eps_model=self.eps_model, n_steps=self.n_steps, device=self.device)
+  # Create [DDPM class](index.html)
+  self.diffusion = DenoiseDiffusion(eps_model=self.eps_model, n_steps=self.n_steps, device=self.device)
 
-# Create dataloader
-self.data_loader = torch.utils.data.DataLoader(self.dataset, self.batch_size, shuffle=True, pin_memory=True)
-# Create optimizer
-self.optimizer = torch.optim.Adam(self.eps_model.parameters(), lr=self.learning_rate)
+  # Create dataloader
+  self.data_loader = torch.utils.data.DataLoader(self.dataset, self.batch_size, shuffle=True, pin_memory=True)
+  # Create optimizer
+  self.optimizer = torch.optim.Adam(self.eps_model.parameters(), lr=self.learning_rate)
 
-class DenoiseDiffusionLoss:
-    def __init__(self, model, n_steps=1000):
-        self.sampler = Sampler(n_steps=n_steps)
-        self.model = model
+  class DenoiseDiffusionLoss:
+      def __init__(self, model, n_steps=1000):
+          self.sampler = Sampler(n_steps=n_steps)
+          self.model = model
 
-    def __call__(self, x0):
-        timestep = torch.randint(0, self.sampler.n_steps, (x0.shape[0]))
-        noise = torch.randn_like(x0)
-        xt = sampler.q_sample(x0, timestep, noise)
-        xt_noise = self.model(xt, timestep)
-        return torch.functional.F.mse_loss(noise, xt_noise)
+      def __call__(self, x0):
+          timestep = torch.randint(0, self.sampler.n_steps, (x0.shape[0]))
+          noise = torch.randn_like(x0)
+          xt = sampler.q_sample(x0, timestep, noise)
+          xt_noise = self.model(xt, timestep)
+          return torch.functional.F.mse_loss(noise, xt_noise)
 
 
-for _ in monit.loop(self.epochs):
-    # Train the model. Iterate through the dataset
-    for data in monit.iterate('Train', self.data_loader):
-        # Move data to device
-        data = data.to(self.device)
+  for _ in monit.loop(self.epochs):
+      # Train the model. Iterate through the dataset
+      for data in monit.iterate('Train', self.data_loader):
+          # Move data to device
+          data = data.to(self.device)
 
-        # Make the gradients zero
-        self.optimizer.zero_grad()
-        # Calculate loss
-        loss = self.diffusion.loss(data)
-        # Compute gradients
-        loss.backward()
-        # Take an optimization step
-        self.optimizer.step()
+          # Make the gradients zero
+          self.optimizer.zero_grad()
+          # Calculate loss
+          loss = self.diffusion.loss(data)
+          # Compute gradients
+          loss.backward()
+          # Take an optimization step
+          self.optimizer.step()
 
-    # Sample some images
-    with torch.no_grad():
-        # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
-        x = torch.randn([self.n_samples, self.image_channels, self.image_size, self.image_size], device=self.device)
+      # Sample some images
+      with torch.no_grad():
+          # $x_T \sim p(x_T) = \mathcal{N}(x_T; \mathbf{0}, \mathbf{I})$
+          x = torch.randn([self.n_samples, self.image_channels, self.image_size, self.image_size], device=self.device)
 
-        # Remove noise for $T$ steps
-        for t_ in monit.iterate('Sample', self.n_steps):
-            # $t$
-            t = self.n_steps - t_ - 1
-            # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
-            x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
-```
+          # Remove noise for $T$ steps
+          for t_ in monit.iterate('Sample', self.n_steps):
+              # $t$
+              t = self.n_steps - t_ - 1
+              # Sample from $\textcolor{lightgreen}{p_\theta}(x_{t-1}|x_t)$
+              x = self.diffusion.p_sample(x, x.new_full((self.n_samples,), t, dtype=torch.long))
+  ```
+***
+
+# StableDiffusion weights
+## CLIP model
+  ```py
+  !GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/openai/clip-vit-large-patch14
+
+  import torch
+  from transformers import CLIPTokenizer, CLIPTextModel
+  clip_model = "../learning/stable_diffusion/clip-vit-large-patch14"
+  ss = torch.load('../learning/stable_diffusion/clip_model.pt')
+  clip_text_embedder = CLIPTextModel.from_pretrained(clip_model, state_dict=ss)
+  _ = clip_text_embedder.eval()
+
+
+  import torch
+
+  ss = torch.load('../learning/stable_diffusion/clip_model.pt')
+  dd = {}
+  for name in ss:
+      if 'k_proj' in name:
+          qq, kk, vv = ss[name.replace('.k_proj', ".q_proj")], ss[name], ss[name.replace('.k_proj',".v_proj")]
+          dd[name] = torch.concat([qq, kk, vv], axis=0)
+          print(f"{name = }, {qq.shape = }, {kk.shape = }, {vv.shape = }, {dd[name].shape = }")
+      elif 'v_proj' in name or 'q_proj' in name or name in ['text_model.embeddings.position_ids']:
+          continue
+      else:
+          dd[name] = ss[name]
+
+  from keras_cv_attention_models import vit, download_and_load
+
+  mm = vit.ViTTextLargePatch14(include_top=False, pretrained=None)
+  tail_align_dict = {"attn_qkv": -1, "attn_output": -1, "mlp_dense_1": -1, "mlp_dense_2": -1}
+  download_and_load.keras_reload_from_torch_model(dd, mm, tail_align_dict=tail_align_dict, tail_split_position=1, do_convert=True, do_predict=False)
+
+  torch_out = clip_text_embedder(torch.ones([1, 77], dtype=torch.int64)).last_hidden_state
+  tf_out = mm(tf.ones([1, 77]))
+  np.allclose(torch_out.detach(), tf_out, atol=1e-5)
+  ```
+## Unet
+  ```py
+  sys.path.append('../learning/stable_diffusion/')
+  import torch
+  import unet as torch_unet
+  unet_model = torch_unet.UNetModel()
+  unet_model.load_state_dict(torch.load("../learning/stable_diffusion/diffusion_model.pt"))
+  _ = unet_model.eval()
+
+  from keras_cv_attention_models.stable_diffusion import stable_diffusion, unet
+  from keras_cv_attention_models import download_and_load
+
+  mm = unet.UNet(pretrained=None)
+
+  full_name_align_dict = {"time_embed_2_dense": -2, "middle_block_attn_in_layers_conv": "middle_block_attn_in_layers_conv"}
+  tail_align_dict = {"in_layers_conv": -1}
+  download_and_load.keras_reload_from_torch_model(unet_model, mm, full_name_align_dict=full_name_align_dict, tail_align_dict=tail_align_dict, tail_split_position=3, do_convert=True, do_predict=False)
+
+  tf_out = mm([tf.ones([1, 64, 64, 4]), tf.ones([1]), tf.ones([1, 77, 768])])
+  torch_out = unet_model(torch.ones([1, 4, 64, 64]), torch.ones([1]), torch.ones([1, 77, 768]))
+  np.allclose(torch_out.permute([0, 2, 3, 1]).detach(), tf_out, atol=1e-4)
+  ```
+## Decoder
+  ```py
+  sys.path.append('../learning/stable_diffusion/')
+  import unet, autoencoder, ddim_sampler, unet_attention, torch
+
+  decoder = autoencoder.Decoder()
+  ss = torch.load("../learning/stable_diffusion/decoder_model.pt")
+  decoder.load_state_dict(ss)
+  _ = decoder.eval()
+
+  pre_decoder = autoencoder.PreDecoder()
+  pre_decoder.load_state_dict(torch.load("../learning/stable_diffusion/pre_decoder_model.pt"))
+  _ = pre_decoder.eval()
+
+  import kecam
+  # kecam.download_and_load.keras_reload_from_torch_model(decoder)
+
+  dd = pre_decoder.state_dict()
+  keys = ['conv_in.weight', 'conv_in.bias', *[kk for kk in ss if kk.startswith("mid")],
+  *[kk for kk in ss if kk.startswith("up.3")], *[kk for kk in ss if kk.startswith("up.2")],
+  *[kk for kk in ss if kk.startswith("up.1")], *[kk for kk in ss if kk.startswith("up.0")],
+  'norm_out.weight', 'norm_out.bias', 'conv_out.weight', 'conv_out.bias']
+  dd.update({kk: ss[kk] for kk in keys})
+
+  from keras_cv_attention_models.stable_diffusion import stable_diffusion, unet, encoder_decoder
+  from keras_cv_attention_models import download_and_load
+
+  mm = encoder_decoder.Decoder(pretrained=None)
+  full_name_align_dict = {"middle_block_attn_query_conv": -1}
+  download_and_load.keras_reload_from_torch_model(dd, mm, full_name_align_dict=full_name_align_dict, do_convert=True, do_predict=False)
+
+  tf_out = mm(tf.ones([1, 64, 64, 4]))
+  torch_out = decoder(pre_decoder(torch.ones([1, 4, 64, 64])))
+  np.allclose(torch_out.permute([0, 2, 3, 1]).detach(), tf_out, atol=5e-2)
+  ```
+## Encoder
+  ```py
+  sys.path.append('../learning/stable_diffusion/')
+  import unet, autoencoder, ddim_sampler, unet_attention, torch
+
+  encoder = autoencoder.Encoder()
+  ss = torch.load("../learning/stable_diffusion/encoder_model.pt")
+  encoder.load_state_dict(ss)
+  _ = encoder.eval()
+
+  post_encoder = autoencoder.PostEncoder()
+  post_encoder.load_state_dict(torch.load("../learning/stable_diffusion/post_encoder_model.pt"))
+  _ = post_encoder.eval()
+
+  ss.update(post_encoder.state_dict())
+
+  from keras_cv_attention_models.stable_diffusion import stable_diffusion, unet, encoder_decoder
+  from keras_cv_attention_models import download_and_load
+
+  mm = encoder_decoder.Encoder(pretrained=None)
+  full_name_align_dict = {"middle_block_attn_query_conv": -1}
+  download_and_load.keras_reload_from_torch_model(ss, mm, full_name_align_dict=full_name_align_dict, do_convert=True, do_predict=False)
+
+  tf_out = mm(tf.ones([1, 512, 512, 3]))
+  torch_out = post_encoder.quant_conv((encoder(torch.ones([1, 3, 512, 512]))))
+  np.allclose(torch_out.permute([0, 2, 3, 1]).detach(), tf_out, atol=5e-1)
+  ```
+## StableDiffusion
+  ```py
+  from keras_cv_attention_models.stable_diffusion import stable_diffusion
+
+  mm = stable_diffusion.StableDiffusion()
+  mm.clip_model.load_weights('vit_text_large_patch14_clip.h5')
+  mm.unet_model.load_weights('unet_imagenet.h5')
+  mm.decoder_model.load_weights('decoder_imagenet.h5')
+
+  imm = mm.text_to_image('a photo of an astonaut riding a horse on mars', batch_size=1).numpy()
+  print(f"{imm.shape = }, {imm.min() = }, {imm.max() = }")
+  plt.imsave('aa.jpg', np.clip(imm / 2 + 0.5, 0, 1)[0])
+  ```
+***
+
+# Train

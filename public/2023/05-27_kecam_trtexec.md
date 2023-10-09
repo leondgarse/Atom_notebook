@@ -443,11 +443,13 @@
       aa = ff.readlines()
 
   tt = []
-  start_mark, started = "# Recognition Models", False
+  start_mark, started, end_mark = "# Recognition Models", False, "# Stable Diffusion"
   extra_input_resolutions = ["160", "224", "256", "288", "336", "384", "448", "512"]
   category = "Recognition"
   model_series = ""
   for line in aa:
+      if line.startswith(end_mark):
+          break
       if line.startswith(start_mark):
           started = True
       if not started:
