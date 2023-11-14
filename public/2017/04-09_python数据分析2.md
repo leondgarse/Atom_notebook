@@ -16,6 +16,7 @@
   	- [axes指定绘图区域](#axes指定绘图区域)
   	- [注释text / arrow / annotate](#注释text-arrow-annotate)
   	- [图形绘制 add_patch](#图形绘制-addpatch)
+  	- [饼图 pie](#饼图-pie)
   	- [将图表保存到文件 savefig](#将图表保存到文件-savefig)
   	- [matplotlib全局配置 rc方法](#matplotlib全局配置-rc方法)
   	- [Plot styles](#plot-styles)
@@ -332,6 +333,17 @@
   ax.add_patch(star([0.36, 0.39], 0.03, 0))
   ax.add_patch(star([0.3, 0.33], 0.03, 0.3))
   ```
+## 饼图 pie
+  ```py
+  sizes = [15, 30, 45, 10]
+  labels = ["foo", "goo", "koo", "loo"]
+  colors = ["yellowgreen", "gold", "lightskyblue", "lightcoral"]
+  explode = (0, 0.1, 0, 0)  # 突出显示
+  plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct="%1.1f%%", shadow=True, startangle=90)
+  plt.title("Pie Test")
+  plt.tight_layout()
+  ```
+  ![](images/pie.jpg)
 ## 将图表保存到文件 savefig
   - plt.savefig将当前图表保存到文件,该方法相当于Figure对象的实例方法savefig
     ```python

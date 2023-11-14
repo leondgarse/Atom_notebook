@@ -519,7 +519,7 @@
     export TMOUT=0
     $ source /etc/profile
     ```
-  - Q: Error: could not get shadow information for xxx
+  - Q: `Error: could not get shadow information for xxx` or `debug3: senf packet: type 1`
     ```sh
     # 查看 selinux 状态
     $ sestatus  -v

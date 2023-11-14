@@ -439,94 +439,94 @@
   ```
 ## CSV result
   ```py
-  with open("README.md") as ff:
-      aa = ff.readlines()
+with open("README.md") as ff:
+    aa = ff.readlines()
 
-  tt = []
-  start_mark, started, end_mark = "# Recognition Models", False, "# Stable Diffusion"
-  extra_input_resolutions = ["160", "224", "256", "288", "336", "384", "448", "512"]
-  category = "Recognition"
-  model_series = ""
-  for line in aa:
-      if line.startswith(end_mark):
-          break
-      if line.startswith(start_mark):
-          started = True
-      if not started:
-          continue
+tt = []
+start_mark, started, end_mark = "# Recognition Models", False, "# Stable Diffusion"
+extra_input_resolutions = ["160", "224", "256", "288", "336", "384", "448", "512"]
+category = "Recognition"
+model_series = ""
+for line in aa:
+    if line.startswith(end_mark):
+        break
+    if line.startswith(start_mark):
+        started = True
+    if not started:
+        continue
 
-      if line.startswith("# "):
-          category = line.split(" ")[1].strip()
-      if line.startswith("## "):
-          model_series = line.split(" ")[1].strip()
-      if "|" not in line or "T4 Inference |" in line or "------------ |" in line:
-          continue
+    if line.startswith("# "):
+        category = line.split(" ")[1].strip()
+    if line.startswith("## "):
+        model_series = line.split(" ")[1].strip()
+    if "|" not in line or "T4 Inference |" in line or "------------ |" in line:
+        continue
 
-      if "](" in line:
-          line = line.split('](')[0].replace('[', '') + line.split(')')[-1]
+    if "](" in line:
+        line = line.split('](')[0].replace('[', '') + line.split(')')[-1]
 
-      ss = [ii.strip() for ii in line.split("|")]
-      ss = [*ss[1:-3], ss[-2]] if category == "Detection" else ss[1:-1]
-      model_name, params, flops, input_shape, top1_acc, inference = ss[:6]
-      # print(model, params, flops, input_shape, top1_acc, inference)
+    ss = [ii.strip() for ii in line.split("|")]
+    ss = [*ss[1:-3], ss[-2]] if category == "Detection" else ss[1:-1]
+    model_name, params, flops, input_shape, top1_acc, inference = ss[:6]
+    # print(model, params, flops, input_shape, top1_acc, inference)
 
-      # model_series_tail = ""
-      if model_name.startswith("- "):
-          extra, model_name = model_name[2:].split(","), tt[-1]["model"]
-          if "=" in extra[0]:
-              kk, vv = [ii.strip() for ii in extra[0].split("=")[:2]]
-              model_name += "_" + kk + ("" if vv.lower() == "true" else ("_" + vv))
-              # model_series_tail = "_deploy" if kk == "deploy" else model_series_tail
-              extra = extra[1:]
-      elif "," in model_name:
-          ss = [ii.strip() for ii in model_name.split(",")]
-          model_name, extra = ss[0].strip(), ss[1:]
-      else:
-          extra = []
+    # model_series_tail = ""
+    if model_name.startswith("- "):
+        extra, model_name = model_name[2:].split(","), tt[-1]["model"]
+        if "=" in extra[0]:
+            kk, vv = [ii.strip() for ii in extra[0].split("=")[:2]]
+            model_name += "_" + kk + ("" if vv.lower() == "true" else ("_" + vv))
+            # model_series_tail = "_deploy" if kk == "deploy" else model_series_tail
+            extra = extra[1:]
+    elif "," in model_name:
+        ss = [ii.strip() for ii in model_name.split(",")]
+        model_name, extra = ss[0].strip(), ss[1:]
+    else:
+        extra = []
 
-      extra = [ii.strip() for ii in extra]
-      extra = [ii for ii in extra if len(ii) > 0 and not ii.startswith("(") and ii not in extra_input_resolutions]
+    extra = [ii.strip() for ii in extra]
+    extra = [ii for ii in extra if len(ii) > 0 and not ii.startswith("(") and ii not in extra_input_resolutions]
 
-      cur = {}
-      cur["model"] = model_name
-      cur["params"] = float(params[:-1]) if params[-1] == "M" else (float(params[:-1]) * 1000)
-      cur["flops"] = float(flops[:-1]) if flops[-1] == "G" else (float(flops[:-1]) / 1000)
-      cur["input"] = int(input_shape)
-      cur["acc_metrics"] = None if len(top1_acc) == 0 else float(top1_acc.replace("?", ""))
-      cur["inference_qps"] = None if len(inference) == 0 else float(inference[:-4])
+    cur = {}
+    cur["model"] = model_name
+    cur["params"] = float(params[:-1]) if params[-1] == "M" else (float(params[:-1]) * 1000)
+    cur["flops"] = float(flops[:-1]) if flops[-1] == "G" else (float(flops[:-1]) / 1000)
+    cur["input"] = int(input_shape)
+    cur["acc_metrics"] = None if len(top1_acc) == 0 else float(top1_acc.replace("?", ""))
+    cur["inference_qps"] = None if len(inference) == 0 else float(inference[:-4])
 
-      cur["category"] = category
-      cur["series"] = "ConvFormer" if model_name.startswith("ConvFormer") else model_series
-      cur["extra"] = None if len(extra) == 0 else " ".join(extra)
+    cur["category"] = category
+    cur["series"] = "ConvFormer" if model_name.startswith("ConvFormer") else model_series
+    cur["extra"] = None if len(extra) == 0 else " ".join(extra)
 
-      tt.append(cur)
-  dd = pd.DataFrame(tt)
+    tt.append(cur)
+dd = pd.DataFrame(tt)
 
-  ee = dd[dd.category == "Recognition"]
-  ee = ee[ee['acc_metrics'].notnull()]
-  ee = ee[ee['inference_qps'].notnull()]
-  ee = ee[ee['extra'].isnull()]
-  # plt.scatter(ee['T4 Inference (qps)'].values, ee['Top1 Acc'].values)
+ee = dd[dd.category == "Recognition"]
+ee = ee[ee['acc_metrics'].notnull()]
+ee = ee[ee['inference_qps'].notnull()]
+ee = ee[ee['extra'].isnull()]
+# plt.scatter(ee['T4 Inference (qps)'].values, ee['Top1 Acc'].values)
 
-  plot_series = ["EfficientViT_B", "EfficientViT_M", "EfficientNet", "EfficientNetV2"]
-  x_label = 'inference_qps'
-  y_label = 'acc_metrics'
-  for name, group in ee.groupby(ee['series']):
-      if name not in plot_series:
-          continue
-      xx = group[x_label].values
-      yy = group[y_label].values
-      plt.scatter(xx, yy, label=name)
-      plt.plot(xx, yy)
-      for ii, jj, kk in zip(xx, yy, group['model'].values):
-          plt.text(ii, jj, kk[len(name):])
-  plt.xlabel(x_label)
-  plt.ylabel(y_label)
-  plt.legend()
-  plt.grid(True)
-  plt.tight_layout()
+plot_series = ["EfficientViT_B", "EfficientViT_M", "EfficientNet", "EfficientNetV2"]
+x_label = 'inference_qps'
+y_label = 'acc_metrics'
+for name, group in ee.groupby(ee['series']):
+    if name not in plot_series:
+        continue
+    xx = group[x_label].values
+    yy = group[y_label].values
+    plt.scatter(xx, yy, label=name)
+    plt.plot(xx, yy)
+    for ii, jj, kk in zip(xx, yy, group['model'].values):
+        plt.text(ii, jj, kk[len(name):])
+plt.xlabel(x_label)
+plt.ylabel(y_label)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
 
-  dd.to_csv('foo.csv', index=False)
+dd.to_csv('foo.csv', index=False)
   ```
   ```py
   cc = pd.read_csv('model_summary.csv')

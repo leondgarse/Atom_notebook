@@ -636,3 +636,27 @@
 ***
 
 # Train
+## Cifar10
+- [The CIFAR-10 dataset](https://www.cs.toronto.edu/~kriz/cifar.html)
+```py
+import pickle
+from tqdm import tqdm
+for id in range(1, 6):
+    with open('cifar-10-batches-py/data_batch_{}'.format(id), 'rb') as ff:
+        aa = pickle.load(ff, encoding='bytes')
+
+    for label, data, filename in tqdm(zip(aa[b'labels'], aa[b'data'], aa[b'filenames'])):
+        filename = os.path.join('cifar10', 'train', str(label), filename.decode())
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+        plt.imsave(filename, data.reshape(3, 32, 32).transpose([1, 2, 0]))
+
+with open('cifar-10-batches-py/test_batch', 'rb') as ff:
+    aa = pickle.load(ff, encoding='bytes')
+
+for label, data, filename in tqdm(zip(aa[b'labels'], aa[b'data'], aa[b'filenames'])):
+    filename = os.path.join('cifar10', 'test', str(label), filename.decode())
+    if not os.path.exists(os.path.dirname(filename)):
+        os.makedirs(os.path.dirname(filename))
+    plt.imsave(filename, data.reshape(3, 32, 32).transpose([1, 2, 0]))
+```

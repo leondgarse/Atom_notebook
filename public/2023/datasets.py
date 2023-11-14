@@ -100,6 +100,8 @@ def load_image(image_file, target_size=640, use_augment=True):
         img = cv2.resize(img, (int(w0 * r), int(h0 * r)), interpolation=interp)
     return img, h0, w0  # img, hw_original
 
+def imread(image_path, image_size):
+    return Image.open(image_path).convert("RGB").resize([image_size, image_size], resample=Image.Resampling.BICUBIC)
 
 def combine_mosaic(images, bboxes, labels, target_size=640):
     # loads images in a mosaic
@@ -152,18 +154,7 @@ def combine_mosaic(images, bboxes, labels, target_size=640):
     return img4, labels4
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(
-        self,
-        data,
-        img_size=640,
-        batch_size=16,
-        augment=False,
-        hyp=None,
-        rect=False,
-        stride=32,
-        pad=0.0,
-        rank=-1,
-    ):
+    def __init__(self, data, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, stride=32, pad=0.0, mosaic=1.0, rank=-1):
         self.data = data
         self.img_size = img_size
         self.augment = augment
@@ -171,17 +162,21 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         self.rect = False if augment else rect
         self.mosaic_border = [-img_size // 2, -img_size // 2]
         self.stride = stride
+        self.mosaic = mosaic
 
     def __len__(self):
         return len(self.img_files)
 
     def __getitem__(self, index):
         datapoint = self.data[index]
-        image, objects = datapoint["image"], datapoint["objects"]
+        image_path, objects = datapoint["image"], datapoint["objects"]
         bbox, label = np.array(objects["bbox"], dtype='float32'), np.array(objects["label"], dtype="int64")
 
+        image = Image.open(image_path).convert("RGB")
+        orign_width, orign_height = image.size()
+
         image, orign_height, orign_width = load_image(image)
-        if random.random() < hyp["mosaic"]:
+        if random.random() < self.mosaic:
             indices = [random.randint(0, len(self.data) - 1) for _ in range(3)]  # 3 additional image indices
             images, bboxes, labels = [image], [bbox], [label]
             for ii in [random.randint(0, len(self.data) - 1) for _ in range(3)]  # 3 additional image indices
@@ -191,7 +186,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels.append(datapoint["objects"]["label"])
             image, bbox, label = combine_mosaic(images, bboxes, labels)
         else:
-            bbox *= [image.shape[0], image.shape[1], image.shape[0], image.shape[1]]
+            bbox *= [orign_height, orign_width, orign_height, orign_width]
 
         if use_augment:
             img, labels = random_perspective(

@@ -1,12 +1,17 @@
 # GTSRB
   ```py
+  import torchvision
+
+  torchvision.datasets.GTSRB('.', download=True)
+  torchvision.datasets.GTSRB('.', split='test', download=True)
+
   from glob2 import glob
   from tqdm import tqdm
   from PIL import Image
 
   """ Train """
-  aa = glob('Final_Training/Images/*/*.ppm')
-  target_dir = 'Final_Training_png'
+  aa = glob('gtsrb/GTSRB/Training/*/*.ppm')
+  target_dir = 'gtsrb/train'
   for ii in tqdm(aa):
       label = str(int(os.path.basename(os.path.dirname(ii))))
       file_name = os.path.basename(ii)
@@ -19,9 +24,9 @@
       image.save(save_name)
 
   """ Test """
-  ground_truth = pd.read_csv('GT-final_test.csv', sep=';').set_index('Filename')['ClassId']
-  aa = glob('Final_Test/Images/*.ppm')
-  target_dir = 'Final_Test_png'
+  ground_truth = pd.read_csv('gtsrb/GT-final_test.csv', sep=';').set_index('Filename')['ClassId']
+  aa = glob('gtsrb/GTSRB/Final_Test/Images/*.ppm')
+  target_dir = 'gtsrb/test'
   for ii in tqdm(aa):
       file_name = os.path.basename(ii)
       label = str(ground_truth[file_name])
@@ -32,18 +37,27 @@
       image = Image.open(ii)
       image.save(save_name)
 
-  !python custom_dataset_script.py --train_images ../../datasets/GTSRB/Final_Training_png/ --test_images ../../datasets/GTSRB/Final_Test_png/ -s GTSRB --is_int_label
+  !python custom_dataset_script.py --train_images gtsrb/train/ --test_images gtsrb/test/
+  # >>>> total_train_samples: 26640, total_test_samples: 12630, num_classes: 43
+  # >>>> Saved to: gtsrb.json
 
-  """ Try loading """
-  from tqdm import tqdm
+  """ Disply heught and width distribution """
   from keras_cv_attention_models.imagenet import data
-  tt = data.recognition_dataset_from_custom_json('GTSRB.json')
-  aa = [plt.imread(ii['image']).shape for ii in tt['train'].as_numpy_iterator()]
+  tt = data.build_custom_dataset('gtsrb.json')
+  aa = np.array([plt.imread(ii['image']).shape for ii in tt['train'].as_numpy_iterator()])
 
   plt.hist(aa[:, 0], bins=100, alpha=0.5, label='height')
   plt.hist(aa[:, 1], bins=100, alpha=0.5, label='width')
   plt.legend()
   plt.tight_layout()
+
+  """ Show """
+  from keras_cv_attention_models.imagenet import data
+  tt = data.init_dataset('../datasets/gtsrb/recognition.json', input_shape=(64, 64), magnitude=-1)[0]
+  import json
+  bb = json.load(open('../datasets/gtsrb/recognition.json'))
+  ax = data.show_batch_sample(tt, indices_2_labels=bb['indices_2_labels'])
+  ax.figure.savefig('aa.jpg')
   ```
 ## Custom model
 ```py
