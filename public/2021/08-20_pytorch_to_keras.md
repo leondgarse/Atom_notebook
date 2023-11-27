@@ -1001,47 +1001,48 @@
   sys.path.append('../pytorch-image-models/')
   import torch
   from models import gc_vit
-  tt = gc_vit.gc_vit_tiny()
+  tt = gc_vit.gc_vit_tiny2()
   _ = tt.eval()
-  ss = torch.load('gcvit_tiny_best_1k.pth.tar', map_location=torch.device('cpu'))
+  ss = torch.load('gcvit_1k_tiny2.pth.tar', map_location=torch.device('cpu'))
   tt.load_state_dict(ss['state_dict'])
 
   from models import gc_vit
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.gcvit import gcvit
-  mm = gcvit.GCViT_Tiny(classifier_activation=None, pretrained=None)
+  mm = gcvit.GCViT_Tiny2(classifier_activation=None, pretrained=None)
 
   unstack_weights = ['relative_position_bias_table', 'gamma1', 'gamma2']
   skip_weights = ["relative_position_index"]
   tail_align_dict =  [
     {
       "stack1": {
-        "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -1,
-        "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -2,
-        "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -3,
-        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -5,
-        "q_global_down8_extract_se_1_dense": -7, "q_global_down8_extract_se_2_dense": -7,
+        "q_global_down2_extract_conv": -1, "q_global_down4_extract_dw_conv": -2,
+        "q_global_down4_extract_se_1_dense": -2, "q_global_down4_extract_se_2_dense": -3,
+        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -4,
+        "q_global_down8_extract_se_1_dense": -6, "q_global_down8_extract_se_2_dense": -7,
         "q_global_down8_extract_conv": -8,
       },
       "stack2": {
         "q_global_down2_extract_dw_conv": -2,
-        "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -3,
-        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -5,
-        "q_global_down4_extract_se_1_dense": -7, "q_global_down4_extract_se_2_dense": -7,
+        "q_global_down2_extract_se_1_dense": -2, "q_global_down2_extract_se_2_dense": -3,
+        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -4,
+        "q_global_down4_extract_se_1_dense": -6, "q_global_down4_extract_se_2_dense": -7,
         "q_global_down4_extract_conv": -8,
       },
       "stack3": {
-        "q_global_down1_extract_dw_conv": -6,
-        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+        "q_global_down1_extract_dw_conv": -4,
+        "q_global_down1_extract_se_1_dense": -5, "q_global_down1_extract_se_2_dense": -6,
         "q_global_down1_extract_conv": -8,
       },
       "stack4": {
-        "q_global_down1_extract_dw_conv": -6,
-        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
+        "q_global_down1_extract_dw_conv": -4,
+        "q_global_down1_extract_se_1_dense": -5, "q_global_down1_extract_se_2_dense": -6,
         "q_global_down1_extract_conv": -8,
       },
     },
     {
+      "1_gamma": -4,
+      "2_gamma": -7,
       "window_mhsa_pos_emb": -1
     },
   ]
@@ -1058,49 +1059,49 @@
       do_convert=True,
   )
   ```
-  **Small / Base with gamma**
+  **Small / Base / Large with gamma**
   ```py
   sys.path.append('../GCVit/')
   sys.path.append('../pytorch-image-models/')
   import torch
   from models import gc_vit
-  tt = gc_vit.gc_vit_small()
+  tt = gc_vit.gc_vit_large()
   _ = tt.eval()
-  ss = torch.load('gcvit_small_best_1k.pth.tar', map_location=torch.device('cpu'))
+  ss = torch.load('gcvit_1k_large.pth.tar', map_location=torch.device('cpu'))
   tt.load_state_dict(ss['state_dict'])
 
   from models import gc_vit
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.gcvit import gcvit
-  mm = gcvit.GCViT_Small(classifier_activation=None, pretrained=None)
+  mm = gcvit.GCViT_Large(classifier_activation=None, pretrained=None)
 
   unstack_weights = ['relative_position_bias_table', 'gamma1', 'gamma2']
   skip_weights = ["relative_position_index"]
   tail_align_dict =  [
     {
       "stack1": {
-        "q_global_down2_extract_se_1_dense": -1, "q_global_down2_extract_se_2_dense": -2,
-        "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -3,
-        "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -4,
-        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -7,
-        "q_global_down8_extract_se_1_dense": -9, "q_global_down8_extract_se_2_dense": -9,
+        "q_global_down2_extract_se_2_dense": -1,
+        "q_global_down2_extract_conv": -2, "q_global_down4_extract_dw_conv": -2,
+        "q_global_down4_extract_se_1_dense": -3, "q_global_down4_extract_se_2_dense": -3,
+        "q_global_down4_extract_conv": -4, "q_global_down8_extract_dw_conv": -6,
+        "q_global_down8_extract_se_1_dense": -8, "q_global_down8_extract_se_2_dense": -9,
         "q_global_down8_extract_conv": -10,
       },
       "stack2": {
-        "q_global_down2_extract_dw_conv": -3,
-        "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -4,
-        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -7,
-        "q_global_down4_extract_se_1_dense": -9, "q_global_down4_extract_se_2_dense": -9,
+        "q_global_down2_extract_dw_conv": -2,
+        "q_global_down2_extract_se_1_dense": -3, "q_global_down2_extract_se_2_dense": -3,
+        "q_global_down2_extract_conv": -4, "q_global_down4_extract_dw_conv": -6,
+        "q_global_down4_extract_se_1_dense": -8, "q_global_down4_extract_se_2_dense": -9,
         "q_global_down4_extract_conv": -10,
       },
       "stack3": {
-        "q_global_down1_extract_dw_conv": -7,
-        "q_global_down1_extract_se_1_dense": -9, "q_global_down1_extract_se_2_dense": -10,
+        "q_global_down1_extract_dw_conv": -5,
+        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
         "q_global_down1_extract_conv": -10,
       },
       "stack4": {
-        "q_global_down1_extract_dw_conv": -7,
-        "q_global_down1_extract_se_1_dense": -9, "q_global_down1_extract_se_2_dense": -10,
+        "q_global_down1_extract_dw_conv": -5,
+        "q_global_down1_extract_se_1_dense": -7, "q_global_down1_extract_se_2_dense": -8,
         "q_global_down1_extract_conv": -10,
       },
     },
@@ -1125,6 +1126,7 @@
   ```
   **Dense qkv / kv -> Conv**
   ```py
+  import kecam
   import tensorflow as tf
   from tensorflow import keras
   from keras_cv_attention_models.gcvit import gcvit
@@ -1139,7 +1141,9 @@
           source_wights = bb.get_layer(source_name).get_weights()
           print(ii.name, source_name)
           mm.get_layer(ii.name).set_weights([source_wights[0][None, None, :, :], source_wights[1]])
-  print(f"{np.allclose(bb(tf.ones([1, 224, 224, 3])), mm(tf.ones([1, 224, 224, 3]))) = }")
+  ii = mm.input_shape[1]
+  print(f"{np.allclose(bb(tf.ones([1, ii, ii, 3])), mm(tf.ones([1, ii, ii, 3]))) = }")
+  print(mm.decode_predictions(mm(mm.preprocess_input(kecam.test_images.cat()))))
 
   mm.save("{}_{}_imagenet.h5".format(mm.name, mm.input_shape[1]))
   ```
@@ -2723,14 +2727,14 @@
   sys.path.append('../RepViT/')
   import torch
   from model import repvit as torch_repvit
-  tt = torch_repvit.repvit_m1(pretrained=True, distillation=True)
-  ss = torch.load('repvit_m1_distill_300.pth', map_location=torch.device('cpu'))
+  tt = torch_repvit.repvit_m0_9(pretrained=True, distillation=True)
+  ss = torch.load('repvit_m0_9_distill_450e.pth', map_location=torch.device('cpu'))
   tt.load_state_dict(ss['model'])
 
   from keras_cv_attention_models import download_and_load
   from keras_cv_attention_models.repvit import repvit
-  mm = repvit.RepViT_M1(classifier_activation=None, pretrained=None)
-  download_and_load.keras_reload_from_torch_model(tt, mm, tail_align_dict={"repvgg_REPARAM_1_bn": -1}, full_name_align_dict={"head": -1})
+  mm = repvit.RepViT_M09(classifier_activation=None, use_distillation=True, pretrained=None)
+  download_and_load.keras_reload_from_torch_model(tt, mm, full_name_align_dict={'head': -1})
 
   torch_out = tt(torch.ones([1, 3, 224, 224]))
   tf_out = tf.reduce_mean(mm(tf.ones([1, 224, 224, 3])), axis=0)

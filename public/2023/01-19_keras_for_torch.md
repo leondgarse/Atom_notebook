@@ -347,3 +347,75 @@ for cur_class in tqdm(range(num_classes), "Generating fake data"):
       optimizer.step()
       print(">>>> loss: {:.4f}".format(loss.item()))
   ```
+***
+
+# Keras save format
+  ```py
+  import kecam
+  mm = kecam.models.LLaMA2_15M()
+  mm.save('aa.keras')
+
+  # keras/src/saving/saving_lib.py load_weights_only
+  import zipfile, h5py
+  archive = zipfile.ZipFile('aa.keras', "r")
+  io_file = archive.open('model.weights.h5', 'r')
+  h5_file = h5py.File(io_file, mode="r")
+  print(np.array(h5_file['_layer_checkpoint_dependencies/dense_42']['vars']['0']).shape)
+  # (288, 32000)
+
+  used_names = {}
+  visited_trackables = set()
+  for trackable in mm._layer_checkpoint_dependencies.values():
+      if not isinstance(trackable, keras.layers.Layer) or id(trackable) in visited_trackables or len(trackable.variables) == 0:
+          continue
+      visited_trackables.add(id(trackable))
+
+      # from keras.src.utils import generic_utils
+      # generic_utils.to_snake_case
+      name = trackable.__class__.__name__
+      name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+      name = re.sub("([a-z])([A-Z])", r"\1_\2", name).lower()
+      name = ("private" + name) if name[0] == "_" else name
+
+      # _load_container_state
+      if name in used_names:
+          used_names[name] += 1
+          name = f"{name}_{used_names[name]}"
+      else:
+          used_names[name] = 0
+      print(f"[layer] {trackable.name = }, [weight key] {name = }")
+
+      cc = h5_file['_layer_checkpoint_dependencies/' + name]['vars']
+      trackable.set_weights([np.array(ii) for ii in cc.values()])
+  ```
+  **Read .keras as dict**
+  ```py
+  def read_keras_weights(filepath, only_valid_weights=True):
+      import re, json, zipfile, h5py
+
+      with zipfile.ZipFile(filepath, "r") as archive:
+          with archive.open('config.json', 'r') as ff:
+              model_config = json.loads(ff.read())
+          with archive.open('model.weights.h5', 'r') as io_file, h5py.File(io_file, mode="r") as h5_file:
+              dd = {}
+              used_names = {}
+              for ii in model_config['config']['layers']:
+                  name = ii['class_name']
+                  name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+                  name = re.sub("([a-z])([A-Z])", r"\1_\2", name).lower()
+                  name = ("private" + name) if name[0] == "_" else name
+
+                  # _load_container_state
+                  if name in used_names:
+                      used_names[name] += 1
+                      name = f"{name}_{used_names[name]}"
+                  else:
+                      used_names[name] = 0
+
+                  map_name = '_layer_checkpoint_dependencies/' + name
+                  if map_name in h5_file and "vars" in h5_file[map_name] and len(h5_file[map_name]["vars"]) != 0:
+                      dd[ii['name']] = [np.array(ii) for ii in h5_file[map_name]["vars"].values()]
+      return dd
+  dd = read_keras_weights('aa.keras')
+  print({kk: [ii.shape for ii in vv] for kk, vv in dd.items()})
+  ```

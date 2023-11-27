@@ -612,6 +612,7 @@
 
     # 重启 iptables
     $ service iptables restart
+    $ iptables --flush  # clear firewall
     ```
   - **Q: 配置 Samba 账户与系统密码同步，支持用户直接修改自己的登录密码**
     ```shell
@@ -1742,10 +1743,11 @@
     ```c
     gocr、tesseract-ocr、libtiff-tools
     安装 tesseract 中文语言包 tesseract-ocr-chi-sim
+    sudo apt install gocr tesseract-ocr libtiff-tools tesseract-ocr-chi-sim
     ```
   - tif文件转文字tif-->text，直接使用tesseract命令即可，如：
     ```c
-    tesseract a.tif a.txt -l chi_sim
+    tesseract a.tif a -l chi_sim
     其中tif图片文件可由shutter截图得到
     ```
 ## compiz
