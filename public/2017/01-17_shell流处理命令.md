@@ -1176,8 +1176,8 @@
     spawn git {*}$argv
     set timeout -1
     expect {
-        "sername" { send "wangguowei33\n"; exp_continue}
-        "assword" { send "a1b2c3d4e5f6\n" }
+        "sername" { send "xxxx\n"; exp_continue}
+        "assword" { send "xxxx\n" }
     }
     interact
     ```

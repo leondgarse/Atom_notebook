@@ -2498,20 +2498,16 @@
   from paddleocr import PaddleOCR, draw_ocr
   ocr = PaddleOCR(use_angle_cls=True, lang="ch")
 
-  """ Cut images """
-  for ii in os.listdir("."):
-      if not ii.endswith(".jpg"):
-          continue
-      imm = plt.imread(ii)
-      plt.imsave("0_" + ii, imm[200:700, 320:2400])
-
   """ OCR """
   dd = []
   for ii in os.listdir("."):
-      if not (ii.startswith("0_") and ii.endswith(".jpg")):
+      if not ii.endswith(".jpg"):
           continue
+      imm = plt.imread(ii)[200:700, 320:2400]  # Cut an area
       print(ii)
-      rr = ocr.ocr(ii, cls=True)
+      # plt.imsave("0_" + ii, imm[200:700, 320:2400])
+
+      rr = ocr.ocr(imm, cls=True)
       dd.append("\n".join([ii[1][0] for ii in rr[0]]))
 
   """ Write xlsx """
