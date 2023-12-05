@@ -46,6 +46,8 @@
   	- [色偏检测](#色偏检测)
   	- [失焦检测](#失焦检测)
   - [Affine Transform](#affine-transform)
+  - [屏幕截图](#屏幕截图)
+  - [Paddlepaddle OCR](#paddlepaddle-ocr)
 
   <!-- /TOC -->
 ***
@@ -2430,3 +2432,90 @@
           return rets
   ```
 ***
+
+# 屏幕截图
+  ```sh
+  pip install mss
+  ```
+  其中 `monitors` 0 表示所有屏幕总体的宽高，1 以后的表示每个屏幕的宽高以及左上点
+  ```py
+  from mss import mss
+  sct = mss()
+  sct.monitors
+  # [{'left': 0, 'top': 0, 'width': 5120, 'height': 1440},
+  #  {'left': 0, 'top': 0, 'width': 2560, 'height': 1440}]
+  #  {'left': 2560, 'top': 0, 'width': 2560, 'height': 1440}]
+  ```
+  ```py
+  import os
+  import time
+  import numpy as np
+  import matplotlib.pyplot as plt
+  from mss import mss
+
+  def mss_plt(path="foo", wait=10, monitor_id=1):
+      sct = mss()
+      bounding_box = sct.monitors[monitor_id]
+      if not os.path.exists(path):
+          os.makedirs(path, exist_ok=True)
+      id = 0
+      while True:
+          sct_image = sct.grab(bounding_box)
+          tt = os.path.join(path, "screen_{}.jpg".format(id))
+          plt.imsave(tt, np.array(sct_image)[:, :, :3][:, :, ::-1])
+          id += 1
+          # print("Saved:", tt)
+          time.sleep(wait)
+
+  if __name__ == "__main__":
+      import argparse
+      parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+      parser.add_argument("-p", "--path", default="foo", help="image saving path")
+      parser.add_argument("-w", "--wait", type=int, default=10, help="seconds for waiting between saving")
+      parser.add_argument("-m", "--monitor_id", type=int, default=1, help="monitor id, 0 for all monitors, 1 or others for specific one")
+      args = parser.parse_known_args()[0]
+      mss_plt(args.path, args.wait, args.monitor_id)
+  ```
+***
+
+# Paddlepaddle OCR
+  ```sh
+  pip install paddlepaddle paddleocr styleframe  # for saving excel with `\n`
+
+  cd ~/.paddleocr/whl/det/ch
+  wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
+  tar xvf ch_PP-OCRv4_det_infer.tar
+
+  cd ~/.paddleocr/whl/rec/ch
+  wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_infer.tar
+  tar xvf ch_PP-OCRv4_rec_infer.tar
+
+  cd ~/.paddleocr/whl/cls
+  wget https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar
+  tar xvf ch_ppocr_mobile_v2.0_cls_infer.tar
+  ```
+  ```py
+  from paddleocr import PaddleOCR, draw_ocr
+  ocr = PaddleOCR(use_angle_cls=True, lang="ch")
+
+  """ Cut images """
+  for ii in os.listdir("."):
+      if not ii.endswith(".jpg"):
+          continue
+      imm = plt.imread(ii)
+      plt.imsave("0_" + ii, imm[200:700, 320:2400])
+
+  """ OCR """
+  dd = []
+  for ii in os.listdir("."):
+      if not (ii.startswith("0_") and ii.endswith(".jpg")):
+          continue
+      print(ii)
+      rr = ocr.ocr(ii, cls=True)
+      dd.append("\n".join([ii[1][0] for ii in rr[0]]))
+
+  """ Write xlsx """
+  import pandas as pd
+  from styleframe import StyleFrame
+  StyleFrame(pd.DataFrame(dd)).to_excel("aa.xlsx").save()
+  ```

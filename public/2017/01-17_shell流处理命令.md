@@ -1151,6 +1151,7 @@
     expect -b sample.sh
     ```
 ## Tcl 函数
+  - [Tcl Commands](https://www.tcl.tk/man/tcl8.6/TclCmd/contents.html)
   - **lindex** Tcl 函数，从列表 / 数组得到一个特定的元素
     ```python
     set user [lindex $argv 0]
@@ -1167,6 +1168,18 @@
   - **trimright**
     ```python
     set response [string trimright "$raw" " "]
+    ```
+  - **{*}** 参数扩展，将列表展开为参数
+    ```python
+    #!/usr/bin/env expect
+
+    spawn git {*}$argv
+    set timeout -1
+    expect {
+        "sername" { send "wangguowei33\n"; exp_continue}
+        "assword" { send "a1b2c3d4e5f6\n" }
+    }
+    interact
     ```
 ## if 判断 for 循环
   - if判断
