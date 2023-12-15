@@ -2256,6 +2256,19 @@
   ffmpeg -ss 00:00:01 -to 00:03:06 -accurate_seek -codec copy -i input.mp4 output.mp4
   ```
   - 视频合并
+## Office 激活
+- [office2021安装,使用KMS服务器激活教程,及安装报错解决方案](https://zhuanlan.zhihu.com/p/629538463)
+- cmd 使用 KMS 激活
+  ```java
+  # cmd
+  cd "\Program Files\Microsoft Office\Office16"
+  # 安装 office2021 批量许可证
+  for /f %x in ('dir /b ..\root\Licenses16\ProPlus2021VL_KMS*.xrm-ms') do cscript ospp.vbs /inslic:"..\root\Licenses16\%x"
+  # KMS 激活，KMS 服务器地址1 kms.0t.net.cn，地址2 kms.moeclub.org
+  cscript ospp.vbs /sethst:kms.0t.net.cn
+  cscript ospp.vbs /setprt:1688
+  cscript ospp.vbs /act
+  ```
 ***
 
 # 系统备份恢复
