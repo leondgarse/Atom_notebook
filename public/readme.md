@@ -133,6 +133,7 @@
   - [09-14_tflite_benchmark_23.md](./2023/09-14_tflite_benchmark_23.md)
   - [10-16_sam.md](./2023/10-16_sam.md)
   - [12-12_onnx.md](./2023/12-12_onnx.md)
+  - [12-24_torch_dump.md](./2023/12-24_torch_dump.md)
   - [datasets.py](./2023/datasets.py)
 - [2024](./2024)
 - [Dainty_factory](./Dainty_factory)
