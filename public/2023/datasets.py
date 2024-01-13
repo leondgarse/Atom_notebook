@@ -1,71 +1,8 @@
-# Dataset utils and dataloaders
-
-import glob
-import math
 import os
+import math
 import random
-import shutil
-import time
-from itertools import repeat
-from multiprocessing.pool import ThreadPool
-from pathlib import Path
-from threading import Thread
-
 import cv2
 import numpy as np
-import torch
-from PIL import Image, ExifTags
-from torch.utils.data import Dataset, DataLoader
-from tqdm import tqdm
-
-import pickle
-from copy import deepcopy
-from pycocotools import mask as maskUtils
-from torchvision.utils import save_image
-from contextlib import contextmanager
-
-
-# Parameters
-help_url = "https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data"
-img_formats = ["bmp", "jpg", "jpeg", "png", "tif", "tiff", "dng"]  # acceptable image suffixes
-vid_formats = ["mov", "avi", "mp4", "mpg", "mpeg", "m4v", "wmv", "mkv"]  # acceptable video suffixes
-
-
-# from utils.torch_utils import torch_distributed_zero_first
-@contextmanager
-def torch_distributed_zero_first(local_rank: int):
-    """
-    Decorator to make all processes in distributed training wait for each local_master to do something.
-    """
-    if local_rank not in [-1, 0]:
-        torch.distributed.barrier()
-    yield
-    if local_rank == 0:
-        torch.distributed.barrier()
-
-
-def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=False, cache=False, pad=0.0, rect=False, rank=-1, world_size=1, workers=8):
-    # Make sure only the first process in DDP process the dataset first, and the following others can use the cache
-    with torch_distributed_zero_first(rank):
-        dataset = LoadImagesAndLabels(
-            path,
-            imgsz,
-            batch_size,
-            augment=augment,  # augment images
-            hyp=hyp,  # augmentation hyperparameters
-            rect=rect,  # rectangular training
-            cache_images=cache,
-            single_cls=opt.single_cls,
-            stride=int(stride),
-            pad=pad,
-            rank=rank,
-        )
-
-    sampler = torch.utils.data.distributed.DistributedSampler(dataset) if rank != -1 else None
-    dataloader = DataLoader(
-        dataset, batch_size=batch_size, num_workers=8, sampler=sampler, pin_memory=True, collate_fn=LoadImagesAndLabels.collate_fn
-    )  # torch.utils.data.DataLoader()
-    return dataloader, dataset
 
 
 def load_from_custom_json(data_path, with_info=False):
@@ -81,7 +18,7 @@ def load_from_custom_json(data_path, with_info=False):
         print(">>>> Using max value from train as num_classes:", num_classes)
 
     if "base_path" in info and len(info["base_path"]) > 0:
-        base_path = info["base_path"]
+        base_path = os.path.expanduser(info["base_path"])
         for ii in train:
             ii["image"] = os.path.join(base_path, ii["image"])
         for ii in test:
@@ -101,10 +38,11 @@ def load_image(image_file, target_size=640, use_augment=True):
     return img, h0, w0  # img, hw_original
 
 def imread(image_path, image_size):
+    from PIL import Image, ExifTags
     return Image.open(image_path).convert("RGB").resize([image_size, image_size], resample=Image.Resampling.BICUBIC)
 
 def combine_mosaic(images, bboxes, labels, target_size=640):
-    # loads images in a mosaic
+    # loads images in a mosaic, bboxes: [top, left, bottom, right]
     mosaic_border = target_size // 2
     hh_center = int(random.uniform(mosaic_border, 2 * target_size - mosaic_border))
     ww_center = int(random.uniform(mosaic_border, 2 * target_size - mosaic_border))
@@ -139,45 +77,28 @@ def combine_mosaic(images, bboxes, labels, target_size=640):
     mosaic_bboxes = np.clip(mosaic_bboxes, 0, paste_border)
     return mosaic_image, mosaic_bboxes, mosaic_labels
 
-    # Augment
-    img4, labels4 = random_perspective(
-        img4,
-        labels4,
-        degrees=self.hyp["degrees"],
-        translate=self.hyp["translate"],
-        scale=self.hyp["scale"],
-        shear=self.hyp["shear"],
-        perspective=self.hyp["perspective"],
-        border=self.mosaic_border,
-    )  # border to remove
-
-    return img4, labels4
-
-class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(self, data, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, stride=32, pad=0.0, mosaic=1.0, rank=-1):
+class DetectionDataset(Dataset):  # for training/testing
+    def __init__(self, data, image_size=640, batch_size=16, is_train=True, rect=False, pad=0.0, mosaic=1.0):
         self.data = data
-        self.img_size = img_size
-        self.augment = augment
-        self.hyp = hyp
-        self.rect = False if augment else rect
-        self.mosaic_border = [-img_size // 2, -img_size // 2]
-        self.stride = stride
+        self.image_size = image_size
+        self.rect = False if is_train else rect
         self.mosaic = mosaic
+        self.degrees, self.translate, self.scale, self.shear = 10, 0.1, 0.1, 10
+        self.hgain, self.sgain, self.vgain = 0.5, 0.5, 0.5
+        self.fliplr = 0.5
 
     def __len__(self):
-        return len(self.img_files)
+        return len(self.data)
 
     def __getitem__(self, index):
         datapoint = self.data[index]
         image_path, objects = datapoint["image"], datapoint["objects"]
         bbox, label = np.array(objects["bbox"], dtype='float32'), np.array(objects["label"], dtype="int64")
 
-        image = Image.open(image_path).convert("RGB")
-        orign_width, orign_height = image.size()
+        image = cv2.imread(image_path)
+        orign_height, orign_width = image.shape[:2]
 
-        image, orign_height, orign_width = load_image(image)
-        if random.random() < self.mosaic:
-            indices = [random.randint(0, len(self.data) - 1) for _ in range(3)]  # 3 additional image indices
+        if self.is_train and random.random() < self.mosaic:
             images, bboxes, labels = [image], [bbox], [label]
             for ii in [random.randint(0, len(self.data) - 1) for _ in range(3)]  # 3 additional image indices
                 datapoint = self.data[ii]
@@ -188,39 +109,20 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         else:
             bbox *= [orign_height, orign_width, orign_height, orign_width]
 
-        if use_augment:
-            img, labels = random_perspective(
-                img, labels, degrees=hyp["degrees"], translate=hyp["translate"], scale=hyp["scale"], shear=hyp["shear"], perspective=hyp["perspective"]
+        if self.is_train:
+            image, bbox, label = random_perspective(
+                image, bbox, label, target_shape=self.image_size, degrees=self.degrees, translate=self.translate, scale=self.scale, shear=self.shear
             )
-            augment_hsv(img, hgain=hyp["hsv_h"], sgain=hyp["hsv_s"], vgain=hyp["hsv_v"])
-        nL = len(labels)  # number of labels
-        if nL:
-            labels[:, 1:5] = xyxy2xywh(labels[:, 1:5])  # convert xyxy to xywh
-            labels[:, [2, 4]] /= img.shape[0]  # normalized height 0-1
-            labels[:, [1, 3]] /= img.shape[1]  # normalized width 0-1
+            augment_hsv(image, hgain=self.hgain, sgain=self.sgain, vgain=self.vgain)
+        bbox /= [image.shape[0], image.shape[1], image.shape[0], image.shape[1]]  # normalized 0-1
 
-        if self.augment:
-            # flip up-down
-            if random.random() < hyp["flipud"]:
-                img = np.flipud(img)
-                if nL:
-                    labels[:, 2] = 1 - labels[:, 2]
-
-            # flip left-right
-            if random.random() < hyp["fliplr"]:
-                img = np.fliplr(img)
-                if nL:
-                    labels[:, 1] = 1 - labels[:, 1]
-
-        labels_out = torch.zeros((nL, 6))
-        if nL:
-            labels_out[:, 1:] = torch.from_numpy(labels)
-
-        # Convert
-        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-        img = np.ascontiguousarray(img)
-
-        return torch.from_numpy(img), labels_out, self.img_files[index], shapes
+        if self.is_train and random.random() < self.fliplr:
+            image = np.fliplr(image)
+            labels[:, [1, 3]] = 1 - labels[:, [1, 3]]
+        image = image[:, :, ::-1].transpose(2, 0, 1)  # BGR -> RGB -> channels first
+        image = np.ascontiguousarray(image)
+        return image, bbox, label
+        # return torch.from_numpy(img), labels_out, self.img_files[index], shapes
 
     @staticmethod
     def collate_fn(batch):
@@ -244,10 +146,10 @@ def load_image(self, index):
     return img, (h0, w0), img.shape[:2]  # img, hw_original, hw_resized
 
 
-def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
+def augment_hsv(image, hgain=0.5, sgain=0.5, vgain=0.5):
     r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
-    hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
-    dtype = img.dtype  # uint8
+    hue, sat, val = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))
+    dtype = image.dtype  # uint8
 
     x = np.arange(0, 256, dtype=np.int16)
     lut_hue = ((x * r[0]) % 180).astype(dtype)
@@ -255,7 +157,7 @@ def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
     lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
 
     img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
-    cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
+    cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR, dst=image)  # no return needed
 
 
 def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, auto_size=32):
@@ -291,76 +193,50 @@ def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scale
     return img, ratio, (dw, dh)
 
 
-def random_perspective(img, targets=(), degrees=10, translate=0.1, scale=0.1, shear=10, perspective=0.0, border=(0, 0)):
+def random_perspective(image, bbox, label, target_shape=(640, 640), degrees=10, translate=0.1, scale=0.1, shear=10):
     # torchvision.transforms.RandomAffine(degrees=(-10, 10), translate=(.1, .1), scale=(.9, 1.1), shear=(-10, 10))
-    # targets = [cls, xyxy]
-
-    height = img.shape[0] + border[0] * 2  # shape(h,w,c)
-    width = img.shape[1] + border[1] * 2
+    height, width = target_shape[:2] if isinstance(target_shape, (list, tuple)) else (target_shape, target_shape)
 
     # Center
-    C = np.eye(3)
-    C[0, 2] = -img.shape[1] / 2  # x translation (pixels)
-    C[1, 2] = -img.shape[0] / 2  # y translation (pixels)
-
-    # Perspective
-    P = np.eye(3)
-    P[2, 0] = random.uniform(-perspective, perspective)  # x perspective (about y)
-    P[2, 1] = random.uniform(-perspective, perspective)  # y perspective (about x)
+    cc = np.eye(3)
+    cc[0, 2] = -image.shape[1] / 2  # x translation (pixels)
+    cc[1, 2] = -image.shape[0] / 2  # y translation (pixels)
 
     # Rotation and Scale
-    R = np.eye(3)
-    a = random.uniform(-degrees, degrees)
-    # a += random.choice([-180, -90, 0, 90])  # add 90deg rotations to small rotations
-    s = random.uniform(1 - scale, 1 + scale)
-    # s = 2 ** random.uniform(-scale, scale)
-    R[:2] = cv2.getRotationMatrix2D(angle=a, center=(0, 0), scale=s)
+    rr = np.eye(3)
+    rr[:2] = cv2.getRotationMatrix2D(angle=random.uniform(-degrees, degrees), center=(0, 0), scale=random.uniform(1 - scale, 1 + scale))
 
     # Shear
-    S = np.eye(3)
-    S[0, 1] = math.tan(random.uniform(-shear, shear) * math.pi / 180)  # x shear (deg)
-    S[1, 0] = math.tan(random.uniform(-shear, shear) * math.pi / 180)  # y shear (deg)
+    ss = np.eye(3)
+    ss[0, 1] = math.tan(random.uniform(-shear, shear) * math.pi / 180)  # x shear (deg)
+    ss[1, 0] = math.tan(random.uniform(-shear, shear) * math.pi / 180)  # y shear (deg)
 
     # Translation
-    T = np.eye(3)
-    T[0, 2] = random.uniform(0.5 - translate, 0.5 + translate) * width  # x translation (pixels)
-    T[1, 2] = random.uniform(0.5 - translate, 0.5 + translate) * height  # y translation (pixels)
+    tt = np.eye(3)
+    tt[0, 2] = random.uniform(0.5 - translate, 0.5 + translate) * width  # x translation (pixels)
+    tt[1, 2] = random.uniform(0.5 - translate, 0.5 + translate) * height  # y translation (pixels)
 
     # Combined rotation matrix
-    M = T @ S @ R @ P @ C  # order of operations (right to left) is IMPORTANT
-    if (border[0] != 0) or (border[1] != 0) or (M != np.eye(3)).any():  # image changed
-        if perspective:
-            img = cv2.warpPerspective(img, M, dsize=(width, height), borderValue=(114, 114, 114))
-        else:  # affine
-            img = cv2.warpAffine(img, M[:2], dsize=(width, height), borderValue=(114, 114, 114))
+    mm = tt @ ss @ rr @ cc  # order of operations (right to left) is IMPORTANT
+    image = cv2.warpAffine(image, mm[:2], dsize=(width, height), borderValue=(114, 114, 114))
 
-    # Transform label coordinates
-    n = len(targets)
-    if n:
-        # warp points
-        xy = np.ones((n * 4, 3))
-        xy[:, :2] = targets[:, [1, 2, 3, 4, 1, 4, 3, 2]].reshape(n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
-        xy = xy @ M.T  # transform
-        if perspective:
-            xy = (xy[:, :2] / xy[:, 2:3]).reshape(n, 8)  # rescale
-        else:  # affine
-            xy = xy[:, :2].reshape(n, 8)
+    # warp points
+    bbox = bbox[:, [1, 0, 3, 2, 3, 0, 1, 2]].reshape(-1, 2)  # x1y1, x2y2, x1y2, x2y1
+    bbox = np.pad(bbox, [[0, 0], [0, 1]], constant_values=1)
+    bbox = bbox @ mm.T  # transform
+    bbox = bbox[:, :2].reshape(-1, 8)
 
-        # create new boxes
-        x = xy[:, [0, 2, 4, 6]]
-        y = xy[:, [1, 3, 5, 7]]
-        xy = np.concatenate((x.min(1), y.min(1), x.max(1), y.max(1))).reshape(4, n).T
+    # create new boxes
+    xx, yy = bbox[:, [0, 2, 4, 6]], bbox[:, [1, 3, 5, 7]]
+    bbox = np.concatenate((yy.min(1), xx.min(1), yy.max(1), xx.max(1))).reshape(4, -1).T
 
-        # clip boxes
-        xy[:, [0, 2]] = xy[:, [0, 2]].clip(0, width)
-        xy[:, [1, 3]] = xy[:, [1, 3]].clip(0, height)
+    # clip boxes
+    bbox[:, [0, 2]] = bbox[:, [0, 2]].clip(0, height)
+    bbox[:, [1, 3]] = bbox[:, [1, 3]].clip(0, width)
 
-        # filter candidates
-        i = box_candidates(box1=targets[:, 1:5].T * s, box2=xy.T)
-        targets = targets[i]
-        targets[:, 1:5] = xy[i]
-
-    return img, targets
+    # filter candidates
+    valid_candidates = np.logical_and(bbox[:, 2] - bbox[:, 0] > 2, bbox[:, 3] - bbox[:, 1] > 2)
+    return image, bbox[valid_candidates], label[valid_candidates]
 
 
 def box_candidates(box1, box2, wh_thr=2, ar_thr=20, area_thr=0.1):  # box1(4,n), box2(4,n)

@@ -2833,6 +2833,38 @@
       additional_transfer=additional_transfer,
   )
   ```
+## CSPNeXt
+  ```py
+  from keras_cv_attention_models.cspnext import cspnext
+  from keras_cv_attention_models import download_and_load
+  mm = cspnext.CSPNeXtLarge()
+
+  tail_align_dict = {
+      "short_conv": "block1_1_conv", "short_bn": "block1_1_bn", "output_conv": "block1_2_dw_conv", "output_bn": "block1_2_dw_bn",
+  }
+  download_and_load.keras_reload_from_torch_model(
+      'cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth', mm, tail_align_dict=tail_align_dict, tail_split_position=1,
+  )
+  ```
+  ```py
+  from mmdet import models
+  tt = models.backbones.CSPNeXt()
+
+  import torch
+  ss = torch.load('cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth')
+  tt.load_state_dict({kk.replace('backbone.', ''): vv for kk, vv in ss['state_dict'].items() if kk.startswith('backbone.')})
+  _ = tt.eval()
+  aa = tt(torch.ones([1, 3, 224, 224]))
+
+  # ss = torch.load()
+  from keras_cv_attention_models import model_surgery
+  from keras_cv_attention_models.cspnext import cspnext
+  mm = cspnext.CSPNeXtLarge(pretrained='cspnext_large_imagenet.h5', num_classes=0)
+  bb = mm(tf.ones([1, 224, 224, 3]))
+
+  print(np.allclose(bb, aa[-1].permute([0, 2, 3, 1]).detach(), atol=1e-4))
+  # True
+  ```
 ## Count parameters and flops
   ```py
   from keras_cv_attention_models import model_surgery
