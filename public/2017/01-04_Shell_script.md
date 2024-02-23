@@ -108,6 +108,13 @@
 
     echo ${my_array[3]}        # 需要使用{} --> orange
     ```
+  - 数组拼接
+    ```sh
+    aa=("aa" "bb" "cc")
+    aa=(${aa[@]} "dd")
+    echo ${aa[@]}
+    # aa bb cc dd
+    ```
   - ($(EXP)) 初始化为命令输出的数组
     ```shell
     FILELIST=($(ls))
@@ -120,6 +127,7 @@
     ```
   - ${#VAR[@]} ${#VAR[\*]} 元素数目
     ```shell
+    echo ${#my_array[@]}        # 输出元素数目 --> 4
     echo ${#my_array[@]}        # 输出元素数目 --> 4
 
     # adding another array element
@@ -390,6 +398,12 @@
     FF=1ba23
     if [[ ! $FF =~ ^[0-9] ]]; then echo "string"; else echo "number"; fi
     # number
+    ```
+    用于判断包含子串
+    ```sh
+    AA="hello world"
+    if [[ $AA =~ "wor" ]]; then echo $AA; fi
+    # hello world
     ```
   - **`if [ -n $STR ]`** 在 `$STR` 为空时会返回 `True`
     ```sh
