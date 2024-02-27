@@ -1,3 +1,31 @@
+## Parse
+```py
+input_code = """
+struct Person
+{
+    int age;
+    const char* name;
+};
+
+int main()
+{
+    Person person = { 1, "John" };
+    person.age = 2;
+    int cc = 2;
+    return 0;
+}
+"""
+
+from clang import cindex
+tu = cindex.Index.create(excludeDecls=True).parse('main.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', input_code)])
+aa, bb = list(tu.cursor.get_children())
+ff = list(list(bb.get_children())[0].get_children())[1]
+print([ii.spelling for ii in ff.get_tokens()])
+
+gg = list(ff.get_tokens())[-1]
+print(input_code[:gg.extent.start.offset] + "4" + input_code[gg.extent.end.offset:])
+```
+## Practices
 ```py
 from clang import cindex
 from clang.cindex import Index, Config, CursorKind, TypeKind
