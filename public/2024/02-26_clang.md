@@ -17,13 +17,91 @@ int main()
 """
 
 from clang import cindex
+
 tu = cindex.Index.create(excludeDecls=True).parse('main.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', input_code)])
+translation_unit = index.parse('example.cpp', args=['-std=c++11'], unsaved_files=[('example.cpp', source_code)])
+
 aa, bb = list(tu.cursor.get_children())
 ff = list(list(bb.get_children())[0].get_children())[1]
 print([ii.spelling for ii in ff.get_tokens()])
 
 gg = list(ff.get_tokens())[-1]
 print(input_code[:gg.extent.start.offset] + "4" + input_code[gg.extent.end.offset:])
+```
+## Functions
+```py
+USING_SCALE_BIAS_ITEMS = ["IN_QKV", "IN_SELFOUT", "IN_MLP"]
+INTERMIDATE_PREFIX = "INTERMIDATE_"
+
+def find_first_enum_recursion(cursor):
+    for cur in cursor.get_children():
+        if cur.kind == cindex.CursorKind.ENUM_DECL:
+            return cur
+        ret = find_first_enum_recursion(cur)
+        if ret is not None:
+            return ret
+
+
+def add_scale_bias_in_enum(contents, enum_cursor, indent=4):
+    added_items, insert_position, is_intermodate_found = [], enum_cursor.extent.end.offset - 1, False
+    for enum_item in enum_cursor.get_children():
+        enum_item_spelling = enum_item.spelling
+        if any([ii in enum_item_spelling for ii in USING_SCALE_BIAS_ITEMS]):
+            print(enum_item_spelling)
+            added_items.append(enum_item_spelling + "_DEQSCALE,")
+            added_items.append(enum_item_spelling + "_BIAS,")  # [TODO] check if bias already exists
+        if not is_intermodate_found and enum_item_spelling.startswith(INTERMIDATE_PREFIX):
+            insert_position = contents[:enum_item.extent.start.offset].rfind('\n') + 1
+            is_intermodate_found = True
+
+    indent_prefix = "\n" + " " * indent
+    insert_contents = indent_prefix + "// Quant weights" + indent_prefix + indent_prefix.join(added_items) + "\n"
+    return insert_contents, insert_position, insert_position
+
+    # return added_items
+
+from clang import cindex
+
+contents = open('flash_attention_rope_layer.cpp').read()
+tu = cindex.Index.create(excludeDecls=True).parse('flash_attention_rope_layer.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', contents)])
+attention_enum = find_first_enum_recursion(tu.cursor)
+print([ii.spelling for ii in list(aa.get_children())])
+
+insert_contents, insert_start, insert_end = add_scale_bias_in_enum(contents, attention_enum)
+print(insert_contents)
+```
+## MLP
+```cpp
+Transforming this code using python clang==14.0 interface like get_children and get_tokens.
+Source:
+struct Person
+{
+    int age;
+    const char* name;
+};
+
+int main()
+{
+    Person person = { 1, "John" };
+    person.age = 2;
+    int cc = 2;
+    return 0;
+}
+
+Target:
+struct Person
+{
+    int age;
+    const char* name;
+};
+
+int main()
+{
+    Person person = { 1, "John" };
+    person.age = 4;
+    int cc = 2;
+    return 0;
+}
 ```
 ## Practices
 ```py
