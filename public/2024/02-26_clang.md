@@ -30,6 +30,26 @@ print(input_code[:gg.extent.start.offset] + "4" + input_code[gg.extent.end.offse
 ```
 ## Functions
 ```py
+Please learn the style of this example thansforming c++ code using python clang interface.
+contents = """
+namespace test_model {
+enum FlashAttentionRopeLayerTensorId : int {
+    IN_HIDDENSTATES = 0,
+
+    IN_NORMWEIGHT,
+    IN_QKVMIXEDLINEARWEIGHT,
+    IN_SELFOUTLINEARWEIGHT,
+    IN_SELFOUTNORMWEIGHT,
+    IN_MLPGATEWEIGHT,
+    IN_MLPDOWNWEIGHT,
+    IN_MLPUPWEIGHT,    
+    OUT_LAYEROUT,
+
+    INTERMIDATE_INPUTNORMOUT,
+};
+}
+"""
+
 USING_SCALE_BIAS_ITEMS = ["IN_QKV", "IN_SELFOUT", "IN_MLP"]
 INTERMIDATE_PREFIX = "INTERMIDATE_"
 
@@ -47,7 +67,7 @@ def add_scale_bias_in_enum(contents, enum_cursor, indent=4):
     for enum_item in enum_cursor.get_children():
         enum_item_spelling = enum_item.spelling
         if any([ii in enum_item_spelling for ii in USING_SCALE_BIAS_ITEMS]):
-            print(enum_item_spelling)
+            # print(enum_item_spelling)
             added_items.append(enum_item_spelling + "_DEQSCALE,")
             added_items.append(enum_item_spelling + "_BIAS,")  # [TODO] check if bias already exists
         if not is_intermodate_found and enum_item_spelling.startswith(INTERMIDATE_PREFIX):
@@ -57,18 +77,146 @@ def add_scale_bias_in_enum(contents, enum_cursor, indent=4):
     indent_prefix = "\n" + " " * indent
     insert_contents = indent_prefix + "// Quant weights" + indent_prefix + indent_prefix.join(added_items) + "\n"
     return insert_contents, insert_position, insert_position
-
     # return added_items
 
 from clang import cindex
 
-contents = open('flash_attention_rope_layer.cpp').read()
-tu = cindex.Index.create(excludeDecls=True).parse('flash_attention_rope_layer.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', contents)])
+# contents = open('flash_attention_rope_layer.cpp').read()
+tu = cindex.Index.create(excludeDecls=True).parse('temp.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', contents)])
 attention_enum = find_first_enum_recursion(tu.cursor)
-print([ii.spelling for ii in list(aa.get_children())])
-
+# print([ii.spelling for ii in list(attention_enum.get_children())])
 insert_contents, insert_start, insert_end = add_scale_bias_in_enum(contents, attention_enum)
-print(insert_contents)
+print(contents[:insert_start] + insert_contents + contents[insert_end:])
+
+Now try using this coding style and clang==14.0 interface, give me python code transforming:
+    atb::Status FlashAttentionRopeLayer(){
+        atb_speed::common::MlpGateParamV2 mlpParam;
+        mlpParam.commDownParam.rank = param.rank;
+        mlpParam.commDownParam.rankSize = param.rankSize;
+        mlpParam.commDownParam.backend = param.backend;
+        mlpParam.activationType = atb::infer::ActivationType::ACTIVATION_SWISH;
+        mlpParam.transposeB = true;
+        mlpParam.isBias = false;
+        mlpParam.isPack = false;
+        atb_speed::common::MlpGateLayerV2(mlpParam, &mlpNode.operation);
+    }
+To:
+    atb::Status FlashAttentionRopeLayer(){
+        atb_speed::common::MlpGateParamV2 mlpParam;
+        mlpParam.isBias = true;
+        mlpParam.isPack = false;
+        mlpParam.isQuant = true;
+        mlpParam.transposeB = true;
+        mlpParam.commDownParam.rank = param.rank;
+        mlpParam.commDownParam.rankSize = param.rankSize;
+        mlpParam.commDownParam.backend = param.backend;
+        mlpParam.activationType = atb::infer::ActivationType::ACTIVATION_SWISH;
+        // add quant op
+        mlpParam.quantDownParam.quantType = atb::infer::QUANT_INT8;
+        mlpParam.quantDownParam.isQuantOp = true;
+        mlpParam.quantDownParam.elewiseType = atb::infer::ElewiseParam::ElewiseType::ELEWISE_QUANT;
+        mlpParam.quantDownParam.inputScale = param.down_projInputScale;
+        mlpParam.quantDownParam.inputOffset = param.down_projInputOffset;
+
+        atb_speed::common::MlpGateLayerV2(mlpParam, &mlpNode.operation);
+    }
+
+Yes, now try using this coding style and python clang interface, write a python code transforming:
+    atb::Status FlashAttentionRopeLayer()
+    {
+        atb_speed::common::MlpGateParamV2 mlpParam;
+        mlpParam.commDownParam.rank = param.rank;
+        mlpParam.commDownParam.rankSize = param.rankSize;
+        mlpParam.commDownParam.backend = param.backend;
+        mlpParam.activationType = atb::infer::ActivationType::ACTIVATION_SWISH;
+        mlpParam.transposeB = true;
+        mlpParam.isBias = false;
+        mlpParam.isPack = false;
+        atb_speed::common::MlpGateLayerV2(mlpParam, &mlpNode.operation);
+    }
+To:
+    atb::Status FlashAttentionRopeLayer()
+    {
+        atb_speed::common::MlpGateParamV2 mlpParam;
+        mlpParam.commDownParam.rank = param.rank;
+        mlpParam.commDownParam.rankSize = param.rankSize;
+        mlpParam.commDownParam.backend = param.backend;
+        mlpParam.activationType = atb::infer::ActivationType::ACTIVATION_SWISH;
+        mlpParam.transposeB = true;
+        mlpParam.isBias = true;
+        mlpParam.isPack = false;
+        mlpParam.isQuant = true;
+        // add quant op
+        mlpParam.quantDownParam.quantType = atb::infer::QUANT_INT8;
+        mlpParam.quantDownParam.isQuantOp = true;
+        mlpParam.quantDownParam.elewiseType = atb::infer::ElewiseParam::ElewiseType::ELEWISE_QUANT;
+        mlpParam.quantDownParam.inputScale = param.down_projInputScale;
+        mlpParam.quantDownParam.inputOffset = param.down_projInputOffset;
+
+        atb_speed::common::MlpGateLayerV2(mlpParam, &mlpNode.operation);
+    }
+
+Please notice those parameters like `mlpParam.isBias` or `mlpParam.transposeB` may exist or not, and its value may different from the target added, so all of them should be checked. If those parameters not exists in source code, should also add them. Also please use `get_tokens` for parsing function's contents
+
+```
+```py
+from clang import cindex
+
+def find_function_cursor(cursor, function_name):
+    for cur in cursor.get_children():
+        if cur.kind == cindex.CursorKind.FUNCTION_DECL and cur.spelling == function_name:
+            return cur
+        result = find_function_cursor(cur, function_name)
+        if result:
+            return result
+
+def add_parameter_if_not_exists(contents, function_cursor, param_name, default_value):
+    tokens = list(function_cursor.get_tokens())
+    for token in tokens:
+        if token.spelling == param_name:
+            return contents
+
+    indent = " " * 4
+    insert_contents = "\n" + indent + f"{param_name} = {default_value};"
+    return contents[:-1] + insert_contents + contents[-1]
+
+def transform_code(contents, function_name):
+    tu = cindex.Index.create().parse('temp.cpp', args=['-std=c++11'], unsaved_files=[('temp.cpp', contents)])
+    function_cursor = find_function_cursor(tu.cursor, function_name)
+
+    if function_cursor:
+        params_to_add = {
+            "isBias": "true",
+            "isPack": "false",
+            "isQuant": "true",
+            "quantDownParam.quantType": "atb::infer::QUANT_INT8",
+            "quantDownParam.isQuantOp": "true",
+            "quantDownParam.elewiseType": "atb::infer::ElewiseParam::ElewiseType::ELEWISE_QUANT",
+            "quantDownParam.inputScale": "param.down_projInputScale",
+            "quantDownParam.inputOffset": "param.down_projInputOffset"
+        }
+
+        for param_name, default_value in params_to_add.items():
+            contents = add_parameter_if_not_exists(contents, function_cursor, param_name, default_value)
+
+    return contents
+
+source_code = """
+atb::Status FlashAttentionRopeLayer(){
+    atb_speed::common::MlpGateParamV2 mlpParam;
+    mlpParam.commDownParam.rank = param.rank;
+    mlpParam.commDownParam.rankSize = param.rankSize;
+    mlpParam.commDownParam.backend = param.backend;
+    mlpParam.activationType = atb::infer::ActivationType::ACTIVATION_SWISH;
+    mlpParam.transposeB = true;
+    mlpParam.isBias = false;
+    mlpParam.isPack = false;
+    atb_speed::common::MlpGateLayerV2(mlpParam, &mlpNode.operation);
+}
+"""
+
+transformed_code = transform_code(source_code, "FlashAttentionRopeLayer")
+print(transformed_code)
 ```
 ## MLP
 ```cpp
