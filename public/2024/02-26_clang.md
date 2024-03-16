@@ -1,3 +1,39 @@
+```py
+init_rngs = {'params': jax.random.PRNGKey(1), 'dropout': jax.random.PRNGKey(2), 'emb_dropout': jax.random.PRNGKey(3)}
+key = jax.random.PRNGKey(5)
+features = jax.random.normal(key, (4, 256, 1024))
+merger = PatchMerger(dim=1024, num_tokens_out=8)
+mei
+
+```
+## Test
+```py
+cpp_file_path = '/home/leondgarse/workspace/ModelLink/mindie_ref/mindie_llm/atb_models/models/llama/layer/flash_attention_layer.cpp'
+from clang import cindex
+from llm.transform import utils
+from llm.transform import transform_quant
+from llm.transform.transform_quant_cpp_layer_function import TransformQuantCppLayerFunction
+
+def print_spelling(param, info="", level="debug"):
+    param = param.get_children() if hasattr(param, "get_children") else param
+    message = info + "[" + ", ".join([ii.spelling for ii in param]) + "]"
+    print(message)
+
+cursor, contents = transform_quant.parse_file_as_cursor(cpp_file_path)
+children = list(next(list(cursor.get_children())[-1].get_children()).get_children())
+print_spelling(children, info="Children parts from cpp: ", level="info")
+
+indent = 4
+in_tensor_added = transform_quant.add_scale_bias_in_enum(contents, children[3], indent)[-1]
+
+cur_cursor = children[-1]
+aa = TransformQuantCppLayerFunction(contents, children[-1], in_tensor_added, indent=indent)
+```
+```py
+cpp_file = "/home/leondgarse/workspace/ModelLink/mindie_ref/mindie_llm/atb_models/models/baichuan2/7b/layer/flash_attention_rope_layer.cpp"
+h_file = "/home/leondgarse/workspace/ModelLink/mindie_ref/mindie_llm/atb_models/models/baichuan2/7b/layer/flash_attention_rope_layer.h"
+
+```
 ## Parse
 ```py
 input_code = """

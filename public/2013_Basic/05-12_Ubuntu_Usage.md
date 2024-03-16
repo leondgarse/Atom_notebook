@@ -2257,17 +2257,47 @@
   ```
   - 视频合并
 ## Office 激活
-- [office2021安装,使用KMS服务器激活教程,及安装报错解决方案](https://zhuanlan.zhihu.com/p/629538463)
-- cmd 使用 KMS 激活
-  ```java
-  # cmd
-  cd "\Program Files\Microsoft Office\Office16"
-  # 安装 office2021 批量许可证
-  for /f %x in ('dir /b ..\root\Licenses16\ProPlus2021VL_KMS*.xrm-ms') do cscript ospp.vbs /inslic:"..\root\Licenses16\%x"
-  # KMS 激活，KMS 服务器地址1 kms.0t.net.cn，地址2 kms.moeclub.org
-  cscript ospp.vbs /sethst:kms.0t.net.cn
-  cscript ospp.vbs /setprt:1688
-  cscript ospp.vbs /act
+  - [office2021安装,使用KMS服务器激活教程,及安装报错解决方案](https://zhuanlan.zhihu.com/p/629538463)
+  - cmd 使用 KMS 激活
+    ```java
+    # cmd
+    cd "\Program Files\Microsoft Office\Office16"
+    # 安装 office2021 批量许可证
+    for /f %x in ('dir /b ..\root\Licenses16\ProPlus2021VL_KMS*.xrm-ms') do cscript ospp.vbs /inslic:"..\root\Licenses16\%x"
+    # KMS 激活，KMS 服务器地址1 kms.0t.net.cn，地址2 kms.moeclub.org
+    cscript ospp.vbs /sethst:kms.0t.net.cn
+    cscript ospp.vbs /setprt:1688
+    cscript ospp.vbs /act
+    ```
+## zsh
+  ```sh
+  sudo apt install zsh
+
+  wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+  sh install.sh
+
+  cd ~/.oh-my-zsh/plugins
+  git clone https://github.com/zsh-users/zsh-autosuggestions.git
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+  chmod  755 zsh-autosuggestions zsh-completions zsh-syntax-highlighting -R
+
+  vi ~/.zshrc
+  ZSH_THEME=""
+  if [ $UID -eq 0 ]; then NCOLOR="red"; else NCOLOR="green"; fi
+  PROMPT='%{$fg[$NCOLOR]%}%n%{$fg[green]%}@%m%{$reset_color%} %{$fg[blue]%}%~%{$reset_color%} %{$fg[red]%}%(!.#.»)%{$reset_color%} '
+
+  CASE_SENSITIVE="true"
+  DISABLE_AUTO_TITLE="true"
+
+  plugins=(
+     # git  # 关闭 git plugins
+     zsh-autosuggestions
+     zsh-completions
+     zsh-syntax-highlighting
+  )
+
+  vi ~/.oh-my-zsh/themes/jreese.zsh-theme  # 删除 git
   ```
 ***
 

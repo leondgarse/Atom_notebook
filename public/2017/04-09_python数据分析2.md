@@ -344,6 +344,33 @@
   plt.tight_layout()
   ```
   ![](images/pie.jpg)
+  ```py
+  import numpy as np
+  import matplotlib.pyplot as plt
+  sizes = [45, 10, 45]
+  colors = ["yellowgreen", "gold", "lightskyblue"]
+  explode = (0.1, 0.1, 0.1)  # 突出显示
+  startangle = 190
+  radius = 2
+  center_x, center_y = 3, 4
+  plt.pie(sizes, explode=explode, colors=colors, autopct="%1.1f%%", shadow=True, startangle=startangle, radius=radius, center=(center_x, center_y))
+  plt.title("Pie Test")
+  plt.tight_layout()
+
+  rotate = startangle / 180 * np.pi
+  to_coords = lambda ratio: (np.cos(2 * np.pi / 100 * ratio + rotate) * radius * 1.1 + center_x, np.sin(2 * np.pi / 100 * ratio + rotate) * radius * 1.1 + center_y)
+  xx, yy = to_coords(45 / 2)
+  plt.scatter(center_x + (xx - center_x) / radius, center_y + (yy - center_y) / radius)
+  plt.text(xx, yy, 'Good\n({:.4f}, {:.4f})'.format(xx, yy), horizontalalignment='left', verticalalignment='top')
+
+  xx, yy = to_coords(45 + 10 / 2)
+  plt.scatter(center_x + (xx - center_x) / radius, center_y + (yy - center_y) / radius)
+  plt.text(xx, yy, 'Bad\n({:.4f}, {:.4f})'.format(xx, yy), horizontalalignment='left', verticalalignment='center')
+
+  xx, yy = to_coords(45 + 10 + 45 / 2)
+  plt.scatter(center_x + (xx - center_x) / radius, center_y + (yy - center_y) / radius)
+  plt.text(xx, yy, 'Medium\n({:.4f}, {:.4f})'.format(xx, yy), horizontalalignment='right')
+  ```
 ## 将图表保存到文件 savefig
   - plt.savefig将当前图表保存到文件,该方法相当于Figure对象的实例方法savefig
     ```python
