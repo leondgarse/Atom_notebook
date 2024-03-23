@@ -1718,6 +1718,38 @@
   ```
 ## wsl
   - 虚拟盘位置 `/mnt/c/Users/Administrator/AppData/Local/Packages/CanonicalGroupLimited.Ubuntu22.04LTS_79rhkp1fndgsc/LocalState/ext4.vhdx`
+  - 挂载 windows 网络位置到 wsl: `sudo mount -t drvfs '\\xxx.xxx.xxx.xxx\data' /media/samba`
+## LVM
+- 查看 LVM 卷组信息 `vgdisplay`
+- 磁盘扩容
+  ```sh
+  lvextend -L 10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 调整为 10G
+  lvextend -L +10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 增加 10G
+  lvextend -L -10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 减少 10G
+  lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv  # 扩展剩余空间的 100%
+
+  resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv  # 执行调整
+  ```
+- 合并多个硬盘为一个虚拟硬盘
+  ```sh
+  # Initialize physical volumes for use by LVM
+  pvcreate /dev/sda
+  pvcreate /dev/sdb
+  pvcreate /dev/sdc
+  ...
+
+  # Create a volume group
+  vgcreate lvm_data /dev/sda  # 开始盘
+  vgextend lvm_data /dev/sdb  # 扩展盘
+  vgextend lvm_data /dev/sdc  # 扩展盘
+  ...
+
+  # Create a logical volume
+  lvcreate -l 100%VG -n vg_data lvm_data
+  # Build a Linux filesystem
+  mkfs -t ext4 /dev/mapper/lvm_data-vg_data
+  ```
+  Q: `Device /dev/sdx excluded by filter` when `pvcreate` -> `wipefs -a /dev/sdx`
 ***
 
 # 软件
