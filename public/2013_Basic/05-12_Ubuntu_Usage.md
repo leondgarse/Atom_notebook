@@ -1719,37 +1719,49 @@
 ## wsl
   - 虚拟盘位置 `/mnt/c/Users/Administrator/AppData/Local/Packages/CanonicalGroupLimited.Ubuntu22.04LTS_79rhkp1fndgsc/LocalState/ext4.vhdx`
   - 挂载 windows 网络位置到 wsl: `sudo mount -t drvfs '\\xxx.xxx.xxx.xxx\data' /media/samba`
+## 添加新用户
+  ```sh
+  USER_NAMES=(test demo)
+  ADDITIONAL_GROUP=root
+  for USER_NAME in ${USER_NAMES[@]}; do
+      echo "USER_NAME=$USER_NAME"
+      useradd -m $USER_NAME
+      echo "$USER_NAME:$USER_NAME" | chpasswd
+      sed -i "/$USER_NAME/s#/sh#/bash#" / etc/passwd
+      sed -i "/^$ADDITIONAL_GROUP/s#.*#&,$USER_NAME#" / etc/group
+  done
+  ```
 ## LVM
-- 查看 LVM 卷组信息 `vgdisplay`
-- 磁盘扩容
-  ```sh
-  lvextend -L 10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 调整为 10G
-  lvextend -L +10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 增加 10G
-  lvextend -L -10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 减少 10G
-  lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv  # 扩展剩余空间的 100%
+  - 查看 LVM 卷组信息 `vgdisplay`
+  - 磁盘扩容
+    ```sh
+    lvextend -L 10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 调整为 10G
+    lvextend -L +10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 增加 10G
+    lvextend -L -10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 减少 10G
+    lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv  # 扩展剩余空间的 100%
 
-  resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv  # 执行调整
-  ```
-- 合并多个硬盘为一个虚拟硬盘
-  ```sh
-  # Initialize physical volumes for use by LVM
-  pvcreate /dev/sda
-  pvcreate /dev/sdb
-  pvcreate /dev/sdc
-  ...
+    resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv  # 执行调整
+    ```
+  - 合并多个硬盘为一个虚拟硬盘
+    ```sh
+    # Initialize physical volumes for use by LVM
+    pvcreate /dev/sda
+    pvcreate /dev/sdb
+    pvcreate /dev/sdc
+    ...
 
-  # Create a volume group
-  vgcreate lvm_data /dev/sda  # 开始盘
-  vgextend lvm_data /dev/sdb  # 扩展盘
-  vgextend lvm_data /dev/sdc  # 扩展盘
-  ...
+    # Create a volume group
+    vgcreate lvm_data /dev/sda  # 开始盘
+    vgextend lvm_data /dev/sdb  # 扩展盘
+    vgextend lvm_data /dev/sdc  # 扩展盘
+    ...
 
-  # Create a logical volume
-  lvcreate -l 100%VG -n vg_data lvm_data
-  # Build a Linux filesystem
-  mkfs -t ext4 /dev/mapper/lvm_data-vg_data
-  ```
-  Q: `Device /dev/sdx excluded by filter` when `pvcreate` -> `wipefs -a /dev/sdx`
+    # Create a logical volume
+    lvcreate -l 100%VG -n vg_data lvm_data
+    # Build a Linux filesystem
+    mkfs -t ext4 /dev/mapper/lvm_data-vg_data
+    ```
+    Q: `Device /dev/sdx excluded by filter` when `pvcreate` -> `wipefs -a /dev/sdx`
 ***
 
 # 软件
@@ -2305,13 +2317,13 @@
   ```sh
   sudo apt install zsh
 
-  wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+  wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh --no-check-certificate
   sh install.sh
 
   cd ~/.oh-my-zsh/plugins
   git clone https://github.com/zsh-users/zsh-autosuggestions.git
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
-  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+  git clone https://github.com/zsh-users/zsh-completions.git
   chmod  755 zsh-autosuggestions zsh-completions zsh-syntax-highlighting -R
 
   vi ~/.zshrc

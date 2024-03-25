@@ -2429,7 +2429,7 @@
     ```
   - 指定用户目录下的 python 版本
     ```sh
-    sudo apt install libbz2-dev libssl-dev liblzma-dev
+    sudo apt install libbz2-dev libssl-dev liblzma-dev libffi-dev
     # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
 
     # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
