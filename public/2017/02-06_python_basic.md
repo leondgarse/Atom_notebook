@@ -79,6 +79,7 @@
   	- [继承](#继承)
   	- [重载](#重载)
   	- [类中的 import](#类中的-import)
+  	- [前置双下划线避免子类重写](#前置双下划线避免子类重写)
   - [文件](#文件)
   	- [open 与 close](#open-与-close)
   	- [读文件](#读文件)
@@ -98,7 +99,11 @@
   	- [enumerate 带指数的列表](#enumerate-带指数的列表)
   	- [format 格式化](#format-格式化)
   	- [Iterator 与 Generators 与 Yield](#iterator-与-generators-与-yield)
-  - [Virtualenv](#virtualenv)
+  - [Python 38](#python-38)
+  - [Python 环境](#python-环境)
+  	- [Virtualenv](#virtualenv)
+  	- [Python 源码编译](#python-源码编译)
+  	- [获取当前 python 的 site-packages](#获取当前-python-的-site-packages)
 
   <!-- /TOC -->
 ***
@@ -2407,53 +2412,6 @@
     ```
 ***
 
-# Virtualenv
-  - 创建 `python3.6` 虚拟环境
-    ```sh
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt install python3.6 python3.6-dev
-
-    pip install virtualenv virtualenvwrapper
-    source $(which virtualenvwrapper.sh)
-
-    mkdir /opt/virtualenvs
-    virtualenv -p /usr/bin/python3.6 /opt/virtualenvs/python36
-    source /opt/virtualenvs/python36/bin/activate
-    ...
-
-    pip install mxnet==1.5.0 tensorflow==1.13.1
-    pip install ipython jedi==0.17.2  # ipython may not compatible with jedi>=0.18
-    pipi pandas scikit-image
-
-    deactivate
-    ```
-  - 指定用户目录下的 python 版本
-    ```sh
-    sudo apt install libbz2-dev libssl-dev liblzma-dev libffi-dev
-    # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
-
-    # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
-    wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
-    tar zxvf Python-3.10.1.tgz
-    cd Python-3.10.15
-    ./configure --prefix=$HOME/local_bin/python-3.10.5 --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
-    make
-    make install
-
-    # 可以添加到环境变量
-    # export PATH=$HOME/local_bin/python-3.10.5/bin:$PATH
-
-    # Virtualenv 指定 python 版本
-    virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
-    ```
-  - 报错 `No module named '_bz2'`，需要先安装 `apt install libbz2-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_bz2.xxx.so`
-  - 报错 `No module named '_ssl'`，需要先安装 `apt install libssl-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
-  - 报错 `No module named '_lzma'`，需要先安装 `apt install liblzma-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
-  - **configure** 参数
-    - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
-    - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`
-***
-
 # Python 38
   - [Python 3.8 有什么新变化](https://docs.python.org/zh-cn/3.8/whatsnew/3.8.html)
   - **f 字符串支持 = 用于调试 `f'{expr=}'`**，自动记录表达式和调试文档
@@ -2509,4 +2467,92 @@
     ppow(10, 2, z=3)
     # TypeError: ppow() got some positional-only arguments passed as keyword arguments: 'z'
     ```
+***
+
+# Python 环境
+## Virtualenv
+  - 创建 `python3.6` 虚拟环境
+    ```sh
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt install python3.6 python3.6-dev
+
+    pip install virtualenv virtualenvwrapper
+    source $(which virtualenvwrapper.sh)
+
+    mkdir /opt/virtualenvs
+    virtualenv -p /usr/bin/python3.6 /opt/virtualenvs/python36
+    source /opt/virtualenvs/python36/bin/activate
+    ...
+
+    pip install mxnet==1.5.0 tensorflow==1.13.1
+    pip install ipython jedi==0.17.2  # ipython may not compatible with jedi>=0.18
+    pipi pandas scikit-image
+
+    deactivate
+    ```
+## Python 源码编译
+  ```sh
+  sudo apt install libbz2-dev libssl-dev liblzma-dev libffi-dev libsqlite3-dev
+  # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
+
+  # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
+  wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
+  tar zxvf Python-3.10.1.tgz
+  cd Python-3.10.15
+  ./configure --prefix=$HOME/local_bin/python-3.10.5 --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
+  make
+  make install
+
+  # 可以添加到环境变量
+  # export PATH=$HOME/local_bin/python-3.10.5/bin:$PATH
+
+  # Virtualenv 指定 python 版本
+  virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
+  ```
+  - 报错 `No module named '_bz2'`，需要先安装 `apt install libbz2-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_bz2.xxx.so`
+  - 报错 `No module named '_ssl'`，需要先安装 `apt install libssl-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
+  - 报错 `No module named '_lzma'`，需要先安装 `apt install liblzma-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
+  - **configure** 参数
+    - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
+    - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`
+## 获取当前 python 的 site-packages
+  ```sh
+  python -m site
+  # sys.path = [
+  #     '/home/leondgarse',
+  #     '/d/ProgramData/Anaconda3/Lib',
+  #     '/d/ProgramData/Anaconda3/Library',
+  #     '/usr/lib/python310.zip',
+  #     '/usr/lib/python3.10',
+  #     '/usr/lib/python3.10/lib-dynload',
+  #     '/home/leondgarse/.local/lib/python3.10/site-packages',
+  #     '/usr/local/lib/python3.10/dist-packages',
+  #     '/usr/lib/python3/dist-packages',
+  # ]
+  # USER_BASE: '/home/leondgarse/.local' (exists)
+  # USER_SITE: '/home/leondgarse/.local/lib/python3.10/site-packages' (exists)
+  # ENABLE_USER_SITE: True
+
+  python -c 'import sys; print("\n".join(sys.path))'
+  # ...
+  # /usr/lib/python3.10
+  # /usr/lib/python3.10/lib-dynload
+  # ~/.local/lib/python3.10/site-packages
+  # /usr/local/lib/python3.10/dist-packages
+  # /usr/lib/python3/dist-packages
+
+  python -c 'import sysconfig; print(sysconfig.get_paths())'
+  # {'stdlib': '/usr/lib/python3.10',
+  #  'platstdlib': '/usr/lib/python3.10',
+  #  'purelib': '/usr/local/lib/python3.10/dist-packages',
+  #  'platlib': '/usr/local/lib/python3.10/dist-packages',
+  #  'include': '/usr/include/python3.10',
+  #  'platinclude': '/usr/include/python3.10',
+  #  'scripts': '/usr/local/bin',
+  #  'data': '/usr/local',
+  # }
+
+  python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+  # /usr/local/lib/python3.10/dist-packages
+  ```
 ***

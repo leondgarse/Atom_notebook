@@ -1,4 +1,94 @@
 ```py
+import kecam
+from kecam.backend import layers, models
+from kecam.attention_layers import conv2d_no_bias, layer_norm, activation_by_name
+
+patch_size = 4  # Should better divisible by input_shape
+backbone = kecam.models.EvaLargePatch14(input_shape=(196, 196, 3), num_classes=0, patch_size=patch_size)
+print(f"{backbone.layers[-3].output_shape = }")
+# backbone.layers[-3].output_shape = (None, 2401, 1024)
+
+inputs = backbone.inputs
+nn = backbone.layers[-3].output
+nn = layers.Reshape([-1, int(nn.shape[1] ** 0.5), nn.shape[-1]])(nn)
+print(f"{nn.shape = }")
+# nn.shape = TensorShape([None, 49, 49, 1024])
+
+""" Neck """
+embed_dims = 256
+nn = conv2d_no_bias(nn, embed_dims, kernel_size=1, use_bias=False, name="neck_1_")
+nn = layer_norm(nn, name="neck_1_")
+nn = conv2d_no_bias(nn, embed_dims, kernel_size=3, padding="SAME", use_bias=False, name="neck_2_")
+nn = layer_norm(nn, name="neck_2_")
+print(f"{nn.shape = }")
+# nn.shape = TensorShape([None, 49, 49, 256])
+
+""" Upsample 4x """
+activation = "gelu"
+nn = layers.Conv2DTranspose(embed_dims // 4, kernel_size=2, strides=2, name="up_1_conv_transpose")(nn)
+nn = layer_norm(nn, epsilon=1e-6, name="up_1_")  # epsilon is fixed using 1e-6
+nn = activation_by_name(nn, activation=activation, name="up_1_")
+nn = layers.Conv2DTranspose(embed_dims // 8, kernel_size=2, strides=2, name="up_2_conv_transpose")(nn)
+nn = activation_by_name(nn, activation=activation, name="up_2_")
+print(f"{nn.shape = }")
+# nn.shape = TensorShape([None, 196, 196, 32])
+
+""" Output head """
+num_classes = 5
+nn = conv2d_no_bias(nn, num_classes, kernel_size=3, padding="SAME", use_bias=True, name="output_")
+output = activation_by_name(nn, activation="softmax", name="output_")
+model = models.Model(inputs, output, name=backbone.name + "_segment")
+print(f"{model.output_shape = }")
+# model.output_shape = (None, 196, 196, 5)
+```
+```py
+import kecam
+from kecam.backend import layers, models
+
+patch_size = 8  # Should better divisible by input_shape
+backbone = kecam.models.EvaLargePatch14(input_shape=(192, 192, 3), num_classes=0, patch_size=patch_size)
+print(f"{backbone.layers[-3].output_shape = }")
+# backbone.layers[-3].output_shape = (None, 576, 1024)
+
+inputs = backbone.inputs
+nn = backbone.layers[-3].output
+nn = layers.Reshape([-1, int(nn.shape[1] ** 0.5), nn.shape[-1]])(nn)
+print(f"{nn.shape = }")
+# nn.shape = TensorShape([None, 24, 24, 1024])
+
+decoder = kecam.stable_diffusion.encoder_decoder.Decoder(input_shape=nn.shape, num_blocks=[1, 1, 1, 1], output_channels=5)
+model = models.Model(inputs, decoder(nn), name=backbone.name + "_segment")
+print(f"{model.output_shape = }")
+# model.output_shape = (None, 192, 192, 5)
+```
+```py
+import kecam, fog_rain_snow
+image = kecam.test_images.cat()
+cur_noise = fog_rain_snow.add_fog(image)
+print(f"{image.min(), image.max() = }")
+print(f"{cur_noise.min() = }, {cur_noise.max() = }")
+
+cc = cur_noise.astype('float32') - image.astype('float32')
+print(f"{cc.min(), cc.max() = }")
+
+import kecam, fog_rain_snow, torch
+images = kecam.stable_diffusion.data.walk_data_path_gather_images('datasets/coco_dog_cat/train2017/')
+tt = kecam.stable_diffusion.build_dataset(images, custom_noise_func=fog_rain_snow.custom_noise_func)
+aa = next(iter(tt))
+
+num_training_steps = 1000
+sqrt_alpha_bar, sqrt_one_minus_alpha_bar = kecam.stable_diffusion.data.init_diffusion_alpha(num_training_steps)
+sqrt_alpha_bar, sqrt_one_minus_alpha_bar = torch.from_numpy(sqrt_alpha_bar), torch.from_numpy(sqrt_one_minus_alpha_bar)
+
+images = next(iter(tt.dataset))[None]
+noise = fog_rain_snow.custom_noise_func(images)  # torch.randn_like(images)
+dd = [sqrt_alpha_bar[timestep] * images + sqrt_one_minus_alpha_bar[timestep] * noise for timestep in range(0, num_training_steps, 20)]
+_ = kecam.plot_func.stack_and_plot_images([ii[0].permute([1, 2, 0]).numpy() / 2 + 0.5 for ii in dd])
+
+dd = [(sqrt_alpha_bar[timestep] + sqrt_one_minus_alpha_bar[timestep]) * images + sqrt_one_minus_alpha_bar[timestep] * noise for timestep in range(0, num_training_steps, 20)]
+_ = kecam.plot_func.stack_and_plot_images([ii[0].permute([1, 2, 0]).numpy() / 2 + 0.5 for ii in dd])
+```
+```py
 import cv2
 import random
 import torch

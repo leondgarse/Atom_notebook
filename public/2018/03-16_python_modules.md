@@ -1541,4 +1541,75 @@
   # hello python
   # 3
   ```
+## Python call cpp by cdll
+  ```java
+  #include <iostream>
+
+  class Foo{
+      public:
+          void bar(){
+              std::cout << "Hello" << std::endl;
+          }
+  };
+
+  extern "C" {
+      Foo* Foo_new(){ return new Foo(); }
+      void Foo_bar(Foo * foo){ foo->bar(); }
+  }
+  ```
+  ```sh
+  g++ -shared -o libfoo.so -fPIC foo.cpp
+  ```
+  ```py
+  from ctypes import cdll
+  aa = cdll.LoadLibrary('libfoo.so')
+  bb = aa.Foo_new()
+  _ = aa.Foo_bar(bb)
+  # Hello
+  ```
+## Python call cpp by pybind11
+  ```cpp
+  #include <iostream>
+  #include <string>
+  #include <pybind11/pybind11.h>
+
+  namespace py = pybind11;
+
+  class Test
+  {
+  public:
+      Test(const std::string &s);
+      ~Test();
+
+      void printStr();
+
+  private:
+      std::string _s;
+  };
+
+  Test::Test(const std::string &s) : _s(s) {}
+  Test::~Test() {}
+
+  void Test::printStr()
+  {
+      std::cout << "---> " << _s << std::endl;
+  }
+
+  PYBIND11_MODULE(class_test, m)
+  {
+      py::class_<Test>(m, "Test")
+          .def(py::init<const std::string &>())
+          .def("printStr", &Test::printStr);
+  }
+  ```
+  ```sh
+  g++ -shared -std=c++11 -fPIC test_pybind.cpp -o class_test`python3-config --extension-suffix` \
+  `python3-config --cflags` `python3-config --libs` `python3 -m pybind11 --includes`
+  ```
+  ```py
+  import class_test
+  aa = class_test.Test('aa')
+  aa.printStr()
+  # ---> aa
+  ```
 ***
