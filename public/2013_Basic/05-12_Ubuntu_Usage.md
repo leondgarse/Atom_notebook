@@ -1732,8 +1732,13 @@
   done
   ```
 ## LVM
-  - 查看 LVM 卷组信息 `vgdisplay`
-  - 磁盘扩容
+  - 查看 LVM 卷组信息
+    ```sh
+    vgdisplay
+    pvdisplay
+    lsblk
+    ```
+  - **磁盘扩容**
     ```sh
     lvextend -L 10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 调整为 10G
     lvextend -L +10G /dev/mapper/ubuntu--vg-ubuntu--lv  # 增加 10G
@@ -1742,7 +1747,7 @@
 
     resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv  # 执行调整
     ```
-  - 合并多个硬盘为一个虚拟硬盘
+  - **合并多个硬盘为一个虚拟硬盘**
     ```sh
     # Initialize physical volumes for use by LVM
     pvcreate /dev/sda

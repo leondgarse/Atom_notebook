@@ -1555,17 +1555,22 @@
   extern "C" {
       Foo* Foo_new(){ return new Foo(); }
       void Foo_bar(Foo * foo){ foo->bar(); }
+      void Print(const char * message) { std::cout << message << std::endl;}
   }
   ```
   ```sh
   g++ -shared -o libfoo.so -fPIC foo.cpp
   ```
   ```py
-  from ctypes import cdll
-  aa = cdll.LoadLibrary('libfoo.so')
+  import ctypes
+  aa = ctypes.cdll.LoadLibrary('libfoo.so')
+  # aa.Print.argtypes = [ctypes.c_char_p]  # not required, may used handling const
+
   bb = aa.Foo_new()
   _ = aa.Foo_bar(bb)
   # Hello
+  _ = aa.Print('aa'.encode('utf-8'))
+  # aa
   ```
 ## Python call cpp by pybind11
   ```cpp
@@ -1613,3 +1618,18 @@
   # ---> aa
   ```
 ***
+
+# Markdown to dataframe
+```py
+aa = """
+| aa     | bb    | cc  | dd  |
+| ------ | ----- | --- | --- |
+| 11     | 21    | 31  | 41  |
+| 12     | 22    | 32  | 42  |
+| 13     | 23    | 33  | 43  |
+"""
+
+split = [[jj.strip() for jj in ii.strip().split("|")] for ii in aa.split('\n') if len(ii.strip()) > 0]
+columns = split[0][1:-1]
+pd.DataFrame([{jj: kk for jj, kk in zip(columns, ii[1:-1])} for ii in split[2:]])
+```

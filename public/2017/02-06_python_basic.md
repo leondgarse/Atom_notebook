@@ -166,6 +166,15 @@
     export PATH="/d/ProgramData/Anaconda3:/d/ProgramData/Anaconda3/Scripts:/d/ProgramData/Anaconda3/Library/bin:$PATH"  # Window anaconda
     export PYTHONPATH="$PYTHONPATH:/d/ProgramData/Anaconda3/Lib:/d/ProgramData/Anaconda3/Library"  
     ```
+  - Q: Python download SSL sertificate error
+    ```sh
+    [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1007)
+    ```
+    A: `request.get` 中添加 `verify=False`，或通过 ssl 关闭检验
+    ```py
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+    ```
 ***
 
 # Python2 to Python3

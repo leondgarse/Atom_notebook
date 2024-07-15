@@ -700,6 +700,13 @@
       echo "Total count of arguments: $#"
     }
     ```
+  - alias 中使用位置参数变量可通过定义函数支持
+    ```sh
+    alias AA='function AA() { test=$1; echo "$test -> ${test:0:0-5}"; }; AA'
+
+    AA test.onnx
+    # test.onnx -> test
+    ```
 ***
 
 # getopts 命令行参数处理

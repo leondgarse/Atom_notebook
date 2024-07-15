@@ -303,3 +303,138 @@ for epoch in range(30):
     print('epoch number:{}'.format(epoch),
           'acc_total_t2:{}'.format(acc_total_t2[-1]))
 ```
+***
+
+## Multi labels
+"0": "20_speed",
+"1": "30_speed",
+"2": "50_speed",
+"3": "60_speed",
+"4": "70_speed",
+"5": "80_speed",
+"6": "80_lifted",
+"7": "100_speed",
+"8": "120_speed",
+"9": "no_overtaking_general",
+"10": "no_overtaking_trucks",
+"11": "right_of_way_crossing",
+"12": "right_of_way_general",
+"13": "give_way",
+"14": "stop",
+"15": "no_way_general",
+"16": "no_way_trucks",
+"17": "no_way_one_way",
+"18": "attention_general",
+"19": "attention_left_turn",
+"20": "attention_right_turn",
+"21": "attention_curvy",
+"22": "attention_bumpers",
+"23": "attention_slippery",
+"24": "attention_bottleneck",
+"25": "attention_construction",
+"26": "attention_traffic_light",
+"27": "attention_pedestrian",
+"28": "attention_children",
+"29": "attention_bikes",
+"30": "attention_snowflake",
+"31": "attention_deer",
+"32": "lifted_general",
+"33": "turn_right",
+"34": "turn_left",
+"35": "turn_straight",
+"36": "turn_straight_right",
+"37": "turn_straight_left",
+"38": "turn_right_down",
+"39": "turn_left_down",
+"40": "turn_circle",
+"41": "lifted_no_overtaking_general",
+"42": "lifted_no_overtaking_trucks"
+```py
+labels = """0\tCOLOR: red\tSHAPE: circle\tDETAIL: 20
+1\tCOLOR: red\tSHAPE: circle\tDETAIL: 30
+2\tCOLOR: red\tSHAPE: circle\tDETAIL: 50
+3\tCOLOR: red\tSHAPE: circle\tDETAIL: 60
+4\tCOLOR: red\tSHAPE: circle\tDETAIL: 70
+5\tCOLOR: red\tSHAPE: circle\tDETAIL: 80
+6\tCOLOR: black\tSHAPE: circle\tDETAIL: 80
+7\tCOLOR: red\tSHAPE: circle\tDETAIL: 100
+8\tCOLOR: red\tSHAPE: circle\tDETAIL: 120
+9\tCOLOR: red\tSHAPE: circle\tDETAIL: car car
+10\tCOLOR: red\tSHAPE: circle\tDETAIL: truck car
+11\tCOLOR: red\tSHAPE: triangle\tDETAIL: crossing
+12\tCOLOR: yellow\tSHAPE: square\tDETAIL: white
+13\tCOLOR: red\tSHAPE: triangle\tDETAIL: white
+14\tCOLOR: red\tSHAPE: octagon\tDETAIL: stop
+15\tCOLOR: red\tSHAPE: circle\tDETAIL: white
+16\tCOLOR: red\tSHAPE: circle\tDETAIL: truck white
+17\tCOLOR: red\tSHAPE: circle\tDETAIL: rectangle white
+18\tCOLOR: red\tSHAPE: triangle\tDETAIL: exclamation
+19\tCOLOR: red\tSHAPE: triangle\tDETAIL: left
+20\tCOLOR: red\tSHAPE: triangle\tDETAIL: right
+21\tCOLOR: red\tSHAPE: triangle\tDETAIL: curvy
+22\tCOLOR: red\tSHAPE: triangle\tDETAIL: bumper
+23\tCOLOR: red\tSHAPE: triangle\tDETAIL: slippery car
+24\tCOLOR: red\tSHAPE: triangle\tDETAIL: bottleneck
+25\tCOLOR: red\tSHAPE: triangle\tDETAIL: construction person
+26\tCOLOR: red\tSHAPE: triangle\tDETAIL: traffic light
+27\tCOLOR: red\tSHAPE: triangle\tDETAIL: person
+28\tCOLOR: red\tSHAPE: triangle\tDETAIL: children person
+29\tCOLOR: red\tSHAPE: triangle\tDETAIL: bike
+30\tCOLOR: red\tSHAPE: triangle\tDETAIL: snow
+31\tCOLOR: red\tSHAPE: triangle\tDETAIL: deer
+32\tCOLOR: black\tSHAPE: circle\tDETAIL: white
+33\tCOLOR: blue\tSHAPE: circle\tDETAIL: right
+34\tCOLOR: blue\tSHAPE: circle\tDETAIL: left
+35\tCOLOR: blue\tSHAPE: circle\tDETAIL: straight
+36\tCOLOR: blue\tSHAPE: circle\tDETAIL: straight right
+37\tCOLOR: blue\tSHAPE: circle\tDETAIL: straight left
+38\tCOLOR: blue\tSHAPE: circle\tDETAIL: right down
+39\tCOLOR: blue\tSHAPE: circle\tDETAIL: left down
+40\tCOLOR: blue\tSHAPE: circle\tDETAIL: circle
+41\tCOLOR: black\tSHAPE: circle\tDETAIL: car car
+42\tCOLOR: black\tSHAPE: circle\tDETAIL: truck, car
+"""
+
+import json
+aa = json.load(open('datasets/gtsrb/recognition.json'))
+dd = {int(ii.split('\t')[0]): ii.split('\t')[1:] for ii in labels.split('\n')}
+
+bb = ['base_path\t{}'.format(aa['info']['base_path'])]
+bb.append('TEST\tTEST')
+
+train = []
+for ii in aa['train']:
+    key = ii['image']
+    for label in dd[int(ii["label"])]:
+        train.append('{}\t{}'.format(key, label))
+test = []
+for ii in aa['test']:
+    key = ii['image']
+    for label in dd[int(ii["label"])]:
+        test.append('{}\t{}'.format(key, label))
+print(f"{len(train) = }, {len(test) = }")
+# len(train) = 79920, len(test) = 37890
+
+np.random.shuffle(train)
+np.random.shuffle(test)
+bb = ['base_path\t{}'.format(aa['info']['base_path'])] + train + ['TEST\tTEST'] + test
+with open('datasets/gtsrb/captions_detail.tsv', 'w') as ff:
+    ff.write('\n'.join(bb))
+
+colors = np.unique([ii[0] for ii in dd.values()]).tolist()
+# ['COLOR: black', 'COLOR: blue', 'COLOR: red', 'COLOR: yellow']
+shapes = np.unique([ii[1] for ii in dd.values()]).tolist()
+# ['SHAPE: circle', 'SHAPE: octagon', 'SHAPE: square', 'SHAPE: triangle']
+details = np.unique([ii[2] for ii in dd.values()]).tolist()
+[
+    'DETAIL: 100', 'DETAIL: 120', 'DETAIL: 20', 'DETAIL: 30', 'DETAIL: 50', 'DETAIL: 60', 'DETAIL: 70', 'DETAIL: 80',
+    'DETAIL: bike', 'DETAIL: bottleneck', 'DETAIL: bumper', 'DETAIL: car car', 'DETAIL: children person', 'DETAIL: circle',
+    'DETAIL: construction person', 'DETAIL: crossing', 'DETAIL: curvy', 'DETAIL: deer', 'DETAIL: exclamation', 'DETAIL: left',
+    'DETAIL: left down', 'DETAIL: person', 'DETAIL: rectangle white', 'DETAIL: right', 'DETAIL: right down', 'DETAIL: slippery car',
+    'DETAIL: snow', 'DETAIL: stop', 'DETAIL: straight', 'DETAIL: straight left', 'DETAIL: straight right', 'DETAIL: traffic light',
+    'DETAIL: truck car', 'DETAIL: truck white', 'DETAIL: truck, car', 'DETAIL: white'
+]
+```
+
+black -l 120 --skip-string-normalization ait/components/benchmark/test/generate_add_model.py ait/components/benchmark/test/ST_SIMPLE/test_infer_resnet50.py ait/components/benchmark/test/UT_SIMPLE/
+black -l 120 --skip-string-normalization ait/components/benchmark/test/ST/test_result.py

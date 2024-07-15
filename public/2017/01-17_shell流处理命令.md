@@ -62,6 +62,8 @@
     rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/thumbdrive/
     rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
     rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
+
+    rsync --progress -avhe ssh /home/ben 192.168.0.1:/home/
     ```
 ## grep sed awk 查找字符串
   ```shell
@@ -818,6 +820,12 @@
     ls -d ~/.* | wc -w  # 88
     # 当前文件夹下包括子目录下的文件夹数量
     ls -lR | grep "^d" | wc -l
+    ```
+  - 统计文件夹下所有文件总行数
+    ```sh
+    find ./* -type f | grep -v __pycache__ | xargs -I {} wc -l {} | awk 'BEGIN {ss=0} {ss=ss+$1} END {print ss}'
+    # 排序
+    find ./* -type f | grep -v __pycache__ | xargs -I {} wc -l {} | sort -n
     ```
 ***
 

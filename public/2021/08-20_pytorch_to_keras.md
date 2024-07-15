@@ -2865,6 +2865,32 @@
   print(np.allclose(bb, aa[-1].permute([0, 2, 3, 1]).detach(), atol=1e-4))
   # True
   ```
+## MobileNetV4
+```py
+sys.path.append('../tensorflow_models/')
+from official.vision.modeling.backbones.mobilenet import MobileNet
+kwargs = dict(
+    model_id='MobileNetV4ConvSmall',
+    filter_size_scale=1.0,
+    stochastic_depth_drop_rate=None,
+    flat_stochastic_depth_drop_rate=True,
+    use_sync_bn=False,
+    kernel_initializer='VarianceScaling',
+    kernel_regularizer=None,
+    bias_regularizer=None,
+    norm_momentum=0.99,
+    norm_epsilon=0.001,
+    output_stride=None,
+    min_depth=8,
+    divisible_by=8,
+    regularize_depthwise=False,
+    finegrain_classification_mode=True,
+)
+
+mm = MobileNet(**kwargs)
+mm.summary()
+mm.save('aa.h5')
+```
 ## Count parameters and flops
   ```py
   from keras_cv_attention_models import model_surgery
