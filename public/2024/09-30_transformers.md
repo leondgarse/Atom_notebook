@@ -62,8 +62,8 @@
 
     unk_token = '[UNK]'
     image_token = '<image>'
-    vocab = {str(id): id for id in range(1, 32064)}
-    vocab.update({unk_token: 0, "<s>": 1, "</s>": 2, "<pad>": 32001, image_token: 32000})
+    vocab = {str(id): id for id in range(1, 32064) if id not in [0, 32000]}
+    vocab.update({unk_token: 0, image_token: 32000})
     tt = tokenizers.Tokenizer(tokenizers.models.WordPiece(vocab, unk_token=unk_token))
     tt.pre_tokenizer = tokenizers.pre_tokenizers.WhitespaceSplit()
     print(f"{tt.encode(f'{image_token} this is a fake tokenizer').ids = }")
