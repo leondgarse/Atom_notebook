@@ -1767,6 +1767,15 @@
     mkfs -t ext4 /dev/mapper/lvm_data-vg_data
     ```
     Q: `Device /dev/sdx excluded by filter` when `pvcreate` -> `wipefs -a /dev/sdx`
+# snap
+  - Q: Unable to update "Snap Store"
+    ```sh
+    Unable to update "Snap Store": cannot refresh "snap-store": snap "snap-store" has running apps (ubuntu-software)
+    ```
+    A: [Unable to update "Snap Store": cannot refresh "snap-store": snap "snap-store" has running apps (ubuntu-software)](https://askubuntu.com/questions/1411104/unable-to-update-snap-store-cannot-refresh-snap-store-snap-snap-store-ha)
+    ```sh
+    snap-store --quit && sudo snap refresh snap-store
+    ```
 ***
 
 # 软件
@@ -2024,6 +2033,16 @@
     A: 删除 `Login Data`
     $ cd ~/.config/google-chrome/Default  # Profile
     $ rm Login\ Data*
+    ```
+  - **Q: The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. #42510**
+    ```sh
+    The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing Im aborting now. #42510
+    ```
+    A: [Github electron issues#42510](https://github.com/electron/electron/issues/42510)
+    ```sh
+    sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+    sudo vi /etc/sysctl.conf
     ```
 ## Numix FlatRemix 主题
   - Set Themes / Cursor / Icons / Shell theme using **gnome-tweak-tool**
