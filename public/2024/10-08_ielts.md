@@ -180,6 +180,45 @@
   On the other hand, While international aid is important, it is equally essential for governments to ensure domestic stability. If domestic demands are not fulfilled, lending international aid would be unrealistic. Moreover, due to the differences in cultures, religions and the modes of governing, global collaboration may suffer obstructions. Though this may not always be true, foreign governments may sometimes misunderstand citizens' needs.
 
   In conclusion, it is the government's duty to maintain the benefit of their own countrymen. Furthermore, we should focus our energy on what really matters to achieve a brighter future, which is only possible when governments can work together, especially for the more developed countries.
+## Test 3
+  - **IELTS writing test 3 topic**: Nowadays some consumers are less influenced by advertising than in the past. What are the reasons? ls it a positive or negative development?
+  - **Here's my essay, give a score and some advices**:
+    As a widely known fact, advertisements potentially affecting our life in many aspects. However, it shows a declining trend comparing with the past. In my perspective, it's the consequence of consumers becoming more aware of what they really needs, and requiring higher quality of personal services. In the long run, it will drive companies pay more effort in investigating personal demands, and providing better products. Thus It's a benefit for consumers while rising new challenges for producers.
+
+    Advertisements are mostly trying to predict the trend or preference among customers, especially with the development of AI which greatly enhanced the efficiency. After years being involved, as they are so widely spread that could be found anywhere, people are now getting used to this strategy. As a result, consumers are now becoming more acknowledging of their own requirements, and less influenced by the propaganda.
+
+    In the positive aspect, companies have to pay more attention to individual desire, as the general advertising may not hit its potential target. Moreover, another method could be providing higher quality goods and better services, for keeping people loyalty. It's a dual beneficial for both producers and consumers, and bring us a future of blooming market.
+
+    On the other hand, companies may be forced to spend more in their advertising, resulting we consumers may have to bear a wider and deeper advertising in daily life. Those less knowns may soon be pull down to extinct, even if providing satisfying products, whereas companies with more power and resources will be more advantaged.
+
+    In conclusion despite some hidden disadvantages, it's still worth the pain for chasing a productive market that may satisfying each individuals' requirements.
+  - **Revised Essay**:
+    As a widely known fact, advertisements affect our lives in many ways. However, their influence has declined compared to the past. In my perspective, this is because consumers are becoming more aware of their needs and demanding higher quality personal services. In the long run, it will push companies to invest more in understanding personal demands and providing better products. Thus, it benefits consumers while presenting new challenges for producers.
+
+    Advertisements often aim to predict trends or preferences among customers, especially with the development of AI, which has greatly enhanced efficiency. After years of exposure, people have grown accustomed to these strategies. As a result, consumers are more aware of their own requirements and less influenced by propaganda.
+
+    On the positive side, companies must focus more on individual desires, as general advertising may not reach its potential target. Providing higher quality goods and better services can maintain customer loyalty. This creates a dual benefit for both producers and consumers and promises a future of a thriving market.
+
+    On the negative side, companies may need to spend more on advertising, which means consumers might face more pervasive advertising in daily life. Lesser-known brands may struggle to survive, even if they offer satisfying products, while companies with more resources will have an advantage.
+
+    In conclusion, despite some hidden disadvantages, pursuing a productive market that satisfies individual requirements is still worth the effort.
+  - **Recommendations**:
+    - Focus on grammar and sentence structure.
+    - Develop ideas with examples and clearer explanations.
+    - Ensure each paragraph directly supports your thesis.
+## Test 4
+Nowadays, more and more people buying and use their own cars. Do you think the advantages of this trend for individuals outweigh the disadvantages for the environment?
+
+Here's my outlining:
+As modern world developing, private cars are becoming more and more popular for citizens. At the top of bringing comfort and convenience for individuals, it also rise a debate on whether the influence on environment should be put on secondary importance. In my view, our aim towards eco-friendly development should be steadfast, and some methods like the electric vehicle can be a further satisfying both sides.
+
+Advantages for individuals
+Able to go places at own choice, like rural area where public transportation had not been applied.
+More private spaces, especially for families with children which sometimes not comfortable if choosing public methods.
+
+Disadvantages for environment
+Fossil energy usage is a challenge, leading to a heavier green-house effect.
+A more convenient public transportation system and green energy usage can lease the influence while keeping development pace.
 ***
 
 # Task 1
@@ -224,6 +263,23 @@
   In contrast, this year has seen IT courses emerge as the most popular, with 27% of students enrolled, despite not being offered previously. Fitness and dance maintained its popularity at 22%, while cookery experienced a modest increase to 19%. However, modern language enrollments dropped to 17%, losing its former top position. Art also saw a slight decline in student numbers, and both local history and music appreciation courses were discontinued.
 
   Overall, the most notable change is the introduction and rise of IT courses, while traditional subjects like local history and music appreciation have disappeared. Practical courses such as cookery have grown in popularity, while modern languages and art experienced minor shifts.
+## Test 2
+  IELTS writing task 1:
+  The diagram below shows the process of making Pu-erh raw tea and ripe tea. Summarize the information by selecting and reporting the main features and make comparisons where relevant.
+  Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Compression -> Pu-erh Raw Tea - Aging by Storage -> Pu-erh Ripe tea
+
+  Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Fermentation by Mold -> Loose Ripe Tea - Compression -> Vintage Pu-erh Raw Tea
+
+  Here's my essay. Give a score and some advice:
+  The flow chart illustrates an overall process of how Pu-erh raw tea and ripe tea are made from initiate tea leaves. A sketchy overview is that, they share a same process before the loose raw tea being made, and afterwards separated.
+
+  In the common first step, the green tea leaves are fried using a pan for inactivation of enzymes. Then after rolling, the fried tea needs to be dried under the sun, in which step it's turned into brown color. Afterwards, with water mostly gone we get the loose raw tea. This is the stage where different methods should be chosen for raw or ripe tea.
+
+  If the raw tea, the loose raw tea is firstly directly compressed and that's the Pu-er raw tea already. In further steps, after being aged in storage we finally get the vintage Pu-erh raw tea.
+
+  In the other path for the Pu-erh ripe tea, before compression it needs to be fermented by mold firstly for producing loose ripe tea. Then it's also the compression step, and afterwards the final Pu-erh ripe tea.
+
+  Overall, these two types tea making process share steps in common before loose raw tea, and Pu-erh tea tea needs to be aged after compression, whereas ripe tea is fermented before copression.
 ***
 
 # Speaking test 3 topics
