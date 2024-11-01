@@ -207,79 +207,701 @@
     - Develop ideas with examples and clearer explanations.
     - Ensure each paragraph directly supports your thesis.
 ## Test 4
-Nowadays, more and more people buying and use their own cars. Do you think the advantages of this trend for individuals outweigh the disadvantages for the environment?
+  - **IELTS writing test 2 topic**
+    Nowadays, more and more people buying and use their own cars. Do you think the advantages of this trend for individuals outweigh the disadvantages for the environment?
+  - **Here's my outline, give some advices**
+    Introduction:
+    As modern world developing, private cars are becoming more and more popular for citizens. At the top of bringing comfort and convenience for individuals, it also rise a debate on whether the influence on environment should be put on secondary importance. In my view, our aim towards eco-friendly development should be steadfast, and some methods like the electric vehicle usage can satisfy both sides.
 
-Here's my outlining:
-As modern world developing, private cars are becoming more and more popular for citizens. At the top of bringing comfort and convenience for individuals, it also rise a debate on whether the influence on environment should be put on secondary importance. In my view, our aim towards eco-friendly development should be steadfast, and some methods like the electric vehicle can be a further satisfying both sides.
+    Advantages for individuals：
+    - Able to go to places at own choice, like rural area where public transportation is not available.
+    - More private spaces, especially for families with children which sometimes is not very comfortable if choosing public methods.
 
-Advantages for individuals
-Able to go places at own choice, like rural area where public transportation had not been applied.
-More private spaces, especially for families with children which sometimes not comfortable if choosing public methods.
+    Disadvantages for environment:
+    - Fossil energy usage is a challenge, leading to a heavier green-house effect.
+    - A more convenient public transportation system and green energy usage can lease the influence while keeping development pace and civil happiness.
 
-Disadvantages for environment
-Fossil energy usage is a challenge, leading to a heavier green-house effect.
-A more convenient public transportation system and green energy usage can lease the influence while keeping development pace.
+    Conclusion:
+    Overall, despite the convenience, personal profit should not outweigh the global environment impact. At the mean time, a balanced and dual beneficial future can be achieved by installing more advanced public method and encouraging the EV usage.
+  - **Recommendations**:
+    #### **Introduction:**
+    1. **Rephrase for clarity**: Make your introduction smoother and more focused by reducing unnecessary words and tightening the phrasing.
+       - Instead of "As modern world developing," say "As the modern world develops,"
+       - The phrase "at the top of bringing comfort" could be simplified to "While offering comfort and convenience."
+       - Reword the environmental impact part for better flow: "this trend raises concerns about the impact on the environment."
+    2. **Clarify your stance**: Your viewpoint could be clearer. You mention eco-friendly development but don't specify whether individuals' benefits outweigh the environmental damage until the conclusion.
+
+    **Suggested improvement:**
+    "As the modern world advances, more people are purchasing and using private cars for their personal convenience. While cars provide comfort and flexibility, there are growing concerns about their environmental impact. In my opinion, while personal benefits are important, we must prioritize eco-friendly development, with solutions such as electric vehicles (EVs) offering a middle ground."
+
+    #### **Body Paragraph 1 (Advantages for individuals):**
+    1. **Improve detail and variety**: Expand on your points with examples and transitions to make the paragraph stronger.
+       - You could add "For example, people living in rural areas where public transportation is limited often depend on cars for daily tasks."
+       - The point about private space could also include, "This is especially true for families with young children or people who require more privacy during long journeys."
+
+    **Suggested improvement:**
+    "Private cars allow individuals to travel at their own convenience, especially to rural or remote areas where public transportation is scarce. For instance, those living in suburban or rural regions may rely on cars for work and errands. Moreover, private vehicles offer personal space, making them ideal for families with children or individuals who value privacy during long trips, which public transportation may not provide."
+
+    #### **Body Paragraph 2 (Disadvantages for the environment):**
+    1. **Explain solutions in detail**: Your mention of public transportation and EVs is good, but you should explain them more thoroughly. Talk about how fossil fuel usage harms the environment and why alternatives are beneficial.
+    2. **Expand on green public transport**: Elaborate on how public transportation could be improved, such as with electric buses, trains, or biking infrastructure, as part of the solution.
+
+    **Suggested improvement:**
+    "However, the growing number of cars poses significant challenges for the environment. The reliance on fossil fuels contributes to air pollution and exacerbates the greenhouse effect. A viable solution is to invest in and promote green energy alternatives, such as electric vehicles, which can reduce emissions without sacrificing convenience. Furthermore, improving public transportation systems—such as expanding electric bus and train networks—could provide an environmentally friendly and efficient alternative to private car use, benefiting both the planet and society."
+
+    #### **Conclusion:**
+    1. **Clarify your stance**: You touch on both sides, but rephrase it slightly to make your conclusion stronger. Highlight the importance of balancing personal benefits with environmental considerations.
+    2. **Be specific with solutions**: Focus more on concrete steps like promoting EV use or improving green public transport.
+
+    **Suggested improvement:**
+    "In conclusion, while private cars offer undeniable benefits to individuals in terms of convenience and comfort, the negative impact on the environment cannot be overlooked. The pursuit of personal convenience should not come at the cost of environmental degradation. By encouraging the use of electric vehicles and investing in greener public transport systems, we can strike a balance between individual needs and the long-term health of our planet."
+
+    ---
+
+    ### General Tips:
+    - **Task Achievement**: Make sure to clearly state your position early on and reinforce it throughout the essay.
+    - **Coherence and Cohesion**: Use more linking phrases to ensure smooth transitions between ideas (e.g., "Furthermore," "For example," "Moreover").
+    - **Lexical Resource**: Use varied vocabulary, especially for common words like "convenience" (alternatives include "comfort," "ease," "flexibility").
+    - **Grammatical Range**: Try including a mix of simple and complex sentences to show a range of grammatical structures. Avoid minor errors such as "lease" instead of "lessen."
+
+    This refined outline and essay approach could help push your writing to a higher band score.
+## Test 5
+  - **IELTS writing test 2 topic**:
+    Some people think that history has nothing or little to tell us, but others believe that studying the past history can help us better understand the present. Discuss both these views and give your own opinion.
+  - **Here's my essay, give me a score and some advice**:
+    While some believe that history is of little value for our modern world, others argue that it provides essential insights for the present and future. In my personal perspective, the past is definitely a key role for our present welfare, and a good teacher in our way chasing a brighter future.
+
+    To err is human. We made mistakes in the past, like the wars, the devastation of environment, all these big mistakes are critical lessons for human moving forward. Forgetting history may lead to a future repeating of past errors. Meanwhile some other areas with rapid changes also need to welcome the experiments from history, like science, culture and economy, that all the advantages and disasters can guide present development. On the other hand, we should also cherish those great moments in the past, like the braveness of exploring Antarctic, and the moment landing on the moon. Those are treasures and pride that bonding our human beings together.
+
+    In contrast, those who argue history has no mean may insist present is totally different from past, especially in currently fast-paced world. Another argument maybe that, hatreds between nations in the past may obstruct our present and future bonds, like those conflicts in different religions and cultures. To debate that, ignoring is not the solution, only when we learned the way of sharing can we harvest a harmony future.
+
+    In conclusion, history is a mirror of present, and the relation between history and present is never loose. The point of a vain history should never be acceptable, and history is always a treasure for our civilization.
+  - **Advices**:
+    - **Introduction and Thesis**:
+      - Refine your introductory sentence to make it more concise. Also, adjust your thesis for clarity.
+      - Suggested revision: "While some believe that history offers little value for the present, others argue that it provides essential insights for both the present and the future. I believe that understanding history is crucial for avoiding mistakes and progressing toward a better future."
+    - **Grammar and Vocabulary**:
+      - Improve phrasing to make your ideas clearer and easier to follow. For instance:
+        - “the past is definitely a key role for our present welfare” → “the past plays a vital role in shaping our present.”
+        - “the devastation of environment” → “the devastation of the environment.”
+      - Pay attention to article use and plural forms, such as "the environment," "the present," and "wars."
+    - **Expand and Clarify Ideas**:
+      - In the paragraph supporting history’s relevance, develop each example slightly further for a stronger argument. For example:
+        - “For instance, devastating wars and environmental degradation highlight the consequences of neglecting peace and sustainability.”
+      - When discussing counterarguments, try to provide specific examples, such as changes in technology, to illustrate how the modern world differs from the past.
+    - **Transitions and Cohesion**:
+       - Use clearer transitions to connect ideas between sentences. For instance:
+         - “Furthermore, history offers valuable insights in fields like science, culture, and the economy, as past successes and failures continue to guide us.”
+    - **Conclusion**:
+      - Summarize your position more directly, using clear language. Avoid abstract phrases like “a vain history.”
+      - Suggested revision: “In conclusion, history serves as a valuable guide for the present, providing lessons and achievements that shape our civilization.”
+  - **Revised Version**:
+    While some people believe that history has limited value for understanding the present, others argue that studying the past offers essential insights for our current and future progress. I believe that history plays a crucial role in guiding us toward a better future by helping us learn from past mistakes and successes.
+
+    To err is human, and history serves as a record of both successes and failures that we can learn from. Mistakes such as devastating wars and environmental damage highlight the costs of conflict and neglect. Forgetting these lessons may lead us to repeat them. History also offers valuable insights in fields like science, culture, and the economy, where past achievements and failures inform current advancements. On the other hand, we should cherish and learn from humanity’s accomplishments, such as the exploration of Antarctica and landing on the moon—moments of pride and inspiration that unite us.
+
+    In contrast, those who see history as irrelevant may argue that today’s world is vastly different, especially given the rapid pace of modern life. Additionally, some may believe that focusing on historical conflicts, such as religious or cultural disagreements, could hinder present and future relationships. However, ignoring history is not a solution; rather, understanding these issues can help us build stronger and more harmonious connections today.
+
+    In conclusion, history is a mirror that reflects the present, showing us what to emulate and what to avoid. Disregarding history would be a loss, as it holds valuable lessons and achievements that benefit our civilization.
+  - **Final Advice**
+    Focus on refining your grammar and vocabulary use to make your ideas clearer, and ensure each example is fully developed. By making these changes, you can improve both your coherence and grammatical range, helping you reach a higher band score in the IELTS writing section.
+  - **Model essay**
+    There are divergent views regarding the value of studying history. While some individuals argue that history has little relevance to our lives today and it would be a waste of time to study it, others hold the view that history can offer us valuable insights into the present and help us make informed decisions.
+
+    Those who hold the former view might argue that the events of the past are too distant from our current circumstances to offer any relevant insights. They might argue that people and societies have changed so much over time that history can no longer provide us with useful guidance. For example, the factors that triggered World War I will make little sense today. Additionally, they argue that history is not always accurate, since the records are often subject to bias and interpretation. Thus, the validity of history is always questionable.
+
+    On the other hand, those who believe in the value of studying history argue that it provides us with a deeper understanding of the present. History can help us comprehend the origins of current events and circumstances, and help us avoid repeating past mistakes. For example, by studying the causes and effects of past conflicts, we can better understand the dynamics of contemporary geopolitical conflicts. This means that, by examining historical events, we can gain insight into the causes and consequences of human actions, and this can help us make better decisions in the present.
+
+    In conclusion, while it is true that history can be distant and difficult to interpret, I believe that studying the past is crucial for gaining a deeper understanding of the world and the forces that shape it. By examining historical events and trends, we will be more likely to avoid mistakes and make better choices in the complex settings of modern world.
+## Test 6
+  The government has the duty to ensure that its citizens have a healthy diet, while others believe this is
+  individuals' responsibility. Discuss both views and give your opinion
+
+  **Introduction**:
+  Nowadays people are paying more attention to fitness and healthy diet, where some people argues it should be guaranteed by government and others believe it's a personal issue. In my view, it can only be some overall plans at national level, and will eventually be dependent on the choices of indivituals.
+
+  **Government**:
+  - Provides science supported guidelines for personal diet, like the ideal daily amount of protein, fat, sugar and other essential components.
+  - Encourage healthier food productions and consumptions, including tax incentive and cutting prices.
+
+  **Individuals**:
+  - Personal choice of whether following the guidances or not, and even the goverments cannot restrict citizens' lifetyle preferances.
+  - Anyone who choose a healthier diet can control daily calories intakes which is hard to track for goverment
+  - Especially in current social media trends, individuals can follow the fitness influencers and pave their own way for a healthy and enjoyable diet.
+
+  **Conclusion**:
+  Overall, it's the duty for government providing guidances and convinient acceptance for healthy diet, but only when individuals take in charge of their own lifestyle, can the fitness benefits be able to achieve.
+## Test 7
+  Traffic and housing problems in major cities could be solved by moving large companies and factories and their
+  employees to the countryside. To what extent do you agree or disagree with this opinion?
+
+  As the population growing rapidly in major metropilies recent years, traffic and living condition are rising as severe problems. There is a suggestion that transfering large enterprises and factories to rural areas, and also their employees. As far as I'm concerned, this is only ideally possible but lacking practical approaches.
+
+  Benefit:
+  - Inspire countryside development, where even one large company can enormously bloom local economy.
+  - Better living condition and lower house price that may alleviate the heavy burden for citizens.
+  - Improve traffic situation for major cities where jams happen almost everyday.
+
+  Disadvantage:
+  - Enterprises tend to gather in large cirties for easy acceptance of educated graduates, also attracting employees from other companies, which is most time not practical possible in rural areas.
+  - Living in more developed cities provides people better condition of health care and education, which is essential for citizens' welfare.
+
+  Conclusion:
+  Afterall, it's people gathering that makes a city big and attractive for enterprises, not the city itself. Thus moving the companies and factories out is not beneficial for employers and employees and the city itself in the long run.
+## Test 8
+  Some people think that "vertical City" is the best, where people live and work in tall buildings. Others think that "horizontal" City is better, where there are few tall buildings. Discuss both views and give your opinion.
+
+  Vertial city
+## Test 9
+  - **IELTS WRITING TASK 2**:
+    You should spend about 40 minutes on this task.
+
+    In many countries, the number of people suffering from stress is increasing.
+
+    What do you think are the causes of this problem and what measures could be taken to tackle it?
+
+    Give reasons for your answer and include any relevant examples from your own knowledge or experience.
+
+    Write at least 250 words.
+  - **Here's my essay, give a score and some advices**:
+  In the current fast-paced world, more and more people are struggling to handle pressure, which has become a global issue. The causes can be rather general, including working, studying, or even relationships. In my opinion, developing a balanced and efficient way to handle stress is essential for mental health.
+
+  There could be multiple sources of stress in our daily life. For people who have already taken a career, the anxieties from their job could be the main reason, which could be customer complaints, meeting deadlines, and being forced to work overtime. On the other aspect, students are also facing similar stresses but in another term, like completing homework, and the fear of not passing an exam. More commonly, It could also be from our daily social connections, like colleagues, classmates, or even our intense relationships, in which situations people may feel depressed rather than supported from their partners.
+
+  In terms of releasing the pressure, there could be diverging ways depending on individual lifestyles. First of all, receiving support from family and friends plays a key role in tackling it, which delivers understanding and acceptance for people in worry. Meanwhile engaging in enjoyable activities, such as drawing, hiking, playing music, or working out in the gym can be refreshing and help recharge our metal energy. Additionally, another way is stay relaxing and keep a lower expectation if it's too heavy, in which case taking more care of ourselves is of higher priority.
+
+  In conclusion, stress is common in the modern world, and it's only when we live with it, can we reach an enjoyable and healthier future. By addressing the sources of the stress and developing an efficient strategies to tackle it, individuals can maintain their mental health effectively.
+  - **Areas for Improvement**:
+    1. **Grammar and Word Choice**:
+       - In the phrase "the causes can be rather general," consider rephrasing to "the causes can be varied" for clarity.
+       - "On the other aspect" should be "On the other hand."
+       - "More commonly, It could also be from our daily social connections" should be "More commonly, it could also stem from our daily social connections."
+       - "engaging in enjoyable activities, such as drawing, hiking, playing music, or workout in the gym" should be "working out in the gym."
+    2. **Clarity and Precision**:
+       - In the sentence "in which situations people may feel depressed rather than supported from their partners," consider rephrasing to "in which people may feel more depressed than supported by their partners."
+       - The phrase "tacking it" should be "tackling it."
+    3. **Development of Ideas**:
+       - The paragraph on causes could benefit from more depth. For example, you could briefly mention how **economic factors** contribute to stress levels, or the impact of **technology** and **social media**.
+       - In your solutions paragraph, consider expanding on the effectiveness of specific strategies, like mindfulness practices or professional therapy, and their benefits.
+    4. **Conclusion**:
+       - The concluding sentence could be more assertive. Instead of "it's only when we live with it," you might say, "only by effectively managing it can we achieve a healthier future."
+  - **Revised Version**:
+    In the current fast-paced world, an increasing number of people are struggling to manage stress, which has become a significant global issue. The causes of this problem can be varied, including work, study, and personal relationships. In my opinion, developing a balanced and effective approach to stress management is essential for maintaining mental health.
+
+    There are multiple sources of stress in daily life. For professionals, job-related anxieties such as customer complaints, **tight deadlines**, and mandatory overtime can be major stressors. **Conversely**, students face similar pressures, including homework completion and the fear of failing exams. Additionally, daily social interactions with colleagues, classmates, and intense relationships can lead to feelings of depression instead of support.
+
+    **To alleviate stress**, individuals can adopt various strategies tailored to their lifestyles. First, receiving support from family and friends plays a crucial role in tackling stress, as it provides understanding and acceptance. Engaging in enjoyable activities—such as drawing, hiking, playing music, or working out at the gym—can also be refreshing and help recharge mental energy. Furthermore, it is important to relax and **set realistic expectations**, **prioritizing self-care when the pressure becomes overwhelming**.
+
+    In conclusion, stress is **prevalent** in the modern world, but by effectively managing its sources and **adopting efficient strategies**, individuals can maintain their mental health and work towards a healthier future.
 ***
 
 # Task 1
 ## Test 1
-  IELTS writing task 1:
-  The sheet below shows the percentage of students at one adult education center taking various courses offered in 1985 and this year. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
-  | Year      | Fitness and dance | Art | Modern language(French/Spanish) | Local history | Music appreciation | IT  | Cookery |
-  | --------- | ----------------- | --- | ------------------------------- | ------------- | ------------------ | --- | ------- |
-  | 1985      | 22%               | 17% | 24%                             | 15%           | 8%                 | 0%  | 14%     |
-  | This Year | 22%               | 15% | 17%                             | 0%            | 0%                 | 27% | 19%     |
+  - **IELTS writing task 1**:
+    The sheet below shows the percentage of students at one adult education center taking various courses offered in 1985 and this year. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
+    | Year      | Fitness and dance | Art | Modern language(French/Spanish) | Local history | Music appreciation | IT  | Cookery |
+    | --------- | ----------------- | --- | ------------------------------- | ------------- | ------------------ | --- | ------- |
+    | 1985      | 22%               | 17% | 24%                             | 15%           | 8%                 | 0%  | 14%     |
+    | This Year | 22%               | 15% | 17%                             | 0%            | 0%                 | 27% | 19%     |
 
-  Here's my essay. Give a score and some advice:
-## First attempt
-  The sheet illustrates the courses students took in one adult education, and compares the percentage of students taking various courses in 1985 and current year.
+    Here's my essay. Give a score and some advice:
+  - **First attempt**
+    The sheet illustrates the courses students took in one adult education, and compares the percentage of students taking various courses in 1985 and current year.
 
-  In 1985, learning a modern language including French and Spanish was most popular, at 24%. Meanwhile, fitness and dance course was also at an almost same level of popularity, both reached above 20%. Following that, art, local history, cookery were less taken, all reaching around 15%. Then the third level preferred course was music appreciation, which was taken by only 8% students.
+    In 1985, learning a modern language including French and Spanish was most popular, at 24%. Meanwhile, fitness and dance course was also at an almost same level of popularity, both reached above 20%. Following that, art, local history, cookery were less taken, all reaching around 15%. Then the third level preferred course was music appreciation, which was taken by only 8% students.
 
-  In contrast, the most significant change in this year is that, IT course reached its peak at 27%, which did not even exist in 1985. At the same time, courses like fitness and dance, cookery, art just kept a same level as previously. However, modern language was the most popular course in 1985 at 24%, it dropped to 17% this year, losing its top position to IT. More significantly, other courses like local history and music appreciation suffered a complete elimination.
+    In contrast, the most significant change in this year is that, IT course reached its peak at 27%, which did not even exist in 1985. At the same time, courses like fitness and dance, cookery, art just kept a same level as previously. However, modern language was the most popular course in 1985 at 24%, it dropped to 17% this year, losing its top position to IT. More significantly, other courses like local history and music appreciation suffered a complete elimination.
 
-  Overall, the most dramatic change in courses popularity is the rise of IT. Practical skills like cookery also keeps a noticeable increasing, whereas traditional classes including local history and music appreciation suffered a dramatic drop. Other courses like art and modern language just fluctuated a bit.
-## Second attempt
-  IELTS writing task 1:
-  The sheet below shows the percentage of students at one adult education center taking various courses offered in 1985 and this year. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
-  | Year      | Fitness and dance | Art | Modern language(French/Spanish) | Local history | Music appreciation | IT  | Cookery |
-  | --------- | ----------------- | --- | ------------------------------- | ------------- | ------------------ | --- | ------- |
-  | 1985      | 22%               | 17% | 24%                             | 15%           | 8%                 | 0%  | 14%     |
-  | This Year | 22%               | 15% | 17%                             | 0%            | 0%                 | 27% | 19%     |
+    Overall, the most dramatic change in courses popularity is the rise of IT. Practical skills like cookery also keeps a noticeable increasing, whereas traditional classes including local history and music appreciation suffered a dramatic drop. Other courses like art and modern language just fluctuated a bit.
+  - **Second attempt**
+    The table illustrates the percentage of students enrolled in various courses at an adult education center in 1985 and this year.
 
-  Here's my essay. Give a score and some advice:
-  The table illustrates the percentage of students enrolled in various courses at an adult education center in 1985 and this year.
+    In 1985, learning a Modern language including French and Spanish was most popular, at 24%. Meanwhile, Fitness and dance followed closely with 22%. After that, Art, Local history and Cookery had less enrollments ranging from 14% to 17%, while Music appreciation was the least popular, with only 8% of students enrolled.
 
-  In 1985, learning a Modern language including French and Spanish was most popular, at 24%. Meanwhile, Fitness and dance followed closely with 22%. After that, Art, Local history and Cookery had less enrollments ranging from 14% to 17%, while Music appreciation was the least popular, with only 8% of students enrolled.
+    In contrast, IT course emerged as the most popular this year, with 27% enrollment. At the same time, Cookery saw a modest increase to 19%, while Fitness and dance remained stable. However, despite being the most popular in 1985, Modern language courses dropped to 17%, and Art also saw a slight decrease (2%) in enrollment percentage.
 
-  In contrast, IT course emerged as the most popular this year, with 27% enrollment. At the same time, Cookery saw a modest increase to 19%, while Fitness and dance remained stable. However, despite being the most popular in 1985, Modern language courses dropped to 17%, and Art also saw a slight decrease (2%) in enrollment percentage.
+    Overall, the most notable change is the introduction and rise of IT courses. Practical skills like Cookery also experienced a noticeable growth, whereas Modern languages saw a decline. Traditional classes including Local history and Music appreciation were completely discontinued.
+  - **Revised**
+    The table compares the percentage of students enrolled in various courses at an adult education center in 1985 and this year.
 
-  Overall, the most notable change is the introduction and rise of IT courses. Practical skills like Cookery also experienced a noticeable growth, whereas Modern languages saw a decline. Traditional classes including Local history and Music appreciation were completely discontinued.
-## ChatGPT
-  The table compares the percentage of students enrolled in various courses at an adult education center in 1985 and this year.
+    In 1985, modern languages (French and Spanish) were the most popular courses, attracting 24% of students. Fitness and dance **followed closely with** 22%. Art, local history, and cookery courses had enrollments **ranging from** 14% to 17%, while music appreciation was the least popular, with only 8% of students. IT courses were not available during this period.
 
-  In 1985, modern languages (French and Spanish) were the most popular courses, attracting 24% of students. Fitness and dance followed closely with 22%. Art, local history, and cookery courses had enrollments ranging from 14% to 17%, while music appreciation was the least popular, with only 8% of students. IT courses were not available during this period.
+    In contrast, this year **has seen** IT courses **emerge as the most popular**, with 27% of students enrolled, despite not being offered previously. Fitness and dance **maintained its popularity at** 22%, while cookery **experienced a modest increase** to 19%. However, modern language enrollments dropped to 17%, losing its former top position. Art also **saw a slight decline in** student numbers, and both local history and music appreciation courses **were discontinued**.
 
-  In contrast, this year has seen IT courses emerge as the most popular, with 27% of students enrolled, despite not being offered previously. Fitness and dance maintained its popularity at 22%, while cookery experienced a modest increase to 19%. However, modern language enrollments dropped to 17%, losing its former top position. Art also saw a slight decline in student numbers, and both local history and music appreciation courses were discontinued.
-
-  Overall, the most notable change is the introduction and rise of IT courses, while traditional subjects like local history and music appreciation have disappeared. Practical courses such as cookery have grown in popularity, while modern languages and art experienced minor shifts.
+    Overall, **the most notable change** is the introduction and rise of IT courses, while traditional subjects like local history and music appreciation have disappeared. Practical courses such as cookery have grown in popularity, while modern languages and art **experienced minor shifts**.
 ## Test 2
-  IELTS writing task 1:
-  The diagram below shows the process of making Pu-erh raw tea and ripe tea. Summarize the information by selecting and reporting the main features and make comparisons where relevant.
-  Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Compression -> Pu-erh Raw Tea - Aging by Storage -> Pu-erh Ripe tea
+  - **IELTS writing task 1**:
+    The diagram below shows the process of making Pu-erh raw tea and ripe tea. Summarize the information by selecting and reporting the main features and make comparisons where relevant.
+    Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Compression -> Pu-erh Raw Tea - Aging by Storage -> Pu-erh Ripe tea
 
-  Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Fermentation by Mold -> Loose Ripe Tea - Compression -> Vintage Pu-erh Raw Tea
+    Pan Frying (Inactivation of Enzymes) - Rolling -> Drying under the sun -> Loose Raw Tea - Fermentation by Mold -> Loose Ripe Tea - Compression -> Vintage Pu-erh Raw Tea
+  - **Here's my essay. Give a score and some advice**:
+    The flow chart illustrates the process of how Pu-erh raw tea and ripe tea are made from tea leaves. Both types share the same initial steps, but the methods differ after the creation of loose raw tea.
 
-  Here's my essay. Give a score and some advice:
-  The flow chart illustrates an overall process of how Pu-erh raw tea and ripe tea are made from initiate tea leaves. A sketchy overview is that, they share a same process before the loose raw tea being made, and afterwards separated.
+    In the initial step, the green tea leaves are fried in a pan to inactivate enzymes. Afterward, the leaves are rolled and dried under the sunlight, during which they turn brown. Subsequently, with water largely removed they become loose raw tea. This is the point where further methods diverge.
 
-  In the common first step, the green tea leaves are fried using a pan for inactivation of enzymes. Then after rolling, the fried tea needs to be dried under the sun, in which step it's turned into brown color. Afterwards, with water mostly gone we get the loose raw tea. This is the stage where different methods should be chosen for raw or ripe tea.
+    For Pu-erh raw tea, the loose raw tea is firstly directly compressed into tea cakes, and then after being aged in storage generating the vintage Pu-erh raw tea. In contrast, for Pu-erh ripe tea, it needs to be fermented by mold before compression, resulting in loose ripe tea. The final step is also compression, marking the completion of the Pu-erh ripe tea.
 
-  If the raw tea, the loose raw tea is firstly directly compressed and that's the Pu-er raw tea already. In further steps, after being aged in storage we finally get the vintage Pu-erh raw tea.
+    Overall, both types of tea share steps in common before loose raw tea stage. The key difference is that raw tea needs to be aged after compression, while ripe tea is fermented before compression.
+  - **Recommendations for Improvement**:
+    - **Task Achievement**: You could enhance the depth of your explanation by briefly describing why fermentation and aging are critical to the flavor or quality of each type of tea. This will enrich the explanation and demonstrate a more complete understanding.
+    - **Coherence and Cohesion**: Add a few more connectors to smooth transitions, such as "subsequently," "thereafter," and "meanwhile." Also, varying sentence lengths could improve the overall flow.
+    - **Lexical Resource**: Try using more advanced vocabulary and synonyms to replace basic terms. For instance, instead of "inactivate enzymes," you could use "halt enzyme activity," or instead of "loose raw tea," "uncompressed raw tea leaves" could work.
+    - **Grammatical Range**: While the writing is mostly accurate, aim for more sentence variety by using relative clauses or passive voice structures. For example, "After the tea is fermented, it is compressed into cakes" could replace a simpler sentence for more variety.
+  - **Suggested Polished Version**:
+    The diagram illustrates the process of making Pu-erh raw tea and ripe tea from tea leaves. Both types follow the same initial steps, but the process differs after the creation of loose raw tea.
 
-  In the other path for the Pu-erh ripe tea, before compression it needs to be fermented by mold firstly for producing loose ripe tea. Then it's also the compression step, and afterwards the final Pu-erh ripe tea.
+    The first step in both processes is pan-frying the green tea leaves to inactivate the enzymes. Afterward, the leaves are rolled and dried under the sun, during which they turn brown. Once the leaves are dried, they become loose raw tea, marking the point where the production methods diverge.
 
-  Overall, these two types tea making process share steps in common before loose raw tea, and Pu-erh tea tea needs to be aged after compression, whereas ripe tea is fermented before copression.
+    For Pu-erh raw tea, the loose raw tea is compressed into tea cakes, which are then aged in storage to produce vintage Pu-erh raw tea. In contrast, for Pu-erh ripe tea, the loose raw tea undergoes fermentation with mold before compression, resulting in loose ripe tea. The final step is compressing the ripe tea into cakes, which completes the process of making Pu-erh ripe tea.
+
+    In summary, both types of tea share the same steps up to the loose raw tea stage. The key difference is that raw tea is aged after compression, while ripe tea is fermented before compression.
+  - **model essay**
+    The flow chart illustrates the process used to produce Pu-erh raw tea and ripe tea.
+
+    In the first stage, the raw materials, fresh green tea leaves, are fried in a large pan to inactivate enzymes contained in the newly picked leaves. The fried leaves are then rolled and dried under the sunlight. **Once** the leaves are dried, they are loosened for further processing.
+
+    **In the following stage**, the loose tea is compressed into a raw tea cake and stored for aging to manufacture vintage Pu-erh raw tea. **Unlike** in the production of raw tea, fermentation is needed to **yield** ripe tea. **Specifically**, after being loosened, the dried tea is fermented with molds until it is ripe, after which it is compressed, **resulting in** a ripe Pu-erh tea cake that can be packaged and sold in markets.
+
+    Overall, the entire process of making Pu-erh raw tea and ripe tea involves the same initial steps: frying, rolling, and drying under sunlight. After these steps, the tea is either fermented by mold to produce ripe tea or compressed directly for aging to produce raw tea.
+## Test 3
+  - **IELTS writing task 1**:
+    The graph below shows the percentage of workers from five different European countries that were absent for a day or more due to illness from 1991 to 2001. Summarise the information by selecting and reporting main features, and make comparisons where relevant.
+
+  - **Here's my essay. Give a score and some advice**:
+    The diagram illustrates the percentage of employees in five different countries who suffered from illness that had to take one or more days off in a period range from 1991 to 2001.
+
+    During this 11-year period, UK and Germany were in a similar trend, that almost remains stable and low percentage. Whereas UK keeps above 2.0%, and experienced a slight rising in the early 2 years, while Germany fluctuated below 2.0% and declined in 1991-1993. On the other hand, though not a big increase for Netherland comparing 2001 and 1991, which is less than 1%, but fluctuated a lot during this period. It decreased to the lowest point 4.1% at 1996, but climbed up to 5.3% afterward.
+
+    In contrast, France and Sweden both came across a large Change, where France’s rate increased while Sweden’s decreased. For France, it remains steady in 1991-1995 but rose up after that and finnaly reached 4.8% at 2001. Relatively, Sweden was maintaining a decreasing trend since 1992 and ended at 3.0% at 2001, which is the start point of France in 1991.
+
+    Overall, heath condition of workers in UK and Germany remains the best and not changed much, while France shows a worsen trend but Netherland still keeps the worst. It seems Sweden put great effort in improving the condition, but there's still a gap comparing UK and Germany.
+
+  - **Suggested Revision**
+    The graph illustrates the percentage of employees in five European countries who took one or more sick days due to illness annually from 1991 to 2001.
+
+    Throughout this 11-year period, the UK and Germany displayed a similar trend, with relatively low and stable absenteeism rates. The UK’s percentage consistently remained above 2%, with a slight rise in the first two years, while Germany’s rate fluctuated below 2%, showing a minor decline from 1991 to 1993. In contrast, the Netherlands saw greater fluctuations; although its rate increased by less than 1% from 1991 to 2001, **it dropped to a low of 4.1% in 1996 before climbing to 5.3% by the end of the period.**
+
+    France and Sweden, however, showed contrasting trends. France’s rate remained stable between 1991 and 1995 but then rose steadily, reaching 4.8% in 2001. Conversely, Sweden’s rate declined consistently from 1992 onward, ending at 3% in 2001, which was France’s starting point in 1991.
+
+    Overall, the UK and Germany maintained the lowest and most stable absenteeism rates, while France showed a worsening trend and the Netherlands continued to have the highest levels of absence. Although Sweden made improvements, its rate still did not match the low levels observed in the UK and Germany.
+
+  - **Model essay**
+  The graph illustrates the percentage of employees who were absent from work owing to illness in the Netherlands, France, Sweden, the UK, and Germany between 1991 and 2001.
+
+  As seen, the Netherlands, the UK, and Sweden experienced overall rises in illness-related absences during the given period, with the Netherlands consistently recording the highest rates. Specifically, the data for the Netherlands increased significantly from around 4.8% in 1991 to 5.5%, before gradually declining to its lowest point of approximately 4.2% in 1996, followed by a rebound to a level similar to that in 1992 by the end of the period. In contrast, Sweden saw minor fluctuations around 3% before 1995, after which it surged to nearly 4.6% in 2001. Meanwhile, the UK’s absenteeism rate remained relatively stable, fluctuating only slightly between 2.1% and 2.3%.
+
+  On the other hand, France and Germany had overall decreased non-attendance rates. France, which started with the highest rates at 5% and saw a steady decline, reaching 3.2% in 1996, at which point it was overtaken by Sweden. From 1996 onwards until 2001, France’s rate remained more or less constant. Germany, meanwhile, consistently had the lowest absenteeism rate, which stayed below 2% throughout the entire period, **with only minimal variations**.
+
+  Overall, the Netherlands maintained the highest worker absenteeism rates, except at the very beginning, while Germany consistently had the lowest rates.
+## Test 4
+  - **IELTS writing task 1**:
+    The charts below show the protein and calorie intakes of people in different parts of the world.Summarize the information by selecting and reporting the main features, and make comparisons where relevant.
+  - **Here's my essay. Give a score and some advice**:
+    The diagram compares the average protein and calorie consumptions in different global regions. Specifically, it's India, East Africa, Latin America and North America.
+
+    In terms of average protein intake, a general overview is that only North America exceeds the ideal amount, which is 62 units of animal protein and 18 other types. Following that, animal protein intake in Latin America is 32, which is almost half of North America, while other types keep matching at 13 units. Meanwhile, the other 2 areas are almost even, where East Africa consumes 16 units of animal type and 15 others, and India only less animal kind which is 13 units. Overall, all areas differ mainly in animal protein, and other protein intakes are relatively similar across regions.
+
+    Relatively, the average calorie intake is similar with protein data, where it's still only North America goes above the ideal line reaching around 3600, and India is the least at 2000, but it's not an as large gap as protein. Simultaneously, midst areas like Latin America is only a bit lower than ideal, and East Africa is also competitively not too far away. Additionally it seems calories have other sources, so it's not as divergent as protein data.
+
+    In conclusion, for both average protein and calorie intake, the data is relatively refelcting each other. It's only North America satisfying the required amount, while India keeping the lowest.
+  - **Areas for Improvement**:
+    1. **Cohesion and Coherence**:
+       - Improve the logical flow between sentences and paragraphs. Use more linking words (e.g., "Moreover," "In contrast," "Additionally") to connect ideas more smoothly.
+    2. **Language Accuracy**:
+       - Pay attention to grammatical issues, such as subject-verb agreement. For instance, "all areas differs" should be "all areas differ."
+       - Correct phrases like "animal type protein" to "animal protein" for clarity.
+    3. **Comparison Clarity**:
+       - Be more precise in your comparisons. When discussing protein and calorie intake, clarify how these figures relate to one another.
+       - Avoid vague phrases like "not as large gap"; instead, specify the degree of difference.
+    4. **Conclusion Strength**:
+       - The conclusion should summarize key findings without introducing new ideas. Consider restating the main points more succinctly.
+  - **Revised Example**:
+    The diagram compares the average protein and calorie intakes in four global regions: India, East Africa, Latin America, and North America.
+
+    In terms of average protein intake, only North America exceeds the recommended levels, consuming 62 units of animal protein and 18 units of other protein. Latin America follows with 32 units of animal protein and 13 units of other types. East Africa consumes 16 units of animal protein and 15 units of other types, while India has the lowest intake at 13 units of animal protein. Overall, the main difference among regions lies in animal protein consumption, with other protein sources remaining relatively similar.
+
+    Similarly, average calorie intake patterns reflect those of protein consumption. Only North America surpasses the recommended intake, averaging around 3600 calories, while India has the lowest at approximately 2000 calories. Latin America and East Africa have calorie intakes that are slightly below the ideal levels, but the differences are less pronounced compared to protein intake.
+
+    In conclusion, North America is the only region meeting the recommended levels for both protein and calorie intake. The data suggests that while protein and calorie intake patterns are similar, calorie sources appear to vary, resulting in less disparity compared to protein consumption.
+  - **Final Tips**:
+  - Continue practicing writing to develop your skills further.
+  - Focus on using varied vocabulary and sentence structures to enhance your writing.
+  - Always proofread your essay for grammatical accuracy and clarity before submission.
+
+  The charts compare the average intake of protein (both animal and other sources) and calories among people in India, East Africa, Latin America, and North America.
+
+  As observed, animal protein consumption is generally higher than other protein sources in most regions, except in India. Notably, only North Americans exceed the ideal protein level of 66 units, consuming a total of 80 units (62 units from animal sources and 18 units from other protein sources). In Latin America, the total protein intake is significantly lower at 45 units, with 32 units coming from animal sources. In East Africa, the intake of animal and other proteins is almost equal, at 16 units and 15 units, respectively. A similar pattern is seen in India, though their animal protein consumption is even lower at just 13 units.
+
+  Regarding average calorie intake, North America records the highest at around 3,600 calories, 700 calories above the ideal level. In the other regions, calorie intake falls short of the standard, particularly in India, where the average intake is 900 calories below the ideal. East Africans also experience a calorie deficit, having only 2,350 calories on average, whereas Latin Americans fare better with an intake of 2,800 calories, which is close to the ideal.
+
+  Overall, there is a significant disparity in nutritional intake across these regions, with North America far exceeding both the ideal protein and calorie levels, while India and East Africa lag behind, particularly in terms of calorie consumption.
+## Test 5
+  - **IELTS WRITING TASK 1**:
+    You should spend about 20 minutes on this task.
+
+    The diagram below shows the water cycle in both forested and urban areas.
+
+    Summarise the information by selecting and reporting the main features and make comparisons where relevant.
+
+    Write at least 150 words.
+  - **Here's my essay. Give a score and some advice**:
+    The graph is a brief illustration of how water is cycled in two major places, both forest and urban.
+
+    In forested areas, the water is cycling in an ideal way. Firstly the raindrops fall to the ground and turn the soil into permeable topsoil. Then it infiltrates into the less permeable subsoil on rock and generates a water table. In the meantime, it also evaporates back into the air as raindrops again. Afterward, the baseflow transports the water downwards and forms a surface river, which transpires even larger back as precipitation. Finally, runoff flows into the sea.
+
+    In contrast, in urban areas, the inflation of water from surface soil into the subsoil is reduced. Thus the following baseflow and evaporation are also smaller. Furthermore, transpiration from the river is tremendously decreased. However, the erosion of soil and pollution on runoff are increased, which could make the situation worse.
+
+    Overall, the water cycle is largely interrupted in urban areas compared with forested areas, but the pollution and erosion are heavier, and that could be an environmental challenge.
+  - **Areas for Improvement**
+    1. **Language Precision**:
+       - Phrases like "the rain drops to the ground" should be revised to "rain falls to the ground" or "raindrops fall to the ground."
+       - Use "infiltrates" instead of "inflation" in the context of water moving through soil.
+    2. **Grammatical Accuracy**:
+       - "It's firstly the rain drops to the ground" should be revised to "Firstly, rain falls to the ground."
+       - "the runoff flows into the sea" could be clearer as "finally, runoff flows into the sea."
+    3. **Detailed Description**:
+       - Include more details about each stage of the water cycle. For example, explain briefly what happens to the water after it infiltrates into the soil.
+       - Avoid vague phrases like "largely cycled"—be specific about what is being cycled.
+    4. **Vocabulary Variety**:
+       - Try to use a wider range of vocabulary to enhance your essay. Instead of repeating "water," consider synonyms like "precipitation" or "moisture" where appropriate.
+    5. **Conclusion Enhancement**:
+       - The conclusion is too brief. You could expand it by summarizing the implications of these differences on the environment, such as how urbanization can affect water quality.
+  - **Revised Essay**
+    The diagram illustrates the water cycle in forested and urban areas, **highlighting the differences** in water management and **environmental impact**.
+
+    In forested areas, the water cycle **functions effectively**. Raindrops fall to the ground, where they are absorbed into permeable topsoil. This water then infiltrates into the less permeable subsoil, generating a water table. Simultaneously, some water evaporates back into the atmosphere. Baseflow then transports this water downwards, forming surface rivers that contribute to precipitation. Finally, runoff flows into the sea.
+
+    In contrast, urban areas **experience** reduced infiltration of water from the surface soil into the subsoil. **Consequently**, both baseflow and evaporation are diminished. **Additionally**, transpiration from rivers is significantly reduced. Urban environments also face increased soil erosion and pollution from runoff, **posing serious environmental challenges**.
+
+    Overall, the water cycle is largely interrupted in urban areas compared to forested regions, with **heightened** pollution and erosion **exacerbating** these issues.
+***
+# Writing 2 pattern
+## Introduction
+  - **Discussion Essays (Discuss both views and give your opinion)**
+    - "There are varying opinions on [topic], with some people arguing that [view 1] is more beneficial, while others believe that [view 2] offers greater advantages."
+    - "In recent years, the debate over [topic] has attracted considerable attention, with supporters on both sides presenting compelling arguments."
+    - "While some people advocate for [view 1], others firmly believe that [view 2] holds more value in today’s society."
+  - **Opinion Essays (To what extent do you agree or disagree?)**
+    - "The question of whether [topic] has sparked considerable debate, with opinions divided on its benefits and drawbacks."
+    - "In today’s world, [topic] has become a contentious issue, with individuals arguing both for and against its impact."
+    - "As society advances, the notion of [topic] has gained traction, leading many to question whether it brings more harm than good."
+  - **Problem-Solution Essays (Discuss the problem and propose solutions)**
+    - "As [problem] becomes increasingly prominent, it is essential to examine both the causes and potential solutions."
+    - "The prevalence of [problem] has raised concerns worldwide, prompting the need for effective strategies to address it."
+    - "In today’s society, [problem] has emerged as a pressing issue that calls for immediate action and innovative solutions."
+  - **Advantages-Disadvantages Essays (Discuss the advantages and disadvantages)**
+    - "In recent years, [topic] has become more common, bringing both positive and negative consequences."
+    - "As [topic] continues to gain popularity, it is important to consider the benefits as well as the potential drawbacks it presents."
+    - "The practice of [topic] has grown significantly, prompting discussions around its advantages and disadvantages."
+  - **Two-Part Question Essays (Answer both questions)**
+    - "With the rise of [topic], society faces both opportunities and challenges that merit discussion."
+    - "In today’s rapidly changing world, [topic] has led to questions about both [first question] and [second question]."
+    - "As [topic] becomes more prevalent, it raises critical questions regarding [question 1] and [question 2]."
+## Conclusion
+  - **Discussion Essays (Discuss both views and give your opinion)**
+    - "In conclusion, while both [view 1] and [view 2] have their merits, I believe that [your opinion] ultimately offers greater benefits for [reason]."
+    - "To sum up, although [view 1] has its advantages, the benefits of [view 2] are more compelling in today’s context."
+    - "In summary, the debate between [view 1] and [view 2] will likely continue, yet [your opinion] seems most suited to address the needs of [society/individuals]."
+  - **Opinion Essays (To what extent do you agree or disagree?)**
+    - "In conclusion, I strongly [agree/disagree] with the view that [topic], as [reasons or benefits]."
+    - "To summarize, while some may argue otherwise, I am convinced that [topic] brings more [advantages/drawbacks] due to [reason]."
+    - "Ultimately, I believe that [topic] is [justified/unjustified], given the long-term effects it may have on [society/environment/individuals]."
+  - **Problem-Solution Essays (Discuss the problem and propose solutions)**
+    - "In conclusion, tackling [problem] requires both immediate and long-term solutions, such as [solution 1 and solution 2]."
+    - "To sum up, addressing [problem] will involve [solution approach], and the active involvement of [governments/individuals/society] is crucial."
+    - "Ultimately, solving [problem] depends on implementing effective measures that can minimize its impact on [society/environment]."
+  - **Advantages-Disadvantages Essays (Discuss the advantages and disadvantages)**
+    - "In conclusion, while [topic] offers significant advantages like [benefit 1 and benefit 2], its drawbacks, particularly [disadvantage], cannot be overlooked."
+    - "To sum up, [topic] comes with both opportunities and challenges, and it is essential to weigh these carefully before making decisions."
+    - "In summary, the pros and cons of [topic] will continue to influence people’s perspectives, depending on individual priorities."
+  - **Two-Part Question Essays (Answer both questions)**
+    - "In conclusion, [answer to question 1] is essential to consider, and addressing [answer to question 2] will contribute to achieving a balanced perspective."
+    - "To summarize, although [answer to question 1], it is equally important to recognize [answer to question 2] for a well-rounded approach."
+    - "Ultimately, tackling [question 1] and [question 2] requires a nuanced understanding to promote positive outcomes for [society/individuals]."
+## Body
+  - **Discussion Essays (Discuss both views and give your opinion)**
+    - **Body Paragraph 1: First Viewpoint**
+      - **Topic sentence**: Introduce the first viewpoint clearly.  
+        - "Some people believe that [view 1] because it offers [reason]."
+      - **Supporting details and examples**: Elaborate on why people hold this view, with examples if possible.
+        - "For instance, in cities like Tokyo, tall buildings allow more people to live centrally, reducing commute times."
+      - **Linking sentence**: Transition to the next paragraph.
+        - "Despite these benefits, others argue that [view 2] offers a more sustainable approach."
+    - **Body Paragraph 2: Second Viewpoint and Your Opinion**
+      - **Topic sentence**: Introduce the second viewpoint.
+        - "On the other hand, many argue that [view 2] is more advantageous due to [reason]."
+      - **Supporting details and examples**: Expand on this view, using examples or logical reasoning.
+        - "For example, horizontal cities like Los Angeles provide more space for green areas, which can enhance residents' quality of life."
+      - **Your opinion**: Clearly state your stance if you haven’t done so in the introduction.
+        - "In my view, a balanced approach combining both structures may be optimal for urban planning."
+  - **Opinion Essays (To what extent do you agree or disagree?)**
+    - **Body Paragraph 1: Support Your Opinion**
+      - **Topic sentence**: Clearly state your stance and the first reason.
+        - "I strongly [agree/disagree] with this view because [reason 1]."
+      - **Supporting details and examples**: Provide evidence and examples to back up your opinion.
+        - "For example, studies show that individuals who live in walkable, high-rise areas have easier access to essential services."
+      - **Linking sentence**: Transition to your next point.
+        - "Moreover, [additional reason supporting your opinion]."
+    - **Body Paragraph 2: Further Support (or Counterargument, if applicable)**
+      - **Topic sentence**: Provide a second reason for your stance (or acknowledge a counterpoint).
+        - "Another reason I support this view is due to [reason 2]."
+        - *Or*: "Although some might argue that [counterargument], this perspective overlooks [reason in support of your opinion]."
+      - **Supporting details and examples**: Add depth to your argument with examples or data.
+        - "For instance, residents in low-rise suburban areas often face longer commutes, which can affect their work-life balance."
+      - **Concluding sentence**: Reinforce your opinion or connect to your next paragraph.
+        - "Thus, I firmly believe that [reiterate opinion]."
+  - **Problem-Solution Essays (Discuss the problem and propose solutions)**
+    - **Body Paragraph 1: Identify the Problem**
+      - **Topic sentence**: Introduce the main issue.
+        - "One of the biggest issues arising from [topic] is [problem]."
+      - **Supporting details and examples**: Describe the causes and impacts of this problem.
+        - "This can lead to [negative consequence], as seen in cities where urban sprawl has caused environmental degradation."
+      - **Linking sentence**: Transition to the solution.
+        - "Addressing this issue requires a comprehensive approach."
+    - **Body Paragraph 2: Propose Solutions**
+      - **Topic sentence**: Present a solution or set of solutions.
+        - "A potential solution to mitigate [problem] is to implement [solution]."
+      - **Supporting details and examples**: Explain how this solution would address the problem, providing examples or details.
+        - "For instance, developing public transportation systems can reduce traffic congestion and lower emissions."
+      - **Concluding sentence**: Summarize the effectiveness of the solution.
+        - "By adopting these measures, it is possible to alleviate the problem and enhance urban living conditions."
+  - **Advantages-Disadvantages Essays (Discuss the advantages and disadvantages)**
+    - **Body Paragraph 1: Advantages**
+      - **Topic sentence**: Clearly state the main advantage(s).
+        - "One primary advantage of [topic] is [advantage]."
+      - **Supporting details and examples**: Provide examples or reasoning for why this is beneficial.
+        - "For instance, living in high-rise buildings allows residents to access amenities conveniently, promoting a more efficient lifestyle."
+      - **Linking sentence**: Prepare to discuss the disadvantages.
+        - "However, despite these benefits, there are also significant drawbacks."
+    - **Body Paragraph 2: Disadvantages**
+      - **Topic sentence**: Introduce the main disadvantage(s).
+        - "On the other hand, [topic] presents several challenges, such as [disadvantage]."
+      - **Supporting details and examples**: Use examples or logical explanations to illustrate the drawbacks.
+        - "For example, high-density areas can experience overcrowding, leading to stress and reduced privacy for residents."
+      - **Concluding sentence**: Offer a balanced view or connect to the conclusion.
+        - "In this way, while [topic] has clear benefits, its downsides should not be ignored."
+  - **Two-Part Question Essays (Answer both questions)**
+    - **Body Paragraph 1: Answer the First Question**
+      - **Topic sentence**: State your response to the first question.
+        - "To address the first question, I believe that [answer to question 1]."
+      - **Supporting details and examples**: Elaborate on this answer with examples or reasoning.
+        - "For instance, many people are drawn to city life for the career opportunities it offers."
+      - **Linking sentence**: Transition to the second question.
+        - "Turning to the second question, it is essential to consider [issue of the second question]."
+    - **Body Paragraph 2: Answer the Second Question**
+      - **Topic sentence**: State your response to the second question.
+        - "In response to the second question, I think that [answer to question 2]."
+      - **Supporting details and examples**: Expand on this answer with evidence or examples.
+        - "For instance, suburban areas often provide a higher quality of life due to cleaner air and more green spaces."
+      - **Concluding sentence**: Summarize both answers or connect to the conclusion.
+        - "In conclusion, both aspects are crucial, and each offers unique benefits depending on personal priorities."
+***
+
+# Writing 1 pattern
+  - In IELTS Writing Task 1, you’ll need to describe visual data (like charts, graphs, maps, or processes) in an organized and concise way. Here are some versatile structures for different types of data presentations:
+## Line Graphs, Bar Charts, and Pie Charts
+  - These require you to compare trends, patterns, and changes over time or between categories.
+  - **Introduction**
+    - **Template**: “The [chart/graph/pie chart] illustrates [what is being measured] over [time period/location].”
+    - **Example**: “The line graph illustrates the changes in global smartphone usage from 2010 to 2020.”
+  - **Overview**
+    - **Template**: “Overall, it can be observed that [mention main trend or pattern], while [secondary trend or contrasting point].”
+    - **Example**: “Overall, it can be observed that smartphone usage increased steadily over the decade, while the growth rate varied significantly between regions.”
+  - **Body Paragraph 1** (Primary Trends)
+    - **Template**: “Firstly, [describe the main trend or most significant feature in the chart].”
+    - **Example**: “Firstly, smartphone usage in North America rose dramatically, reaching 90% by the end of the period.”
+  - **Body Paragraph 2** (Additional or Contrast Trends)
+    - **Template**: “On the other hand, [describe contrasting trend or additional details].”
+    - **Example**: “On the other hand, Africa experienced a slower rise, with usage reaching only 30% by 2020.”
+## Tables
+  - Tables usually require comparing numbers across categories without visual indicators, so structuring based on key comparisons or trends is useful.
+  - **Introduction**
+    - **Template**: “The table provides information about [what is being compared] across [time period/locations/categories].”
+    - **Example**: “The table provides information about the population growth rates in five different countries from 2010 to 2020.”
+  - **Overview**
+    - **Template**: “Overall, [state the key trend], with [mention any notable feature or outliers].”
+    - **Example**: “Overall, population growth rates increased in most countries, with Country A showing the highest growth and Country D experiencing a decline.”
+  - **Body Paragraph 1** (Main Data Points)
+    - **Template**: “In terms of [category 1], [describe main numbers and comparisons].”
+    - **Example**: “In terms of Country A, the growth rate was the highest, increasing from 1.5% in 2010 to 3.2% in 2020.”
+  - **Body Paragraph 2** (Secondary or Comparative Data Points)
+    - **Template**: “Conversely, [describe secondary or contrasting data points].”
+    - **Example**: “Conversely, Country D experienced a slight decline, from 2% to 1.5%, over the same period.”
+## Maps
+  - Maps compare locations, infrastructure, or changes in geographical features over time.
+  - **Introduction**
+    - **Template**: “The maps illustrate changes in [location/feature] between [two time periods].”
+    - **Example**: “The maps illustrate changes in the layout of Riverside City Center between 2000 and 2020.”
+  - **Overview**
+    - **Template**: “Overall, [mention general change or major transformation], while [mention any preserved or significantly altered areas].”
+    - **Example**: “Overall, Riverside City Center became more commercialized, with new shopping and residential areas, while the park and river areas remained intact.”
+  - **Body Paragraph 1** (Changes in Key Areas or Features)
+    - **Template**: “In the [area/location], [describe the change].”
+    - **Example**: “In the eastern part of the city, a new shopping complex was constructed, replacing the previous residential buildings.”
+  - **Body Paragraph 2** (Other Changes and Comparisons)
+    - **Template**: “Additionally, [describe further changes or preserved areas].”
+    - **Example**: “Additionally, a bridge was built over the river, connecting the northern and southern areas of the city.”
+## Process Diagrams
+  - These require you to describe each step in a process, often starting from raw materials to the final product.
+  - **Introduction**
+    - **Template**: “The diagram illustrates the process of [describing what the process is about].”
+    - **Example**: “The diagram illustrates the process of recycling used paper into new paper.”
+  - **Overview**
+    - **Template**: “Overall, the process involves [number] main stages, beginning with [start point] and ending with [end point].”
+    - **Example**: “Overall, the process involves four main stages, beginning with paper collection and ending with the production of new paper sheets.”
+  - **Body Paragraph 1** (First Half of the Process)
+    - **Template**: “To begin with, [describe the first step]. Following this, [describe next steps in sequence].”
+    - **Example**: “To begin with, used paper is collected and sorted by quality. Following this, the paper is shredded and soaked in water to form pulp.”
+  - **Body Paragraph 2** (Second Half of the Process)
+    - **Template**: “In the subsequent stages, [describe remaining steps until completion].”
+    - **Example**: “In the subsequent stages, the pulp is filtered, then rolled into sheets, and finally dried to produce new paper.”
+## Tips for Writing Task 1
+  - **Use Variety in Vocabulary**: Use synonyms and descriptive phrases to avoid repetition, like “climb,” “increase,” “rise” for upward trends, and “decline,” “fall,” “decrease” for downward trends.
+  - **Include Comparison Words**: For example, use “higher than,” “while,” “compared to,” “by contrast,” etc., to clarify comparisons.
+  - **Use Passive Voice in Process Descriptions**: This is helpful when describing processes without specifying who performs each action (e.g., “the pulp is filtered”).
+  - **Avoid Personal Opinion**: Task 1 is about describing data, not giving personal opinions or analysis.
+  - **Stay Within the Word Limit**: Aim for around 150 words, focusing on clear descriptions without excessive detail.
+***
+
+# Speaking Patterns
+## Part 1
+  - **Preferences**
+    - **Talking about what you like or dislike**
+      - "I really enjoy [activity/thing] because it allows me to [reason or benefit]. For instance, I love reading novels because it’s a great way to relax and escape from daily life."
+      - "I’m not particularly fond of [activity/thing], mainly because [reason]. For example, I don’t really enjoy watching sports on TV; I’d rather spend my time outdoors."
+    - **Explaining your favorite**
+      - "If I had to pick a favorite, I’d say [thing], mostly because [reason]. For instance, my favorite type of food is Italian food, as I find the flavors so rich and satisfying."
+      - "I’d have to say [thing] is my top choice because [reason]. Like, my favorite season is spring since the weather is perfect for outdoor activities."
+  - **Experiences**
+    - **Discussing a past event**
+      - "Once, I [describe experience], and it was really memorable because [reason]. For instance, I once traveled to Japan, and the cultural experiences I had there were unforgettable."
+      - "I remember [experience], which was quite exciting. For example, last year, I attended a concert by my favorite band, and it was an incredible experience."
+    - **Describing your first or most recent experience**
+      - "The first time I [did something] was quite exciting. I remember feeling [emotion] because [reason]. For example, the first time I tried skiing, I was thrilled yet nervous."
+      - "Most recently, I [did something], and it was [description]. For instance, I recently visited a new restaurant with my friends, and the food was amazing."
+  - **Routines and Habits**
+    - **Talking about frequency**
+      - "I usually [activity] every [frequency] because [reason]. For example, I go jogging every morning as it helps me start my day with energy."
+      - "I hardly ever [activity], since I find it [reason]. For instance, I rarely watch TV on weekdays, as I’m usually busy with work."
+    - **Describing a regular activity**
+      - "Every [day/time], I [activity] as part of my routine. For example, every Sunday, I spend time with my family, and we usually cook a meal together."
+      - "I make it a point to [activity] because it helps me [reason]. For example, I always review my work at the end of each day to stay organized."
+  - **Opinions**
+    - **Expressing agreement or disagreement**
+      - "I definitely agree with [idea], mainly because [reason]. For instance, I believe that exercise is essential since it greatly benefits both physical and mental health."
+      - "I’m not sure I agree with [idea], as I think [opposing view]. Like, I don’t believe that watching TV all the time is a good idea because it can limit time for other productive activities."
+    - **Explaining your view on common topics**
+      - "In my opinion, [topic/idea] is quite important because [reason]. For instance, I think that learning a foreign language opens up a lot of opportunities to connect with people from different cultures."
+      - "I’d say that [topic/idea] has both positives and negatives. For example, technology has made life easier, but it can also be distracting."
+  - **Descriptions**
+    - **Talking about people**
+      - "I’d describe [person] as [adjective], mainly because [reason]. For instance, my best friend is very supportive, always being there when I need advice."
+      - "[Person] is someone who’s always [characteristic]. Like, my dad is incredibly hardworking, and he always inspires me to do my best."
+    - **Describing places**
+      - "I’d say [place] is [adjective] because of [reason]. For example, my hometown is peaceful, with a lot of beautiful natural scenery."
+      - "[Place] is known for its [characteristic]. Like, my city is famous for its historic architecture, which attracts many tourists."
+    - **Describing objects**
+      - "One of my favorite things is [object] because [reason]. For instance, I really value my laptop since it allows me to study and work from anywhere."
+      - "[Object] is special to me because [reason]. Like, my old camera holds sentimental value as it reminds me of all the trips I’ve taken."
+## Part 2
+  - For IELTS Speaking Part 2, the best approach is to create a clear structure that allows you to speak confidently for the full 1-2 minutes. Here’s a flexible structure and example sentences for various question types, as well as some useful tips for expanding your answers smoothly.
+  - Remember, when preparing for Part 2, focus on **clarity and coherence**. Use simple phrases to keep your story flowing naturally, and make sure you convey your feelings or personal reflections to keep the answer engaging. Practicing with a timer can also help you manage the 1-2 minute timeframe effectively.
+  - **General Structure for Part 2:**
+    1. **Introduction:** Briefly introduce what you’re going to talk about.
+       - "I’d like to talk about [person/place/event/thing] that is quite special to me."
+    2. **Description/Background:** Provide basic details—who, what, where, when.
+      - "This happened [time period ago, e.g., last year], and it took place in [location]."
+      - "It was when I was [in school/on vacation/with friends]."
+    3. **Main Story/Details:** Share more specific details, actions, and feelings.
+      - "During this time, I was [doing activity] with [people, e.g., friends/family]."
+      - "One of the most memorable moments was when [specific event]."
+    4. **Feelings/Impact:** Explain how you felt and what it meant to you.
+      - "This experience was so [emotion, e.g., exciting/meaningful], and I learned [lesson]."
+      - "I still think about this often because it [reason, e.g., made a lasting impression]."
+    5. **Closing Statement (Optional):** Wrap up with a final thought.
+       - "Overall, this is an experience I’ll always cherish."
+  - **Describe a Person Who Inspired You**
+    - **Introduction**: "The person I’d like to talk about is my high school English teacher, Ms. Lee."
+    - **Description**: "Ms. Lee was a passionate and knowledgeable teacher who really made a difference in my life. She had a warm smile and always encouraged her students to think creatively."
+    - **Main Story**: "One day, I remember struggling with an essay, and Ms. Lee sat down with me after class to go over my ideas. She encouraged me to approach writing with confidence and showed me how to organize my thoughts. Thanks to her, I felt motivated to keep improving."
+    - **Feelings/Impact**: "Because of her guidance, I developed a love for English that eventually shaped my career path. She truly inspired me to believe in my abilities."
+    - **Closing Statement**: "Even today, I’m grateful for her impact, and I hope to inspire others the way she inspired me."
+  - **Describe a Place You Enjoy Visiting**
+    - **Introduction**: "A place I love visiting is a beautiful lake near my hometown."
+    - **Description**: "This lake is surrounded by forests and has clear, calm waters. I first visited it when I was a child with my family, and since then, it’s been my favorite escape."
+    - **Main Story**: "I often go there with friends to swim or just relax by the shore. Last summer, I went with my best friend, and we spent the whole day there, picnicking and enjoying the peaceful atmosphere."
+    - **Feelings/Impact**: "Being at the lake makes me feel so calm and refreshed. It’s like a little piece of paradise that helps me unwind from city life."
+    - **Closing Statement**: "For me, this lake isn’t just a place—it’s a refuge where I feel connected to nature."
+  - **Describe an Event That Was Important to You**
+    - **Introduction**: "An event that was really important to me was my high school graduation ceremony."
+    - **Description**: "This event took place at my school’s auditorium with all my classmates, teachers, and family there to celebrate with us."
+    - **Main Story**: "I remember feeling both excited and nervous. The principal gave a touching speech, and then one by one, we walked across the stage to receive our diplomas. The whole atmosphere was full of joy and anticipation for the future."
+    - **Feelings/Impact**: "That day was memorable because it marked the end of one chapter and the beginning of another. I felt proud of my achievements and excited to take on new challenges in college."
+    - **Closing Statement**: "Looking back, this ceremony is a day I’ll always treasure."
+  - **Describe a Skill You Would Like to Learn**
+    - **Introduction**: "One skill I’ve always wanted to learn is playing the guitar."
+    - **Description**: "I’ve been interested in music for a long time, but I never had the chance to take formal guitar lessons. I imagine it would be great to play my favorite songs."
+    - **Main Story**: "Recently, I even bought a beginner’s guitar, and I’m teaching myself basic chords using online tutorials. It’s a bit challenging, but I feel really excited every time I make progress."
+    - **Feelings/Impact**: "Learning the guitar would allow me to express myself creatively and would be a wonderful way to relax."
+    - **Closing Statement**: "Hopefully, with enough practice, I’ll be able to play fluently someday."
+  - **Useful Phrases to Expand Your Answer in Part 2**
+    - **To add details**: "Another aspect of this is…" / "In addition to that…"
+    - **For transitions**: "Moving on to…" / "That reminds me of…"
+    - **To express feelings**: "I felt that it was…" / "What really stood out to me was…"
+    - **For hypothetical thoughts**: "If I could, I would…" / "If I were to do it again, I might…"
+    - **To conclude**: "All in all…" / "So, that’s why I consider this experience memorable."
+## Part 3
+  - In IELTS Speaking Part 3, the examiner will ask more in-depth, abstract questions related to the Part 2 topic, and they’ll be looking for well-reasoned answers with examples. Here’s a guide with example structures, sample sentences, and tips for expanding answers in Part 3.
+  - **General Structure for Part 3 Responses**
+    1. **Direct Answer**: Start by answering the question directly.
+       - "I think that…" / "In my opinion…" / "Yes, absolutely…"
+    2. **Explanation**: Give a reason for your answer, expanding on your view.
+       - "The reason I say this is because…" / "This is mainly due to…"
+    3. **Examples or Additional Details**: Support your answer with examples, facts, or comparisons.
+       - "For instance…" / "A good example would be…" / "Compared to…"
+    4. **Conclusion (Optional)**: If applicable, end with a summarizing sentence.
+       - "Overall, this approach seems effective…" / "So, considering all these points…"
+  - **1. Opinion-Based Questions** **Question**: *Do you think people today are more interested in fitness than in the past?*
+    - **Answer**: "Yes, I believe people today are generally more interested in fitness than they were in the past."
+    - **Explanation**: "This is largely because there is more awareness about the benefits of staying fit, thanks to social media and health campaigns."
+    - **Example**: "For example, platforms like Instagram are filled with fitness influencers, which makes healthy lifestyles seem more accessible and appealing to people of all ages."
+    - **Conclusion**: "So, overall, I think this growing interest is a positive trend that encourages people to take better care of themselves."
+  - **2. Compare and Contrast Questions** **Question**: *How is family life different now compared to the past?*
+    - **Answer**: "Family life has changed significantly over the years."
+    - **Explanation**: "In the past, families tended to spend more time together at home, whereas today, work and school schedules are often busier, and people may not have as much family time."
+    - **Example**: "For instance, many parents now work longer hours, and children have more extracurricular activities, which can limit shared time at home."
+    - **Conclusion**: "Overall, while family bonds are still strong, the ways families spend time together have definitely evolved."
+  - **3. Hypothetical or Future-Oriented Questions** **Question**: *How do you think education will change in the future?*
+    - **Answer**: "I think education will become even more technology-driven in the future."
+    - **Explanation**: "With advances in digital learning, students may attend virtual classes, and personalized learning could become more common."
+    - **Example**: "For example, AI could allow students to learn at their own pace, and virtual classrooms might help reduce overcrowding in traditional schools."
+    - **Conclusion**: "In this way, education could become more flexible and accessible, benefiting students worldwide."
+  - **4. Problem-Solution Questions** **Question**: *What can be done to encourage people to recycle more?*
+    - **Answer**: "One effective way to encourage recycling is by introducing incentives."
+    - **Explanation**: "People tend to respond well to rewards, so if they received a small financial benefit or reward points for recycling, it might motivate them to do it more consistently."
+    - **Example**: "For instance, in some countries, people can return bottles to collection points and receive a small amount of money, which has increased recycling rates."
+    - **Conclusion**: "By making recycling convenient and rewarding, it’s possible to encourage more people to participate."
+  - **5. Pros and Cons Questions** **Question**: *What are the advantages and disadvantages of working from home?*
+    - **Answer**: "Working from home definitely has both pros and cons."
+    - **Explanation** (Pros): "One major advantage is that it saves time and money on commuting, which also reduces stress for many employees."
+    - **Example** (Pro): "For example, those who work from home can start their day immediately without having to deal with traffic."
+    - **Explanation** (Cons): "However, a disadvantage is that it can lead to feelings of isolation, as people miss out on the social interactions they would have in an office."
+    - **Example** (Con): "In some cases, this isolation can affect mental health, making it difficult for people to stay motivated."
+    - **Conclusion**: "So, while remote work offers flexibility, it’s important to find a balance to address the downsides."
+  - **Useful Phrases and Tips for Expanding Part 3 Answers**
+    - **To Explain Further**: "The main reason for this is…" / "One of the biggest factors is…"
+    - **To Give an Example**: "A good example of this would be…" / "To illustrate this point…"
+    - **To Compare or Contrast**: "Compared to the past…" / "On the other hand…" / "Similarly…"
+    - **For Hypothetical Ideas**: "If this trend continues…" / "If we were to implement this…"
+    - **To Acknowledge Different Sides**: "While some people believe that…others feel that…" / "There are both benefits and drawbacks to this…"
+    - **To Conclude**: "All in all…" / "So, in my view…" / "In conclusion…"
+    - **Tips for a Strong Part 3 Performance**
+    1. **Practice Adding Depth**: Give at least two supporting points with examples to make your answer more comprehensive.
+    2. **Use Connectors and Transition Words**: These help to smoothly link ideas and make your answer more coherent.
+    3. **Balance Your Answers**: For questions asking for pros and cons, make sure to mention both sides.
+    4. **Be Specific, Not General**: Use specific examples or details from real-life situations or knowledge to add credibility.
+    5. **Show Confidence and Enthusiasm**: Speak clearly and naturally; this shows confidence in your opinions and keeps your response engaging.
 ***
 
 # Speaking test 3 topics
@@ -529,6 +1151,7 @@ A more convenient public transportation system and green energy usage can lease 
 
 # Speaking topics
 ## 帮助过的某人
+## 最喜欢的节日
 ## fitness, health, lifestyle choices, and even the societal importance of physical activity
   - **GPT polished**
     In my spare time, I enjoy going to the gym for workouts. It’s a great way to break the daily routine of work and study while recharging my energy. I aim to go about six times a week, but, realistically, I usually manage four due to other commitments. From my experience, being in the gym is crucial, even more than the specific exercises we do. The environment and atmosphere can energize us and help us discover our own workout styles since people tend to be influenced by others. Besides the gym, I also enjoy running, swimming, and hiking outdoors with friends, but I’m not very skilled at sports involving a ball, like football or basketball.
@@ -552,7 +1175,6 @@ A more convenient public transportation system and green energy usage can lease 
   - **Question 6: What challenges might people face when trying to maintain a fitness routine?** The biggest challenge is often finding the time, especially with busy work schedules or family responsibilities. Some people also find it hard to stay motivated, especially when they don’t see immediate results. Financial limitations, like the cost of a gym membership, can also be a barrier. I face time management challenges myself, but I’ve found that setting specific goals and sticking to a schedule helps me stay on track.
 ## 有影响的人 education, teachers and their role in society
   - **GPT polished**
-
     My favorite teacher is my English teacher from junior middle school, and she was the one who introduced me to English study. In many ways, she inspired my passion for learning English. I believe this is the mark of a truly great teacher—not just delivering academic knowledge, but also sparking a genuine interest in the subject. At the beginning, we were all new to English, but she was incredibly patient and always encouraged me to have confidence and keep going, which kinda helped me build a very solid foundation for my future studies.
 
     Back then, most teachers focused heavily on textbook learning, unlike today's technology-enhanced methods. However, she always found creative ways to engage us with interactive activities, such as group discussions, partner speaking, and storytelling. These techniques helped me build a strong foundation in the language. Another aspect of her teaching was her incredible patience with students who struggled. Her passion for teaching was evident in every lesson, and it motivated us to try harder and not be afraid of asking "silly" questions.
@@ -611,7 +1233,7 @@ A more convenient public transportation system and green energy usage can lease 
   - **In your opinion, do people make friends in different ways today compared to the past?** **Answer:** Yes, I think the way people make friends today has changed significantly. In the past, friendships were often formed through physical activities, like sports or hobbies, but nowadays, many friendships begin online through social media or gaming platforms. While technology has made it easier to connect with people from all over the world, I believe face-to-face interactions, like doing activities together, still play a key role in forming strong, lasting friendships.
   - **Why do you think some friendships last longer than others?** **Answer:** I think some friendships last longer because they’re built on strong foundations like shared interests, mutual respect, and effective communication. Friends who regularly engage in activities together and make an effort to stay connected tend to maintain their bond over time. Additionally, friendships that can adapt to changes, such as different life stages or career paths, are more likely to endure.
   - **Do you think technology has changed the way people socialize and form friendships?** **Answer:** Absolutely. Technology has made it easier for people to meet and stay in touch, especially with social media and messaging apps. It allows for long-distance friendships to thrive, even when people don’t see each other often. However, I think it has also reduced face-to-face interactions, which are important for building deeper connections. For me, activities like swimming or hiking still feel more personal and help create stronger bonds than just chatting online.
-## Books, movies, social media, Technology, Internet, media consumption and attention spans
+## Books, **movies**, social media, Technology, Internet, media consumption and attention spans
   - **GPT polished**
     I'm not a big fan of short videos; I much prefer books and movies. In today’s social media-driven world, short videos have become incredibly popular, with platforms like TikTok dominating the internet. While I understand their appeal—they’re quick, easy to consume, and can be quite entertaining—I often find they lack depth and can sometimes be misleading due to AI manipulation.
 
@@ -680,3 +1302,48 @@ A more convenient public transportation system and green energy usage can lease 
 
     In conclusion, globalization has had a profound influence on cultures, languages, business, and cultural exchange. While it has led to the spread of ideas and economic growth, it has also brought challenges related to cultural preservation, language loss, and economic inequality. The ongoing challenge will be to harness the benefits of globalization while protecting the diversity and richness of local cultures.
 ***
+
+food:
+what: dumpling
+when: new year, big events
+why: celebrating, work together
+feel:
+
+Who: mother
+what: crabs
+why: short travels
+feel: delicious, after
+
+where: west lake
+who, what: colleague, lake other people
+how:
+why:
+
+Yunnan
+elephant
+free place for animals, surrounding
+hidden beautiful fancy
+
+who:
+
+
+how: mother
+what kind: common stuffs
+where: merket, super
+why:
+
+who:
+how:
+what:
+
+when: KTV
+what: sofia
+why: strong tune, simple lyrics
+how:
+
+limit overtime working
+WLB
+whether poplu
+
+一个乐于助人的人，描述一个人
+food 相关
