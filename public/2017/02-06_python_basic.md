@@ -2505,10 +2505,11 @@
   # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
 
   # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
-  wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
-  tar zxvf Python-3.10.1.tgz
-  cd Python-3.10.15
-  ./configure --prefix=$HOME/local_bin/python-3.10.5 --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
+  VERSION=3.10.1
+  wget https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tgz
+  tar zxvf Python-${VERSION}.tgz
+  cd Python-${VERSION}
+  ./configure --prefix=$HOME/local_bin/python-${VERSION} --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
   make
   make install
 
