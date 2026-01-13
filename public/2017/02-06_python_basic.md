@@ -2505,7 +2505,7 @@
   # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
 
   # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
-  VERSION=3.10.1
+  VERSION=3.10.19
   wget https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tgz
   tar zxvf Python-${VERSION}.tgz
   cd Python-${VERSION}

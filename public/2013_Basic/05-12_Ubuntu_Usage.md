@@ -445,6 +445,16 @@
     ssh tdtest@192.168.0.83 "cat foo"
     # Hello world
     ```
+  - ssh 转发 jupyter 端口 [How to run a jupyter notebook through a remote server on local machine?](https://stackoverflow.com/questions/69244218/how-to-run-a-jupyter-notebook-through-a-remote-server-on-local-machine)
+  ```sh
+  # run the notebook on the remote in no browser mode.
+  # Running on a specific port is not necessary. The --no-browser tag is.
+  jupyter notebook --no-browser --port=8080
+
+  # Then setup an ssh tunnel from the local machine:
+  ssh -NfL 8080:localhost:8080 <REMOTE_USER>@<REMOTE_HOST>
+  ```
+  Then in your local browser go to: http://localhost:8080/
 ## SSH Q / A
   - Q: ssh: connect to host 135.251.168.141 port 22: Connection refused
     ```shell
@@ -1616,6 +1626,18 @@
     alias Tmux="tmux attach || if [[ -e $HOME/.tmux/resurrect/last ]]; then tmux new-session -d; tmux run-shell $HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh; tmux attach; else tmux; fi"
     ```
   - **断开其他连接** `Ctrl + s` + `D`，选择并关闭
+  - 复制到系统剪贴板 [Github tmux-yank](https://github.com/tmux-plugins/tmux-yank)
+    ```sh
+    # install dependencies
+    sudo apt install xsel
+    ```
+    Add tmux plugin
+    ```sh
+    vi .tmux.conf
+    # set -g @plugin 'tmux-plugins/tmux-yank'
+    ```
+    - `[prefix] – I` to install tmux-yank
+    - `[prefix] – [` copy -> y to system clipboard
 ## 特殊符号
   - [Unicode Character Table](https://unicode-table.com)
   - **制表符**
@@ -1767,7 +1789,7 @@
     mkfs -t ext4 /dev/mapper/lvm_data-vg_data
     ```
     Q: `Device /dev/sdx excluded by filter` when `pvcreate` -> `wipefs -a /dev/sdx`
-# snap
+## snap
   - Q: Unable to update "Snap Store"
     ```sh
     Unable to update "Snap Store": cannot refresh "snap-store": snap "snap-store" has running apps (ubuntu-software)
@@ -1776,6 +1798,17 @@
     ```sh
     snap-store --quit && sudo snap refresh snap-store
     ```
+## 清理缓存
+  ```sh
+  rm ~/.cache/pip/ -rf
+
+  sudo rm /var/log/journal/*/ -rf
+  sudo rm /usr/lib/snapd/cache/ -rf
+  sudo snap set system refresh.retain=2  # starting from snapd version 2.34
+  snap list --all | awk '/disabled/{print $1, $3}' | while read snapname revision; do sudo snap remove "$snapname" --revision="$revision"; done
+
+  sudo apt autoclean && sudo apt clean  # /var/cache/apt
+  ```
 ***
 
 # 软件
