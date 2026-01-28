@@ -57,13 +57,16 @@
   - 比较两个排序后的文件内容 **comm**
   - **dirname** 获取文件夹名，**basename** 获取文件名，**pwd** 获取当前文件夹名
   - **set -o vi** 将整个命令状态设置为 VI 编辑器
-  - **rsync** [rsync详解之exclude排除文件](http://wanwentao.blog.51cto.com/2406488/582432/)
+  - **rsync** [rsync详解之exclude排除文件](http://wanwentao.blog.51cto.com/2406488/582432/) [Is there a way to continue broken scp (secure copy) command process in Linux](https://stackoverflow.com/questions/20860896/is-there-a-way-to-continue-broken-scp-secure-copy-command-process-in-linux)
     ```shell
     rsync -arv --exclude "/home/ben/.ccache:/home/ben/build" /home/ben /media/ben/thumbdrive/
     rsync -arv --exclude=.ccache --exclude=build /home/ben /media/ben/thumbdrive/
     rsync -arv --exclude={.ccache,build} /home/ben /media/ben/thumbdrive/
 
     rsync --progress -avhe ssh /home/ben 192.168.0.1:/home/
+
+    rsync --partial --progress --rsh=ssh local_file user@host:remote_file
+    rsync -P -e "ssh -p 222" SRC DEST  # 注意双引号
     ```
 ## grep sed awk 查找字符串
   ```shell
