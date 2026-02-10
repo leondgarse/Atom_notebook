@@ -914,6 +914,7 @@
     rename "s//.html//.php/" * # 把.html 后缀的改成 .php后缀
     rename "s/$//.txt/" *      # 把所有的文件名都以txt结尾
     rename "s//.txt//" *       # 把所有以.txt结尾的文件名的.txt删掉
+    rename 's/^/week1_/' *.pdf  # 所有 pdf 文件前添加 week1_
     ```
   - Ubuntu命令 rename foo foo0 foo? 这样使用不对，报错：
     ```md
