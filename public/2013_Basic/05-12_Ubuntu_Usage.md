@@ -2400,6 +2400,36 @@
 
   vi ~/.oh-my-zsh/themes/jreese.zsh-theme  # 删除 git
   ```
+## Pulsar
+  - uncheck `Settings` -> `Core` -> `Use Tree-sitter Parsers` for folding on indent, not on markdown header level.
+  - Markdown toggle bold key binding:
+    ```sh
+    '.platform-linux atom-text-editor':
+      'ctrl-b': 'markdown-writer:toggle-bold-text'
+      'ctrl-i': 'markdown-writer:toggle-italic-text'
+    ```
+    ```sh
+    ".platform-linux atom-text-editor:not([mini])":
+      "shift-ctrl-K": "markdown-writer:insert-link"
+      "shift-ctrl-I": "markdown-writer:insert-image"
+      "ctrl-i":       "markdown-writer:toggle-italic-text"
+      "ctrl-b":       "markdown-writer:toggle-bold-text"
+      "ctrl-'":       "markdown-writer:toggle-code-text"
+      "ctrl-h":       "markdown-writer:toggle-strikethrough-text"
+      "ctrl-1":       "markdown-writer:toggle-h1"
+      "ctrl-2":       "markdown-writer:toggle-h2"
+      "ctrl-3":       "markdown-writer:toggle-h3"
+      "ctrl-4":       "markdown-writer:toggle-h4"
+      "ctrl-5":       "markdown-writer:toggle-h5"
+    ```
+  - Packages:
+    - file-icons
+    - highlight-selected
+    - markdown-pdf
+    - markdown-preview-plus
+    - markdown-table-editor
+    - markdown-toc
+    - markdown-writer
 ***
 
 # 系统备份恢复
