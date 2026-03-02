@@ -1,46 +1,77 @@
-- qwen2-vl-8b-instruct
-- image / pdf /
-- [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)
-- [langchain Llama.cpp](https://python.langchain.com/docs/integrations/chat/llamacpp/)
-- [Qwen3-4B-GGUF](https://huggingface.co/unsloth/Qwen3-4B-GGUF)
-- [Qwen-Agent](https://github.com/QwenLM/Qwen-Agent)
-- [LLM Explorer](https://llm-explorer.com/)
-- [Streaming-STT-1.5B-GGUF](https://huggingface.co/mradermacher/Streaming-STT-1.5B-GGUF/tree/main)
-- [canary-qwen-2.5b](https://huggingface.co/nvidia/canary-qwen-2.5b)
-- [qwen3-asr-0.6b-GGUF](https://huggingface.co/FlippyDora/qwen3-asr-0.6b-GGUF/tree/main)
+# ___Llama.cpp___
+***
+
+# References
+  - qwen2-vl-8b-instruct
+  - image / pdf /
+  - [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)
+  - [langchain Llama.cpp](https://python.langchain.com/docs/integrations/chat/llamacpp/)
+  - [Qwen3-4B-GGUF](https://huggingface.co/unsloth/Qwen3-4B-GGUF)
+  - [Qwen-Agent](https://github.com/QwenLM/Qwen-Agent)
+  - [LLM Explorer](https://llm-explorer.com/)
+  - [Streaming-STT-1.5B-GGUF](https://huggingface.co/mradermacher/Streaming-STT-1.5B-GGUF/tree/main)
+  - [canary-qwen-2.5b](https://huggingface.co/nvidia/canary-qwen-2.5b)
+  - [qwen3-asr-0.6b-GGUF](https://huggingface.co/FlippyDora/qwen3-asr-0.6b-GGUF/tree/main)
+
 ***
 
 # Build CPU
+## Installation
   - [llama.cpp build](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)
   - [gemma-3-270m-it-GGUF fp16](https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/tree/main)
-  - Should better build with CUDA, may disable it at runtime, or use `-ngl, --n-gpu-layers` for setting number of layers running on GPU.
-  - Check GPU compute capability and set with `cmake`: `nvidia-smi --query-gpu=name,compute_cap --format=csv`
-  ```sh
-  # Install cuda, at least ~9G storage
-  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
-  sudo dpkg -i cuda-keyring_1.1-1_all.deb
-  sudo apt-get update
-  # sudo apt-get -y install cuda-toolkit-13-0
-  sudo apt-get -y install cuda-toolkit-12-8  # For torch 2.8.0 requirement
+  - **GPU Configuration:** Should better build with CUDA, may disable it at runtime, or use `-ngl, --n-gpu-layers` for setting number of layers running on GPU.
+  - **CUDA Capability:** Check GPU compute capability and set with `cmake`:
+    ```sh
+    nvidia-smi --query-gpu=name,compute_cap --format=csv
+    ```
+  - **Build Steps:**
+    ```sh
+    # Install cuda, at least ~9G storage
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb
+    sudo apt-get update
+    # sudo apt-get -y install cuda-toolkit-13-0
+    sudo apt-get -y install cuda-toolkit-12-8  # For torch 2.8.0 requirement
 
-  cmake -B build -DGGML_CUDA=ON
-  cmake --build build --config Release
-  ```
-  ```sh
-  sudo apt-get install libcurl4-openssl-dev
-  git clone https://github.com/ggml-org/llama.cpp
-  cd llama.cpp/
-  cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 && cmake --build build --config Release -j $(nproc)
-  cd build && sudo make install && cd -
+    cmake -B build -DGGML_CUDA=ON
+    cmake --build build --config Release
+    ```
+    ```sh
+    sudo apt-get install libcurl4-openssl-dev
+    git clone https://github.com/ggml-org/llama.cpp
+    cd llama.cpp/
+    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 && cmake --build build --config Release -j $(nproc)
+    cd build && sudo make install && cd -
 
-  LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH llama-cli -m workspace/gemma-3-270m-it-F16.gguf
-  ```
-  ```sh
-  GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/unsloth/Qwen2.5-VL-7B-Instruct-GGUF
+    LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH llama-cli -m workspace/gemma-3-270m-it-F16.gguf
+    ```
+  - **Clone Models:**
+    ```sh
+    GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/unsloth/Qwen2.5-VL-7B-Instruct-GGUF
 
-  GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/google/gemma-3-270m
-  ```
+    GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/google/gemma-3-270m
+    ```
+  - CUDA one should better specify `DCMAKE_CUDA_ARCHITECTURES`
+    ```sh
+    cd llama.cpp
+
+    # Set up the correct CUDA environment variables
+    export CUDA_HOME=/usr/local/cuda-12.6
+    export PATH=${CUDA_HOME}/bin:${PATH}
+    export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+    # Clean previous build artifacts that might be cached
+    rm -rf build
+    # Configure with CUDA enabled, explicitly targeting architecture 80 (A100)
+    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="80" -DLLAMA_CURL=OFF
+    # Build using all available cores
+    cmake --build build --config Release -j$(nproc)
+    ```
+
+***
+
 # Basic guide
+## Quick Start
   - [llama.cpp guide - Running LLMs locally, on any hardware, from scratch](https://blog.steelph0enix.dev/posts/llama-cpp-guide/)
   - **Get SmolLM2 for experiment**
     ```sh
@@ -50,10 +81,10 @@
     cd -
     ```
   - **Required files**
-    - `config.json`  contains configuration/metadata of our model
-    - `model.safetensors` contains model weights
-    - `tokenizer.json` contains tokenizer data (mapping of text tokens to their ID’s, and other stuff). Sometimes this data is stored in tokenizer.model file instead.
-    - `tokenizer_config.json` contains tokenizer configuration (for example, special tokens and chat template)
+    - `config.json`: contains configuration/metadata of our model
+    - `model.safetensors`: contains model weights
+    - `tokenizer.json`: contains tokenizer data (mapping of text tokens to their ID’s, and other stuff). Sometimes this data is stored in tokenizer.model file instead.
+    - `tokenizer_config.json`: contains tokenizer configuration (for example, special tokens and chat template)
   - **Create GGUF file from downloaded HuggingFace repository**
     ```sh
     cd llama.cpp
@@ -68,57 +99,19 @@
     # Writing: 100%|█████████████████████████████████████████| 3.42G/3.42G [00:27<00:00, 126Mbyte/s]
     # INFO:hf-to-gguf:Model successfully exported to SmolLM2.gguf
     ```
-  - **quantizing the model** `{source gguf model} {target file} {quantization type} [number of parallel]`
+  - **Quantizing the model** `{source gguf model} {target file} {quantization type} [number of parallel]`
     ```sh
     ./build/bin/llama-quantize -h
     # usage: ./build/bin/llama-quantize [--help] [--allow-requantize] [--leave-output-tensor] [--pure] [--imatrix] [--include-weights]
     #        [--exclude-weights] [--output-tensor-type] [--token-embedding-type] [--tensor-type] [--tensor-type-file] [--prune-layers] [--keep-split] [--override-kv]
     #        model-f32.gguf [model-quant.gguf] type [nthreads]
     # ...
-    # Allowed quantization types:
-    #    2  or  Q4_0    :  4.34G, +0.4685 ppl @ Llama-3-8B
-    #    3  or  Q4_1    :  4.78G, +0.4511 ppl @ Llama-3-8B
-    #   38  or  MXFP4_MOE :  MXFP4 MoE
-    #    8  or  Q5_0    :  5.21G, +0.1316 ppl @ Llama-3-8B
-    #    9  or  Q5_1    :  5.65G, +0.1062 ppl @ Llama-3-8B
-    #   19  or  IQ2_XXS :  2.06 bpw quantization
-    #   20  or  IQ2_XS  :  2.31 bpw quantization
-    #   28  or  IQ2_S   :  2.5  bpw quantization
-    #   29  or  IQ2_M   :  2.7  bpw quantization
-    #   24  or  IQ1_S   :  1.56 bpw quantization
-    #   31  or  IQ1_M   :  1.75 bpw quantization
-    #   36  or  TQ1_0   :  1.69 bpw ternarization
-    #   37  or  TQ2_0   :  2.06 bpw ternarization
-    #   10  or  Q2_K    :  2.96G, +3.5199 ppl @ Llama-3-8B
-    #   21  or  Q2_K_S  :  2.96G, +3.1836 ppl @ Llama-3-8B
-    #   23  or  IQ3_XXS :  3.06 bpw quantization
-    #   26  or  IQ3_S   :  3.44 bpw quantization
-    #   27  or  IQ3_M   :  3.66 bpw quantization mix
-    #   12  or  Q3_K    : alias for Q3_K_M
-    #   22  or  IQ3_XS  :  3.3 bpw quantization
-    #   11  or  Q3_K_S  :  3.41G, +1.6321 ppl @ Llama-3-8B
-    #   12  or  Q3_K_M  :  3.74G, +0.6569 ppl @ Llama-3-8B
-    #   13  or  Q3_K_L  :  4.03G, +0.5562 ppl @ Llama-3-8B
-    #   25  or  IQ4_NL  :  4.50 bpw non-linear quantization
-    #   30  or  IQ4_XS  :  4.25 bpw non-linear quantization
-    #   15  or  Q4_K    : alias for Q4_K_M
-    #   14  or  Q4_K_S  :  4.37G, +0.2689 ppl @ Llama-3-8B
-    #   15  or  Q4_K_M  :  4.58G, +0.1754 ppl @ Llama-3-8B
-    #   17  or  Q5_K    : alias for Q5_K_M
-    #   16  or  Q5_K_S  :  5.21G, +0.1049 ppl @ Llama-3-8B
-    #   17  or  Q5_K_M  :  5.33G, +0.0569 ppl @ Llama-3-8B
-    #   18  or  Q6_K    :  6.14G, +0.0217 ppl @ Llama-3-8B
-    #    7  or  Q8_0    :  7.96G, +0.0026 ppl @ Llama-3-8B
-    #    1  or  F16     : 14.00G, +0.0020 ppl @ Mistral-7B
-    #   32  or  BF16    : 14.00G, -0.0050 ppl @ Mistral-7B
-    #    0  or  F32     : 26.00G              @ 7B
-    #           COPY    : only copy tensors, no quantizing
     ```
-    - **Description** that in most cases shows either the example model’s size and perplexity, or the amount of bits per tensor weight (bpw) for that specific quantization.
-    - **Perplexity** is a metric that describes how certain the model is about it’s predictions. Lower perplexity -> model is more certain about it’s predictions -> model is more accurate.
-    - **BPW** is the “bits per weight” metric tells the average size of quantized tensor’s weight.
-    - **Picking quantization type** use the largest can fit in VRAM, unless it’s too slow.
-    - **Memory requirements for the context** besides from model weight size, should have at least 1GB memory for context. Can be controled by `--ctx-size` in `llama-server`
+    - **Description:** in most cases shows either the example model’s size and perplexity, or the amount of bits per tensor weight (bpw) for that specific quantization.
+    - **Perplexity:** is a metric that describes how certain the model is about it’s predictions. Lower perplexity -> model is more certain about it’s predictions -> model is more accurate.
+    - **BPW:** is the “bits per weight” metric tells the average size of quantized tensor’s weight.
+    - **Picking quantization type:** use the largest can fit in VRAM, unless it’s too slow.
+    - **Memory requirements for the context:** besides from model weight size, should have at least 1GB memory for context. Can be controled by `--ctx-size` in `llama-server`
     ```sh
     ./build/bin/llama-quantize SmolLM2.gguf SmolLM2_Q8.gguf Q8_0 8  # 1.7G
     # ...
@@ -150,7 +143,7 @@
     # srv  update_slots: all slots are idle
     ```
     Access the web UI on http://127.0.0.1:8080
-  - **tokenize / detokenize**
+  - **Tokenize / Detokenize**
     ```sh
     curl -X POST -H "Content-Type: application/json" -d '{"content": "hello world! this is an example message!"}' http://127.0.0.1:8080/tokenize
     # {"tokens":[28120,905,17,451,314,354,1183,3714,17]}
@@ -158,9 +151,9 @@
     # {"content":"hello world! this is an example message!"}
     ```
   - **Other tools**
-  - `./build/bin/llama-bench --model selected_model.gguf` to benchmark the prompt processing and text generation speed of our llama.cpp build for a selected model.
-  - `./build/bin/llama-cli --model ./SmolLM2_Q8.gguf --prompt "The highest mountain on earth"` a simple CLI interface for the LLM to generate a completion for specified prompt, or chat with the LLM.
-  - `ggml library` is the back-end for llama.cpp. This library contains the code for math operations used to run LLMs, and it supports many hardware accelerations that can enable to get the maximum LLM performance on specific hardware.
+    - `./build/bin/llama-bench --model selected_model.gguf`: to benchmark the prompt processing and text generation speed of our llama.cpp build for a selected model.
+    - `./build/bin/llama-cli --model ./SmolLM2_Q8.gguf --prompt "The highest mountain on earth"`: a simple CLI interface for the LLM to generate a completion for specified prompt, or chat with the LLM.
+    - `ggml library` is the back-end for llama.cpp. This library contains the code for math operations used to run LLMs, and it supports many hardware accelerations that can enable to get the maximum LLM performance on specific hardware.
     ```sh
     cmake -S . -B build -G Ninja -DGGML_VULKAN=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/your/install/dir -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=ON -DLLAMA_BUILD_SERVER=ON
     cmake --build build --config Release -j 16
@@ -184,9 +177,12 @@
     - **Mirostat**: is a funky sampling algorithm that overrides Top-K, Top-P and Typical-P samplers. It’s an alternative sampler that produces text with controlled perplexity (entropy), which means that we can control how certain the model should be in it’s predictions. This comes without side-effects of generating repeated text (as it happens in low perplexity scenarios) or incoherent output (as it happens in high perplexity scenarios). The configuration parameters for Mirostat are: `Mirostat version`: 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0. `Mirostat learning rate (η, eta)`: specifies how fast the model converges to desired perplexity. `Mirostat target entropy (τ, tau)`: the desired perplexity. Depending on the model, it should not be too high, otherwise you may degrade it’s performance.
     - **Max tokens**: -1 makes the LLM generate until it decides it’s end of the sentence (by returning end-of-sentence token), or the context is full.
     - **Repetition penalty**: Repetition penalty algorithm (not to be mistaken with DRY) simply reduces the chance that tokens that are already in the generated text will be used again. Usually the repetition penalty algorithm is restricted to N last tokens of the context. In case of llama.cpp (i’ll simplify a bit), it works like that: first, it creates a frequency map occurrences for last N tokens. Then, the current logit bias for each token is divided by repeat_penalty value. By default it’s usually set to 1.0, so to enable repetition penalty it should be set to >1. Finally, frequency and presence penalties are applied based on the frequency map. The penalty for each token is equal to (token_count * frequency_penalty) + (presence_penalty if token_count > 0). The penalty is represented as logit bias, which can be in [-100, 100] range. Negative values reduce the probability of token appearing in output, while positive increase it. The configuration parameters for repetition penalty are: `Repeat last N`: Amount of tokens from the end of the context to consider for repetition penalty. `Repeat penalty`: repeat_penalty argument described above, if equal to 1.0 then the repetition penalty is disabled. `Presence penalty`: presence_penalty argument from the equation above. `Frequency penalty`: frequency_penalty argument from the equation above.
-# Qwen agent
 
-```sh
-cd ~/workspace/llama.cpp && ./build/bin/llama-server -m ../qwen_rag/Qwen3-0.6B-Q8_0.gguf --ctx-size 65536
-cd ~/workspace/qwen_rag && python rag_webui.py
-```
+***
+
+# Qwen agent
+## Deployment
+  ```sh
+  cd ~/workspace/llama.cpp && ./build/bin/llama-server -m ../qwen_rag/Qwen3-0.6B-Q8_0.gguf --ctx-size 65536
+  cd ~/workspace/qwen_rag && python rag_webui.py
+  ```
