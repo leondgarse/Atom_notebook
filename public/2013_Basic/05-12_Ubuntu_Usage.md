@@ -1638,6 +1638,25 @@
     ```
     - `[prefix] – I` to install tmux-yank
     - `[prefix] – [` copy -> y to system clipboard
+  - **For remote server Tmux with Ghostty copying to local clipboard**. Update `.tmux.conf`
+    ```sh
+    -set-option -s set-clipboard off
+    -bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'xclip -selection clipboard -i'
+    +set-option -s set-clipboard on
+    +bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'tmux-osc52-copy'
+    +# tmux-yank: override copy command to use OSC 52 (no X display on remote server)
+    +set -g @override_copy_command 'tmux-osc52-copy'
+    ```
+    The script `~/.local/bin/tmux-osc52-copy` reads stdin, base64-encodes it, then sends an OSC 52 escape sequence directly to the tmux client's TTY (SSH connection). Ghostty receives it and sets local clipboard — no Xdisplay needed.
+    ```sh
+    #!/bin/bash
+    # Copy stdin to local clipboard via OSC 52, tunneled through SSH to Ghostty.
+    # Writes directly to the tmux client TTY to bypass tmux buffering.
+    data=$(base64 -w 0)
+    tty=$(tmux list-clients -F '#{client_tty}' | head -1)
+    printf "\033]52;c;%s\007" "$data" > "$tty"
+    ```
+    - Then `tmux source-file ~/.tmux.conf 2>&1` and Run `[prefix] I` in tmux to reinstall plugins.
 ## 特殊符号
   - [Unicode Character Table](https://unicode-table.com)
   - **制表符**

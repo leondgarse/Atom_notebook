@@ -2501,12 +2501,12 @@
     ```
 ## Python 源码编译
   ```sh
-  sudo apt install libbz2-dev libssl-dev liblzma-dev libffi-dev libsqlite3-dev
+  sudo apt install libbz2-dev libssl-dev liblzma-dev libffi-dev libsqlite3-dev zlib1g-dev
   # sudo yum install bzip2-libs.aarch64 xz-devel.aarch64 openssl-libs.aarch64
 
   # https://www.python.org/downloads/ 下载特定版本的 Gzipped source tarball
   VERSION=3.10.19
-  wget https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tgz
+  wget -c https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tgz
   tar zxvf Python-${VERSION}.tgz
   cd Python-${VERSION}
   ./configure --prefix=$HOME/local_bin/python-${VERSION} --enable-shared --enable-loadable-sqlite-extensions --enable-optimizations
@@ -2514,14 +2514,15 @@
   make install
 
   # 可以添加到环境变量
-  # export PATH=$HOME/local_bin/python-3.10.5/bin:$PATH
+  # export PATH=$HOME/local_bin/python-3.10.19/bin:$PATH
 
   # Virtualenv 指定 python 版本
-  virtualenv -p /local_bin/python-3.10.5/python3.10 /opt/virtualenvs/python310
+  virtualenv -p /local_bin/python-3.10.19/python3.10 /opt/virtualenvs/python310
   ```
   - 报错 `No module named '_bz2'`，需要先安装 `apt install libbz2-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_bz2.xxx.so`
   - 报错 `No module named '_ssl'`，需要先安装 `apt install libssl-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
   - 报错 `No module named '_lzma'`，需要先安装 `apt install liblzma-dev`，然后重新 `configure -> make -> make install`，在 `{安装目录}/lib-dynload/` 下生成 `_ssl.xxx.so`
+  - 报错 `ModuleNotFoundError: No module named ‘zlib’`，需要先安装 `apt install zlib1g-dev`，然后重新 `make -> make install`
   - **configure** 参数
     - **--enable-shared** 指定编译 so 库, 而不是静态库, 针对某些需要动态库的包
     - **--enable-loadable-sqlite-extensions** 指定链接外部 sqlite3 库, 针对报错 `No module named _sqlite3`

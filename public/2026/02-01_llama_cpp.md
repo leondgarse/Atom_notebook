@@ -15,14 +15,15 @@
 
 ***
 
-# Build CPU
+# Build CPU or GPU
 ## Installation
   - [llama.cpp build](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)
   - [gemma-3-270m-it-GGUF fp16](https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/tree/main)
   - **GPU Configuration:** Should better build with CUDA, may disable it at runtime, or use `-ngl, --n-gpu-layers` for setting number of layers running on GPU.
-  - **CUDA Capability:** Check GPU compute capability and set with `cmake`:
+  - **CUDA Capability:** Check GPU compute capability and set with `cmake -DCMAKE_CUDA_ARCHITECTURES`:
     ```sh
     nvidia-smi --query-gpu=name,compute_cap --format=csv
+    # NVIDIA GeForce RTX 2080 Ti, 7.5 -> -DCMAKE_CUDA_ARCHITECTURES=75
     ```
   - **Build Steps:**
     ```sh
@@ -37,11 +38,12 @@
     cmake --build build --config Release
     ```
     ```sh
-    sudo apt-get install libcurl4-openssl-dev
+    sudo apt-get install libcurl4-openssl-dev pciutils build-essential cmake curl libcurl4-openssl-dev git-all
     git clone https://github.com/ggml-org/llama.cpp
     cd llama.cpp/
     cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 && cmake --build build --config Release -j $(nproc)
-    cd build && sudo make install && cd -
+    # cd build && sudo make install && cd -
+    cmake --install build --prefix ~/.local
 
     LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH llama-cli -m workspace/gemma-3-270m-it-F16.gguf
     ```
