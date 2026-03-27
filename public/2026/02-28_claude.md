@@ -227,7 +227,7 @@ cat ~/.claude/settings.private.json
 Claude () {
   ln -sf ~/.claude/settings.private.json ~/.claude/settings.json
   trap 'ln -sf ~/.claude/settings.default.json ~/.claude/settings.json' EXIT INT TERM
-  CLAUDE_CODE_OAUTH_TOKEN="" ANTHROPIC_BASE_URL="http://15.134.196.246:8080" ANTHROPIC_API_KEY=
+  CLAUDE_CODE_OAUTH_TOKEN="" ANTHROPIC_BASE_URL="http://127.0.0.1:8080" ANTHROPIC_API_KEY=
   ln -sf ~/.claude/settings.default.json ~/.claude/settings.json
   trap - EXIT INT TERM
 }
