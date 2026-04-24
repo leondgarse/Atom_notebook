@@ -188,3 +188,28 @@
   cd ~/workspace/llama.cpp && ./build/bin/llama-server -m ../qwen_rag/Qwen3-0.6B-Q8_0.gguf --ctx-size 65536
   cd ~/workspace/qwen_rag && python rag_webui.py
   ```
+***
+
+# Ollama
+- [ollama](https://ollama.com/)
+- install
+  ```sh
+  curl -fsSL https://ollama.com/install.sh | sh
+  ```
+```sh
+ollama pull nemotron-3-nano:4b
+
+ollama create nemotron3_4b -f modelfile_nemotron3
+ollama run nemotron3_4b
+```
+```sh
+pip install easyocr
+python ocr.py image.png
+```
+```py
+import easyocr
+
+reader = easyocr.Reader(["en"])
+results = reader.readtext(image_path, detail=0)
+print("\n".join(results))
+```

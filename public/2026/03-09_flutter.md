@@ -13,5 +13,7 @@ flutter doctor
 flutter devices
 
 flutter run -d linux
+
+flutter build apk --release
 ```
 - Use Dart for a flutter application and stitch loop skill for designing.
