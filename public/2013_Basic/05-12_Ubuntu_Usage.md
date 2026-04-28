@@ -2096,6 +2096,15 @@
 
     sudo vi /etc/sysctl.conf
     ```
+## Edge
+  ```sh
+  curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main" | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+  sudo apt update
+
+  apt-cache policy microsoft-edge-stable
+  # 500 https://packages.microsoft.com/repos/edge stable/main amd64 Packages
+  ```
 ## Numix FlatRemix 主题
   - Set Themes / Cursor / Icons / Shell theme using **gnome-tweak-tool**
   - **Numix**
