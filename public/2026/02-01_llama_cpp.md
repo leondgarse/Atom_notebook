@@ -33,9 +33,6 @@
     sudo apt-get update
     # sudo apt-get -y install cuda-toolkit-13-0
     sudo apt-get -y install cuda-toolkit-12-8  # For torch 2.8.0 requirement
-
-    cmake -B build -DGGML_CUDA=ON
-    cmake --build build --config Release
     ```
     ```sh
     sudo apt-get install libcurl4-openssl-dev pciutils build-essential cmake curl libcurl4-openssl-dev git-all
