@@ -113,6 +113,11 @@ pip install claude-agent-sdk
     --port 8080 --ctx-size 65536 #change as required
     ```
     ```sh
+    llama-server -hf unsloth/Qwen3.6-27B-GGUF:UD-Q8_K_XL --host 0.0.0.0 --port 8095 --ctx-size 512000 --no-mmap \
+    --parallel 2 --flash-attn on --n-gpu-layers 999 -chat-template-kwargs "{"preserve_thinking":true}" \
+    --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.00 --repeat_penalty 1.0 --presence_penalty 0.0
+    ```
+    ```sh
     export ANTHROPIC_BASE_URL="http://localhost:8080"
     export ANTHROPIC_API_KEY="sk-no-key-required" ## or 'sk-1234'
     claude --model unsloth/GLM-4.7-Flash
@@ -155,7 +160,7 @@ pip install claude-agent-sdk
     ```sh
     llama-server --models-preset ~/workspace/models/models.ini --port 8080
     ```
-  - **Set llama-server as a service with router mode**. Create `/etc/systemd/system# cat llama-router.service`. Replace `$HOME` with actual path.
+  - **Set llama-server as a service with router mode**. Create `/etc/systemd/system/llama-router.service`. Replace `$HOME` with actual path.
     ```sh
     [Unit]
     Description=Llama.cpp Router Service (Root with CUDA)
@@ -187,11 +192,75 @@ pip install claude-agent-sdk
     WantedBy=multi-user.target
     ```
     ```sh
-    sudo systemctl daemon-reload && sudo systemctl restart ollama
+    sudo systemctl daemon-reload
+    sudo systemctl restart llama-router
 
     # log
     sudo journalctl -u llama-router -f
     ```
+    ```sh
+    curl http://localhost:8080/health
+    curl http://localhost:8080/models
+    curl http://localhost:8080/v1/chat/completions   -H "Content-Type: application/json"   -d '{
+      "model": "unsloth/GLM-4.7-Flash",
+      "messages": [
+        {"role": "user", "content": "Hello! Can you help me with a Python function to calculate fibonacci numbers?"}
+      ],
+      "stream": false,
+      "max_tokens": 500
+    }'
+
+    curl http://localhost:8080/v1/chat/completions   -H "Content-Type: application/json"   -d '{
+      "model": "Jackrong/Qwopus3.6",
+      "messages": [
+        {"role": "user", "content": "Hello! Can you help me with a Python function to calculate fibonacci numbers?"}
+      ],
+      "stream": false,
+      "max_tokens": 500
+    }'
+
+    curl http://localhost:8080/v1/chat/completions \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "Jackrong/Qwopus3.6",
+        "messages": [{"role": "user", "content": "What is 2 times 3?"}],
+        "tools": [{
+          "type": "function",
+          "function": {
+            "name": "multiply",
+            "description": "Multiply two integers",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "a": {"type": "integer"},
+                "b": {"type": "integer"}
+              },
+              "required": ["a", "b"]
+            }
+          }
+        }]
+      }'
+    ```
+## litellm proxy
+  ```sh
+  pip install 'litellm[proxy]'
+  ```
+  **Then a config.yaml**
+  ```yml
+  model_list:
+    - model_name: local-glm
+      litellm_params:
+        model: openai/local
+        api_base: http://localhost:8080/v1
+        api_key: not-needed
+    - model_name: gemini-flash
+      litellm_params:
+        model: gemini/gemini-2.0-flash
+        api_key: os.environ/GOOGLE_API_KEY
+  ```
+  ```sh
+  litellm --config config.yaml --port 4000
+  ```
 ## Claude private setting
   ```sh
   cp ~/.claude/settings.json ~/.claude/settings.default.json
