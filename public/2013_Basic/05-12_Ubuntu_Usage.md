@@ -1828,6 +1828,75 @@
 
   sudo apt autoclean && sudo apt clean  # /var/cache/apt
   ```
+## Repurpose the NumLock key as a screenshot shortcut
+  - **Packages install**
+    ```sh
+    sudo apt install numlockx flameshot
+    ```
+  - `NumLock` can't be bound directly as a GNOME shortcut (X treats it as a modifier, not a key).
+  - The trick: remap the physical `NumLock` key to `F13` (an unused keysym), bind `F13` to `flameshot`.
+  - Put the actual `NumLock` modifier on a different keycode so the numpad keeps producing digits.
+  - **Check `gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings` for current key binding and use an empty one**:
+    ```sh
+    gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings
+    # ['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+    # -> Use '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1'
+    ```
+  - **GNOME custom shortcut (custom1 slot) - set once via gsettings or `Settings`**. Binding `F13` to `flameshot gui --clipboard`
+    ```sh
+    # 1. Register the custom1 slot in the keybindings list
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings \
+      "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/']"
+
+    # 2. Set the three properties for that slot
+    PP=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$PP name 'Flameshot region'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$PP command 'flameshot gui --clipboard'
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$PP binding 'F13'
+    ```
+    By `Settings`: Settings → Keyboard → View and Customize Shortcuts → Custom Shortcuts.
+  - `~/.local/bin/setup-numlock-flameshot.sh` runs at login, applies the remap:
+    ```sh
+    #!/bin/bash
+    sleep 10
+    apply_remap() {
+        xmodmap -e "keycode 77 = F13"           # NumLock key → F13
+        xmodmap -e "remove mod2 = F13"          # don't let it act as modifier
+        xmodmap -e "keycode any = Num_Lock"     # put Num_Lock on a free keycode
+        xmodmap -e "add mod2 = Num_Lock"        # restore NumLock modifier
+        numlockx on                             # turn NumLock state on
+    }
+    apply_remap
+    sleep 5
+    if xmodmap -pke | grep -q "keycode  77 = Num_Lock"; then
+        apply_remap   # retry if GNOME re-applied XKB and clobbered us
+    fi
+    sleep 15
+    # Nudge gsd-media-keys to re-grab F13 (otherwise its grab is stale)
+    PP=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$PP binding 'XF86Launch5'
+    sleep 2
+    gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$PP binding 'F13'
+    ```
+  - `~/.config/autostart/numlockx.desktop` autostart entry that runs the script:
+    ```sh
+    [Desktop Entry]
+    Type=Application
+    Name=NumLock + Flameshot key remap
+    Exec=/home/leondgarse/.local/bin/setup-numlock-flameshot.sh
+    Hidden=false
+    NoDisplay=false
+    X-GNOME-Autostart-enabled=true
+    ```
+  - **Behavior after login**
+    - ~10 s: remap applied, numpad digits work
+    - ~30 s: GNOME shortcut grab refreshed → NumLock key triggers flameshot
+    - During that ~30 s "grace period" the key does nothing
+  - **Key gotchas hit along the way**
+    - xmodmap only changes the symbol, not the modifier map — had to also remove mod2 = F13 so X stops treating the key as a modifier.
+    - Removing Num_Lock from mod2 broke numlockx and the numpad (digits became arrows) — fixed by binding Num_Lock to a free keycode and re-adding it to mod2.
+    - GNOME's shortcut daemon caches the key grab - needs a gsettings nudge (write a different value, then write back) to refresh.
+    - GNOME re-applies the XKB layout during early session startup, wiping xmodmap - needed a sleep + retry to land after that.
 ***
 
 # 软件

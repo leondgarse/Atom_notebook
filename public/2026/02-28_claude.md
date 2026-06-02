@@ -219,6 +219,15 @@ pip install claude-agent-sdk
       "max_tokens": 500
     }'
 
+    curl http://localhost:8080/v1/chat/completions   -H "Content-Type: application/json"   -d '{
+      "model": "Jackrong/Qwopus3.6",
+      "messages": [
+        {"role": "user", "content": "Hello! Can you help me with a Python function to calculate fibonacci numbers?"}
+      ],
+      "stream": false,
+      "max_tokens": 500
+    }'
+
     curl http://localhost:8080/v1/chat/completions \
       -H "Content-Type: application/json" \
       -d '{
@@ -305,3 +314,9 @@ pip install claude-agent-sdk
 # Learning
 ## Workflow
 - [Clade Basic workflows](https://platform.claude.com/cookbook/patterns-agents-basic-workflows)
+
+
+| Model                       | Size | GPU Usage |
+| --------------------------- | ---- | --------- |
+| GLM-4.7-Flash-UD-Q4_K_XL    | 30B  | 20596MiB  |
+| Qwopus3.6-v1-preview-Q4_K_M | 27B  | 20186MiB  |
