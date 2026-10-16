@@ -1826,6 +1826,12 @@
   sudo snap set system refresh.retain=2  # starting from snapd version 2.34
   snap list --all | awk '/disabled/{print $1, $3}' | while read snapname revision; do sudo snap remove "$snapname" --revision="$revision"; done
 
+  docker system df                  # check what's left
+  docker builder prune -af          # build cache
+  docker volume prune               # anonymous unused volumes only
+
+  sudo apt purge kdump-tools
+
   sudo apt autoclean && sudo apt clean  # /var/cache/apt
   ```
 ## Repurpose the NumLock key as a screenshot shortcut

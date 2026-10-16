@@ -38,11 +38,16 @@
     sudo apt-get install libcurl4-openssl-dev pciutils build-essential cmake curl libcurl4-openssl-dev git-all
     git clone https://github.com/ggml-org/llama.cpp
     cd llama.cpp/
-    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 && cmake --build build --config Release -j $(nproc)
+    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=75 && cmake --build build --config Release -j $(nproc)
     # cd build && sudo make install && cd -
     cmake --install build --prefix ~/.local
 
-    LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH llama-cli -m workspace/gemma-3-270m-it-F16.gguf
+    LD_LIBRARY_PATH=$HOME/.local/lib/:$LD_LIBRARY_PATH llama-cli -m workspace/gemma-3-270m-it-F16.gguf
+    ```
+    **Earlier version**
+    ```sh
+    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 -DCMAKE_CUDA_HOST_COMPILER=g++-13
+    cmake --build build -j
     ```
   - **Clone Models:**
     ```sh
@@ -176,7 +181,6 @@
     - **Mirostat**: is a funky sampling algorithm that overrides Top-K, Top-P and Typical-P samplers. It’s an alternative sampler that produces text with controlled perplexity (entropy), which means that we can control how certain the model should be in it’s predictions. This comes without side-effects of generating repeated text (as it happens in low perplexity scenarios) or incoherent output (as it happens in high perplexity scenarios). The configuration parameters for Mirostat are: `Mirostat version`: 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0. `Mirostat learning rate (η, eta)`: specifies how fast the model converges to desired perplexity. `Mirostat target entropy (τ, tau)`: the desired perplexity. Depending on the model, it should not be too high, otherwise you may degrade it’s performance.
     - **Max tokens**: -1 makes the LLM generate until it decides it’s end of the sentence (by returning end-of-sentence token), or the context is full.
     - **Repetition penalty**: Repetition penalty algorithm (not to be mistaken with DRY) simply reduces the chance that tokens that are already in the generated text will be used again. Usually the repetition penalty algorithm is restricted to N last tokens of the context. In case of llama.cpp (i’ll simplify a bit), it works like that: first, it creates a frequency map occurrences for last N tokens. Then, the current logit bias for each token is divided by repeat_penalty value. By default it’s usually set to 1.0, so to enable repetition penalty it should be set to >1. Finally, frequency and presence penalties are applied based on the frequency map. The penalty for each token is equal to (token_count * frequency_penalty) + (presence_penalty if token_count > 0). The penalty is represented as logit bias, which can be in [-100, 100] range. Negative values reduce the probability of token appearing in output, while positive increase it. The configuration parameters for repetition penalty are: `Repeat last N`: Amount of tokens from the end of the context to consider for repetition penalty. `Repeat penalty`: repeat_penalty argument described above, if equal to 1.0 then the repetition penalty is disabled. `Presence penalty`: presence_penalty argument from the equation above. `Frequency penalty`: frequency_penalty argument from the equation above.
-
 ***
 
 # Qwen agent
