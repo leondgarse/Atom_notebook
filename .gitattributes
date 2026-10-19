@@ -1,0 +1,2 @@
+# Store text files with LF; Git detects binaries (images) and leaves them alone
+* text=auto eol=lf
