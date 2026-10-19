@@ -1,0 +1,8 @@
+# never commit: inner server info / passwords
+private/
+
+# macOS
+.DS_Store
+
+# local Obsidian settings (vault lives in ~/obsidian_projects)
+.obsidian/
