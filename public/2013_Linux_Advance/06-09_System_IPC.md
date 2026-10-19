@@ -130,3 +130,13 @@ int semctl(int semid, int semnum, int cmd, .../*union semun arg*/);
                                       (Linux-specific) */
               };
 ```
+
+<!-- related -->
+# Related
+- [传统的进程间通信](06-07_传统的进程间通信.md)
+- [Linux线程](06-13_Linux线程.md)
+- [Linux进程](06-06_Linux进程.md)
+- [网络编程](06-17_网络编程.md)
+- [curses](06-11_curses.md)
+***
+<!-- /related -->

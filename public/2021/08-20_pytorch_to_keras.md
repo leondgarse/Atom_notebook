@@ -6767,3 +6767,13 @@ plt.tight_layout()
       evals.eval_callback(lambda imm: mm(imm * 128 + 127.5), "/datasets/ms1m-retinaface-t1/agedb_30.bin").on_epoch_end()
   ```
 ***
+
+<!-- related -->
+# Related
+- [eva02](../2023/04-25_eva02.md)
+- [ImageNet Basic](10-14_imagenet_basic.md)
+- [mamba](../2024/09-2_mamba.md)
+- [deepmad](../2023/07-09_deepmad.md)
+- [ImageNet Train](../2022/01-09_imagenet_train.md)
+***
+<!-- /related -->

@@ -2572,3 +2572,13 @@ virtualenv -p /local_bin/python-3.10.19/python3.10 /opt/virtualenvs/python310
   # /usr/local/lib/python3.10/dist-packages
   ```
 ***
+
+<!-- related -->
+# Related
+- [Python Modules](../2018/03-16_python_modules.md)
+- [Python 数据分析 1](03-09_python数据分析1.md)
+- [SQL](08-06_sql.md)
+- [Python 数据分析 2](04-09_python数据分析2.md)
+- [Neo4j](../2018/07-09_neo4j.md)
+***
+<!-- /related -->

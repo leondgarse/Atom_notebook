@@ -248,3 +248,13 @@ from keras_cv_attention_models.imagenet import data
 tt = data.init_dataset('datasets/coco_dog_cat/recognition.json', batch_size=16)[0]
 _ = data.show_batch_sample(tt)
 ```
+
+<!-- related -->
+# Related
+- [EfficientDet](01-11_efficientdet.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [clip](../2023/05-08_clip.md)
+- [yolov7](11-26_yolov7.md)
+- [YOLOX](02-17_yolox.md)
+***
+<!-- /related -->

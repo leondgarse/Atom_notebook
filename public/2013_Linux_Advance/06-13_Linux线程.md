@@ -159,3 +159,13 @@ summary: POSIX threads — thread functions, semaphore synchronisation, mutexes,
 # pread / pwrite
   - 线程中对所有线程共享的文件描述符进行读写操作应使用，以保证操作的原子性，并且不对文件指针进行更新
 ***
+
+<!-- related -->
+# Related
+- [传统的进程间通信](06-07_传统的进程间通信.md)
+- [System IPC](06-09_System_IPC.md)
+- [curses](06-11_curses.md)
+- [网络编程](06-17_网络编程.md)
+- [Linux进程](06-06_Linux进程.md)
+***
+<!-- /related -->

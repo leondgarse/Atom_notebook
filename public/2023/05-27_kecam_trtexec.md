@@ -540,3 +540,13 @@ cc = pd.read_csv('model_summary.csv')
 dd['original_inference_qps'] = cc.inference_qps
 dd.to_csv('goo.csv', index=False)
 ```
+
+<!-- related -->
+# Related
+- [TensorRT](../2019/08-19_tensorrt.md)
+- [onnx](12-12_onnx.md)
+- [quantization](../2022/10-18_quantization.md)
+- [tflite benchmark 23](09-14_tflite_benchmark_23.md)
+- [Model Conversion](../2019/07-26_model_conversion.md)
+***
+<!-- /related -->

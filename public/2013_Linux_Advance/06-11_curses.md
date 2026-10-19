@@ -261,4 +261,14 @@ if (ch == KEY_MOUSE) {
 - **鼠标程序开发步骤**： 
   - 使用mousemask()函数初始化需要获取的鼠标事件 
   - 循环使用getch()/wgetch()函数获取键盘或者鼠标输入，当返回KEY_MOUSE时，则表明是鼠标输入 
-  - 通过getmouse()获取触发的鼠标事件，根据具体的事件进行处理 
+  - 通过getmouse()获取触发的鼠标事件，根据具体的事件进行处理
+
+<!-- related -->
+# Related
+- [Linux线程](06-13_Linux线程.md)
+- [网络编程](06-17_网络编程.md)
+- [System IPC](06-09_System_IPC.md)
+- [Linux进程](06-06_Linux进程.md)
+- [传统的进程间通信](06-07_传统的进程间通信.md)
+***
+<!-- /related -->

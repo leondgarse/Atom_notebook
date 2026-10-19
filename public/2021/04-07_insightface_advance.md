@@ -2023,3 +2023,11 @@ neg_picked_images = np.array(neg_picked)[:, :2]
   )
   ```
 ***
+
+<!-- related -->
+# Related
+- [Keras Insightface Training](../2020/12-01_Insightface_training.md)
+- [Keras Insightface](../2019/11-18_keras_insightface.md)
+- [Face Quality](../2022/01-10_face_quality.md)
+***
+<!-- /related -->

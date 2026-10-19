@@ -1217,3 +1217,13 @@ MATCH (n) DETACH DELETE n
 
   ![](images/resume_recomm.jpg)
 ***
+
+<!-- related -->
+# Related
+- [Surprise](08-13_surprise.md)
+- [机器学习 (无监督学习 / 降维 / MapReduce](../2017/06-28_Machine_Learning.md)
+- [Chatbot](10-24_chatbot.md)
+- [Decomposition](../2022/08-03_decomposition.md)
+- [机器学习 (监督学习 分类 / 回归](../2017/05-30_Machine_Learning.md)
+***
+<!-- /related -->

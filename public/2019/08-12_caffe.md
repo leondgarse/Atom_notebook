@@ -320,3 +320,10 @@ export PYTHONPATH=$PYTHONPATH:$HOME/workspace/caffe/python
   docker run --rm -u $(id -u):$(id -g) -v $(pwd):$(pwd) -w $(pwd) bvlc/caffe:cpu caffe train --solver=example_solver.prototxt
   ```
 ***
+
+<!-- related -->
+# Related
+- [transformers](../2024/09-30_transformers.md)
+- [Haiku](../2021/08-13_haiku.md)
+***
+<!-- /related -->

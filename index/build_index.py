@@ -100,7 +100,7 @@ TOPICS = [
      []),
 ]
 
-SKIP_SECTIONS = {"目录", "table of contents", "toc", "links", "链接", "q / a", "q and a", "qa", "info"}
+SKIP_SECTIONS = {"目录", "table of contents", "toc", "links", "链接", "q / a", "q and a", "qa", "info", "related"}
 MAX_SECTIONS = 8
 
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")

@@ -118,3 +118,13 @@ from keras_cv_attention_models.imagenet import eval_func
 
 eval_func.evaluation('mobilenet_v2_uint8.onnx', input_shape=[224, 224, 3])
 ```
+
+<!-- related -->
+# Related
+- [Model Optimization](../2019/09-19_model_pruning.md)
+- [TensorRT](../2019/08-19_tensorrt.md)
+- [onnx](../2023/12-12_onnx.md)
+- [tflite benchmark 23](../2023/09-14_tflite_benchmark_23.md)
+- [Model Conversion](../2019/07-26_model_conversion.md)
+***
+<!-- /related -->

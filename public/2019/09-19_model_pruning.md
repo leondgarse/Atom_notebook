@@ -1247,3 +1247,12 @@ tf.keras.models.save_model(model, keras_file, include_optimizer=False)
     toco --graph_def_file=mtcnn.pb --output_file=mtcnn.tflite --input_shape=1,240,240,3 --input_array=input --output_array=prob,landmarks,box
     ```
 ***
+
+<!-- related -->
+# Related
+- [quantization](../2022/10-18_quantization.md)
+- [tflite benchmark 23](../2023/09-14_tflite_benchmark_23.md)
+- [TensorRT](08-19_tensorrt.md)
+- [Model Conversion](07-26_model_conversion.md)
+***
+<!-- /related -->

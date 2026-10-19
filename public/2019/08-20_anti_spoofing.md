@@ -2026,3 +2026,13 @@ print_metrics(pred, test_y)
   # (2775, 4) (2775, 4)
   ```
 ***
+
+<!-- related -->
+# Related
+- [SiW PAD](../2020/04-10_SiW_PAD.md)
+- [Face Recognition](../2018/04-16_face_recognition.md)
+- [Keras Insightface](11-18_keras_insightface.md)
+- [YOLOV5 Face](../2021/11-05_yolov5face.md)
+- [Face Detect](../2020/08-21_face_detect.md)
+***
+<!-- /related -->

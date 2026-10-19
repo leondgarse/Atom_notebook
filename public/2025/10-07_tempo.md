@@ -64,3 +64,10 @@ print(df[[94 < ii < 96 for ii in df.tempo]].to_markdown())
 
 plt.plot(sorted(df['tempo'].values))
 ```
+
+<!-- related -->
+# Related
+- [09-16 Taiwan](../2026/09-16_taiwan.md)
+- [ielts](../2024/10-08_ielts.md)
+***
+<!-- /related -->

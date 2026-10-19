@@ -598,3 +598,10 @@ ___2017 - 05 - 25 Markdown Grammar___
       $$P_\omega={n_\omega\over 2}\hbar\omega\,{1+R\over 1-v^2}\int\limits_{-1}^{1}dx\,(x-v)|x-v|,$$
       ```
 ***
+
+<!-- related -->
+# Related
+- [shell 流处理命令](01-17_shell流处理命令.md)
+- [Vim使用](../2013_Basic/05-12_Vim使用.md)
+***
+<!-- /related -->

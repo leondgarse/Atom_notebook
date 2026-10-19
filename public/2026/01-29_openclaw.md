@@ -266,3 +266,13 @@ summary: OpenClaw agent — install, llama.cpp provider, gateway service, securi
   Wow, I am completely blown away by all the amazing presentations tonight. I will make sure to send all the presentation slides directly to our WhatsApp group, so do not worry if you missed scanning a QR code or need specific technical details. I hope you all enjoyed this inaugural OpenClaw Singapore Meetup. Who else is impressed by our incredible lineup of speakers? Let us give them a massive round of applause! I also want to extend a huge thank you to our meeting sponsors: MiniMax, Kimi, and Alibaba Cloud. It is incredibly rare to see representatives from all these competing frontier AI labs gathered together in one room collaborating like this. We will continue to use our WhatsApp community to help each other learn and build better OpenClaw systems. Our next event is scheduled for Wednesday night, March 4th, right here at the same venue. Following that, on March 11th, we are hosting a dedicated OpenClaw masterclass together with Alibaba Cloud. We have many more exciting events in the pipeline, so please be sure to follow us on WhatsApp and LinkedIn to stay updated. If there are no further questions, please feel free to grab some refreshments, mingle, and network with the speakers and your fellow builders. Let us continue doing great work in the OpenClaw ecosystem. Thank you, everyone, and have a great night!
 
   哇，我完全被今晚所有精彩的演讲震撼到了。我一定会确保将所有演示幻灯片直接发送到我们的 WhatsApp 群组中，所以如果你错过了扫描二维码或需要特定的技术细节，请不要担心。我希望大家都能享受这首届 OpenClaw 新加坡聚会。还有谁对我们不可思议的演讲嘉宾阵容印象深刻？让我们给他们热烈的掌声！我还要向我们的会议赞助商：MiniMax、Kimi 和阿里云表示巨大的感谢。能够看到所有这些相互竞争的前沿 AI 实验室的代表聚集在一个房间里这样合作，真是极其罕见。我们将继续利用我们的 WhatsApp 社区互相帮助学习，并构建更好的 OpenClaw 系统。我们的下一场活动定于 3 月 4 日星期三晚上，就在这个场地举行。在此之后，3 月 11 日，我们将与阿里云共同举办一场专门的 OpenClaw 大师班。我们还在筹备更多激动人心的活动，所以请务必在 WhatsApp 和 LinkedIn 上关注我们以获取最新动态。如果没有其他问题，请大家随意享用茶点，与演讲者和各位开发者同仁交流、建立联系。让我们继续在 OpenClaw 生态系统中做出卓越的成果。谢谢大家，祝大家度过一个美好的夜晚！
+
+<!-- related -->
+# Related
+- [claude](02-28_claude.md)
+- [Gemini](02-02_gemini_cli.md)
+- [learn claude code](07-27_learn_claude_code.md)
+- [langgraph](05-08_langgraph.md)
+- [agno](05-10_agno.md)
+***
+<!-- /related -->

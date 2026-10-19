@@ -509,3 +509,13 @@ fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=0, base_si
   fig = eval_func.plot_hists(hhs.values(), list(hhs.keys()), skip_first=3, base_size=8)
   ```
 ***
+
+<!-- related -->
+# Related
+- [ImageNet Basic](../2021/10-14_imagenet_basic.md)
+- [advance training](05-18_advance_training.md)
+- [mamba](../2024/09-2_mamba.md)
+- [deepmad](../2023/07-09_deepmad.md)
+- [eva02](../2023/04-25_eva02.md)
+***
+<!-- /related -->

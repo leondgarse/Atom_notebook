@@ -1507,3 +1507,10 @@ summary: Dainty Factory — a collection of home-cooking recipes with photos.
     - 重新倒油，五成热时，加入切好的葱，姜，大蒜以及一大勺豆瓣酱，之后以次加入鸡丁、花生、黄瓜，翻炒，加入食盐，最后倒入点薄芡汁
     - 大功告成！挺下饭的，别吃太多哦
 ***
+
+<!-- related -->
+# Related
+- [tempo](../2025/10-07_tempo.md)
+- [09-16 Taiwan](../2026/09-16_taiwan.md)
+***
+<!-- /related -->

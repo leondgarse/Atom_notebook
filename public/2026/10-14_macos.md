@@ -69,3 +69,10 @@ On a Mac keyboard the order next to the spacebar is Ctrl ⌥ ⌘ [space], so ⌘
 your thumb. On your PC keyboard ⌘ (Win) is one key further away. You can swap them in System Settings → Keyboard → Keyboard
 Shortcuts → Modifier Keys: pick your keyboard, then set Option → Command and Command → Option. Many PC-keyboard users do this
 because almost every shortcut uses ⌘.
+
+<!-- related -->
+# Related
+- [Shortcuts for Atom (text editor) 1.0 (win/en](../2017/07-07_atom_usage.md)
+- [Shell script](../2017/01-04_Shell_script.md)
+***
+<!-- /related -->

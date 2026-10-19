@@ -423,3 +423,13 @@ def read_keras_weights(filepath, only_valid_weights=True):
 dd = read_keras_weights('aa.keras')
 print({kk: [ii.shape for ii in vv] for kk, vv in dd.items()})
 ```
+
+<!-- related -->
+# Related
+- [torch fx](../2024/07-19_torch_fx.md)
+- [torch dump](12-24_torch_dump.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [Tensorflow Programmer's Guide](../2018/08-27_tensorflow_guide.md)
+***
+<!-- /related -->

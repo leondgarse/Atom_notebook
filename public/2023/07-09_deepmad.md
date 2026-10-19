@@ -214,3 +214,13 @@ summary: DeepMAD model port attempt (unfinished — weights not right).
       output_conv_filter = 2560
       return DeepMAD(**locals(), model_name="deepmad_89m", **kwargs)
   ```
+
+<!-- related -->
+# Related
+- [eva02](04-25_eva02.md)
+- [ImageNet Train](../2022/01-09_imagenet_train.md)
+- [mamba](../2024/09-2_mamba.md)
+- [PyTorch to Keras](../2021/08-20_pytorch_to_keras.md)
+- [deformable conv](04-29_deformable_conv.md)
+***
+<!-- /related -->

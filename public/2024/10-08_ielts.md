@@ -1375,3 +1375,10 @@ whether poplu
 
 一个乐于助人的人，描述一个人
 food 相关
+
+<!-- related -->
+# Related
+- [09-16 Taiwan](../2026/09-16_taiwan.md)
+- [tempo](../2025/10-07_tempo.md)
+***
+<!-- /related -->

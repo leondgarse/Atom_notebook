@@ -150,3 +150,10 @@ cat ~/.atom/.apmrc
 | ------------------------------- | ---------------------------------- |
 | Alt+g, then d                   | Toggle list of diffs in file       |
 | Alt+g, then Arrow Down/Arrow Up | Move to next/previous diff in file |
+
+<!-- related -->
+# Related
+- [Vim使用](../2013_Basic/05-12_Vim使用.md)
+- [macos](../2026/10-14_macos.md)
+***
+<!-- /related -->

@@ -226,3 +226,13 @@ int main(int argc, char **argv) {
     return 0;
 }
 ```
+
+<!-- related -->
+# Related
+- [Qt编程基础](../2016_QT_c++/09-17_Qt编程基础.md)
+- [Primier C++ plus Basic](../2016_QT_c++/10-28_Primier_C++_plus_Basic.md)
+- [clang](../2024/02-26_clang.md)
+- [System IPC](../2013_Linux_Advance/06-09_System_IPC.md)
+- [程序编译](../2013_Basic/05-17_程序编译.md)
+***
+<!-- /related -->

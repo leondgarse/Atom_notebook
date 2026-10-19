@@ -112,3 +112,13 @@ summary: Building fake/random-weight LLaMA and LLaVA objects with HF transformer
     # mm.generate(**inputs, max_new_tokens=5) = tensor([[1, 0, 32000, 0, 26944, 26944, 12672, 12672, 12672]])
     ```
 ***
+
+<!-- related -->
+# Related
+- [llama2](../2023/08-06_llama2.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+- [torch fx](07-19_torch_fx.md)
+- [Caffe](../2019/08-12_caffe.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+***
+<!-- /related -->

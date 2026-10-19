@@ -299,3 +299,13 @@ plt.imshow(YUVtoRGB([byte(ii) for ii in cc], 1280, 800))
   plt.imshow(bb.reshape([1280, 800, 4]))
   ```
 ***
+
+<!-- related -->
+# Related
+- [SiW PAD](../2020/04-10_SiW_PAD.md)
+- [Face Detect](../2020/08-21_face_detect.md)
+- [tflite benchmark 23](../2023/09-14_tflite_benchmark_23.md)
+- [Keras Insightface Training](../2020/12-01_Insightface_training.md)
+- [Keras Insightface Advance](04-07_insightface_advance.md)
+***
+<!-- /related -->

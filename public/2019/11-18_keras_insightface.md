@@ -1230,3 +1230,11 @@ model.fit(train_ds, epochs=15, callbacks=callbacks, verbose=1)
   docker run -e CUDA_VISIBLE_DEVICES='1' -v /home/tdtest/workspace/:/workspace -it -p 9082:8082 -w /workspace/insightface-master insightface:latest ./server_flask.py
   ```
 ***
+
+<!-- related -->
+# Related
+- [Keras Insightface Training](../2020/12-01_Insightface_training.md)
+- [Keras Insightface Advance](../2021/04-07_insightface_advance.md)
+- [Face Quality](../2022/01-10_face_quality.md)
+***
+<!-- /related -->

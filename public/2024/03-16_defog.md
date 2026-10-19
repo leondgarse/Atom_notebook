@@ -219,3 +219,10 @@ def custom_noise_func(images):
         noise.append(torch.from_numpy(cur_noise))
     return torch.stack(noise).permute([0, 3, 1, 2]).float() / 127.5 - 1
 ```
+
+<!-- related -->
+# Related
+- [yolov7](../2022/11-26_yolov7.md)
+- [GTSRB](../2022/08-06_GTSRB.md)
+***
+<!-- /related -->

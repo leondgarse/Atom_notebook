@@ -19,3 +19,13 @@ adb shell am start -S -n org.tensorflow.lite.benchmark/.BenchmarkModelActivity -
 ```sh
 adb shell /data/local/tmp/benchmark_model --graph=/data/local/tmp/{model_name}.tflite --num_threads=1 --use_xnnpack=true
 ```
+
+<!-- related -->
+# Related
+- [Model Optimization](../2019/09-19_model_pruning.md)
+- [SiW PAD](../2020/04-10_SiW_PAD.md)
+- [YOLOV5 Face](../2021/11-05_yolov5face.md)
+- [quantization](../2022/10-18_quantization.md)
+- [onnx](12-12_onnx.md)
+***
+<!-- /related -->

@@ -5443,3 +5443,13 @@ np.argmax(model.predict(x_test[:1])) # 7
     ```
     ![](images/tensorflow_imagenet_recognise.jpg)
 ***
+
+<!-- related -->
+# Related
+- [Tensorflow Programmer's Guide](08-27_tensorflow_guide.md)
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+- [Tensorflow 实战 Google 深度学习框架](04-19_ternsorflow_low_level.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+***
+<!-- /related -->

@@ -447,3 +447,13 @@ trainer = Trainer(
 
 trainer.train()
 ```
+
+<!-- related -->
+# Related
+- [server chat](../2026/03-11_server_chat.md)
+- [gpt](../2023/02-27_gpt.md)
+- [llama2](../2023/08-06_llama2.md)
+- [Deepseek Harness](../2026/08-20_deepseek_harness.md)
+- [learn claude code](../2026/07-27_learn_claude_code.md)
+***
+<!-- /related -->

@@ -900,3 +900,13 @@ if __name__ == "__main__":
     #  0.07745843)
     ```
 ***
+
+<!-- related -->
+# Related
+- [Face Anti Spoofing](../2019/08-20_anti_spoofing.md)
+- [YOLOV5 Face](../2021/11-05_yolov5face.md)
+- [tflite benchmark 23](../2023/09-14_tflite_benchmark_23.md)
+- [Keras Insightface Training](12-01_Insightface_training.md)
+- [Face Detect](08-21_face_detect.md)
+***
+<!-- /related -->

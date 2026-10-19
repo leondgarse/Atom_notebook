@@ -183,3 +183,10 @@ for epoch in range(2):
   graphviz.Source(dot)
   ```
 ***
+
+<!-- related -->
+# Related
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [MindSpore](../2022/07-20_mindspore.md)
+***
+<!-- /related -->

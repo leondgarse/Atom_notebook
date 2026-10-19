@@ -2240,3 +2240,10 @@ cc.start_conversation_loop(session_id)
     requests.post("http://%s/course_chatbot/admin_tools" % (host_ip), headers={"Content-type": "application/json"}, data=json.dumps(rr)).text
     ```
 ***
+
+<!-- related -->
+# Related
+- [课程推荐](07-04_course_reomm.md)
+- [机器学习 (监督学习 分类 / 回归](../2017/05-30_Machine_Learning.md)
+***
+<!-- /related -->

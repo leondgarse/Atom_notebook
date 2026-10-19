@@ -763,3 +763,13 @@ mm = keras.models.load_model("checkpoints/freeze_backbone_test_TL_bilinear_lates
 
 # DTensor
 ***
+
+<!-- related -->
+# Related
+- [ImageNet Train](01-09_imagenet_train.md)
+- [ImageNet Basic](../2021/10-14_imagenet_basic.md)
+- [mamba](../2024/09-2_mamba.md)
+- [deepmad](../2023/07-09_deepmad.md)
+- [eva02](../2023/04-25_eva02.md)
+***
+<!-- /related -->

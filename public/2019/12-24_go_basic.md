@@ -2827,3 +2827,13 @@ func ReadAll(file_name string) []byte {
   GONOSUMDB='gitlab.com/leondgarse/hello-gitlab' go mod tidy
   ```
 ***
+
+<!-- related -->
+# Related
+- [Go Modules](../2020/01-06_go_modules.md)
+- [cgo](../2020/02-11_cgo.md)
+- [Flutter](../2026/03-09_flutter.md)
+- [Java基础](../2013_Java_Android/06-17_Java基础.md)
+- [R语言基础](../2017/07-30_R语言基础.md)
+***
+<!-- /related -->

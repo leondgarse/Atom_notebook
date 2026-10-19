@@ -772,3 +772,13 @@ imagenet.evaluation(mm, input_shape=(256, 256, 3), rescale_mode="tf", resize_met
   | AotNet50 (CE)      | torch (clip 255)    | bicubic            | 0.95         | 0.76996 | 0.9371  |
   | AotNet50 (CE)      | torch (resize_crop) | bicubic            | 0.95         | 0.76956 | 0.93696 |
 ***
+
+<!-- related -->
+# Related
+- [ImageNet Train](../2022/01-09_imagenet_train.md)
+- [advance training](../2022/05-18_advance_training.md)
+- [PyTorch to Keras](08-20_pytorch_to_keras.md)
+- [eva02](../2023/04-25_eva02.md)
+- [mamba](../2024/09-2_mamba.md)
+***
+<!-- /related -->

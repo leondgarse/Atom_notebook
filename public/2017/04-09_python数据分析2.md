@@ -3702,3 +3702,13 @@ d.root.mainloop()
     在Windows平台表现不太好
     ```
 ***
+
+<!-- related -->
+# Related
+- [Python 数据分析 1](03-09_python数据分析1.md)
+- [Python Data Visualization](../2018/06-26_python_data_visualization.md)
+- [SQL](08-06_sql.md)
+- [Python Basic](02-06_python_basic.md)
+- [Spark 快速大数据分析](05-09_Spark快速大数据分析.md)
+***
+<!-- /related -->

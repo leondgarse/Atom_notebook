@@ -246,3 +246,13 @@ description: Reviews code changes for bugs, style issues, and best practices. Us
 2. Add sources: `notebook_add_url`, `notebook add text`, `notebook add drive`
 3. Query or generate artifacts
 ```
+
+<!-- related -->
+# Related
+- [agno](05-10_agno.md)
+- [langgraph](05-08_langgraph.md)
+- [learn claude code](07-27_learn_claude_code.md)
+- [OpenClaw](01-29_openclaw.md)
+- [Deepseek Harness](08-20_deepseek_harness.md)
+***
+<!-- /related -->

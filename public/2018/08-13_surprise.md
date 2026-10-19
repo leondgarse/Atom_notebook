@@ -1254,3 +1254,13 @@ algo = BaselineOnly(bsl_options=bsl_options)
     load(file_name)
     ```
 ***
+
+<!-- related -->
+# Related
+- [课程推荐](07-04_course_reomm.md)
+- [scikit-learn](../2017/07-25_scikit-learn.md)
+- [机器学习 (无监督学习 / 降维 / MapReduce](../2017/06-28_Machine_Learning.md)
+- [机器学习 (监督学习 分类 / 回归](../2017/05-30_Machine_Learning.md)
+- [Decomposition](../2022/08-03_decomposition.md)
+***
+<!-- /related -->

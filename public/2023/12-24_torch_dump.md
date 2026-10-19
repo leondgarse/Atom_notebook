@@ -407,3 +407,11 @@ if __name__ == "__main__":
     pd.DataFrame(csv_contents).to_csv(output)
     print(f"\n>>>> Result saved to: {output}")
 ```
+
+<!-- related -->
+# Related
+- [torch fx](../2024/07-19_torch_fx.md)
+- [keras for torch](01-19_keras_for_torch.md)
+- [MindSpore](../2022/07-20_mindspore.md)
+***
+<!-- /related -->

@@ -2832,3 +2832,10 @@ mkisofs -D -r -V "ubuntu-16.04.2-server-amd64.iso" -cache-inodes -J -l -b isolin
 ```sh
 mkisofs -D -r -V "ubuntu-18.04-desktop-x86_64.iso" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -allow-limited-size -o "../test.iso" .
 ```
+
+<!-- related -->
+# Related
+- [Github](../2017/01-14_github.md)
+- [git](../2017/01-12_git.md)
+***
+<!-- /related -->

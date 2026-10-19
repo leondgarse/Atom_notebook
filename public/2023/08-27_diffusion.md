@@ -664,3 +664,10 @@ for label, data, filename in tqdm(zip(aa[b'labels'], aa[b'data'], aa[b'filenames
         os.makedirs(os.path.dirname(filename))
     plt.imsave(filename, data.reshape(3, 32, 32).transpose([1, 2, 0]))
 ```
+
+<!-- related -->
+# Related
+- [clip](05-08_clip.md)
+- [yolov7](../2022/11-26_yolov7.md)
+***
+<!-- /related -->

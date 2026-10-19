@@ -854,3 +854,13 @@ Epoch 00045: val_dice_loss improved from 0.14202 to 0.13994, saving model to ./t
       tumor_segmentation(args.source_image, args.output_path, args.model_path)
   ```
 ***
+
+<!-- related -->
+# Related
+- [sam](../2023/10-16_sam.md)
+- [Car Plate Recognition](09-27_car_plate.md)
+- [Image Processing](../2018/10-11_image_processing.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [Computer Vision](../2020/05-02_computer_vision.md)
+***
+<!-- /related -->

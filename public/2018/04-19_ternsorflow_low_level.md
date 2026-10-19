@@ -4413,3 +4413,13 @@ output = tf.add_n([input1, input2], name="add")
 writer = tf.train.SummaryWriter("/path/to/log", tf.get_default_graph())
 writer.close()
 ```
+
+<!-- related -->
+# Related
+- [Tensorflow Programmer's Guide](08-27_tensorflow_guide.md)
+- [Tensorflow Tutorials](09-06_tensorflow_tutotials.md)
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+- [MindSpore](../2022/07-20_mindspore.md)
+***
+<!-- /related -->

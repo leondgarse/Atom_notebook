@@ -2519,3 +2519,13 @@ import pandas as pd
 from styleframe import StyleFrame
 StyleFrame(pd.DataFrame(dd)).to_excel("aa.xlsx").save()
 ```
+
+<!-- related -->
+# Related
+- [Image Processing](../2018/10-11_image_processing.md)
+- [yolov7](../2022/11-26_yolov7.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [Car Plate Recognition](../2019/09-27_car_plate.md)
+- [defog](../2024/03-16_defog.md)
+***
+<!-- /related -->

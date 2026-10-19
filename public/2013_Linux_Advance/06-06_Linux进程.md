@@ -229,3 +229,13 @@ summary: Linux process programming — fork, exec, wait, exit, signals/alarm, pr
     int fcntl(int fd, int cmd, struct flock *lock);
     ```
 ***
+
+<!-- related -->
+# Related
+- [传统的进程间通信](06-07_传统的进程间通信.md)
+- [System IPC](06-09_System_IPC.md)
+- [网络编程](06-17_网络编程.md)
+- [curses](06-11_curses.md)
+- [Linux线程](06-13_Linux线程.md)
+***
+<!-- /related -->

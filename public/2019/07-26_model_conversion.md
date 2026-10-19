@@ -2106,3 +2106,13 @@ for strides in range(1, 4):
   mmn = keras.models.clone_model(mm, clone_function=convert_UpSampling2D_layer)
   ```
 ***
+
+<!-- related -->
+# Related
+- [onnx](../2023/12-12_onnx.md)
+- [TensorRT](08-19_tensorrt.md)
+- [Model Optimization](09-19_model_pruning.md)
+- [quantization](../2022/10-18_quantization.md)
+- [kecam trtexec](../2023/05-27_kecam_trtexec.md)
+***
+<!-- /related -->

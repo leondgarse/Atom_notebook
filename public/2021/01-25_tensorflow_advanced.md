@@ -2260,3 +2260,13 @@ print("allclose:", np.allclose(orign_out.numpy(), fused_out.numpy(), atol=1e-7))
   # 35.8 ms ± 278 µs per loop (mean ± std. dev. of 7 runs, 10 loops each) # GPU
   ```
 ***
+
+<!-- related -->
+# Related
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [Tensorflow Programmer's Guide](../2018/08-27_tensorflow_guide.md)
+- [Tensorflow Tutorials](../2018/09-06_tensorflow_tutotials.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+- [Tensorflow 实战 Google 深度学习框架](../2018/04-19_ternsorflow_low_level.md)
+***
+<!-- /related -->

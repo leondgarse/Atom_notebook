@@ -1890,3 +1890,13 @@ for ii in range(3):
     rr.append(pp[ii].permute(0, 2, 3, 1, 4).reshape([16, -1, 85]).detach().numpy())
 rr[ii][rr[ii].sum(-1) != 0]
 ```
+
+<!-- related -->
+# Related
+- [yolov7](11-26_yolov7.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [EfficientDet](01-11_efficientdet.md)
+- [Custom COCO](10-21_custom_coco.md)
+- [sam](../2023/10-16_sam.md)
+***
+<!-- /related -->

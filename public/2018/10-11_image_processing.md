@@ -2444,3 +2444,13 @@ plt.show()
   ```
   ![](images/skiamge_seg_morphological_snakes.jpg)
 ***
+
+<!-- related -->
+# Related
+- [Computer Vision](../2020/05-02_computer_vision.md)
+- [Dicom Segmentation](../2019/09-05_physic_dicom.md)
+- [defog](../2024/03-16_defog.md)
+- [Car Plate Recognition](../2019/09-27_car_plate.md)
+- [diffusion](../2023/08-27_diffusion.md)
+***
+<!-- /related -->

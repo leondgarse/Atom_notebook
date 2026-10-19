@@ -2153,3 +2153,10 @@ bbs, ccs, _ = det.detect_faces(img, image_format="RGB", show=True)
   video_test(func=FaceMaskDetect(det=UltraFaceDetect(model_path='tflite/version-RFB-320_without_postprocessing_tf2.tflite', input_size=(240, 320), nms_iou_threshold=0.2), mask_model='../../face_mask/model.h5'))
   ```
 ***
+
+<!-- related -->
+# Related
+- [YOLOV5 Face](../2021/11-05_yolov5face.md)
+- [Keras Insightface Advance](../2021/04-07_insightface_advance.md)
+***
+<!-- /related -->

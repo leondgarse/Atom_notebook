@@ -692,3 +692,13 @@ hist = modelb.fit(unintegrity_image_data, unintegrity_data, batch_size=256, epoc
 ## Optimizers
   ![](images/opt1.gif)
 ***
+
+<!-- related -->
+# Related
+- [Tensorflow Tutorials](../2018/09-06_tensorflow_tutotials.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+- [Tensorflow Programmer's Guide](../2018/08-27_tensorflow_guide.md)
+- [Tensorflow 实战 Google 深度学习框架](../2018/04-19_ternsorflow_low_level.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+***
+<!-- /related -->

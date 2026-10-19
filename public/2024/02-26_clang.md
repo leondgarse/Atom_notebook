@@ -373,3 +373,11 @@ if __name__ == "__main__":
     # Example C++ code
 
 """
+```
+
+<!-- related -->
+# Related
+- [opencv cpp](../2023/07-06_opencv_cpp.md)
+- [System IPC](../2013_Linux_Advance/06-09_System_IPC.md)
+***
+<!-- /related -->

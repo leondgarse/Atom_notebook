@@ -1718,3 +1718,13 @@ Gerhard Schroeder       0.94      0.64      0.76        25
 ## Videos
   - [External Resources, Videos and Talks](http://scikit-learn.org/stable/presentations.html#videos)
 ***
+
+<!-- related -->
+# Related
+- [机器学习 (监督学习 分类 / 回归](05-30_Machine_Learning.md)
+- [Surprise](../2018/08-13_surprise.md)
+- [机器学习 (无监督学习 / 降维 / MapReduce](06-28_Machine_Learning.md)
+- [Chatbot](../2018/10-24_chatbot.md)
+- [课程推荐](../2018/07-04_course_reomm.md)
+***
+<!-- /related -->

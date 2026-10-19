@@ -2664,3 +2664,13 @@ plt.plot(x2, r[1][True][1][0] * 1 + r[1][True][1][1] * x2, 'm')
   ![](images/regress_compare.jpg)
   - 从相关系数来看，该复杂数据集上模型树的结果比回归树好，树回归比简单线性模型好
 ***
+
+<!-- related -->
+# Related
+- [机器学习 (无监督学习 / 降维 / MapReduce](06-28_Machine_Learning.md)
+- [scikit-learn](07-25_scikit-learn.md)
+- [Surprise](../2018/08-13_surprise.md)
+- [Chatbot](../2018/10-24_chatbot.md)
+- [课程推荐](../2018/07-04_course_reomm.md)
+***
+<!-- /related -->

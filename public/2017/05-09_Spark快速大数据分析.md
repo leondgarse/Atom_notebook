@@ -1849,3 +1849,10 @@ summary: Learning Spark — RDD basics, pair RDDs, partitioning, data I/O, share
 
 # 基于 MLlib 的机器学习
 ***
+
+<!-- related -->
+# Related
+- [SQL](08-06_sql.md)
+- [Python 数据分析 2](04-09_python数据分析2.md)
+***
+<!-- /related -->

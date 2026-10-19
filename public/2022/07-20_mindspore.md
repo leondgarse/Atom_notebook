@@ -630,3 +630,10 @@ print([(ii.name, ii.shape, ii.dtype) for ii in mm.get_parameters()])
 
 # MindSpore 进阶教程
 ## 线性拟合
+
+<!-- related -->
+# Related
+- [torch dump](../2023/12-24_torch_dump.md)
+- [Tensorflow 实战 Google 深度学习框架](../2018/04-19_ternsorflow_low_level.md)
+***
+<!-- /related -->

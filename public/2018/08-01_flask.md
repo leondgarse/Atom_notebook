@@ -969,3 +969,10 @@ flask run
   sudo vi /etc/nginx/sites-available/default
   ```
 ***
+
+<!-- related -->
+# Related
+- [Python 数据分析 1](../2017/03-09_python数据分析1.md)
+- [Python Modules](03-16_python_modules.md)
+***
+<!-- /related -->

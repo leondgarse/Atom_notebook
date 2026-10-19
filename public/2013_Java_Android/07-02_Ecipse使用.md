@@ -142,3 +142,13 @@ summary: Eclipse setup — localisation, ADT and Android emulator, cross-compile
   - 【Ctrl+Shift+G】查找类、方法和属性的引用
   - 【ALT+Shift+W】查找当前文件所在项目中的路径
 ***
+
+<!-- related -->
+# Related
+- [Android开发](07-09_Android开发.md)
+- [Flutter](../2026/03-09_flutter.md)
+- [Typescript](../2026/10-10_typescript.md)
+- [Go Modules](../2020/01-06_go_modules.md)
+- [Java进阶](07-01_Java进阶.md)
+***
+<!-- /related -->

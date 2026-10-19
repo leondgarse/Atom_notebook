@@ -1831,3 +1831,13 @@ CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC="/usr/bin/aarch64-linux-gnu-gcc -Wl,-rp
   // Found &{Name:John}
   ```
 ***
+
+<!-- related -->
+# Related
+- [Go Basic](../2019/12-24_go_basic.md)
+- [cgo](02-11_cgo.md)
+- [Flutter](../2026/03-09_flutter.md)
+- [Ecipse使用](../2013_Java_Android/07-02_Ecipse使用.md)
+- [Android开发](../2013_Java_Android/07-09_Android开发.md)
+***
+<!-- /related -->

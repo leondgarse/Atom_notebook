@@ -186,3 +186,10 @@ mm = keras.models.Sequential([
 mm.compile(optimizer='adam', loss=keras.losses.categorical_crossentropy)
 mm.fit(xx, yy, epochs=5, batch_size=256)
 ```
+
+<!-- related -->
+# Related
+- [机器学习 (无监督学习 / 降维 / MapReduce](../2017/06-28_Machine_Learning.md)
+- [Surprise](../2018/08-13_surprise.md)
+***
+<!-- /related -->

@@ -724,3 +724,10 @@ summary: Taiwan cycling trip journal (Sep 2026, ~980 km over 9 riding days) with
   - Your sentence about the beach was already conceptually good: **“The rising sun cast a golden reflection across the wet beach.”** *Cast a reflection* is a useful collocation.
   - **“squeeze me all out”** is understandable and actually quite expressive, but not idiomatic. **“squeeze almost everything out of me”** preserves your metaphor while sounding natural. More ordinary alternatives would be *“completely exhausted me”* or *“took everything out of me.”*
   - **“not worthing” → “not worth it.”** *Worth* isn't normally used as a verb this way: “The climb was worth it.” “It wasn't worth the effort.” “Jiufen is worth visiting.”
+
+<!-- related -->
+# Related
+- [ielts](../2024/10-08_ielts.md)
+- [tempo](../2025/10-07_tempo.md)
+***
+<!-- /related -->

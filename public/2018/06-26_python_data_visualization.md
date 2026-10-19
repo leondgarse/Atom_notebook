@@ -896,3 +896,13 @@ timeline.render()
   ```
   ![](images/pyecharts_theme.jpg)
 ***
+
+<!-- related -->
+# Related
+- [Python 数据分析 2](../2017/04-09_python数据分析2.md)
+- [neo4j](../2026/03-20_neo4j.md)
+- [Neo4j](07-09_neo4j.md)
+- [Python 数据分析 1](../2017/03-09_python数据分析1.md)
+- [Flask Quick Start](08-01_flask.md)
+***
+<!-- /related -->

@@ -299,3 +299,13 @@ summary: Android app development basics — adb, apk decompiling, platform archi
     - 此时不能直接调用stopService()方法，而只能调用unbindService()方法停止服务运行
     - 如果调用者退出，则Service会调用onUnbind() --> onDestroy()停止运行
 ***
+
+<!-- related -->
+# Related
+- [Ecipse使用](07-02_Ecipse使用.md)
+- [Java基础](06-17_Java基础.md)
+- [Flutter](../2026/03-09_flutter.md)
+- [Go Modules](../2020/01-06_go_modules.md)
+- [Go Basic](../2019/12-24_go_basic.md)
+***
+<!-- /related -->

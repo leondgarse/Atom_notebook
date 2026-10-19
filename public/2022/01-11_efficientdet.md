@@ -1065,3 +1065,13 @@ from keras_cv_attention_models.efficientdet import convert_efficientdet as effic
 backbone = efficientdet.EfficientNetV1B0(input_shape=(320, 320, 3), output_conv_filter=0, se_ratios=[0] * 10, is_fused=False, num_classes=0, activation="relu6", pretrained=None)
 bb = efficientdet.EfficientDetD0(backbone=backbone, activation="relu6", anchor_scale=3, use_weighted_sum=False, pretrained=None)
 ```
+
+<!-- related -->
+# Related
+- [YOLOX](02-17_yolox.md)
+- [Custom COCO](10-21_custom_coco.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [yolov7](11-26_yolov7.md)
+- [sam](../2023/10-16_sam.md)
+***
+<!-- /related -->

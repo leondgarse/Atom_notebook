@@ -48,3 +48,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now dsh-web@`whoami`.service   # starts now and at every boot
 journalctl -u dsh-web@`whoami`.service -f              # follow its logs
 ```
+
+<!-- related -->
+# Related
+- [learn claude code](07-27_learn_claude_code.md)
+- [OpenClaw](01-29_openclaw.md)
+- [agno](05-10_agno.md)
+- [claude](02-28_claude.md)
+- [langgraph](05-08_langgraph.md)
+***
+<!-- /related -->

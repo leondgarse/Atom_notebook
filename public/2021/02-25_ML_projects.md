@@ -1570,3 +1570,10 @@ plt.show()
   fig, axes = show_images_masks(images[:5], masks[:5], preds[:5])
   ```
 ***
+
+<!-- related -->
+# Related
+- [Car Plate Recognition](../2019/09-27_car_plate.md)
+- [defog](../2024/03-16_defog.md)
+***
+<!-- /related -->

@@ -218,3 +218,13 @@ reader = easyocr.Reader(["en"])
 results = reader.readtext(image_path, detail=0)
 print("\n".join(results))
 ```
+
+<!-- related -->
+# Related
+- [claude](02-28_claude.md)
+- [OpenClaw](01-29_openclaw.md)
+- [llama2](../2023/08-06_llama2.md)
+- [langgraph](05-08_langgraph.md)
+- [learn claude code](07-27_learn_claude_code.md)
+***
+<!-- /related -->

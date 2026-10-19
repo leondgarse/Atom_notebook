@@ -1271,3 +1271,10 @@ accuracy_calc(tt, ys)
   seperator_index = 1500, sum_on_client = 1500.000000, sum_on_imposter = 983.000000, accuracy = 0.827667
   ```
 ***
+
+<!-- related -->
+# Related
+- [Face Anti Spoofing](../2019/08-20_anti_spoofing.md)
+- [Keras Insightface](../2019/11-18_keras_insightface.md)
+***
+<!-- /related -->

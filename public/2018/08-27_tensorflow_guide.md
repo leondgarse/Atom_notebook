@@ -3342,3 +3342,13 @@ Out[43]: array([7, 2, 1, 0, 4, 1, 4, 9, 5, 9], dtype=int32)
     ![](images/tensorboard_scalar.jpg)
     ![](images/tensorboard_histograms.jpg)
 ***
+
+<!-- related -->
+# Related
+- [Tensorflow Tutorials](09-06_tensorflow_tutotials.md)
+- [Tensorflow 2.4.0](../2021/01-25_tensorflow_advanced.md)
+- [Tensorflow Examples](../2019/10-22_tensorflow_examples.md)
+- [Tensorflow 实战 Google 深度学习框架](04-19_ternsorflow_low_level.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+***
+<!-- /related -->

@@ -3592,3 +3592,13 @@ vector<elem> books_backup(books); // copy a new vetor
   - ratio 有理数算数库
   - regex 正则表达式支持库
 ***
+
+<!-- related -->
+# Related
+- [Qt编程基础](09-17_Qt编程基础.md)
+- [opencv cpp](../2023/07-06_opencv_cpp.md)
+- [c和指针](../2013_Basic/05-31_c和指针.md)
+- [标准I/O / 文件I/O](../2013_Basic/06-03_标准IO_文件IO.md)
+- [curses](../2013_Linux_Advance/06-11_curses.md)
+***
+<!-- /related -->

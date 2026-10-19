@@ -38,3 +38,13 @@ summary: Brief outline of Android low-level driver development — build steps a
 # JNI编程
   - Java 类中任何方法和属性对 JNI 都是可见的，不管它是 public 的，还是private/protected
 ***
+
+<!-- related -->
+# Related
+- [ARM高级驱动开发](08-05_ARM高级驱动开发.md)
+- [ARM 驱动开发理论基础](07-26_ARM驱动开发理论基础.md)
+- [ARM硬件平台接口开发](07-22_ARM硬件平台接口开发.md)
+- [交叉编译工具](../2013_Basic/05-16_交叉编译工具.md)
+- [RKNN NPU](../2021/01-22_rknn.md)
+***
+<!-- /related -->

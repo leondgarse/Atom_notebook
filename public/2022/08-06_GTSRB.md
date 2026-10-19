@@ -442,3 +442,13 @@ details = np.unique([ii[2] for ii in dd.values()]).tolist()
 
 black -l 120 --skip-string-normalization ait/components/benchmark/test/generate_add_model.py ait/components/benchmark/test/ST_SIMPLE/test_infer_resnet50.py ait/components/benchmark/test/UT_SIMPLE/
 black -l 120 --skip-string-normalization ait/components/benchmark/test/ST/test_result.py
+
+<!-- related -->
+# Related
+- [Custom COCO](10-21_custom_coco.md)
+- [EfficientDet](01-11_efficientdet.md)
+- [yolov8](../2023/04-03_yolov8.md)
+- [yolov7](11-26_yolov7.md)
+- [defog](../2024/03-16_defog.md)
+***
+<!-- /related -->

@@ -325,3 +325,13 @@ litellm --config config.yaml --port 4000
 | --------------------------- | ---- | --------- |
 | GLM-4.7-Flash-UD-Q4_K_XL    | 30B  | 20596MiB  |
 | Qwopus3.6-v1-preview-Q4_K_M | 27B  | 20186MiB  |
+
+<!-- related -->
+# Related
+- [learn claude code](07-27_learn_claude_code.md)
+- [agno](05-10_agno.md)
+- [OpenClaw](01-29_openclaw.md)
+- [langgraph](05-08_langgraph.md)
+- [Llama.cpp](02-01_llama_cpp.md)
+***
+<!-- /related -->

@@ -197,3 +197,13 @@ for ii in range(seq_len):
     ys.append(y)
 y = torch.stack(ys, dim=1)  # shape (b, l, d_in)
 ```
+
+<!-- related -->
+# Related
+- [ImageNet Train](../2022/01-09_imagenet_train.md)
+- [deformable conv](../2023/04-29_deformable_conv.md)
+- [deepmad](../2023/07-09_deepmad.md)
+- [eva02](../2023/04-25_eva02.md)
+- [PyTorch to Keras](../2021/08-20_pytorch_to_keras.md)
+***
+<!-- /related -->

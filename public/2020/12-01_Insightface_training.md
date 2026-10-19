@@ -2642,3 +2642,11 @@ for model_name in model_names:
   |               5 | False    |           1 | False       |        6.14882 |            72242.8 |
   |               1 | True     |           1 | False       |        12.1898 |             107735 |
 ***
+
+<!-- related -->
+# Related
+- [Keras Insightface Advance](../2021/04-07_insightface_advance.md)
+- [Keras Insightface](../2019/11-18_keras_insightface.md)
+- [Face Quality](../2022/01-10_face_quality.md)
+***
+<!-- /related -->

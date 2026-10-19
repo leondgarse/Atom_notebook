@@ -19,7 +19,7 @@ Back to [all indexes](README.md).
 
 ## Go
 
-- **[Go Basic](../public/2019/12-24_go_basic.md)** (2019-12-24, 86 KB) — Go basics — install and tooling (gofmt, go doc, modules, proxy), project layout, syntax, data structures, interfaces, concurrency.  
+- **[Go Basic](../public/2019/12-24_go_basic.md)** (2019-12-24, 87 KB) — Go basics — install and tooling (gofmt, go doc, modules, proxy), project layout, syntax, data structures, interfaces, concurrency.  
   [Install](../public/2019/12-24_go_basic.md#install) · [Go 项目一般结构](../public/2019/12-24_go_basic.md#Go%20项目一般结构) · [基础语法](../public/2019/12-24_go_basic.md#基础语法) · [数据结构](../public/2019/12-24_go_basic.md#数据结构) · [方法和接口](../public/2019/12-24_go_basic.md#方法和接口) · [文件读写](../public/2019/12-24_go_basic.md#文件读写) · [并发](../public/2019/12-24_go_basic.md#并发) · [Panic 与 Recover](../public/2019/12-24_go_basic.md#Panic%20与%20Recover)
 - **[Go Modules](../public/2020/01-06_go_modules.md)** (2020-01-06, 59 KB) — Go libraries — logging (zap, logrus), flags, binary I/O and gob, TensorFlow for Go, MySQL sync, image handling.  
   [Go Log](../public/2020/01-06_go_modules.md#Go%20Log) · [Flag and command line arguments](../public/2020/01-06_go_modules.md#Flag%20and%20command%20line%20arguments) · [Binary 二进制文件读写](../public/2020/01-06_go_modules.md#Binary%20二进制文件读写) · [Tensorflow](../public/2020/01-06_go_modules.md#tensorflow) · [Sync data from mysql and calculate dot values](../public/2020/01-06_go_modules.md#Sync%20data%20from%20mysql%20and%20calculate%20dot%20values) · [Images](../public/2020/01-06_go_modules.md#images) · [Tensorflow images](../public/2020/01-06_go_modules.md#Tensorflow%20images) · [onnx-go](../public/2020/01-06_go_modules.md#onnx-go)
@@ -28,7 +28,7 @@ Back to [all indexes](README.md).
 
 ## R, TypeScript, Flutter
 
-- **[R语言基础](../public/2017/07-30_R语言基础.md)** (2017-07-30, 15 KB) — R language basics — vectors and arithmetic, indexing, object modes and attributes, factors, arrays and matrices.  
+- **[R语言基础](../public/2017/07-30_R语言基础.md)** (2017-07-30, 14 KB) — R language basics — vectors and arithmetic, indexing, object modes and attributes, factors, arrays and matrices.  
   [R基本使用](../public/2017/07-30_R语言基础.md#r基本使用) · [向量与算术运算](../public/2017/07-30_R语言基础.md#向量与算术运算) · [对象的模式和属性](../public/2017/07-30_R语言基础.md#对象的模式和属性) · [有序因子和无序因子 factor](../public/2017/07-30_R语言基础.md#有序因子和无序因子%20factor) · [数组和矩阵](../public/2017/07-30_R语言基础.md#数组和矩阵)
 - **[Flutter](../public/2026/03-09_flutter.md)** (2026-03-09, 1 KB) — Flutter SDK install and basic project commands.  
   [Install](../public/2026/03-09_flutter.md#install)

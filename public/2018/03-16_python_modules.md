@@ -1637,3 +1637,13 @@ split = [[jj.strip() for jj in ii.strip().split("|")] for ii in aa.split('\n') i
 columns = split[0][1:-1]
 pd.DataFrame([{jj: kk for jj, kk in zip(columns, ii[1:-1])} for ii in split[2:]])
 ```
+
+<!-- related -->
+# Related
+- [Python Basic](../2017/02-06_python_basic.md)
+- [Python 数据分析 1](../2017/03-09_python数据分析1.md)
+- [Python 数据分析 2](../2017/04-09_python数据分析2.md)
+- [SQL](../2017/08-06_sql.md)
+- [Flask Quick Start](08-01_flask.md)
+***
+<!-- /related -->

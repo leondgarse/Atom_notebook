@@ -215,3 +215,13 @@ print(f"{response.content = }\n{response.stop_reason = }")
 print("final output:", messages[-1]['content'][0].text)
 # final output: Done. The file `hello.py` has been created and prints "Hello, World!".
 ```
+
+<!-- related -->
+# Related
+- [claude](02-28_claude.md)
+- [agno](05-10_agno.md)
+- [langgraph](05-08_langgraph.md)
+- [Gemini](02-02_gemini_cli.md)
+- [OpenClaw](01-29_openclaw.md)
+***
+<!-- /related -->

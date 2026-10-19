@@ -593,3 +593,13 @@ r100 + Glint360k + adaface 0.998500 | 0.993000 | 0.986000
 | --------- | --------:| --------:| --------:| --------:| --------:| --------:| -------:|
 | r100 IJBB | 0.471081 | 0.937975 | 0.962415 | 0.972055 | 0.981013 | 0.988121 | 0.99398 |
 | r100 IJBC | 0.886435 | 0.962724 | 0.974843 | 0.981643 | 0.987063 | 0.992279 | 0.99595 |
+
+<!-- related -->
+# Related
+- [Keras Insightface](../2019/11-18_keras_insightface.md)
+- [Keras Insightface Training](../2020/12-01_Insightface_training.md)
+- [Keras Insightface Advance](../2021/04-07_insightface_advance.md)
+- [Face Detect](../2020/08-21_face_detect.md)
+- [YOLOV5 Face](../2021/11-05_yolov5face.md)
+***
+<!-- /related -->

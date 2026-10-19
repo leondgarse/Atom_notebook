@@ -234,3 +234,10 @@ def plate_mask_to_scatter(source_mask, conv_kernel_size=[9, 9], corner_min=None,
       plt.contour(ee[0, :, :, 0] > thresh, [0.5], colors=[color])
   ```
 ***
+
+<!-- related -->
+# Related
+- [Dicom Segmentation](09-05_physic_dicom.md)
+- [yolov8](../2023/04-03_yolov8.md)
+***
+<!-- /related -->

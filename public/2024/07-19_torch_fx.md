@@ -73,3 +73,13 @@ git revert 744ff8d070a9b8788ba0aae4efaddafb6cfde886
 git diff --name-only --diff-filter=U | xargs -I {} git rm {} && git revert --continue
 
 git revert 7e1cb3157c94c9ecedceaa8c6df331b4713b8deb
+
+<!-- related -->
+# Related
+- [torch dump](../2023/12-24_torch_dump.md)
+- [keras for torch](../2023/01-19_keras_for_torch.md)
+- [transformers](09-30_transformers.md)
+- [Haiku](../2021/08-13_haiku.md)
+- [Caffe](../2019/08-12_caffe.md)
+***
+<!-- /related -->

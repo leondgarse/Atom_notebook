@@ -1081,3 +1081,13 @@ print(f"{aa(torch.ones([1, 3, 32, 32])).shape = }")
  'iou_prediction_head.layers.0'
  'iou_prediction_head.layers.1'
  'iou_prediction_head.layers.2'
+
+<!-- related -->
+# Related
+- [mamba](../2024/09-2_mamba.md)
+- [ImageNet Train](../2022/01-09_imagenet_train.md)
+- [eva02](04-25_eva02.md)
+- [deepmad](07-09_deepmad.md)
+- [PyTorch to Keras](../2021/08-20_pytorch_to_keras.md)
+***
+<!-- /related -->

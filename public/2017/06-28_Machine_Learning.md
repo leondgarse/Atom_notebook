@@ -1828,3 +1828,13 @@ plt.legend(loc='best')
   echo 'foo' | python3 mrSVM.py --iterations=2
   ```
 ***
+
+<!-- related -->
+# Related
+- [机器学习 (监督学习 分类 / 回归](05-30_Machine_Learning.md)
+- [scikit-learn](07-25_scikit-learn.md)
+- [Surprise](../2018/08-13_surprise.md)
+- [Decomposition](../2022/08-03_decomposition.md)
+- [课程推荐](../2018/07-04_course_reomm.md)
+***
+<!-- /related -->

@@ -1353,3 +1353,13 @@ foo
     quit
     ```
 ***
+
+<!-- related -->
+# Related
+- [Shell script](01-04_Shell_script.md)
+- [Vim使用](../2013_Basic/05-12_Vim使用.md)
+- [Shortcuts for Atom (text editor) 1.0 (win/en](07-07_atom_usage.md)
+- [macos](../2026/10-14_macos.md)
+- [git](01-12_git.md)
+***
+<!-- /related -->
