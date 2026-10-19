@@ -43,7 +43,7 @@ def parse_arguments(argv):
         "--excluded_suffix",
         type=str,
         nargs="*",
-        default=[".jpg", ".png", ".gif", ".svg", ".jpeg"],
+        default=[".jpg", ".png", ".gif", ".svg", ".jpeg", ".DS_Store"],
         help="File suffixes that are exluded in TOC",
     )
 
