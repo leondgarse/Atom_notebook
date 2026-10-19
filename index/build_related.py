@@ -92,7 +92,7 @@ def main():
     write = "--write" in sys.argv
     notes = sorted(
         os.path.relpath(os.path.join(d, f), PUB)
-        for d, _, fs in os.walk(PUB) for f in fs if f.endswith(".md") and f != "readme.md"
+        for d, _, fs in os.walk(PUB) for f in fs if f.endswith(".md") and f != "README.md"
     )
     S = scores(notes)
     for n in notes:

@@ -19,11 +19,11 @@ Back to [all indexes](README.md).
 
 ## Go
 
-- **[Go Basic](../public/2019/12-24_go_basic.md)** (2019-12-24, 87 KB) — Go basics — install and tooling (gofmt, go doc, modules, proxy), project layout, syntax, data structures, interfaces, concurrency.  
+- **[Go Basic](../public/2019/12-24_go_basic.md)** (2019-12-24, 84 KB) — Go basics — install and tooling (gofmt, go doc, modules, proxy), project layout, syntax, data structures, interfaces, concurrency.  
   [Install](../public/2019/12-24_go_basic.md#install) · [Go 项目一般结构](../public/2019/12-24_go_basic.md#Go%20项目一般结构) · [基础语法](../public/2019/12-24_go_basic.md#基础语法) · [数据结构](../public/2019/12-24_go_basic.md#数据结构) · [方法和接口](../public/2019/12-24_go_basic.md#方法和接口) · [文件读写](../public/2019/12-24_go_basic.md#文件读写) · [并发](../public/2019/12-24_go_basic.md#并发) · [Panic 与 Recover](../public/2019/12-24_go_basic.md#Panic%20与%20Recover)
-- **[Go Modules](../public/2020/01-06_go_modules.md)** (2020-01-06, 59 KB) — Go libraries — logging (zap, logrus), flags, binary I/O and gob, TensorFlow for Go, MySQL sync, image handling.  
+- **[Go Modules](../public/2020/01-06_go_modules.md)** (2020-01-06, 58 KB) — Go libraries — logging (zap, logrus), flags, binary I/O and gob, TensorFlow for Go, MySQL sync, image handling.  
   [Go Log](../public/2020/01-06_go_modules.md#Go%20Log) · [Flag and command line arguments](../public/2020/01-06_go_modules.md#Flag%20and%20command%20line%20arguments) · [Binary 二进制文件读写](../public/2020/01-06_go_modules.md#Binary%20二进制文件读写) · [Tensorflow](../public/2020/01-06_go_modules.md#tensorflow) · [Sync data from mysql and calculate dot values](../public/2020/01-06_go_modules.md#Sync%20data%20from%20mysql%20and%20calculate%20dot%20values) · [Images](../public/2020/01-06_go_modules.md#images) · [Tensorflow images](../public/2020/01-06_go_modules.md#Tensorflow%20images) · [onnx-go](../public/2020/01-06_go_modules.md#onnx-go)
-- **[cgo](../public/2020/02-11_cgo.md)** (2020-02-11, 61 KB) — cgo interop (strings, arrays, structs, callbacks), Go/C++ assembly, gomobile packaging, Xeus Cling kernel.  
+- **[cgo](../public/2020/02-11_cgo.md)** (2020-02-11, 59 KB) — cgo interop (strings, arrays, structs, callbacks), Go/C++ assembly, gomobile packaging, Xeus Cling kernel.  
   [Jupyter Xeus Cling Kernel](../public/2020/02-11_cgo.md#Jupyter%20Xeus%20Cling%20Kernel) · [cgo](../public/2020/02-11_cgo.md#cgo) · [汇编](../public/2020/02-11_cgo.md#汇编) · [gomobile](../public/2020/02-11_cgo.md#gomobile) · [cpp](../public/2020/02-11_cgo.md#cpp) · [Inference Projects](../public/2020/02-11_cgo.md#Inference%20Projects) · [TdFace](../public/2020/02-11_cgo.md#tdface) · [TensorRT](../public/2020/02-11_cgo.md#tensorrt)
 
 ## R, TypeScript, Flutter

@@ -258,7 +258,7 @@ def main():
         os.path.relpath(os.path.join(d, f), PUB)
         for d, _, fs in os.walk(PUB) for f in fs if f.endswith(".md")
     )
-    all_notes = [r for r in all_notes if r != "readme.md"]
+    all_notes = [r for r in all_notes if r != "README.md"]
     titles = {t[0]: t[1] for t in TOPICS}
     assigned = {}
     os.makedirs(OUT, exist_ok=True)

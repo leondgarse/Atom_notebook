@@ -9,7 +9,7 @@ Back to [all indexes](README.md).
 - **[gpt](../public/2023/02-27_gpt.md)** (2023-02-27, 23 KB) — GPT from scratch — nanoGPT tokenizer, model, HF weight loading, Shakespeare training, TFDS, Llama2.  
   [NanoGPT](../public/2023/02-27_gpt.md#nanogpt) · [Prepare](../public/2023/02-27_gpt.md#prepare) · [Tokennizer](../public/2023/02-27_gpt.md#tokennizer) · [Model definition](../public/2023/02-27_gpt.md#Model%20definition) · [Model load statedict from huggingface](../public/2023/02-27_gpt.md#Model%20load%20statedict%20from%20huggingface) · [Model evaluation](../public/2023/02-27_gpt.md#Model%20evaluation) · [Shakespeare datasets](../public/2023/02-27_gpt.md#Shakespeare%20datasets) · [Optimizer](../public/2023/02-27_gpt.md#optimizer)
 - **[llama2](../public/2023/08-06_llama2.md)** (2023-08-06, 2 KB) — Minimal Chinese Llama 2 inference with HF transformers.
-- **[llm train](../public/2024/03-23_llm_train.md)** (2024-03-23, 13 KB) — Training a small LLM with Hugging Face — tokenizer, data, pretraining and LoRA.  
+- **[llm train](../public/2024/03-23_llm_train.md)** (2024-03-23, 12 KB) — Training a small LLM with Hugging Face — tokenizer, data, pretraining and LoRA.  
   [Huggingface train](../public/2024/03-23_llm_train.md#Huggingface%20train) · [Huggingface lora](../public/2024/03-23_llm_train.md#Huggingface%20lora)
 
 ## Serving
