@@ -1743,7 +1743,7 @@ estimator.evaluate(input_fn=eval_input_fn)
   ```
 - 对于稀疏数据集 sparse data，大多数数据值为0，可以使用 **SparseTensor**
   - **dense_shape** Tensor 的形状，如 dense_shape=[3,6]
-  - **indices** 非0值的位置，如 indices=[[1,3], [2,4]]
+  - **indices** 非0值的位置，如 `indices=[[1,3], [2,4]]`
   - **values** 非0值的值，如 values=[18, 3.6]
   ```python
   sparse_tensor = tf.SparseTensor(indices=[[0,1], [2,4]],
