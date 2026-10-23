@@ -271,9 +271,9 @@ summary: GitHub basics — setting up git, https vs ssh keys, new repositories, 
 <!-- related -->
 # Related
 - [git](01-12_git.md)
+- [macOS](../2026/10-14_macos.md)
 - [Ubuntu 使用与 shell 命令](../2013_Basic/05-12_Ubuntu_Usage.md)
 - [Shortcuts for Atom (text editor) 1.0 (win/en](07-07_atom_usage.md)
 - [Shell script](01-04_Shell_script.md)
-- [macos](../2026/10-14_macos.md)
 ***
 <!-- /related -->

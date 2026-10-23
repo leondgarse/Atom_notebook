@@ -267,8 +267,8 @@ if (ch == KEY_MOUSE) {
 # Related
 - [Linux线程](06-13_Linux线程.md)
 - [网络编程](06-17_网络编程.md)
-- [System IPC](06-09_System_IPC.md)
 - [Linux进程](06-06_Linux进程.md)
+- [System IPC](06-09_System_IPC.md)
 - [传统的进程间通信](06-07_传统的进程间通信.md)
 ***
 <!-- /related -->

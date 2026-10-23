@@ -601,7 +601,7 @@ ___2017 - 05 - 25 Markdown Grammar___
 
 <!-- related -->
 # Related
-- [shell 流处理命令](01-17_shell流处理命令.md)
+- [macOS](../2026/10-14_macos.md)
 - [Vim使用](../2013_Basic/05-12_Vim使用.md)
 ***
 <!-- /related -->

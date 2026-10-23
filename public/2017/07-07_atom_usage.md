@@ -153,7 +153,7 @@ cat ~/.atom/.apmrc
 
 <!-- related -->
 # Related
+- [macOS](../2026/10-14_macos.md)
 - [Vim使用](../2013_Basic/05-12_Vim使用.md)
-- [macos](../2026/10-14_macos.md)
 ***
 <!-- /related -->

@@ -2836,6 +2836,6 @@ mkisofs -D -r -V "ubuntu-18.04-desktop-x86_64.iso" -cache-inodes -J -l -b isolin
 <!-- related -->
 # Related
 - [Github](../2017/01-14_github.md)
-- [git](../2017/01-12_git.md)
+- [macOS](../2026/10-14_macos.md)
 ***
 <!-- /related -->

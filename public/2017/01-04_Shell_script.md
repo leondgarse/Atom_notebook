@@ -875,7 +875,7 @@ calc '1 + 2 * 3 / 4'  # 2.5
 <!-- related -->
 # Related
 - [shell 流处理命令](01-17_shell流处理命令.md)
-- [macos](../2026/10-14_macos.md)
+- [macOS](../2026/10-14_macos.md)
 - [Ubuntu 使用与 shell 命令](../2013_Basic/05-12_Ubuntu_Usage.md)
 - [Vim使用](../2013_Basic/05-12_Vim使用.md)
 - [git](01-12_git.md)
