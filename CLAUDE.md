@@ -32,7 +32,8 @@ conversion, TensorRT), NUS course notes, tools.
   `cd public && python3 2017/folder_toc.py` (defaults: `-i ./ -o ./README.md`;
   skips images, hidden files and image-only folders). Re-run after adding,
   renaming or deleting notes; don't hand-edit.
-- `README.md` — repo readme.
+- `README.md` — repo readme, with the add / remove note steps.
+  `index/update.sh` runs all three generators (Related, indexes, `public/README.md`).
 - macOS is case-insensitive (APFS): `readme.md` vs `README.md` once collided.
   Never create names differing only in case; rename via a temp name.
 
@@ -70,8 +71,9 @@ conversion, TensorRT), NUS course notes, tools.
 
 ## Working rules
 
-- Never commit or push without the user asking. Show `git diff --stat` and a
-  sample diff for review first. Bulk edits go in their own commit.
+- Commit and push finished changes without asking. Check new or changed notes
+  for private info first (the repo is public). Bulk edits go in their own
+  commit; the user's own unrelated edits go in a separate commit.
 - Prefer adding new files (indexes) over rewriting existing notes; when editing
   notes, don't change wording of existing content.
 - After bulk Markdown changes, verify rendering didn't break (e.g. render
