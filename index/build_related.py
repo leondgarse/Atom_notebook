@@ -1,4 +1,5 @@
 """Add a generated "Related" section to the end of each note in public/.
+Notes listed in RELATED get hand-picked links instead.
 
 Relatedness = TF-IDF cosine over title / summary / tags / H1-H2 headings,
 plus a bonus for shared frontmatter tags and shared topics in build_index.TOPICS.
@@ -21,6 +22,17 @@ WEAK = 0.4  # notes whose best match is below this get only MIN_LINKS links
 TAG_BONUS, TOPIC_BONUS = 0.15, 0.1
 STOP = set("the and for with of to in on a an by from use using how notes note basic basics advance advanced".split())
 BLOCK = re.compile(r"\s*<!-- related -->.*?<!-- /related -->\s*$", re.S)
+
+# Hand-picked links, note prefix -> related note prefixes (as in build_index.TOPICS).
+# They replace the computed links; an empty list means no Related section.
+RELATED = {
+    "2026/09-16_taiwan": ["2021/11-14_shandong", "2024/10-08_ielts", "2026/02-26_gym"],
+    "Dainty_factory/": ["2026/02-26_gym"],
+    "2018/09-20_JP": ["2024/10-08_ielts"],
+    "2024/10-08_ielts": ["2018/09-20_JP", "2026/09-16_taiwan"],
+    "2021/11-14_shandong": ["2026/09-16_taiwan"],
+    "2026/02-26_gym": ["Dainty_factory/", "2026/09-16_taiwan"],
+}
 
 
 def tokens(s):
@@ -82,7 +94,23 @@ def link(src, dst, info):
     return f"- [{bi.esc(info['title'], 80)}]({url})"
 
 
+def resolve(prefix, notes):
+    found = [m for m in notes if m.startswith(prefix)]
+    if len(found) != 1:
+        sys.exit(f"RELATED prefix {prefix!r} matches {len(found)} notes")
+    return found[0]
+
+
+def manual(n, notes):
+    for prefix, related in RELATED.items():
+        if n.startswith(prefix):
+            return [resolve(p, notes) for p in related]
+    return None
+
+
 def block(n, related):
+    if not related:
+        return ""
     lines = ["<!-- related -->", "# Related"] + [link(n, m, bi.note_info(m)) for m in related]
     return "\n".join(lines + ["***", "<!-- /related -->"])
 
@@ -98,7 +126,8 @@ def main():
     for n in notes:
         if args and not any(a in n for a in args):
             continue
-        text = block(n, pick(n, notes, S))
+        related = manual(n, notes)
+        text = block(n, pick(n, notes, S) if related is None else related)
         if not write:
             print(f"== {n}\n{text}\n")
             continue
@@ -106,7 +135,7 @@ def main():
         raw = open(path, "rb").read().decode("utf-8")
         nl = "\r\n" if "\r\n" in raw else "\n"
         body = BLOCK.sub("", raw.replace("\r\n", "\n")).rstrip("\n")
-        new = (body + "\n\n" + text + "\n").replace("\n", nl)
+        new = (body + "\n\n" + text + "\n" if text else body + "\n").replace("\n", nl)
         if new != raw:
             open(path, "wb").write(new.encode("utf-8"))
     if write:

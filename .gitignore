@@ -6,3 +6,6 @@ private/
 
 # local Obsidian settings (vault lives in ~/obsidian_projects)
 .obsidian/
+
+# cache
+index/__pycache__/

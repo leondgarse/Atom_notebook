@@ -1510,7 +1510,6 @@ summary: Dainty Factory — a collection of home-cooking recipes with photos.
 
 <!-- related -->
 # Related
-- [tempo](../2025/10-07_tempo.md)
-- [09-16 Taiwan](../2026/09-16_taiwan.md)
+- [gym](../2026/02-26_gym.md)
 ***
 <!-- /related -->

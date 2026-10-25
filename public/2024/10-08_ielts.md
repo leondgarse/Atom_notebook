@@ -1378,7 +1378,7 @@ food 相关
 
 <!-- related -->
 # Related
+- [日语](../2018/09-20_JP.md)
 - [09-16 Taiwan](../2026/09-16_taiwan.md)
-- [tempo](../2025/10-07_tempo.md)
 ***
 <!-- /related -->

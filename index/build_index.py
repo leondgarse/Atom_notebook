@@ -94,9 +94,9 @@ TOPICS = [
       ("Law, governance & ethics", ["2026/01-13_", "2026/01-15_ll", "2026/08-11_ll"])],
      ["llm_agents"]),
     ("life_languages", "Life & Languages",
-     "Japanese and IELTS, fitness, recipes, travel, music.",
+     "Japanese and IELTS, fitness, recipes, travel.",
      [("", ["2018/09-20_JP", "2024/10-08_ielts", "2026/02-26_gym", "Dainty_factory/",
-            "2026/09-16_taiwan", "2025/10-07_tempo"])],
+            "2026/09-16_taiwan", "2021/11-14_shandong"])],
      []),
 ]
 

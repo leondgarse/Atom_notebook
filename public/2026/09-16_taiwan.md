@@ -727,7 +727,8 @@ summary: Taiwan cycling trip journal (Sep 2026, ~980 km over 9 riding days) with
 
 <!-- related -->
 # Related
+- [山东导游词](../2021/11-14_shandong_tour_conductor.md)
 - [ielts](../2024/10-08_ielts.md)
-- [tempo](../2025/10-07_tempo.md)
+- [gym](02-26_gym.md)
 ***
 <!-- /related -->

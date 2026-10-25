@@ -1,14 +1,15 @@
 # Life & Languages
 
-Japanese and IELTS, fitness, recipes, travel, music.
+Japanese and IELTS, fitness, recipes, travel.
 
 Back to [all indexes](README.md).
 
 - **[日语](../public/2018/09-20_JP.md)** (2018-09-20) — Japanese study — kana, pronunciation, then lesson-by-lesson vocabulary and grammar.
   - [五十音图](../public/2018/09-20_JP.md#五十音图) · [小李是中国人](../public/2018/09-20_JP.md#小李是中国人) · [这是书](../public/2018/09-20_JP.md#这是书) · [这里是百货商店](../public/2018/09-20_JP.md#这里是百货商店) · [房间里有桌子和椅子](../public/2018/09-20_JP.md#房间里有桌子和椅子) · [森先生七点起床](../public/2018/09-20_JP.md#森先生七点起床) · [吉田先生下个月去中国](../public/2018/09-20_JP.md#吉田先生下个月去中国) · [小李每天喝咖啡](../public/2018/09-20_JP.md#小李每天喝咖啡)
+- **[山东导游词](../public/2021/11-14_shandong_tour_conductor.md)** (2021-11-14) — Shandong tour-guide scripts (导游词) — province overview, welcome / farewell speeches, and commentary for 12 sites incl. Penglai Pavilion, the Three Confucian Sites, Mount Tai, Laoshan and Baotu Spring.
+  - [山东省情](../public/2021/11-14_shandong_tour_conductor.md#山东省情) · [01 蓬莱阁](../public/2021/11-14_shandong_tour_conductor.md#01%20蓬莱阁) · [02 三孔](../public/2021/11-14_shandong_tour_conductor.md#02%20三孔) · [03 泰山](../public/2021/11-14_shandong_tour_conductor.md#03%20泰山) · [04 崂山](../public/2021/11-14_shandong_tour_conductor.md#04%20崂山) · [05 刘公岛](../public/2021/11-14_shandong_tour_conductor.md#05%20刘公岛) · [南山](../public/2021/11-14_shandong_tour_conductor.md#南山) · [07 台儿庄古城](../public/2021/11-14_shandong_tour_conductor.md#07%20台儿庄古城)
 - **[ielts](../public/2024/10-08_ielts.md)** (2024-10-08) — IELTS preparation — writing advice and patterns, Task 1/2 practice tests, speaking topics.
   - [Advices](../public/2024/10-08_ielts.md#advices) · [Writing](../public/2024/10-08_ielts.md#Writing) · [Task 2](../public/2024/10-08_ielts.md#Task%202) · [Task 1](../public/2024/10-08_ielts.md#Task%201) · [Writing 2 pattern](../public/2024/10-08_ielts.md#Writing%202%20pattern) · [Writing 1 pattern](../public/2024/10-08_ielts.md#Writing%201%20pattern) · [Speaking Patterns](../public/2024/10-08_ielts.md#Speaking%20Patterns) · [Speaking test 3 topics](../public/2024/10-08_ielts.md#Speaking%20test%203%20topics)
-- **[tempo](../public/2025/10-07_tempo.md)** (2025-10-07) — Measuring music tempo stability with librosa and notes on human timing-jitter perception.
 - **[gym](../public/2026/02-26_gym.md)** (2026-02-26) — Fitness notes — joint movements vs muscles, training anatomy by body part, diet, swimming strokes.
   - [A 一个关节活动有哪些肌肉参与](../public/2026/02-26_gym.md#A%20一个关节活动有哪些肌肉参与) · [B 一块肌肉有哪些关节活动 (完整优化版)](../public/2026/02-26_gym.md#B%20一块肌肉有哪些关节活动%20完整优化版) · [拉伸](../public/2026/02-26_gym.md#拉伸) · [科学健身指南：从认知框架到硬核实操的系统增肌逻辑](../public/2026/02-26_gym.md#科学健身指南：从认知框架到硬核实操的系统增肌逻辑) · [健身饮食的核心认知：从“食物决定论”到“碳蛋脂总量管理”](../public/2026/02-26_gym.md#健身饮食的核心认知：从“食物决定论”到“碳蛋脂总量管理”) · [健身动作与解剖学：关节活动与目标肌肉的“一一映射”](../public/2026/02-26_gym.md#健身动作与解剖学：关节活动与目标肌肉的“一一映射”) · [胸大肌解剖学底层逻辑](../public/2026/02-26_gym.md#胸大肌解剖学底层逻辑) · [运动解剖学与肩膀专练：三角肌的三维力学矩阵](../public/2026/02-26_gym.md#运动解剖学与肩膀专练：三角肌的三维力学矩阵)
 - **[09-16 Taiwan](../public/2026/09-16_taiwan.md)** (2026-09-16) — Taiwan cycling trip journal (Sep 2026, ~980 km over 9 riding days) with polished English notes.
