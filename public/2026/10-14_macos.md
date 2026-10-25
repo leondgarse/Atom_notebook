@@ -1,6 +1,6 @@
 ---
 tags: [shell-tools, macos, terminal]
-summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input method, window management, Karabiner remaps, Dock, Homebrew apps, zsh/terminal, ssh, git case-insensitivity and Obsidian setup.
+summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input method, window management, Karabiner remaps, Dock, Homebrew apps, zsh/terminal, ssh and git case-insensitivity.
 ---
 # ___macOS___
 ***
@@ -12,19 +12,19 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
 - Almost every Linux `Ctrl+X` shortcut is `⌘X` on macOS; `Ctrl+C` in the terminal still interrupts.
 ## Everyday shortcuts
 
-| Action | Keys |
-| --- | --- |
-| Quit app / close window only | `⌘Q` / `⌘W` (the app keeps running after `⌘W`) |
-| Hide app / minimize window | `⌘H` / `⌘M` |
-| App switcher / windows of the current app | `⌘Tab` / ``⌘` `` |
-| Force Quit | `⌘⌥Esc` |
-| Mission Control / App Exposé / switch desktop | `Ctrl+↑` / `Ctrl+↓` / `Ctrl+←/→` |
-| Full screen | `Ctrl⌘F` |
-| Spotlight (launch apps) / Apps grid | `⌘Space` / `⌘Space` then `⌘1` |
-| Lock screen | `Ctrl⌘Q` |
-| Screenshot area / full / menu with recording | `⌘⇧4` / `⌘⇧3` / `⌘⇧5` |
-| Emoji picker | `Ctrl⌘Space` |
-| Settings of the current app | `⌘,` |
+| Action                                        | Keys                                           |
+| --------------------------------------------- | ---------------------------------------------- |
+| Quit app / close window only                  | `⌘Q` / `⌘W` (the app keeps running after `⌘W`) |
+| Hide app / minimize window                    | `⌘H` / `⌘M`                                    |
+| App switcher / windows of the current app     | `⌘Tab` / ``⌘` ``                               |
+| Force Quit                                    | `⌘⌥Esc`                                        |
+| Mission Control / App Exposé / switch desktop | `Ctrl+↑` / `Ctrl+↓` / `Ctrl+←/→`               |
+| Full screen                                   | `Ctrl⌘F`                                       |
+| Spotlight (launch apps) / Apps grid           | `⌘Space` / `⌘Space` then `⌘1`                  |
+| Lock screen                                   | `Ctrl⌘Q`                                       |
+| Screenshot area / full / menu with recording  | `⌘⇧4` / `⌘⇧3` / `⌘⇧5`                          |
+| Emoji picker                                  | `Ctrl⌘Space`                                   |
+| Settings of the current app                   | `⌘,`                                           |
 ## Text editing (most apps, not the terminal)
 
 | Linux | macOS | Action |
@@ -260,31 +260,6 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
   git branch -f master HEAD && git switch master
   ```
 - Never create names that differ only in case; rename through a temp name (`git mv a tmp && git mv tmp A`).
-***
-
-# Obsidian
-## Vaults and files
-- A vault is one root folder per window; no "Add Project Folder". To combine folders, make a hub vault of symlinks (linked folders must not overlap):
-  ```sh
-  mkdir -p ~/obsidian_projects && ln -s ~/Atom_notebook ~/obsidian_projects/Atom_notebook
-  ```
-- Plugins, themes, settings and hotkeys live in `<vault>/.obsidian/` — per vault. Copy `.obsidian` to reuse a setup, or use a single hub vault.
-- Other file types (`.py` ...) are hidden: Settings → Files and links → "Detect all file extensions". They still open in the default app unless a code-editor plugin is installed.
-- Open in a new tab: `⌘`-click (`⌘⌥`-click for a split); pinned tabs are never replaced.
-- Hotkey file `<vault>/.obsidian/hotkeys.json` (on macOS `Ctrl` is Control, `Mod` is ⌘); reload with `⌘P` → "Reload app without saving":
-  ```json
-  {"app:toggle-left-sidebar": [{"modifiers": ["Ctrl"], "key": "\\"}]}
-  ```
-- Wider text: keep Settings → Editor → "Readable line length" on and add `<vault>/.obsidian/snippets/wide.css`, then Appearance → CSS snippets → refresh → enable:
-  ```css
-  body { --file-line-width: 1200px; }
-  ```
-## Markdown that Obsidian doesn't render
-- Indented tables (`  | a | b |`) and tables right after a text line: Obsidian needs them flush-left with a blank line before. Plugins can't fix it — parsing happens before plugins run. Atom-style notes (everything indented 2 spaces under headings) were converted once with a script: dedent a section only if all its lines are indented ≥ 2, keep code inside column-0 fences, expand leading tabs first; verified by rendering every note with `markdown-it-py` before / after.
-- Tables nested in list items stay indented; Reading view (`⌘E`) handles them better than Live Preview.
-## AI plugins and private notes
-- Smart Connections embeds notes locally (transformers model, stored in `<vault>/.smart-env/`); its Smart Chat sends retrieved notes to the configured chat model. Exclude secret folders in Settings → Smart Connections → Excluded folders.
-- Notes with passwords: keep them out of git (`.gitignore`), out of AI indexing, and ideally move the secrets to the Passwords app.
 ***
 
 <!-- related -->

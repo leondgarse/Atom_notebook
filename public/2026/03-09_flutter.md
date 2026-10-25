@@ -25,6 +25,6 @@ flutter build apk --release
 <!-- related -->
 # Related
 - [Go Basic](../2019/12-24_go_basic.md)
-- [Typescript](10-10_typescript.md)
+- [cgo](../2020/02-11_cgo.md)
 ***
 <!-- /related -->

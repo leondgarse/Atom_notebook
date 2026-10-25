@@ -601,7 +601,10 @@ ___2017 - 05 - 25 Markdown Grammar___
 
 <!-- related -->
 # Related
-- [macOS](../2026/10-14_macos.md)
+- [Obsidian](../2026/10-25_obsidian.md)
+- [shell 流处理命令](01-17_shell流处理命令.md)
 - [Vim使用](../2013_Basic/05-12_Vim使用.md)
+- [Shortcuts for Atom (text editor) 1.0 (win/en](07-07_atom_usage.md)
+- [Shell script](01-04_Shell_script.md)
 ***
 <!-- /related -->

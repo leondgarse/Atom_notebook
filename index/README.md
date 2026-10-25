@@ -7,7 +7,7 @@ Each index links every note in the topic and its main sections.
 | --- | ---: | --- |
 | [Embedded Linux & ARM](embedded_arm.md) | 8 | ARM SoC basics, hardware interfaces, Linux driver development, bootloader / kernel porting, NPU boards. |
 | [C/C++ & Linux System Programming](c_linux_system.md) | 14 | C language, compilation toolchain, Linux processes / threads / IPC / sockets, Qt and C++. |
-| [Shell, Linux & Dev Tools](shell_tools.md) | 9 | Ubuntu / macOS usage, shell scripting and text processing, Vim, git / GitHub, editors, Markdown. |
+| [Shell, Linux & Dev Tools](shell_tools.md) | 10 | Ubuntu / macOS usage, shell scripting and text processing, Vim, git / GitHub, editors, Markdown. |
 | [Other Languages](other_languages.md) | 11 | Java and Android, Go (incl. cgo), R, TypeScript / Node, Flutter. |
 | [Python, Data & Backend](python_data.md) | 11 | Python language and modules, numpy / pandas / matplotlib, Spark, SQL, Neo4j, Flask, Kubernetes. |
 | [Classic ML, Recommenders & NLP](classic_ml.md) | 7 | Supervised / unsupervised ML from scratch, scikit-learn, recommender systems, early chatbot / NLP work. |

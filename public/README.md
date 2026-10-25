@@ -167,5 +167,6 @@
   - [09-16_taiwan.md](./2026/09-16_taiwan.md)
   - [10-10_typescript.md](./2026/10-10_typescript.md)
   - [10-14_macos.md](./2026/10-14_macos.md)
+  - [10-25_obsidian.md](./2026/10-25_obsidian.md)
 - [Dainty_factory](./Dainty_factory)
   - [Dainty_factory.md](./Dainty_factory/Dainty_factory.md)

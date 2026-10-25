@@ -1119,6 +1119,6 @@ Total TypeScript exercises
 <!-- related -->
 # Related
 - [Flutter](03-09_flutter.md)
-- [Ecipse使用](../2013_Java_Android/07-02_Ecipse使用.md)
+- [cgo](../2020/02-11_cgo.md)
 ***
 <!-- /related -->

@@ -147,8 +147,8 @@ summary: Eclipse setup — localisation, ADT and Android emulator, cross-compile
 # Related
 - [Android开发](07-09_Android开发.md)
 - [Flutter](../2026/03-09_flutter.md)
-- [Typescript](../2026/10-10_typescript.md)
 - [Go Modules](../2020/01-06_go_modules.md)
+- [Typescript](../2026/10-10_typescript.md)
 - [Java进阶](07-01_Java进阶.md)
 ***
 <!-- /related -->

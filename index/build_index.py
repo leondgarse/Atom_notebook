@@ -23,7 +23,7 @@ TOPICS = [
     ("shell_tools", "Shell, Linux & Dev Tools",
      "Ubuntu / macOS usage, shell scripting and text processing, Vim, git / GitHub, editors, Markdown.",
      [("", ["2013_Basic/05-12_", "2017/01-04_", "2017/01-17_", "2017/01-12_", "2017/01-14_",
-            "2017/05-25_", "2017/07-07_", "2026/10-14_macos"])],
+            "2017/05-25_", "2017/07-07_", "2026/10-14_macos", "2026/10-25_obsidian"])],
      ["c_linux_system"]),
     ("other_languages", "Other Languages",
      "Java and Android, Go (incl. cgo), R, TypeScript / Node, Flutter.",
@@ -114,8 +114,9 @@ def obsidian_heading(s):
 
 
 def frontmatter(path):
-    """Parse the simple `key: value` lines of a leading YAML block."""
-    meta = {}
+    """Parse the simple `key: value` lines of a leading YAML block.
+    Block lists (`key:` then `  - item` lines, as Obsidian writes them) become `[a, b]`."""
+    meta, key = {}, None
     with open(path, encoding="utf-8", errors="replace") as f:
         if f.readline().strip() != "---":
             return meta
@@ -124,7 +125,13 @@ def frontmatter(path):
                 break
             m = re.match(r"^(\w+):\s*(.*?)\s*$", line)
             if m:
-                meta[m.group(1)] = m.group(2).strip("'\"")
+                key = m.group(1)
+                meta[key] = m.group(2).strip("'\"")
+                continue
+            m = re.match(r"^\s+-\s+(.*?)\s*$", line)
+            if m and key:
+                items = meta[key].strip("[]")
+                meta[key] = "[" + ", ".join(filter(None, [items, m.group(1).strip("'\"")])) + "]"
     return meta
 
 
@@ -241,15 +248,13 @@ def note_line(n):
     meta = [n["date"]] if n["date"] else []
     if n["size"] < 200:
         meta.append("empty stub")
-    elif n["size"] >= 1024 * 1024:
-        meta.append(f"{n['size'] / 1024 / 1024:.1f} MB")
-    else:
-        meta.append(f"{max(1, n['size'] // 1024)} KB")
-    line = f"- **[{esc(n['title'], 80)}]({href(n['rel'])})** ({', '.join(meta)})"
+    line = f"- **[{esc(n['title'], 80)}]({href(n['rel'])})**"
+    if meta:
+        line += f" ({', '.join(meta)})"
     if n["summary"]:
         line += f" — {n['summary']}"
     if n["sections"]:
-        line += "  \n  " + " · ".join(f"[{esc(t)}]({href(n['rel'], anchor(s, raw))})" for _, t, s, raw in n["sections"])
+        line += "\n  - " + " · ".join(f"[{esc(t)}]({href(n['rel'], anchor(s, raw))})" for _, t, s, raw in n["sections"])
     return line
 
 
