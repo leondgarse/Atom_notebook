@@ -67,6 +67,12 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
   defaults write com.apple.Terminal NSUserKeyEquivalents -dict-add "Show Previous Tab" '@\UF72C' "Show Next Tab" '@\UF72D'
   ```
   `@` = ⌘, `\UF72C` / `\UF72D` = PageUp / PageDown. The same mechanism (System Settings → Keyboard → Keyboard Shortcuts → App Shortcuts) binds any menu item of any app.
+- **⌘Backspace wipes the whole line in Ghostty** — its default binding sends `Ctrl+U`. Easy to hit when used to `Alt+Backspace` for deleting a word. Make both delete the previous word instead (`ESC DEL`, zsh `backward-kill-word`):
+  ```sh
+  keybind = super+backspace=text:\x1b\x7f
+  keybind = alt+backspace=text:\x1b\x7f
+  ```
+  Use `keybind = super+backspace=ignore` to make it do nothing. `ghostty +list-keybinds --default` lists all built-in bindings. `Ctrl+U` / `Ctrl+W` still clear the line / a word.
 ***
 
 # Finder
