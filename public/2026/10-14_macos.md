@@ -1,6 +1,6 @@
 ---
 tags: [shell-tools, macos, terminal]
-summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input method, window management, Karabiner remaps, Dock, Homebrew apps, zsh/terminal, ssh and git case-insensitivity.
+summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input method, window management, Karabiner remaps, Dock, Homebrew apps, zsh/terminal, adding users, ssh and git case-insensitivity.
 ---
 # ___macOS___
 ***
@@ -233,6 +233,26 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
   ```
 ***
 
+# Adding a user from the command line
+- Over ssh, use `ssh -t` so `sudo` can prompt. `-password -` asks for the password instead of leaving it in shell history:
+  ```sh
+  sudo sysadminctl -addUser newuser -fullName "New User" -password - -home /Users/newuser -shell /bin/zsh  # add -admin for an administrator
+  sudo createhomedir -c -u newuser  # home is otherwise created at the first GUI login
+  sudo dseditgroup -o edit -a newuser -t user com.apple.access_ssh  # only needed if Remote Login is limited to some users
+  id newuser
+  ls -ld /Users/newuser  # drwxr-x--- newuser
+  ```
+- Make an existing user admin later (applies to new logins):
+  ```sh
+  sudo dseditgroup -o edit -a newuser -t user admin
+  dseditgroup -o checkmember -m newuser admin  # yes newuser is a member of admin
+  ```
+- Then `ssh-copy-id -i ~/.ssh/id_xxx.pub newuser@server`. Key login fails if the home or `~/.ssh` is group/world writable (sshd `StrictModes`): `chmod 755 ~; chmod 700 ~/.ssh; chmod 600 ~/.ssh/authorized_keys`.
+- A user created over ssh has no secure token, which is needed to unlock FileVault at boot or approve software updates. Add `-adminUser <admin> -adminPassword -` to `sysadminctl -addUser` to grant one.
+- Remove: `sudo sysadminctl -deleteUser newuser` (`-keepHome` keeps the home folder).
+- vim without a working Esc: `Ctrl+[` is Esc, `Ctrl+C` also leaves insert mode, `Ctrl+O :wq` saves and quits straight from insert mode.
+***
+
 # SSH: Too many authentication failures
 - `ssh -v` shows every agent key being offered, then `Received disconnect ... Too many authentication failures` before any password prompt. The server's `MaxAuthTries` (default 6) counts each rejected key; with 6 keys in the agent the password step is never reached. It worked on Ubuntu because fewer keys were loaded there.
 - Fix per host in `~/.ssh/config`:
@@ -272,5 +292,8 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
 # Related
 - [Github](../2017/01-14_github.md)
 - [Shortcuts for Atom (text editor) 1.0 (win/en](../2017/07-07_atom_usage.md)
+- [Obsidian](10-25_obsidian.md)
+- [Ubuntu 使用与 shell 命令](../2013_Basic/05-12_Ubuntu_Usage.md)
+- [git](../2017/01-12_git.md)
 ***
 <!-- /related -->
