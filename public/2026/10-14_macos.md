@@ -312,6 +312,26 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
   ```
 - Never create names that differ only in case; rename through a temp name (`git mv a tmp && git mv tmp A`).
 ***
+# Reboot
+- Check
+  ```sh
+  pmset -g sched
+  
+  crontab -l
+  ```
+  Automatic macOS updates can also restart the machine on their own: `AutomaticallyInstallMacOSUpdates = 1`
+- How to disable it
+  ```sh
+  sudo pmset repeat cancel
+  
+  # Turn off automatic macOS update installs:
+  sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool false
+  
+  # Optional, but these can also trigger restarts:
+  sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool false
+  sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool false
+  ```
+***
 
 <!-- related -->
 # Related
