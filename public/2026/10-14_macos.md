@@ -87,6 +87,8 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
 | Show hidden files | `⌘⇧.` |
 | Move to Trash | `⌘Backspace` |
 | Quick Look preview | `Space` |
+| Next / previous tab | `Ctrl+Tab` / `Ctrl+⇧Tab`, `⌘⇧]` / `⌘⇧[` |
+| Move files (cut and paste) | `⌘C`, then `⌥⌘V` in the target folder |
 | Icon / list view | `⌘1` / `⌘2` |
 | View options | `⌘J` |
 | Info / live Inspector (total size of a selection) | `⌘I` / `⌥⌘I` |
@@ -103,6 +105,12 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
   killall Finder
   ```
 - Quick Look renders Markdown with `brew install --cask qlmarkdown`; it also previews html, pdf and most other files with `Space`.
+- **⌘PageUp / ⌘PageDown for tabs** — same menu-item binding as Terminal.app:
+  ```sh
+  defaults write com.apple.finder NSUserKeyEquivalents -dict-add "Show Previous Tab" '@\UF72C' "Show Next Tab" '@\UF72D'
+  killall Finder
+  ```
+- **No `⌘X` for files**: Finder only cuts text. `⌘C` then `⌥⌘V` moves the files; holding `⌥` while the Edit menu is open shows "Move Item Here". A Karabiner rule can make `⌘X` / `⌘V` do this, see [Karabiner-Elements](#Karabiner-Elements).
 ***
 
 # Input method
@@ -158,6 +166,23 @@ summary: Moving from Ubuntu to macOS — keyboard shortcuts, Finder, input metho
                     "bundle_identifiers": ["^com\\.microsoft\\.edgemac$", "^com\\.google\\.Chrome$", "^com\\.apple\\.Safari$", "^org\\.mozilla\\.firefox$"]}]
   }
   ```
+- **Finder `⌘X` / `⌘V` moves files**: `⌘X` sends `⌘C` and sets a variable; the next `⌘V` sends `⌥⌘V` and clears it, so later pastes copy again. `⌘C` and `Esc` also clear it (same `to` with value 0, no `variable_if`):
+  ```json
+  {
+    "type": "basic",
+    "from": {"key_code": "v", "modifiers": {"mandatory": ["command"], "optional": ["caps_lock"]}},
+    "to": [{"key_code": "v", "modifiers": ["left_command", "left_option"]}, {"set_variable": {"name": "finder_cut", "value": 0}}],
+    "conditions": [{"type": "frontmost_application_if", "bundle_identifiers": ["^com\\.apple\\.finder$"]},
+                   {"type": "variable_if", "name": "finder_cut", "value": 1}]
+  },
+  {
+    "type": "basic",
+    "from": {"key_code": "x", "modifiers": {"mandatory": ["command"], "optional": ["caps_lock"]}},
+    "to": [{"key_code": "c", "modifiers": ["left_command"]}, {"set_variable": {"name": "finder_cut", "value": 1}}],
+    "conditions": [{"type": "frontmost_application_if", "bundle_identifiers": ["^com\\.apple\\.finder$"]}]
+  }
+  ```
+  The `⌘V` manipulator must come first. Downside: `⌘X` while renaming a file copies the text instead of cutting it — Karabiner can't tell a text field from the file list.
 - F-keys: Karabiner maps F1–F12 to Apple media actions (F5 = Dictation). Real F-keys: System Settings → Keyboard → Keyboard Shortcuts → Function Keys → "Use F1, F2, etc. keys as standard function keys". Dictation's own shortcut: Keyboard → Dictation → Shortcut. Karabiner → EventViewer shows what a key really sends.
 ***
 
