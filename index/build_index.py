@@ -80,7 +80,7 @@ TOPICS = [
      "GPT / Llama training, LLM serving (vLLM, llama.cpp), agent frameworks and coding agents.",
      [("Models & training", ["2023/02-27_gpt", "2023/08-06_llama2", "2024/03-23_llm"]),
       ("Serving", ["2025/07-05_vllm", "2026/02-01_llama", "2026/03-11_server"]),
-      ("Agents & tools", ["2026/02-02_gemini", "2026/02-28_claude", "2026/07-27_", "2026/01-29_openclaw",
+      ("Agents & tools", ["2026/02-02_antigravity", "2026/02-28_claude", "2026/07-27_", "2026/01-29_openclaw",
                           "2026/05-08_", "2026/05-10_agno",
                           "2026/08-20_deepseek"])],
      ["dl_frameworks", "nus_courses"]),

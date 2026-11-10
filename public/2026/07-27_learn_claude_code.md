@@ -221,7 +221,7 @@ print("final output:", messages[-1]['content'][0].text)
 - [claude](02-28_claude.md)
 - [agno](05-10_agno.md)
 - [langgraph](05-08_langgraph.md)
-- [Gemini](02-02_gemini_cli.md)
 - [OpenClaw](01-29_openclaw.md)
+- [Antigravity](02-02_antigravity_cli.md)
 ***
 <!-- /related -->

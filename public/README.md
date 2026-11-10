@@ -146,7 +146,7 @@
   - [01-17_dsa5204.md](./2026/01-17_dsa5204.md)
   - [01-29_openclaw.md](./2026/01-29_openclaw.md)
   - [02-01_llama_cpp.md](./2026/02-01_llama_cpp.md)
-  - [02-02_gemini_cli.md](./2026/02-02_gemini_cli.md)
+  - [02-02_antigravity_cli.md](./2026/02-02_antigravity_cli.md)
   - [02-26_gym.md](./2026/02-26_gym.md)
   - [02-28_claude.md](./2026/02-28_claude.md)
   - [03-09_flutter.md](./2026/03-09_flutter.md)

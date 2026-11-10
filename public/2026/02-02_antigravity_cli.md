@@ -1,8 +1,8 @@
 ---
-tags: [llm-agents, gemini, agents]
-summary: Gemini CLI and Antigravity (agy) — CLI usage, settings & permissions, rules, workflows, agent skills, hooks, MCP, NotebookLM MCP.
+tags: [llm-agents, antigravity, gemini, agents]
+summary: Antigravity CLI (agy) — CLI usage, settings & permissions, rules, workflows, agent skills, hooks, MCP, NotebookLM MCP.
 ---
-# ___Gemini___
+# ___Antigravity___
 ***
 
 # Get Started
@@ -95,33 +95,6 @@ summary: Gemini CLI and Antigravity (agy) — CLI usage, settings & permissions,
   - **Default:** Terminal sandbox enabled; commands allowed in sandbox and prompted outside; file access restricted to workspace + temp dirs.
   - **Auto:** Terminal sandbox enabled; automatically evaluates and approves safe, reversible commands outside the sandbox while prompting for risky actions.
   - **Turbo:** Unrestricted (`always-proceed`); disables sandbox, grants full filesystem access, and runs all commands without prompting.
-## Gemini CLI
-- **Gemini CLI Get Started:** [Gemini CLI Docs](https://geminicli.com/docs/get-started/) · [GitHub google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)
-  ```sh
-  # Run directly without installing
-  npx @google/gemini-cli
-
-  # Or install globally via npm / Homebrew
-  npm install -g @google/gemini-cli
-  brew install gemini-cli
-
-  # Start interactive session or specify a model
-  gemini
-  gemini -m gemini-2.5-pro
-  gemini -m gemini-2.5-flash-lite
-
-  # Non-interactive one-shot prompt or interactive initial prompt
-  gemini -p "Summarize README.md"
-  gemini -i "Fix lint errors"
-
-  # Sandbox or auto-approve (YOLO) mode
-  gemini --sandbox -p "run unit tests"
-  gemini --yolo
-  ```
-- **Settings Locations:**
-  - Global user settings: `~/.gemini/settings.json`
-  - Project settings: `<project-root>/.gemini/settings.json`
-  - System defaults: `/etc/gemini-cli/system-defaults.json`
 - **Installing NotebookLM MCP:** Copy and paste the below into `mcp_config.json` (`~/.gemini/config/mcp_config.json` or `~/.gemini/antigravity/mcp_config.json`):
   ```sh
   cat ~/.gemini/config/mcp_config.json
