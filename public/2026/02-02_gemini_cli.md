@@ -1,220 +1,347 @@
 ---
 tags: [llm-agents, gemini, agents]
-summary: Gemini CLI and Antigravity — rules, workflows, agent skills, MCP, NotebookLM MCP.
+summary: Gemini CLI and Antigravity (agy) — CLI usage, settings & permissions, rules, workflows, agent skills, hooks, MCP, NotebookLM MCP.
 ---
 # ___Gemini___
 ***
 
 # Get Started
+## Antigravity CLI (agy)
+- **Documentation:** [Antigravity Docs](https://antigravity.google/docs) · [CLI Reference](https://antigravity.google/docs/cli/reference) · [Agent Permissions & Security](https://antigravity.google/docs/permissions)
+- **Install & Launch:**
+  ```sh
+  # macOS / Linux (installs to ~/.local/bin/agy)
+  curl -fsSL https://antigravity.google/cli/install.sh | bash
+
+  # Configure environment paths and shell settings
+  agy install
+
+  # Start interactive TUI session
+  agy
+
+  # Update CLI to latest version
+  agy update
+  ```
+
+| Command / Flag                              | Description                                                                 | Example                                         |
+| ------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------- |
+| `agy`                                       | Start interactive TUI session                                               | `agy`                                           |
+| `-p`, `--print`, `--prompt "<query>"`       | Run a single prompt non-interactively and print the response                | `agy -p "explain this function"`                |
+| `-i`, `--prompt-interactive "<prompt>"`     | Run an initial prompt interactively and continue the session                | `agy -i "fix the build error"`                  |
+| `-c`, `--continue`                          | Continue the most recent conversation                                       | `agy -c`                                        |
+| `--conversation <id>`                       | Resume a previous conversation by ID                                        | `agy --conversation <uuid>`                     |
+| `--model <model-id>`                        | Select model for the current CLI session                                    | `agy --model gemini-4-argon-medium`             |
+| `--effort <level>`                          | Set reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`)              | `agy --effort high`                             |
+| `--mode <mode>`                             | Set agent execution mode (`accept-edits`, `auto`, `plan`)                   | `agy --mode auto`                               |
+| `--add-dir <path>`                          | Add a directory to the workspace (repeatable)                               | `agy --add-dir ../shared`                       |
+| `--sandbox`                                 | Run in a sandbox with terminal restrictions enabled                         | `agy --sandbox`                                 |
+| `--dangerously-skip-permissions`            | Auto-approve all tool permission requests without prompting                 | `agy --dangerously-skip-permissions`            |
+| `--output-format <fmt>`                     | Output format for print mode (`text`, `json`, `stream-json`)                | `agy -p "review" --output-format json`          |
+| `agy models`                                | List available models                                                       | `agy models`                                    |
+| `agy agents`                                | List available agents                                                       | `agy agents`                                    |
+| `agy mcp <subcommand>`                      | Manage MCP servers (`add`, `remove`, `list`, `enable`, `disable`)           | `agy mcp list`                                  |
+| `agy plugin <subcommand>`                   | Manage plugins (`list`, `install`, `uninstall`, `enable`, `disable`)        | `agy plugin list`                               |
+| `agy remote-control <subcommand>`           | Manage the remote-control background daemon (`start`, `status`, `stop`)     | `agy remote-control status`                     |
+
+- **Interactive TUI Slash Commands:**
+  - `/help` — Show all available slash commands
+  - `/settings` or `/config` — Open the interactive settings overlay
+  - `/permissions` — Open the interactive Permissions Manager (`Project`, `Shared`, or `Global` scope)
+  - `/skills` — List and reload available skills
+  - `/agents` — Open the Agent Manager to switch agents or monitor subagents
+  - `/context` — Inspect loaded rule/config files (`GEMINI.md`, `AGENTS.md`) and token usage
+  - `/codesearch` (alias `/cs`) — Fast regex/literal search across the codebase
+  - `/plan` — Step-by-step research and implementation planning before execution
+  - `/grill-me` — Interactive interview to align on design decisions before building a plan
+  - `/goal` — Autonomous long-running execution until the goal is fully achieved
+  - `/boost` — Deep thinking, multi-perspective planning, and rigorous verification
+  - `/teamwork` — Coordinate a team of autonomous subagents on a large project
+  - `/schedule` — Run an instruction on a recurring cron schedule or one-time timer
+  - `/learn` — Persist corrections or complex setups into reusable customizations
+  - `/compact` — Summarize and compact conversation history to free context window
+  - `/btw` — Ask a side question without polluting the main task's context
+  - `/resume` — List and resume previous conversations
+  - `/exit` or `/quit` (or `Ctrl+D Ctrl+D`) — Exit the CLI
+- **Global Configuration & Permissions (`~/.gemini/antigravity-cli/settings.json`):**
+  - Rules use `action(target)` syntax (`command(...)`, `unsandboxed(...)`, `read_file(...)`, `write_file(...)`, `read_url(...)`, `execute_url(...)`, `mcp(...)`).
+  - Evaluation precedence is strictly **`deny` > `ask` > `allow`**, so you can allow `"command(*)"` globally while blocking destructive commands in `deny` and prompting for sensitive commands in `ask`:
+  ```json
+  {
+    "allowNonWorkspaceAccess": true,
+    "colorScheme": "tokyo night",
+    "permissions": {
+      "allow": [
+        "command(*)",
+        "read_file(*)",
+        "write_file(*)"
+      ],
+      "deny": [
+        "command(rm -rf)",
+        "command(sudo)",
+        "write_file(.git/)"
+      ],
+      "ask": [
+        "command(git push)",
+        "command(rm)"
+      ]
+    },
+    "trustedWorkspaces": [
+      "~/workspace"
+    ]
+  }
+  ```
+- **Permission Presets (App / IDE / CLI):**
+  - **Request Review:** Terminal sandbox disabled; always asks before running commands or modifying files; file access restricted to workspace.
+  - **Default:** Terminal sandbox enabled; commands allowed in sandbox and prompted outside; file access restricted to workspace + temp dirs.
+  - **Auto:** Terminal sandbox enabled; automatically evaluates and approves safe, reversible commands outside the sandbox while prompting for risky actions.
+  - **Turbo:** Unrestricted (`always-proceed`); disables sandbox, grants full filesystem access, and runs all commands without prompting.
 ## Gemini CLI
-  - **Gemini CLI Get Started** [Gemini CLI Docs](https://geminicli.com/docs/get-started/)
-    ```sh
-    npm install -g @google/gemini-cli
+- **Gemini CLI Get Started:** [Gemini CLI Docs](https://geminicli.com/docs/get-started/) · [GitHub google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)
+  ```sh
+  # Run directly without installing
+  npx @google/gemini-cli
 
-    gemini -m gemini-2.5-flash-lite
-    ```
-  - **Installing NotbookLM MCP** Copy and paste the below 
-    ```sh
-    cat ~/.gemini/antigravity/mcp_config.json
-    # {
-    #   "mcpServers": {
-    #     "notebooklm": {
-    #       "command": "npx",
-    #       "args": [
-    #         "notebooklm-mcp@latest"
-    #       ]
-    #     }
-    # }
-    ```
-  - **AntiGravity Skills Creator** `antigravity-skill-creator.md`
-    ```md
-    #Antigravity Skill Creator System Instructions
-    You are an expert developer specializing in creating "Skills" for the Antigravity agent environment. Your goal is to generate high-quality, predictable, and efficient `.agent/skills/` directories based on user requirements.
+  # Or install globally via npm / Homebrew
+  npm install -g @google/gemini-cli
+  brew install gemini-cli
 
-    1. Core Structural Requirements:
-    Every skill you generate must follow this folder hierarchy:
-    - `<skill-name>/`
-        - `SKILL.md` (Required: Main logic and instructions)
-        - `scripts/` (Optional: Helper scripts)
-        - `examples/` (Optional: Reference implementations)
-        - `resources/` (Optional: Templates or assets)
+  # Start interactive session or specify a model
+  gemini
+  gemini -m gemini-2.5-pro
+  gemini -m gemini-2.5-flash-lite
 
-    2. YAML Frontmatter Standards:
-    The `SKILL.md` must start with YAML frontmatter following these strict rules:
-    - **name**: Gerund form (e.g., `testing-code`, `managing-databases`). Max 64 chars. Lowercase, numbers, and hyphens only. No "claude" or "anthropic" in the name.
-    - **description**: Written in **third person**. Must include specific triggers/keywords. Max 1024 chars. (e.g., "Extracts text from PDFs. Use when the user mentions document processing or PDF files.")
+  # Non-interactive one-shot prompt or interactive initial prompt
+  gemini -p "Summarize README.md"
+  gemini -i "Fix lint errors"
 
-    3. Writing Principles (The "Claude Way"):
-    When writing the body of `SKILL.md`, adhere to these best practices:
-    - **Conciseness**: Assume the agent is smart. Do not explain what a PDF or a Git repo is. Focus only on the unique logic of the skill.
-    - **Progressive Disclosure**: Keep `SKILL.md` under 500 lines. If more detail is needed, link to secondary files (e.g., `[See ADVANCED.md](ADVANCED.md)`) only one level deep.
-    - **Forward Slashes**: Always use `/` for paths, never `\`.
-    - **Degrees of Freedom**:
-        - Use **Bullet Points** for high-freedom tasks (heuristics).
-        - Use **Code Blocks** for medium-freedom (templates).
-        - Use **Specific Bash Commands** for low-freedom (fragile operations).
+  # Sandbox or auto-approve (YOLO) mode
+  gemini --sandbox -p "run unit tests"
+  gemini --yolo
+  ```
+- **Settings Locations:**
+  - Global user settings: `~/.gemini/settings.json`
+  - Project settings: `<project-root>/.gemini/settings.json`
+  - System defaults: `/etc/gemini-cli/system-defaults.json`
+- **Installing NotebookLM MCP:** Copy and paste the below into `mcp_config.json` (`~/.gemini/config/mcp_config.json` or `~/.gemini/antigravity/mcp_config.json`):
+  ```sh
+  cat ~/.gemini/config/mcp_config.json
+  # {
+  #   "mcpServers": {
+  #     "notebooklm": {
+  #       "command": "npx",
+  #       "args": [
+  #         "notebooklm-mcp@latest"
+  #       ]
+  #     }
+  #   }
+  # }
+  ```
+- **AntiGravity Skills Creator:** `antigravity-skill-creator.md`
+  ```md
+  # Antigravity Skill Creator System Instructions
+  You are an expert developer specializing in creating "Skills" for the Antigravity agent environment. Your goal is to generate high-quality, predictable, and efficient `.agents/skills/` (or `.agent/skills/`) directories based on user requirements.
 
-    4. Workflow & Feedback Loops:
-    For complex tasks, include:
-    - **Checklists**: A markdown checklist the agent can copy and update to track state.
-    - **Validation Loops**: A "Plan-Validate-Execute" pattern. (e.g., Run a script to check a config file BEFORE applying changes).
-    - **Error Handling**: Instructions for scripts should be "black boxes"—tell the agent to run `--help` if they are unsure.
+  1. Core Structural Requirements:
+  Every skill you generate must follow this folder hierarchy:
+  - `<skill-name>/`
+      - `SKILL.md` (Required: Main logic and instructions)
+      - `scripts/` (Optional: Helper scripts)
+      - `examples/` (Optional: Reference implementations)
+      - `resources/` (Optional: Templates or assets)
+      - `references/` (Optional: Detailed documentation or manuals)
 
-    5. Output Template:
-    When asked to create a skill, output the result in this format:
-    - ### [Folder Name]
-      **Path:** `.agent/skills/[skill-name]/`
-    - ### [SKILL.md]
-      (Markdown content with YAML frontmatter)
-    ```
+  2. YAML Frontmatter Standards:
+  The `SKILL.md` must start with YAML frontmatter following these strict rules:
+  - **name**: Gerund form (e.g., `testing-code`, `managing-databases`). Max 64 chars. Lowercase, numbers, and hyphens only. No "claude" or "anthropic" in the name.
+  - **description**: Written in **third person**. Must include specific triggers/keywords. Max 1024 chars. (e.g., "Extracts text from PDFs. Use when the user mentions document processing or PDF files.")
+
+  3. Writing Principles (The "Claude Way"):
+  When writing the body of `SKILL.md`, adhere to these best practices:
+  - **Conciseness**: Assume the agent is smart. Do not explain what a PDF or a Git repo is. Focus only on the unique logic of the skill.
+  - **Progressive Disclosure**: Keep `SKILL.md` under 500 lines. If more detail is needed, link to secondary files (e.g., `[See ADVANCED.md](references/ADVANCED.md)`) only one level deep.
+  - **Forward Slashes**: Always use `/` for paths, never `\`.
+  - **Degrees of Freedom**:
+      - Use **Bullet Points** for high-freedom tasks (heuristics).
+      - Use **Code Blocks** for medium-freedom (templates).
+      - Use **Specific Bash Commands** for low-freedom (fragile operations).
+
+  4. Workflow & Feedback Loops:
+  For complex tasks, include:
+  - **Checklists**: A markdown checklist the agent can copy and update to track state.
+  - **Validation Loops**: A "Plan-Validate-Execute" pattern. (e.g., Run a script to check a config file BEFORE applying changes).
+  - **Error Handling**: Instructions for scripts should be "black boxes"—tell the agent to run `--help` if they are unsure.
+
+  5. Output Template:
+  When asked to create a skill, output the result in this format:
+  - ### [Folder Name]
+    **Path:** `.agents/skills/[skill-name]/`
+  - ### [SKILL.md]
+    (Markdown content with YAML frontmatter)
+  ```
 ***
 
 # Anti-gravity
 ## Documentation
-- [Google Antigravity Documentation](https://antigravity.google/docs/get-started)
+- [Google Antigravity Documentation](https://antigravity.google/docs) · [Skills](https://antigravity.google/docs/skills) · [Rules & Workflows](https://antigravity.google/docs/rules-workflows) · [Hooks](https://antigravity.google/docs/hooks) · [Plugins](https://antigravity.google/docs/plugins) · [MCP](https://antigravity.google/docs/mcp)
+
+| Customization Type | Config File / Folder                  | Scope                     | Purpose                                                                           |
+| ------------------ | ------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
+| **Rules**          | `GEMINI.md`, `AGENTS.md`, `rules/*.md`| Contextual / Hierarchical | Enforcing coding styles, API restrictions, and local guidelines                   |
+| **Skills**         | `skills/<name>/SKILL.md`              | On-Demand (Progressive)   | Teaching multi-step procedures, runbooks, and tool workflows                      |
+| **Workflows**      | `workflows/<name>.md`                 | Slash Command (`/name`)   | Repeatable step-by-step prompt trajectories                                       |
+| **Plugins**        | `plugins/<name>/plugin.json`          | Bundle                    | Packaging related skills, rules, hooks, and MCP configs into a single unit        |
+| **Hooks**          | `hooks.json`                          | Lifecycle Event           | Running shell commands at agent lifecycle points (`PreToolUse`, `PostToolUse`)    |
+| **MCP Servers**    | `mcp_config.json`                     | Tool Integration          | Connecting the agent to external services and custom tool providers               |
+
+- **Discovery Locations & Precedence (Highest to Lowest):**
+  1. **Workspace Project:** `.agents/` (or `.agent/`, `_agents/`, `_agent/`) and hierarchical `GEMINI.md` / `AGENTS.md` walking up from CWD to the repo root.
+  2. **Declared Workspace Configs:** Explicitly listed in `skills.json` or `plugins.json` in the workspace.
+  3. **Global Discovery:** `~/.gemini/config/` (and `~/.gemini/GEMINI.md`).
+  4. **Built-in Customizations:** Bundled default skills mounted by name.
+  5. **Global Declared Configs:** Explicitly listed in global JSON configs.
 ## Rules
 Rules are manually defined constraints for the Agent to follow, at both the local and global levels. Rules allow users to guide the agent to follow behaviors particular to their own use cases and style.
 
-To get started with Rules:
-1. Open the Customizations panel via the "..." dropdown at the top of the editor's agent panel.
-2. Navigate to the Rules panel.
-3. Click + Global to create new Global Rules, or + Workspace to create new Workspace-specific rules.
-
-A Rule itself is simply a Markdown file, where you can input the constraints to guide the Agent to your tasks, stack, and style.
-- Rules files are limited to 12,000 characters each.
-- **Global Rules:** live in `~/.gemini/GEMINI.md` and are applied across all workspaces.
-- **Workspace Rules:** live in the `.agent/rules` folder of your workspace or git root.
-
-At the rule level you can define how a rule should be activated:
-- **Manual:** The rule is manually activated via at mention in Agent’s input box.
-- **Always On:** The rule is always applied.
-- **Model Decision:** Based on a natural language description of the rule, the model decides whether to apply the rule.
-- **Glob:** Based on the glob pattern you define (e.g., `.js`, `src/**/.ts`), the rule will be applied to all files that match the pattern.
-
-**@ Mentions:**
-You can reference other files using `@filename` in a Rules file. If filename is a relative path, it will be interpreted relative to the location of the Rules file. If filename is an absolute path, it will be resolved as a true absolute path, otherwise it will be resolved relative to the repository. For example, `@/path/to/file.md` will first attempt to be resolved to `/path/to/file.md`, and if that file does not exist, it will be resolved to `workspace/path/to/file.md`.
+- **Getting started with Rules in the Editor UI:**
+  1. Open the Customizations panel via the `"..."` dropdown at the top of the editor's agent panel.
+  2. Navigate to the **Rules** panel.
+  3. Click **+ Global** to create new Global Rules, or **+ Workspace** to create new Workspace-specific rules.
+- **Locations & Limits:**
+  - **Global Rules:** live in `~/.gemini/GEMINI.md` (or `~/.gemini/config/rules/`) and are applied across all workspaces.
+  - **Directory Rules (`GEMINI.md` / `AGENTS.md`):** placed in any directory; the agent walks up from the current working directory to the repository root and loads them automatically.
+  - **Workspace Rules:** live in the `.agents/rules/` (or `.agent/rules/`) folder of your workspace or git root.
+  - **Size Limits:** Per-file limit is `24 KB` (`24,000` bytes; legacy UI limit `12,000` chars). Always-on and global rules share a `20,000`-token aggregate budget (over-budget rules are demoted to file path pointers read on demand).
+- **Rule Activation Modes:**
+  - **Manual:** Activated via `@` mention in the Agent's input box.
+  - **Always On:** Always applied to the context.
+  - **Model Decision:** Based on a natural language description of the rule, the model decides whether to apply it.
+  - **Glob:** Applied automatically when working with files matching the glob pattern (e.g., `*.js`, `src/**/*.ts`).
+- **@ Mentions:**
+  - Reference other files using `@filename` (or `@[label](path)`) in a Rules file. Relative paths resolve relative to the Rules file; `/path/to/file.md` attempts absolute resolution first, falling back to `workspace/path/to/file.md`.
 ## Workflows
 Workflows enable you to define a series of steps to guide the Agent through a repetitive set of tasks, such as deploying a service or responding to PR comments. These Workflows are saved as markdown files, allowing you to have an easy repeatable way to run key processes. Once saved, Workflows can be invoked in Agent via a slash command with the format `/workflow-name`.
 
 While Rules provide models with guidance by providing persistent, reusable context at the prompt level, Workflows provide a structured sequence of steps or prompts at the trajectory level, guiding the model through a series of interconnected tasks or actions.
 
-To create a workflow:
-1. Open the Customizations panel via the "..." dropdown at the top of the editor's agent panel.
-2. Navigate to the Workflows panel.
-3. Click the + Global button to create a new global workflow that can be accessed across all your workspaces, or click the + Workspace button to create a workflow specific to your current workspace.
-4. To execute a workflow, simply invoke it in Agent using the `/workflow-name` command. You can call other Workflows from within a workflow! For example, `/workflow-1` can include instructions like “Call /workflow-2” and “Call /workflow-3”. Upon invocation, Agent sequentially processes each step defined in the workflow, performing actions or generating responses as specified.
-
-- Workflows are saved as markdown files and contain a title, a description and a series of steps with specific instructions for Agent to follow.
-- Workflow files are limited to 12,000 characters each.
-- **Agent-Generated Workflows:** You can also ask Agent to generate Workflows for you! This works particularly well after manually working with Agent through a series of steps since it can use the conversation history to create the Workflow.
+- **Creating and running a Workflow:**
+  1. Open the Customizations panel via the `"..."` dropdown at the top of the editor's agent panel.
+  2. Navigate to the **Workflows** panel.
+  3. Click **+ Global** to create a global workflow across all workspaces, or **+ Workspace** to create a workspace-specific workflow.
+  4. Invoke it in Agent using `/workflow-name`. Workflows can chain other workflows (e.g., `/workflow-1` can include instructions like `"Call /workflow-2"` and `"Call /workflow-3"`).
+- **Workflow Details:**
+  - Saved as Markdown files containing a title, a description, and a series of steps.
+  - Limited to 12,000 characters each.
+  - **Agent-Generated Workflows:** Ask the Agent to generate a Workflow for you after working through a multi-step task in conversation.
 ## Agent Skills
 Skills are an open standard for extending agent capabilities. A skill is a folder containing a `SKILL.md` file with instructions that the agent can follow when working on specific tasks.
 
-**What are skills?**
-Skills are reusable packages of knowledge that extend what the agent can do. Each skill contains:
-- Instructions for how to approach a specific type of task
-- Best practices and conventions to follow
-- Optional scripts and resources the agent can use
+- **What are skills?** Reusable packages of knowledge that extend what the agent can do:
+  - Instructions for how to approach a specific type of task
+  - Best practices and conventions to follow
+  - Optional scripts and resources the agent can use
+- **Where skills live:**
+  - **Workspace-specific:** `<workspace-root>/.agents/skills/<skill-folder>/` (or `.agent/skills/<skill-folder>/`) — for project-specific workflows like team deployment or testing conventions.
+  - **Global (all workspaces):** `~/.gemini/config/skills/<skill-folder>/` (or `~/.gemini/antigravity/skills/<skill-folder>/`) — for personal utilities or general-purpose tools everywhere.
+- **Creating a skill:**
+  1. Create a folder for your skill in one of the skill directories:
+     ```text
+     .agents/skills/my-skill/
+     ├── SKILL.md          # Required: Main instructions with YAML frontmatter
+     ├── scripts/          # Optional: Helper scripts and utilities
+     ├── examples/         # Optional: Reference implementations
+     ├── resources/        # Optional: Templates and assets
+     └── references/       # Optional: Detailed documentation loaded on demand
+     ```
+  2. Add YAML frontmatter at the top of `SKILL.md`:
+     ```yaml
+     ---
+     name: my-skill
+     description: Helps with a specific task. Use when you need to do X or Y.
+     ---
+     ```
+- **Frontmatter fields:**
+  - `name` (required): Unique identifier for the skill (lowercase, hyphens for spaces). Defaults to the folder name if omitted.
+  - `description` (required): Clear description of **what** the skill does and **when** to use it. Write in third person and include trigger keywords (e.g., `"Generates unit tests for Python code using pytest conventions."`).
+- **How the agent uses skills (Progressive Disclosure):**
+  1. **Discovery:** At conversation start, only skill names and descriptions are injected into context.
+  2. **Activation:** When a skill matches the user's task, the agent reads the full `SKILL.md` content (and any linked `references/` files on demand).
+  3. **Execution:** The agent follows the skill's instructions.
+- **Best practices:**
+  - **Keep skills focused:** Each skill should do one thing well.
+  - **Write clear descriptions:** Make it specific about what the skill does and when it's useful.
+  - **Use scripts as black boxes:** Encourage the agent to run helper scripts with `--help` first rather than reading their entire source code.
+  - **Include decision trees:** Help the agent choose the right path based on the situation.
+- **Example: A code review skill**
+  ```yaml
+  ---
+  name: code-review
+  description: Reviews code changes for bugs, style issues, and best practices. Use when reviewing PRs or checking code quality.
+  ---
+  ```
+## Hooks
+Lifecycle hooks (`hooks.json` in `.agents/hooks.json` or `~/.gemini/config/hooks.json`) execute external shell commands at specific points in the agent loop. Hook scripts receive a JSON payload on `stdin` and return a JSON response on `stdout`.
 
-When you start a conversation, the agent sees a list of available skills with their names and descriptions. If a skill looks relevant to your task, the agent reads the full instructions and follows them.
-
-**Where skills live**
-Antigravity supports two types of skills:
-- `<workspace-root>/.agent/skills/<skill-folder>/`: Workspace-specific
-- `~/.gemini/antigravity/skills/<skill-folder>/`: Global (all workspaces)
-
-- Workspace skills are great for project-specific workflows, like your team's deployment process or testing conventions.
-- Global skills work across all your projects. Use these for personal utilities or general-purpose tools you want everywhere.
-
-**Creating a skill**
-To create a skill:
-1. Create a folder for your skill in one of the skill directories
-2. Add a `SKILL.md` file inside that folder
-   - `.agent/skills/└─── my-skill/└─── SKILL.md`
-3. Every skill needs a `SKILL.md` file with YAML frontmatter at the top:
-   ```yaml
-   ---
-   name: my-skill
-   description: Helps with a specific task. Use when you need to do X or Y.
-   ---
-   ```
-
-**Frontmatter fields**
-- `name`: A unique identifier for the skill (lowercase, hyphens for spaces). Defaults to the folder name if not provided.
-- `description`: A clear description of what the skill does and when to use it. This is what the agent sees when deciding whether to apply the skill.
-
-**Tip:** Write your description in third person and include keywords that help the agent recognize when the skill is relevant. For example: "Generates unit tests for Python code using pytest conventions."
-
-**Skill folder structure**
-While `SKILL.md` is the only required file, you can include additional resources:
-- `SKILL.md`: Main instructions (required)
-- `scripts/`: Helper scripts (optional)
-- `examples/`: Reference implementations (optional)
-- `resources/`: Templates and other assets (optional)
-
-**How the agent uses skills**
-Skills follow a progressive disclosure pattern:
-1. **Discovery:** When a conversation starts, the agent sees a list of available skills with their names and descriptions
-2. **Activation:** If a skill looks relevant to your task, the agent reads the full `SKILL.md` content
-3. **Execution:** The agent follows the skill's instructions while working on your task
-
-**Best practices**
-- **Keep skills focused:** Each skill should do one thing well. Instead of a "do everything" skill, create separate skills for distinct tasks.
-- **Write clear descriptions:** The description is how the agent decides whether to use your skill. Make it specific about what the skill does and when it's useful.
-- **Use scripts as black boxes:** If your skill includes scripts, encourage the agent to run them with `--help` first rather than reading the entire source code. This keeps the agent's context focused on the task.
-- **Include decision trees:** For complex skills, add a section that helps the agent choose the right approach based on the situation.
-
-**Example: A code review skill**
-```yaml
----
-name: code-review
-description: Reviews code changes for bugs, style issues, and best practices. Use when reviewing PRs or checking code quality.
----
-```
-(Followed by review checklist and feedback guidelines)
+- **Supported Lifecycle Events:**
+  - `SessionStart`: Runs once when a new conversation session starts (can inject initial system messages via `injectSteps`).
+  - `PreToolUse`: Runs before a tool executes (matched by regex `matcher`, e.g., `"run_command"`); returns `"decision": "allow" | "deny" | "ask" | "force_ask"` and optional argument `overwrite`.
+  - `PostToolUse`: Runs after a tool completes (e.g., auto-linting or formatting).
+  - `PreInvocation` / `PostInvocation`: Runs before/after model calls to inject steps or force continuation/termination.
+  - `Stop`: Runs when the execution loop terminates; can return `{"decision": "continue", "reason": "..."}` to keep the agent working if goals aren't met.
+  ```json
+  {
+    "lint-checker": {
+      "PostToolUse": [
+        {
+          "matcher": "run_command",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "./scripts/lint.sh",
+              "timeout": 10
+            }
+          ]
+        }
+      ]
+    }
+  }
+  ```
 ## MCP Integration
-  Antigravity supports the Model Context Protocol (MCP), a standard that allows the editor to securely connect to your local tools, databases, and external services. This integration provides the AI with real-time context beyond just the files open in your editor.
+Antigravity supports the Model Context Protocol (MCP), an open standard that connects the agent to local tools, databases, and remote services.
 
-  What is MCP?
-  MCP acts as a bridge between Antigravity and your broader development environment. Instead of manually pasting context (like database schemas or logs) into the editor, MCP allows Antigravity to fetch this information directly when needed.
-
-  Core Features
-  1. Context Resources
-  The AI can read data from connected MCP servers to inform its suggestions.
-
-  Example: When writing a SQL query, Antigravity can inspect your live Neon or Supabase schema to suggest correct table and column names.
-
-  Example: When debugging, the editor can pull in recent build logs from Netlify or Heroku.
-
-  2. Custom Tools
-  MCP enables Antigravity to execute specific, safe actions defined by your connected servers.
-
-  Example: "Create a Linear issue for this TODO."
-
-  Example: "Search Notion or GitHub for authentication patterns."
-
-  How to Connect
-  Connections are managed directly through the built-in MCP Store.
-
-  Access the Store: Open the MCP Store panel within the "..." dropdown at the top of the editor's side panel.
-  Browse & Install: Select any of the supported servers from the list and click Install.
-  Authenticate: Follow the on-screen prompts to securely link your accounts (where applicable).
-  Once installed, resources and tools from the server are automatically available to the editor.
-
-  Connecting Custom MCP Servers
-  To connect to a custom MCP server:
-
-  Open the MCP store via the "..." dropdown at the top of the editor's agent panel.
-  Click on "Manage MCP Servers"
-  Click on "View raw config"
-  Modify the mcp_config.json with your custom MCP server configuration.
+- **Core Features:**
+  1. **Context Resources:** Read data directly from connected MCP servers (e.g., inspect live Neon/Supabase schemas when writing SQL, or pull build logs from Netlify/Heroku).
+  2. **Custom Tools:** Execute actions defined by connected servers (e.g., `"Create a Linear issue for this TODO"`, `"Search Notion or GitHub for authentication patterns"`).
+- **Connecting via the Editor MCP Store:**
+  1. Open the **MCP Store** panel via the `"..."` dropdown at the top of the editor's agent panel.
+  2. Browse & click **Install** on any supported server and follow on-screen authentication prompts.
+- **Connecting Custom MCP Servers (`mcp_config.json`):**
+  - Global config lives at `~/.gemini/config/mcp_config.json` (or via **Manage MCP Servers → View raw config** in the editor, or `agy mcp add` in the CLI).
+  - Supports **Stdio** (local command-line executables) and **Streamable HTTP** (`url` pointing to `/mcp` remote endpoint):
+  ```json
+  {
+    "mcpServers": {
+      "sqlite-helper": {
+        "command": "sqlite-mcp-server",
+        "args": ["/path/to/database.db"],
+        "env": {
+          "DB_READONLY": "true"
+        }
+      },
+      "remote-service": {
+        "url": "https://mcp.example.com/mcp"
+      }
+    }
+  }
+  ```
 ***
 
 # SKILLs
-## NotbookLM MCP
-```
-**name:** notebooklm-research
-**description:** Performs deep research and knowledge synthesis using NotebookLM MCP. Use when the user mentions research, learning materials, creating study guides, generating audio/video overviews, or needs to gather comprehensive information on a topic from web or Google Drive sources.
+## NotebookLM MCP
+```md
+---
+name: notebooklm-research
+description: Performs deep research and knowledge synthesis using NotebookLM MCP. Use when the user mentions research, learning materials, creating study guides, generating audio/video overviews, or needs to gather comprehensive information on a topic from web or Google Drive sources.
+---
 
 # NotebookLM Research & Knowledge Synthesis
 
@@ -246,13 +373,14 @@ description: Reviews code changes for bugs, style issues, and best practices. Us
 2. Add sources: `notebook_add_url`, `notebook add text`, `notebook add drive`
 3. Query or generate artifacts
 ```
+***
 
 <!-- related -->
 # Related
-- [agno](05-10_agno.md)
 - [langgraph](05-08_langgraph.md)
+- [agno](05-10_agno.md)
 - [learn claude code](07-27_learn_claude_code.md)
 - [OpenClaw](01-29_openclaw.md)
-- [Deepseek Harness](08-20_deepseek_harness.md)
+- [claude](02-28_claude.md)
 ***
 <!-- /related -->
