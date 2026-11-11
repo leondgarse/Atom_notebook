@@ -90,6 +90,12 @@ summary: Antigravity CLI (agy) — CLI usage, settings & permissions, rules, wor
     ]
   }
   ```
+- **Global Rules (`~/.gemini/config/GEMINI.md`):** Applied across all workspaces in Antigravity CLI, IDE, and 2.0:
+  ```md
+  # Global Rules
+
+  - For each project, if `CLAUDE.md` exists and has not been read yet in the current session, read `CLAUDE.md` before proceeding with project tasks.
+  ```
 - **Permission Presets (App / IDE / CLI):**
   - **Request Review:** Terminal sandbox disabled; always asks before running commands or modifying files; file access restricted to workspace.
   - **Default:** Terminal sandbox enabled; commands allowed in sandbox and prompted outside; file access restricted to workspace + temp dirs.
@@ -180,7 +186,7 @@ Rules are manually defined constraints for the Agent to follow, at both the loca
   2. Navigate to the **Rules** panel.
   3. Click **+ Global** to create new Global Rules, or **+ Workspace** to create new Workspace-specific rules.
 - **Locations & Limits:**
-  - **Global Rules:** live in `~/.gemini/GEMINI.md` (or `~/.gemini/config/rules/`) and are applied across all workspaces.
+  - **Global Rules:** live in `~/.gemini/config/GEMINI.md` (or `~/.gemini/config/AGENTS.md`, `~/.gemini/config/rules/`, `~/.gemini/GEMINI.md`, `~/.gemini/AGENTS.md`) and are applied across all workspaces.
   - **Directory Rules (`GEMINI.md` / `AGENTS.md`):** placed in any directory; the agent walks up from the current working directory to the repository root and loads them automatically.
   - **Workspace Rules:** live in the `.agents/rules/` (or `.agent/rules/`) folder of your workspace or git root.
   - **Size Limits:** Per-file limit is `24 KB` (`24,000` bytes; legacy UI limit `12,000` chars). Always-on and global rules share a `20,000`-token aggregate budget (over-budget rules are demoted to file path pointers read on demand).
