@@ -1,6 +1,6 @@
 ---
 tags: [llm-agents, claude-code, agents]
-summary: Claude Code setup — install, Ghostty, local models via Ollama/llama.cpp/litellm, settings, learning resources.
+summary: Claude Code setup — install, Ghostty, local models via Ollama/llama.cpp/litellm, settings, Garmin MCP connector for claude.ai via Tailscale Funnel, learning resources.
 ---
 - [claude docs](https://code.claude.com/docs/en/overview)
 ```sh
@@ -328,6 +328,59 @@ litellm --config config.yaml --port 4000
   ```
 - Then tell the sender: "message `keystone-ai-system-c7` ...", or "look up session 6123308c in `~/.claude/sessions/*.json` to get its name".
 - The `ListAgents` tool can also list your account's sessions on other machines or in the cloud, when Remote Control is connected. Those rows show a title instead of a `<dir>-xx` name and are not in the local registry.
+## Garmin MCP connector for claude.ai
+- **Goal**: use Garmin data on claude.ai (web and mobile). claude.ai custom connectors take a **remote HTTPS URL** only, so a local stdio MCP server (`npx ...` / `uvx ...`) doesn't work there. Run an HTTP MCP server locally and expose it publicly.
+  ```text
+  claude.ai --HTTPS--> Tailscale Funnel (https://<mac>.<tailnet>.ts.net/<secret>/mcp)
+            --> server.py on 127.0.0.1:8787 --Bearer token--> personal.connectapi.garmin.com
+  ```
+- **Garmin Personal API** (official, for your own data): create a key at `https://connect.garmin.com/app/settings/personalApiToken` (expires after 30/90/180/365 days, shown once). The key is exchanged for a **24h access token** (a raw JWT, no refresh token). Request a new one with the key when it expires.
+  ```sh
+  # key -> access token
+  curl -X POST 'https://personal.connectapi.garmin.com/personalapitoken-service/personal-api/personal-api-key/token' \
+    -H "Authorization: ApiKey $GARMIN_API_KEY"
+  # token -> data
+  curl 'https://personal.connectapi.garmin.com/usersummary-service/usersummary/daily?calendarDate=2026-11-14' \
+    -H "Authorization: Bearer $TOKEN"
+  ```
+  - China accounts use `https://personal.connectapi.garmin.cn`.
+  - The Swagger docs page (`developer.garmin.com/gc-developer-program/personal/swagger-docs/`) is rendered in the browser. The OpenAPI spec is embedded as `JSON.parse('{"openapi":"3.0.1",...}')` in the page's `component---src-pages-gc-developer-program-personal-swagger-docs-js-*.js` bundle. It has 25 read-only GET endpoints: daily summaries, sleep, HRV, heart rate, HR zones, body battery, stress/steps/hydration stats, SpO2, fitness age, weight, weight goals, nutrition, menstrual cycle, activity list/detail/workouts, activity file download, profile settings.
+- **MCP server**: Python `mcp` SDK **v2** (`from mcp.server.mcpserver import MCPServer`; v1's `FastMCP` was renamed) plus `httpx`. 21 `@mcp.tool` functions, one per endpoint. It caches the token and refreshes it 5 minutes before the JWT `exp`, or on a 401. Responses are trimmed: the activity list keeps key fields only (63 KB down to 14 KB) and anything over 120k chars is truncated.
+  ```sh
+  mkdir connectors && cd connectors
+  uv init --bare --name garmin-mcp && uv add "mcp[cli]" httpx
+  # .env: MCP_PATH_SECRET=<python3 -c 'import secrets;print(secrets.token_urlsafe(24))'>, PORT=8787
+  set -a; source .env; set +a; uv run python server.py
+  ```
+  - Serve at `/<secret>/mcp`. claude.ai connectors support OAuth or no auth, not a static API-key header, so the unguessable path is the access control. Every other path returns 404.
+  - Disable the SDK's DNS-rebinding guard (`TransportSecuritySettings(enable_dns_rebinding_protection=False)`). Otherwise the public Host header is rejected, because only localhost is allowed by default.
+  - Use stateful mode (sessions) with SSE responses, which are the SDK defaults. Set a non-empty `version=` on the server.
+- **Tailscale Funnel** (the commands actually run, Homebrew CLI on macOS):
+  ```sh
+  sudo brew services start tailscale   # start tailscaled as root, also starts at boot
+  tailscale up                         # prints a login URL, then the machine joins the tailnet
+  tailscale funnel --bg 8787           # first time prints "Funnel is not enabled on your tailnet"
+                                       #   plus a https://login.tailscale.com/f/funnel?node=... link; open it and click Enable
+  tailscale funnel --bg 8787           # rerun: "Available on the internet: https://<mac>.<tailnet>.ts.net/ |-- proxy http://127.0.0.1:8787"
+  tailscale funnel status              # check
+  tailscale funnel --https=443 off     # turn it off
+  ```
+  - The Funnel config persists across reboots. Only `server.py` has to be started again.
+  - The first HTTPS request may fail for a few seconds while the certificate is issued.
+- **claude.ai**: Settings → Connectors → Add custom connector → URL `https://<mac>.<tailnet>.ts.net/<secret>/mcp` → "Don't need login" → Connect. Also works in the mobile apps.
+- **Pitfall: `*.trycloudflare.com` (Cloudflare quick tunnel) is rejected by claude.ai.** It shows `无法连接到 Garmin ... ofid_...`. The server log shows a single `initialize` from Anthropic's servers (UA `python-httpx/0.28.1`, clientInfo `Anthropic`) answered with 200, and then nothing more. How it was narrowed down:
+  - MCP v1 and v2 Python clients through the same public URL worked fully.
+  - `https://mcp.deepwiki.com/mcp` connected on the same account.
+  - The same server via `ssh -R 80:localhost:8787 nokey@localhost.run` (`*.lhr.life`) connected.
+  - So the domain is the problem. Use Tailscale Funnel, an ngrok static domain, or a Cloudflare *named* tunnel on your own domain.
+- **Test a remote MCP URL locally**:
+  ```py
+  from mcp import ClientSession
+  from mcp.client.streamable_http import streamablehttp_client   # mcp<2; v2: streamable_http_client
+  async with streamablehttp_client(URL) as (r, w, _):
+      async with ClientSession(r, w) as s:
+          await s.initialize(); print((await s.list_tools()).tools)
+  ```
 ***
 
 # Learning
@@ -345,7 +398,7 @@ litellm --config config.yaml --port 4000
 - [learn claude code](07-27_learn_claude_code.md)
 - [agno](05-10_agno.md)
 - [OpenClaw](01-29_openclaw.md)
-- [langgraph](05-08_langgraph.md)
+- [Antigravity](02-02_antigravity_cli.md)
 - [Llama.cpp](02-01_llama_cpp.md)
 ***
 <!-- /related -->
