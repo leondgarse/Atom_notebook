@@ -83,7 +83,7 @@ TOPICS = [
       ("Agents & tools", ["2026/02-02_antigravity", "2026/02-28_claude", "2026/07-27_", "2026/01-29_openclaw",
                           "2026/05-08_", "2026/05-10_agno",
                           "2026/08-20_deepseek"])],
-     ["dl_frameworks", "nus_courses"]),
+     ["dl_frameworks", "nus_courses", "life_languages"]),
     ("nus_courses", "NUS MSc Coursework",
      "Course notes from the NUS MSc in AI & Innovation (2025–2026).",
      [("Technical", ["2025/08-11_nus", "2026/01-16_", "2026/01-17_", "2026/08-11_it5005",
@@ -97,8 +97,14 @@ TOPICS = [
      "Japanese and IELTS, fitness, recipes, travel.",
      [("", ["2018/09-20_JP", "2024/10-08_ielts", "2026/02-26_gym", "Dainty_factory/",
             "2026/09-16_taiwan", "2021/11-14_shandong"])],
-     []),
+     ["llm_agents"]),
 ]
+
+# Sections of notes that live in another index but also belong here:
+# topic key -> [(note prefix, heading text)]. Listed under "## Also in other indexes".
+CROSS_REFS = {
+    "life_languages": [("2026/02-28_claude", "Garmin MCP connector for claude.ai")],
+}
 
 SKIP_SECTIONS = {"目录", "table of contents", "toc", "links", "链接", "q / a", "q and a", "qa", "info", "related"}
 MAX_SECTIONS = 8
@@ -285,6 +291,17 @@ def main():
                 assigned[r] = key
                 lines.append(note_line(note_info(r)))
                 count += 1
+            lines.append("")
+        xrefs = CROSS_REFS.get(key, [])
+        if xrefs:
+            lines += ["## Also in other indexes", ""]
+            for prefix, heading in xrefs:
+                rel = next(r for r in all_notes if r.startswith(prefix))
+                h = next(h for h in headings(os.path.join(PUB, rel)) if h[1] == heading)
+                n = note_info(rel)
+                home = titles[next(t[0] for t in TOPICS for _, ps in t[3] for p in ps if rel.startswith(p))]
+                lines.append(f"- **[{esc(heading, 80)}]({href(rel, anchor(h[2], h[3]))})** — "
+                             f"section of [{esc(n['title'], 80)}]({href(rel)}) ({n['date']}), listed under {home}.")
             lines.append("")
         if related:
             lines += ["## See also", ""] + [f"- [{titles[r]}]({r}.md)" for r in related] + [""]

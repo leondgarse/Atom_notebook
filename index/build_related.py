@@ -31,7 +31,7 @@ RELATED = {
     "2018/09-20_JP": ["2024/10-08_ielts"],
     "2024/10-08_ielts": ["2018/09-20_JP", "2026/09-16_taiwan"],
     "2021/11-14_shandong": ["2026/09-16_taiwan"],
-    "2026/02-26_gym": ["Dainty_factory/", "2026/09-16_taiwan"],
+    "2026/02-26_gym": ["Dainty_factory/", "2026/09-16_taiwan", "2026/02-28_claude"],
 }
 
 

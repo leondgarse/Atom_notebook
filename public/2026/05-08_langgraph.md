@@ -1512,9 +1512,9 @@ print(resumed["status"])  # -> "approved"
 <!-- related -->
 # Related
 - [learn claude code](07-27_learn_claude_code.md)
-- [claude](02-28_claude.md)
 - [agno](05-10_agno.md)
 - [Antigravity](02-02_antigravity_cli.md)
+- [claude](02-28_claude.md)
 - [OpenClaw](01-29_openclaw.md)
 ***
 <!-- /related -->

@@ -16,3 +16,11 @@ Back to [all indexes](README.md).
   - [9.16 Taipei](../public/2026/09-16_taiwan.md#9%2016%20Taipei) · [9.17 Taipei → Zhunan](../public/2026/09-16_taiwan.md#9%2017%20Taipei%20→%20Zhunan) · [9/18 — Zhunan → Puli](../public/2026/09-16_taiwan.md#9%2018%20—%20Zhunan%20→%20Puli) · [9/19 — Puli → Chiayi](../public/2026/09-16_taiwan.md#9%2019%20—%20Puli%20→%20Chiayi) · [9/20 — Chiayi → Alishan](../public/2026/09-16_taiwan.md#9%2020%20—%20Chiayi%20→%20Alishan) · [9/21 — Alishan → Tainan](../public/2026/09-16_taiwan.md#9%2021%20—%20Alishan%20→%20Tainan) · [9/22 — Tainan → Fangliao → Hengchun → Longpan →…](../public/2026/09-16_taiwan.md#9%2022%20—%20Tainan%20→%20Fangliao%20→%20Hengchun%20→%20Longpan%20→%20Southernmost%20Point%20→%20Hengchun) · [9/23 — Hengchun → Xuhai → Shouka → Jinlun](../public/2026/09-16_taiwan.md#9%2023%20—%20Hengchun%20→%20Xuhai%20→%20Shouka%20→%20Jinlun)
 - **[Dainty Factory 美味工厂](../public/Dainty_factory/Dainty_factory.md)** — Dainty Factory — a collection of home-cooking recipes with photos.
   - [BBC风味药膳枸杞鸡汤 By 相宜宜](../public/Dainty_factory/Dainty_factory.md#BBC风味药膳枸杞鸡汤%20By%20相宜宜) · [Pancakes 英式煎饼 By xdcandy](../public/Dainty_factory/Dainty_factory.md#Pancakes%20英式煎饼%20By%20xdcandy) · [一口番茄 By 苏里慈](../public/Dainty_factory/Dainty_factory.md#一口番茄%20By%20苏里慈) · [一步一步包馄饨 By 海草](../public/Dainty_factory/Dainty_factory.md#一步一步包馄饨%20By%20海草) · [今日の晩御飯 可乐饼 By 蜂蜜甜甜圈](../public/Dainty_factory/Dainty_factory.md#今日の晩御飯%20可乐饼%20By%20蜂蜜甜甜圈) · [健康方便的芒果冰淇淋 By 可可酱](../public/Dainty_factory/Dainty_factory.md#健康方便的芒果冰淇淋%20By%20可可酱) · [厚蛋烧 By 小木](../public/Dainty_factory/Dainty_factory.md#厚蛋烧%20By%20小木) · [双皮奶 By lplinkin](../public/Dainty_factory/Dainty_factory.md#双皮奶%20By%20lplinkin)
+
+## Also in other indexes
+
+- **[Garmin MCP connector for claude.ai](../public/2026/02-28_claude.md#Garmin%20MCP%20connector%20for%20claude%20ai)** — section of [claude](../public/2026/02-28_claude.md) (2026-02-28), listed under LLMs & AI Agents.
+
+## See also
+
+- [LLMs & AI Agents](llm_agents.md)

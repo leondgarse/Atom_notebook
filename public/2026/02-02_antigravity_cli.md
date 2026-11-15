@@ -356,10 +356,10 @@ description: Performs deep research and knowledge synthesis using NotebookLM MCP
 
 <!-- related -->
 # Related
+- [claude](02-28_claude.md)
 - [langgraph](05-08_langgraph.md)
 - [agno](05-10_agno.md)
 - [learn claude code](07-27_learn_claude_code.md)
 - [OpenClaw](01-29_openclaw.md)
-- [claude](02-28_claude.md)
 ***
 <!-- /related -->

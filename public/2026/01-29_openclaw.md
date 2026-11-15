@@ -195,7 +195,7 @@ summary: OpenClaw agent — install, llama.cpp provider, gateway service, securi
 - [claude](02-28_claude.md)
 - [learn claude code](07-27_learn_claude_code.md)
 - [langgraph](05-08_langgraph.md)
+- [Antigravity](02-02_antigravity_cli.md)
 - [agno](05-10_agno.md)
-- [Llama.cpp](02-01_llama_cpp.md)
 ***
 <!-- /related -->
