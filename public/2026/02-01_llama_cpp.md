@@ -1,6 +1,6 @@
 ---
 tags: [llm-agents, llama-cpp, ollama]
-summary: llama.cpp build and usage, Qwen agent deployment, Ollama.
+summary: llama.cpp build and usage, router mode as a systemd service, reasoning and vision notes, a local model comparison (Nov 2026), Qwen agent deployment, Ollama.
 ---
 # ___Llama.cpp___
 ***
@@ -185,6 +185,103 @@ summary: llama.cpp build and usage, Qwen agent deployment, Ollama.
     - **Mirostat**: is a funky sampling algorithm that overrides Top-K, Top-P and Typical-P samplers. It’s an alternative sampler that produces text with controlled perplexity (entropy), which means that we can control how certain the model should be in it’s predictions. This comes without side-effects of generating repeated text (as it happens in low perplexity scenarios) or incoherent output (as it happens in high perplexity scenarios). The configuration parameters for Mirostat are: `Mirostat version`: 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0. `Mirostat learning rate (η, eta)`: specifies how fast the model converges to desired perplexity. `Mirostat target entropy (τ, tau)`: the desired perplexity. Depending on the model, it should not be too high, otherwise you may degrade it’s performance.
     - **Max tokens**: -1 makes the LLM generate until it decides it’s end of the sentence (by returning end-of-sentence token), or the context is full.
     - **Repetition penalty**: Repetition penalty algorithm (not to be mistaken with DRY) simply reduces the chance that tokens that are already in the generated text will be used again. Usually the repetition penalty algorithm is restricted to N last tokens of the context. In case of llama.cpp (i’ll simplify a bit), it works like that: first, it creates a frequency map occurrences for last N tokens. Then, the current logit bias for each token is divided by repeat_penalty value. By default it’s usually set to 1.0, so to enable repetition penalty it should be set to >1. Finally, frequency and presence penalties are applied based on the frequency map. The penalty for each token is equal to (token_count * frequency_penalty) + (presence_penalty if token_count > 0). The penalty is represented as logit bias, which can be in [-100, 100] range. Negative values reduce the probability of token appearing in output, while positive increase it. The configuration parameters for repetition penalty are: `Repeat last N`: Amount of tokens from the end of the context to consider for repetition penalty. `Repeat penalty`: repeat_penalty argument described above, if equal to 1.0 then the repetition penalty is disabled. `Presence penalty`: presence_penalty argument from the equation above. `Frequency penalty`: frequency_penalty argument from the equation above.
+***
+
+# Router mode
+## models.ini presets as a user service
+  - **Router mode**: one `llama-server` started with `--models-preset models.ini` serves every preset on one port. It spawns a child `llama-server` per model on first request, and `sleep-idle-seconds` unloads an idle one. `--models-max 2` keeps at most two resident, so a third evicts one.
+  - **systemd user unit** `~/.config/systemd/user/llama-router.service`. The children use the router's own binary, so the build path matters:
+    ```ini
+    [Service]
+    Environment=LD_LIBRARY_PATH=%h/workspace/llama.cpp/build/bin:/usr/local/cuda/lib64
+    WorkingDirectory=%h/workspace/models
+    ExecStart=%h/workspace/llama.cpp/build/bin/llama-server \
+        --models-preset %h/workspace/models/models.ini \
+        --models-max 2 --host 0.0.0.0 --port 8080
+    Restart=always
+    RestartSec=5
+
+    [Install]
+    WantedBy=default.target
+    ```
+  - **Preset** example, a dense 27B with vision:
+    ```ini
+    [Qwen/Qwen3.8-27B]
+    model = /home/USER/workspace/models/Qwen3.8-27B-Q8_0.gguf
+    mmproj = /home/USER/workspace/models/mmproj-Qwen3.8-27B-BF16.gguf
+    ctx-size = 65536
+    flash-attn = true
+    fit = on
+    cache-type-k = q8_0
+    cache-type-v = q8_0
+    parallel = 1
+    temp = 0.6
+    top-p = 0.95
+    top-k = 20
+    sleep-idle-seconds = 300
+    ```
+  - **Daily commands**
+    ```sh
+    curl -s 'http://127.0.0.1:8080/v1/models?reload=1'   # re-read models.ini (hot reload, no restart)
+    curl -s http://127.0.0.1:8080/v1/models               # presets and status: unloaded / loading / loaded / sleeping
+    curl -s -X POST http://127.0.0.1:8080/models/unload -H 'Content-Type: application/json' -d '{"model": "Qwen/Qwen3.8-27B"}'
+    curl -s http://127.0.0.1:8080/health
+    journalctl --user -u llama-router -n 50 --no-pager
+    ```
+  - **Switch the service to a new build**: a plain restart keeps the binary named in `ExecStart`. Point it at the new build first. A restart drops all loaded models, which reload on their next request.
+    ```sh
+    cd ~/workspace/llama.cpp && git pull
+    cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=75 && cmake --build build --config Release -j $(nproc)
+
+    f=~/.config/systemd/user/llama-router.service
+    cp $f $f.bak-$(date +%Y%m%d)
+    sed -i 's#OLD/llama.cpp/build/bin#NEW/llama.cpp/build/bin#g' $f   # both LD_LIBRARY_PATH and ExecStart
+    systemctl --user daemon-reload && systemctl --user restart llama-router
+    systemctl --user status llama-router --no-pager | head -5
+    ```
+  - **Memory**: `fit = on` sizes layers to the free memory at load time. A standalone server started with `-ngl 99` doesn't, so it can fail to reload after sleeping if something else took the GPU meanwhile. Never load two copies of the same large model: with two 48 GB GPUs and 62 GB of host RAM, a second 35B copy got the whole router OOM-killed by systemd-oomd.
+## Reasoning control
+  - **Per request**, to turn thinking off for templates that support it (Qwen3.x, Gemma 4):
+    ```json
+    {"chat_template_kwargs": {"enable_thinking": false}}
+    ```
+    Gemma-4-26B-A4B with thinking on reasoned for 40 min (~380k chars) on a 6-image request and never answered. With it off, it answers in seconds.
+  - **Server flags**: `--reasoning on|off|auto`, `--reasoning-budget N` (token cap on thinking; 0 ends it at once), `--reasoning-format deepseek` (thinking goes to `message.reasoning_content`).
+  - **Client side**: when streaming, stop after N reasoning characters with no answer yet. A stuck model then fails fast instead of hanging.
+  - **Context per slot**: `-c` is split across `-np` slots. A long reasoner that runs out of slot context returns an empty answer with no error, so give it `-c` = per-request need × `-np`.
+## Vision models
+  - **mmproj**: vision needs the model's projector, `--mmproj mmproj-*.gguf` or `mmproj =` in a preset. Without one the model is text-only. `/v1/models` on a standalone server lists `"capabilities": ["multimodal"]`.
+  - **Small transcriber for a text-only model**: Qwen3-VL-4B (Q4_K_M, greedy, ctx 16k) transcribes a screenshot page into Markdown tables and verbatim text, Chinese included, in ~13 s a page. Ask it to tag only marks a person drew (red boxes, arrows) and to treat UI badges as plain text, or it tags everything. Cap `max_tokens` and cut repeated lines, since greedy decoding can loop.
+  - **Muse Glimmer-30B** (Meta, Oct 2026) needs a build with `LLM_ARCH_MUSE_GLIMMER` (mid-Nov 2026 or later). The router's older build can't load it.
+    ```sh
+    D=~/workspace/models/Muse-Glimmer-30B-GGUF
+    llama-server --port 18030 --alias Muse-Glimmer-30B \
+        -m $D/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf --mmproj $D/mmproj-Muse-Glimmer-30B-Q4_K_M.gguf \
+        -md $D/dflash-Muse-Glimmer-30B-Q4_K_M.gguf -ngld 99 \
+        --jinja -c 65536 -np 1 -fa on --cache-type-k q8_0 --cache-type-v q8_0 --fit on \
+        --temp 1.0 --top-p 0.95 --top-k 64 --sleep-idle-seconds 300
+    ```
+    Reasoning effort goes in the system prompt as a line `Reasoning effort: high`. ~23 GB over two GPUs, ~43 tok/s with the DFlash drafter on RTX 8000.
+## Local model comparison, Nov 2026
+  - **Task**: turn a chat export (6 page images of screenshots) into a short task brief for a coding agent. The benchmark is 5 private cases scored by regex checks: exact values, seen vs guessed, which messages count, no invented asks.
+  - **Hardware**: 2× Quadro RTX 8000 (48 GB, sm_75). Times are wall time per brief, the first one after a load included.
+
+    | model | score | mean time | range |
+    |---|---|---|---|
+    | Gemini 3.8 Flash (cloud, reference) | ~95% | ~25 s | 15–40 s |
+    | Qwen3.8-27B dense Q8_0, temp 0.3 | 85% | ~13 min | 8–20 min |
+    | Qwen3.6-27B Fable fine-tune Q4_K_M, temp 0.3 | 81% | ~110 s | 27–290 s |
+    | Muse Glimmer-30B Q4_K_M + DFlash drafter | 80% | ~106 s | 74–150 s |
+    | Muse Glimmer-30B, `Reasoning effort: high` | 78% | ~100 s | 83–139 s |
+    | Qwen3.6-35B-A3B Q8, temp 0.3 | 74% | ~100 s | 33–350 s |
+    | Fable + a second "check your draft" pass | 64% | ~9 min | 2–27 min |
+    | Nemotron-3.5-30B-A3B (text-only) + Qwen3-VL-4B transcripts | 64% | ~210 s | 153–340 s |
+    | Gemma-4-26B-A4B, thinking off | 58% | 8 s | 5–11 s |
+  - **Findings**
+    - Every model read the screenshots correctly. The gap to the cloud model is judgement: which messages count, and keeping a guess apart from a fact.
+    - More reasoning didn't help. High effort and a self-review pass both scored lower, and the review pass once looped in its thinking.
+    - Temperature 0.3 beat the default ~1.0 for the Qwen3.6 models, scoring higher and running ~3× faster.
+    - The dense Q8 27B was the most accurate local model, but 5–10× slower than the MoE / Q4 ones on these older GPUs.
 ***
 
 # Qwen agent
