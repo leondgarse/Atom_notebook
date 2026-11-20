@@ -66,29 +66,29 @@ summary: Antigravity CLI (agy) — CLI usage, settings & permissions, rules, wor
   - Rules use `action(target)` syntax (`command(...)`, `unsandboxed(...)`, `read_file(...)`, `write_file(...)`, `read_url(...)`, `execute_url(...)`, `mcp(...)`).
   - Evaluation precedence is strictly **`deny` > `ask` > `allow`**, so you can allow `"command(*)"` globally while blocking destructive commands in `deny` and prompting for sensitive commands in `ask`:
   ```json
-  {
-    "allowNonWorkspaceAccess": true,
-    "colorScheme": "tokyo night",
-    "permissions": {
-      "allow": [
-        "command(*)",
-        "read_file(*)",
-        "write_file(*)"
-      ],
-      "deny": [
-        "command(rm -rf)",
-        "command(sudo)",
-        "write_file(.git/)"
-      ],
-      "ask": [
-        "command(git push)",
-        "command(rm)"
-      ]
-    },
-    "trustedWorkspaces": [
-      "~/workspace"
+{
+  "allowNonWorkspaceAccess": true,
+  "colorScheme": "tokyo night",
+  "permissions": {
+    "allow": [
+      "command(*)",
+      "read_file(*)",
+      "write_file(*)"
+    ],
+    "deny": [
+      "command(rm -rf)",
+      "command(sudo)",
+      "write_file(.git/)"
+    ],
+    "ask": [
+      "command(git push)",
+      "command(rm)"
     ]
-  }
+  },
+  "trustedWorkspaces": [
+    "~/workspace"
+  ]
+}
   ```
 - **Global Rules (`~/.gemini/config/GEMINI.md`):** Applied across all workspaces in Antigravity CLI, IDE, and 2.0:
   ```md
